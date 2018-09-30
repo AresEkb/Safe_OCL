@@ -39,8 +39,8 @@ datatype type =
   SupType
 | OclVoid
 | OclInvalid
-| Required simple_type ("_[1]")
-| Optional simple_type ("_[?]")
+| Required simple_type ("_[1]" [1000] 1000)
+| Optional simple_type ("_[?]" [1000] 1000)
 | Collection type
 | Set type
 | OrderedSet type
@@ -48,8 +48,8 @@ datatype type =
 | Sequence type
 
 
-term "Real[?]"
-term "Real[1]"
+term "Set Real[?]"
+term "Set Real[1]"
 (*
 declare [[coercion "ST :: simple_type \<Rightarrow> type"]]
 declare [[coercion "CT :: complex_type \<Rightarrow> type"]]
@@ -1099,21 +1099,8 @@ lemma sup_less_eq_required:
   apply (simp add: conforms_to.intros(3) less_eq_type_def less_type_def)
   apply (simp add: conforms_to.intros(4) less_eq_type_def less_type_def)
   apply (simp add: conforms_to.intros(4) less_eq_type_def less_type_def)
-proof -
-  fix \<tau>' :: simple_type and \<tau>'' :: simple_type
-  assume a1: "\<tau>' < \<rho>"
-  assume a2: "\<tau>'' < \<rho>"
-  assume a3: "\<tau> = \<tau>'[1]"
-  assume a4: "\<sigma> = \<tau>''[1]"
-  then have "(<:) \<tau>' \<squnion> \<tau>''[1] = (<) (\<tau> \<squnion> \<sigma>)"
-    using a3 less_type_def by auto
-  moreover
-    { assume "\<tau>' \<squnion> \<tau>'' = \<rho> \<squnion> \<tau>'"
-      then have ?thesis
-        using a4 a3 a1 by (simp add: sup.strict_order_iff) }
-    ultimately show ?thesis
-      using a2 a1 by (metis conforms_to.intros(4) less_eq_type_def sup.strict_order_iff sup_assoc)
-  qed
+  apply (simp add: conforms_to.intros less_eq_type_def less_type_def)
+  by (metis Required_conforms_to_Required sup.assoc sup.strict_order_iff)
 
 (*  by (smt conforms_to.intros(4) le_neq_trans less_eq_type_def less_type_def sup.orderI sup.strict_order_iff sup_assoc sup_type.simps(9) type.inject(1) type.simps(101))*)
 
@@ -1683,14 +1670,7 @@ code_pred [show_modes] cast_oany .
    cast_any_fun Invalid Real = (RealVal \<bottom>) *)
 
 fun cast_any_fun :: "any \<Rightarrow> simple_type \<Rightarrow> any option" where
-(*  "cast_any_fun Invalid OclInvalid = None"
-| "cast_any_fun Invalid Boolean = Some (BoolVal \<bottom>)"
-| "cast_any_fun Invalid UnlimitedNatural = Some (UnlimNatVal \<bottom>)"
-| "cast_any_fun Invalid Real = Some (RealVal \<bottom>)"
-| "cast_any_fun Invalid OclAny = Some InvalidAny"
-| "cast_any_fun Invalid _ = None"
-
-|*) "cast_any_fun (BoolVal \<bottom>) OclAny = Some InvalidAny"
+  "cast_any_fun (BoolVal \<bottom>) OclAny = Some InvalidAny"
 | "cast_any_fun (UnlimNatVal \<bottom>) OclAny = Some InvalidAny"
 | "cast_any_fun (RealVal \<bottom>) OclAny = Some InvalidAny"
 
@@ -1706,6 +1686,16 @@ fun cast_any_fun :: "any \<Rightarrow> simple_type \<Rightarrow> any option" whe
 | "cast_any_fun (UnlimNatVal \<infinity>) Real = Some (RealVal \<bottom>)"
 | "cast_any_fun (UnlimNatVal _) _ = None"
 | "cast_any_fun (RealVal x) _ = None"
+
+fun cast_any_fun' :: "any \<Rightarrow> simple_type \<Rightarrow> any option" where
+  "cast_any_fun' InvalidAny OclAny = Some InvalidAny"
+| "cast_any_fun' InvalidAny t = cast_any_fun InvalidAny t"
+| "cast_any_fun' (BoolVal x) Boolean = Some (BoolVal x)"
+| "cast_any_fun' (BoolVal x) t = cast_any_fun (BoolVal x) t"
+| "cast_any_fun' (UnlimNatVal x) UnlimitedNatural = Some (UnlimNatVal x)"
+| "cast_any_fun' (UnlimNatVal x) t = cast_any_fun (UnlimNatVal x) t"
+| "cast_any_fun' (RealVal x) Real = Some (RealVal x)"
+| "cast_any_fun' (RealVal x) t = cast_any_fun (RealVal x) t"
 
 fun type_of_any :: "any \<Rightarrow> simple_type" where
 (*  "type_of_any Invalid = OclInvalid"
@@ -1756,6 +1746,18 @@ fun cast_oany_fun :: "oany \<Rightarrow> simple_type \<Rightarrow> oany option" 
 | "cast_oany_fun (OBoolVal x\<^sub>\<box>) t = map_option any_to_oany (cast_any_fun (BoolVal x) t)"
 | "cast_oany_fun (OUnlimNatVal x\<^sub>\<box>) t = map_option any_to_oany (cast_any_fun (UnlimNatVal x) t)"
 | "cast_oany_fun (ORealVal x\<^sub>\<box>) t = map_option any_to_oany (cast_any_fun (RealVal x) t)"
+
+fun cast_oany_fun' :: "oany \<Rightarrow> simple_type \<Rightarrow> oany option" where
+  "cast_oany_fun' NullAny OclAny = Some NullAny"
+| "cast_oany_fun' NullAny t = cast_oany_fun NullAny t"
+| "cast_oany_fun' OInvalidAny OclAny = Some OInvalidAny"
+| "cast_oany_fun' OInvalidAny t = cast_oany_fun OInvalidAny t"
+| "cast_oany_fun' (OBoolVal x) Boolean = Some (OBoolVal x)"
+| "cast_oany_fun' (OBoolVal x) t = cast_oany_fun (OBoolVal x) t"
+| "cast_oany_fun' (OUnlimNatVal x) UnlimitedNatural = Some (OUnlimNatVal x)"
+| "cast_oany_fun' (OUnlimNatVal x) t = cast_oany_fun (OUnlimNatVal x) t"
+| "cast_oany_fun' (ORealVal x) Real = Some (ORealVal x)"
+| "cast_oany_fun' (ORealVal x) t = cast_oany_fun (ORealVal x) t"
 
 thm "tranclp_induct"
 
@@ -1911,7 +1913,40 @@ lemma cast_oany_eq_cast_any1:
   apply (metis any.distinct(9) any_to_oany.simps(2) any_to_oany.simps(4) cast_any.intros(1) cast_any.intros(3) cast_any.intros(5) cast_any_fun.simps(7) cast_oany_eq_cast_any3 eunat.exhaust nullable.inject nullable_def tranclp.simps)
   using cast_any.intros(5) cast_oany_eq_cast_any3 q24 by fastforce
 
-thm cast_any_fun_implies_cast_any_closure
+lemma qx1:
+  "(\<And>x y. P x y \<Longrightarrow> Q x y) \<Longrightarrow> P\<^sup>+\<^sup>+ x y \<Longrightarrow> Q\<^sup>+\<^sup>+ x y"
+  by (smt tranclp.r_into_trancl tranclp_trans tranclp_trans_induct)
+
+lemma qx2:
+  "(\<And>x y. P (any_to_oany x) (any_to_oany y) \<Longrightarrow> Q x y) \<Longrightarrow> P\<^sup>+\<^sup>+ (any_to_oany x) (any_to_oany y) \<Longrightarrow> Q\<^sup>+\<^sup>+ x y"
+  apply (erule qx1)
+
+lemma qx3:
+  "P\<^sup>+\<^sup>+ x y \<Longrightarrow> (\<lambda>x y. P x y)\<^sup>+\<^sup>+ x y"
+  by simp
+
+lemma tranclp_implies_tranclfun:
+  "(\<And>x y. x \<noteq> y \<Longrightarrow> f x \<noteq> f y) \<Longrightarrow>
+   P\<^sup>+\<^sup>+ (f x) (f y) \<Longrightarrow>
+   (\<lambda>x y. P (f x) (f y))\<^sup>+\<^sup>+ x y"
+
+term "(\<lambda>x y. P (f x) (f y))\<^sup>+\<^sup>+"
+  
+  term "(\<lambda>x y. ((\<lambda>z. undefined)(a\<^sub>1 := {a\<^sub>2}, a\<^sub>2 := {a\<^sub>1})) x y)\<^sup>+\<^sup>+"
+
+lemma qx4:
+  "(\<And>x y. cast_oany (any_to_oany x) (any_to_oany y) \<Longrightarrow> cast_any x y) \<Longrightarrow> cast_oany\<^sup>+\<^sup>+ (any_to_oany x) (any_to_oany y) \<Longrightarrow> cast_any\<^sup>+\<^sup>+ x y"
+  apply (erule qx1)
+
+lemma cast_oany_eq_cast_any2:
+  "cast_oany\<^sup>+\<^sup>+ x y \<Longrightarrow> cast_any\<^sup>+\<^sup>+ x y"
+  apply (erule converse_tranclpE)
+   apply (simp add: cast_oany_eq_cast_any2 tranclp.r_into_trancl)
+  apply (rule tranclp_rtranclp_tranclp)
+(*  apply (cases x; cases y; simp)
+  apply (metis any.distinct(3) any.distinct(5) any_oany.cases cast_any.simps cast_oany.cases oany.distinct(1) oany.distinct(3) oany.distinct(5) oany.distinct(7) tranclp.cases)*)
+
+  thm cast_any_fun_implies_cast_any_closure
 (*
 lemma cast_oany_eq_cast_any:
   "cast_oany\<^sup>+\<^sup>+ x y \<Longrightarrow> cast_any\<^sup>+\<^sup>+ x y"
@@ -2164,389 +2199,187 @@ definition "cast_oany_fun2 x \<equiv> Predicate.the (cast_oany_i_o x)"
 
 term map_option
 term "map_option RequiredVal"
+term the
 
 fun cast_val_fun :: "val \<Rightarrow> type \<Rightarrow> val option" where
   "cast_val_fun (RequiredVal x) (Required t) = map_option RequiredVal (cast_any_fun x t)"
-| "cast_val_fun (OptionalVal x) (Optional t) = map_option OptionalVal (cast_oany_fun2 x)"
-| "cast_val_fun (RequiredVal x) (Optional t) = Some (OptionalVal (cast_oany_fun2 x))"
+| "cast_val_fun (OptionalVal x) (Optional t) = map_option OptionalVal (cast_oany_fun x t)"
+| "cast_val_fun (RequiredVal x) (Optional t) = map_option OptionalVal (cast_oany_fun x t)"
 | "cast_val_fun (OptionalVal x) _ = None"
-(*| "cast_val_fun (RequiredVal x) (Optional t) = OptionalVal (cast_any_fun x t)\<^sub>\<box>"
+| "cast_val_fun (RequiredVal x) _ = None"
+| "cast_val_fun (SetVal xs\<^sub>\<bottom>) (Set t) = Some (SetVal (fimage (\<lambda>x. the (cast_val_fun x t)) xs)\<^sub>\<bottom>)"
+| "cast_val_fun (SetVal xs) _ = None"
 
- "cast_any x y \<Longrightarrow> cast_val (OptionalVal x\<^sub>\<box>) (OptionalVal y\<^sub>\<box>)"
-| "cast_val (RequiredVal x) (OptionalVal x\<^sub>\<box>)"
-| "rel_fset cast_val xs ys \<Longrightarrow>
-   cast_val (SetVal xs\<^sub>\<bottom>) (SetVal ys\<^sub>\<bottom>)"
-*)
+fun cast_val_fun' :: "val \<Rightarrow> type \<Rightarrow> val option" where
+  "cast_val_fun' (RequiredVal x) (Required t) = map_option RequiredVal (cast_any_fun' x t)"
+| "cast_val_fun' (OptionalVal x) (Optional t) = map_option OptionalVal (cast_oany_fun' x t)"
+| "cast_val_fun' (RequiredVal x) (Optional t) = map_option OptionalVal (cast_oany_fun' x t)"
+| "cast_val_fun' (OptionalVal x) _ = None"
+| "cast_val_fun' (RequiredVal x) _ = None"
+| "cast_val_fun' (SetVal xs\<^sub>\<bottom>) (Set t) = Some (SetVal (fimage (\<lambda>x. the (cast_val_fun' x t)) xs)\<^sub>\<bottom>)"
+| "cast_val_fun' (SetVal xs) _ = None"
 
-inductive cast :: "val \<Rightarrow> type \<Rightarrow> val \<Rightarrow> bool" where
-  "cast (RequiredVal x) (Optional t) (OptionalVal (any_to_oany x))"
-| "cast_myset x t1 t2 = y \<Longrightarrow> cast (SetVal t1 x) t2 (SetVal t2 y)"
-
-code_pred [show_modes] cast .
-
-inductive cast2 :: "val \<Rightarrow> val \<Rightarrow> bool" where
-  "cast2 (RequiredVal x) (OptionalVal (any_to_oany x))"
-| "cast (SetVal t1 x) t2 (SetVal t2 y) \<Longrightarrow> cast2 (SetVal t1 x) (SetVal t2 y)"
-
-code_pred [show_modes] cast2 .
-
-
-(* Тут была какая-то сложность в определении OclAny, что invalid и null определены
-   для каждого типа отдельно, а реально одни и те же всегда.
-   Цель всего этого вроде в том, чтобы определить операторы кастования.
-   Например null может быть скастован в значение любого типа.
-   И любое значение кроме коллекции может быть скастовано в OclAny
-
-   null и invalid разные для разных типов! Например int null не может использоваться
-   в логических выражениях *)
-(*
-typedef any_val1 = "UNIV :: (invalid + bool + real) set" ..
-typedef any_val2 = "UNIV :: (invalid + ebool + ereal) set" ..
-typedef any_val3 = "UNIV :: (bool + real) option set" ..
-
-typedef oany_val1 = "UNIV :: (invalid + void + bool + real) set" ..
-typedef oany_val2 = "UNIV :: (invalid + void + obool + oreal) set" ..
-typedef oany_val3 = "UNIV :: any_val3 option set" ..
-
-typedef any_val = "UNIV :: (bool + real) option set" ..
-
-term "(Inr (Inr (Inl False)))"
-
-instantiation any_val :: bot
-begin
-definition "\<bottom> = Abs_any_val None"
-instance ..
-end
-
-fun invalid_any :: "invalid \<Rightarrow> any_val" where
-  "invalid_any \<bottom> = \<bottom>"
-
-definition bool_any :: "bool \<Rightarrow> any_val" where
-  "bool_any b = Abs_any_val (Some (Inl b))"
-
-fun ebool_any :: "ebool \<Rightarrow> any_val" where
-  "ebool_any (ebool b) = Abs_any_val (Some (Inl b))"
-| "ebool_any \<bottom> = \<bottom>"
-
-definition real_any :: "real \<Rightarrow> any_val" where
-  "real_any b = Abs_any_val (Some (Inr b))"
-
-term "invalid_any \<bottom>"
-term "bool_any True"
-term "bool_any \<bottom>"
-term "ebool_any \<bottom>"
-term "real_any \<bottom>"
-
-
-fun any_to_ebool :: "any_val \<Rightarrow> ebool" where
-  "any_to_ebool (ebool _) = True"
-| "any_to_ebool _ = \<bottom>"
-
-typedef oany_val = "UNIV :: any_val option set" ..
-
-instantiation oany_val :: opt
-begin
-definition "\<bottom> = Abs_oany_val (Some \<bottom>)"
-definition "\<epsilon> = Abs_oany_val None"
-instance ..
-end
-
-fun invalid_oany :: "invalid \<Rightarrow> oany_val" where
-  "invalid_oany \<bottom> = \<bottom>"
-
-fun void_oany :: "void \<Rightarrow> oany_val" where
-  "void_oany \<bottom> = \<bottom>"
-| "void_oany \<epsilon> = \<epsilon>"
-
-definition any_oany :: "any_val \<Rightarrow> oany_val" where
-  "any_oany b = Abs_oany_val (Some b)"
-
-definition bool_oany :: "bool \<Rightarrow> oany_val" where
-  "bool_oany b = Abs_oany_val (Some (bool_any b))"
-
-fun ebool_oany :: "ebool \<Rightarrow> oany_val" where
-  "ebool_oany (ebool b) = Abs_oany_val (Some (bool_any b))"
-| "ebool_oany \<bottom> = \<bottom>"
-
-fun obool_oany :: "obool \<Rightarrow> oany_val" where
-  "obool_oany (obool b) = Abs_oany_val (Some (bool_any b))"
-| "obool_oany \<bottom> = \<bottom>"
-| "obool_oany \<epsilon> = \<epsilon>"
-*)
-
-typedef 'a ocl_set = "UNIV :: 'a set option set" ..
-
-definition ocl_set :: "'a set \<Rightarrow> 'a ocl_set" where
-  "ocl_set b = Abs_ocl_set (Some b)"
-
-instantiation ocl_set :: (type) bot
-begin
-definition "\<bottom> = Abs_ocl_set None"
-instance ..
-end
-
-free_constructors case_ocl_set for
-  ocl_set
-| "\<bottom> :: 'a ocl_set"
-  apply (metis Rep_ocl_set_inverse bot_ocl_set_def ocl_set_def option.collapse)
-  apply (metis Abs_ocl_set_inverse iso_tuple_UNIV_I ocl_set_def option.inject)
-  by (metis Abs_ocl_set_inverse bot_ocl_set_def iso_tuple_UNIV_I ocl_set_def option.distinct(1))
-
-term "ocl_set {1::int,2}"
-term "ocl_set {1::real,2}"
+value "cast_any_fun (UnlimNatVal (eunat 1)) Real"
+value "cast_val_fun (RequiredVal (UnlimNatVal (eunat 1))) UnlimitedNatural[1]"
+value "cast_val_fun (RequiredVal (UnlimNatVal (eunat 1))) UnlimitedNatural[?]"
+value "cast_val_fun' (RequiredVal (UnlimNatVal (eunat 1))) UnlimitedNatural[1]"
+value "cast_val_fun' (RequiredVal (UnlimNatVal (eunat 1))) UnlimitedNatural[?]"
+value "cast_val_fun (RequiredVal (UnlimNatVal (eunat 1))) Real[1]"
+value "cast_val_fun (RequiredVal (UnlimNatVal (eunat 1))) Real[?]"
+value "cast_val_fun (RequiredVal (UnlimNatVal (eunat 1))) OclAny[?]"
+value "cast_val_fun (SetVal {|RequiredVal (UnlimNatVal (eunat 1))|}\<^sub>\<bottom>) (Set Real[?])"
 
 (*
 Collection - 
 Set        - set
-OrderedSet - list?
+OrderedSet - list? dlist?
 Bag        - multiset
 Sequence   - list
 *)
-(*
-fun ocl_set_to_ocl_set1 :: "ebool ocl_set \<Rightarrow> any_val ocl_set" where
-  "ocl_set_to_ocl_set1 (ocl_set xs) = ocl_set xs"
-| "ocl_set_to_ocl_set1 \<bottom> = \<bottom>"
 
-fun ocl_set_to_ocl_set :: "'a ocl_set \<Rightarrow> 'b ocl_set" where
-  "ocl_set_to_ocl_set (ocl_set xs) = ocl_set xs"
-| "ocl_set_to_ocl_set \<bottom> = \<bottom>"
-*)
-(*
-declare [[coercion "ebool :: bool \<Rightarrow> ebool"]]
-declare [[coercion "obool :: bool \<Rightarrow> obool"]]
-declare [[coercion "ebool_to_obool :: ebool \<Rightarrow> obool"]]
-*)
+definition cast (infix "as!" 55) where
+  "cast \<equiv> cast_val\<^sup>+\<^sup>+"
 
-datatype any =
-  ErrorVal
-| BooleanVal ebool
-| RealVal real
-| IntegerVal int
-| UnlimNaturalVal enat
-| StringVal string
-| ObjectVal cls oid
-(*
-typedef eany = "UNIV :: any option set" ..
+definition cast_eq (infix "as" 55) where
+  "cast_eq \<equiv> cast_val\<^sup>*\<^sup>*"
 
-definition eany :: "any \<Rightarrow> eany" where
-  "eany v = Abs_eany (Some v)"
-*)
-instantiation any :: bot
+
+lemma cast_any_not_refl:
+  "cast_any x y \<Longrightarrow> cast_any y x \<Longrightarrow> False"
+  by (induct rule: cast_any.induct; simp add: cast_any.simps)
+
+inductive_cases cast_oany_NullAny_OBoolVal: "cast_oany NullAny (OBoolVal \<epsilon>)"
+inductive_cases cast_oany_NullAny_ORealVal: "cast_oany NullAny (ORealVal \<epsilon>)"
+
+lemma cast_oany_not_refl:
+  "cast_oany x y \<Longrightarrow> cast_oany y x \<Longrightarrow> False"
+  apply (induct rule: cast_oany.induct)
+  using any_oany_implies_any_to_oany cast_any_not_refl cast_oany_eq_cast_any2 apply blast
+  apply (metis any_oany_implies_any_to_oany cast_any_not_refl cast_oany.cases cast_oany.intros(2) cast_oany_eq_cast_any2 oany.distinct(11) oany.distinct(9))
+  apply (metis any_oany_implies_any_to_oany cast_any_not_refl cast_oany.intros(3) cast_oany_eq_cast_any2 cast_oany_NullAny_OBoolVal)
+  apply (erule cast_oany_NullAny_ORealVal)
+  using any_oany_implies_any_to_oany cast_any_not_refl cast_oany.intros(4) cast_oany_eq_cast_any2 by fastforce
+
+lemma cast_any_not_refl2:
+  "cast_any x y \<Longrightarrow> \<not> cast_any\<^sup>*\<^sup>* y x"
+  by (metis cast_any.cases cast_any_closure_eq_cast_any_fun cast_any_fun.simps(4) cast_any_fun.simps(52) option.distinct(1) rtranclp_into_tranclp1 type_of_any.simps(3) type_of_any.simps(4))
+
+lemma cast_any_cl_implies_cast_oany_cl:
+  "cast_any\<^sup>*\<^sup>* x y \<Longrightarrow> cast_oany\<^sup>*\<^sup>* x y"
+  by (metis Nitpick.rtranclp_unfold cast_oany_eq_cast_any1 tranclp_into_rtranclp)
+
+thm cast_oany_eq_cast_any1
+
+
+lemma q:
+  "(\<And>x y. P x y \<Longrightarrow> Q x y) \<Longrightarrow> P\<^sup>*\<^sup>* x y \<Longrightarrow> Q\<^sup>*\<^sup>* x y"
+  by (metis mono_rtranclp)
+
+lemma q2:
+  "(\<And>x y. P (any_to_oany x) (any_to_oany y) \<Longrightarrow> Q x y) \<Longrightarrow> P\<^sup>*\<^sup>* (any_to_oany x) (any_to_oany y) \<Longrightarrow> Q\<^sup>*\<^sup>* x y"
+
+thm mono_rtranclp
+
+lemma q2:
+  "(\<And>x y. cast_oany x y \<Longrightarrow> cast_any x y) \<Longrightarrow> cast_oany\<^sup>*\<^sup>* x y \<Longrightarrow> cast_any\<^sup>*\<^sup>* x y"
+  apply (erule q)
+  apply (induct rule: rtranclp_induct)
+
+lemma cast_oany_cl_implies_cast_any_cl:
+  "cast_oany\<^sup>*\<^sup>* x y \<Longrightarrow> cast_any\<^sup>*\<^sup>* x y"
+
+lemma cast_oany_not_refl2:
+  "cast_oany x y \<Longrightarrow> cast_oany\<^sup>*\<^sup>* y x \<Longrightarrow> False"
+  apply (erule cast_oany.cases)
+  apply (cases x; cases y; simp)
+(*  apply (induct rule: cast_oany.induct)*)
+
+
+
+instantiation any :: order
 begin
-definition "\<bottom> = ErrorVal"
-instance ..
+
+definition less_any where
+  "less_any \<equiv> cast_any\<^sup>+\<^sup>+"
+
+definition less_eq_any where
+  "less_eq_any \<equiv> cast_any\<^sup>*\<^sup>*"
+
+lemma less_le_not_le_any:
+  "x < y \<longleftrightarrow> x \<le> y \<and> \<not> y \<le> x"
+  for x :: any
+  apply (auto simp add: less_any_def less_eq_any_def)
+  apply (metis any.distinct(5) any.distinct(9) cast_any.cases cast_any_closure_eq_cast_any_fun cast_any_fun.simps(52) option.distinct(1) rtranclp_tranclp_tranclp tranclp.cases tranclpD type_of_any.simps(3))
+  by (metis rtranclpD)
+
+lemma order_trans_any:
+  "x \<le> y \<Longrightarrow> y \<le> z \<Longrightarrow> x \<le> z"
+  for x :: any
+  apply (simp add: less_eq_any_def)
+  done
+
+lemma antisym_any:
+  "x \<le> y \<Longrightarrow> y \<le> x \<Longrightarrow> x = y"
+  for x :: any
+  apply (simp add: less_eq_any_def)
+  by (metis (mono_tags, lifting) less_any_def less_eq_any_def less_le_not_le_any rtranclpD)
+
+instance
+  apply (standard)
+  apply (simp add: less_le_not_le_any)
+  apply (simp add: less_eq_any_def)
+  apply (simp add: order_trans_any)
+  apply (simp add: antisym_any)
+  done
+
+end
+
+(* Это нужно перенести выше, скорее всего это поможет доказывать
+   эквивалентность предикатов и функций *)
+
+instantiation oany :: order
+begin
+
+definition less_oany where
+  "less_oany \<equiv> cast_oany\<^sup>+\<^sup>+"
+
+definition less_eq_oany where
+  "less_eq_oany \<equiv> cast_oany\<^sup>*\<^sup>*"
+
+lemma less_le_not_le_oany:
+  "x < y \<longleftrightarrow> x \<le> y \<and> \<not> y \<le> x"
+  for x :: oany
+  apply (auto simp add: less_oany_def less_eq_oany_def)
+  apply (rule r_into_rtranclp)
+  apply (induct rule: tranclp_induct)
+   apply (erule tranclp.cases)
+  apply (erule rtranclp_tranclp_tranclp)
+(*  apply (metis any.distinct(5) any.distinct(9) cast_any.cases cast_any_closure_eq_cast_any_fun cast_any_fun.simps(52) option.distinct(1) rtranclp_tranclp_tranclp tranclp.cases tranclpD type_of_any.simps(3))
+  by (metis rtranclpD)*)
+
+lemma order_trans_any:
+  "x \<le> y \<Longrightarrow> y \<le> z \<Longrightarrow> x \<le> z"
+  for x :: any
+  apply (simp add: less_eq_any_def)
+  done
+
+lemma antisym_any:
+  "x \<le> y \<Longrightarrow> y \<le> x \<Longrightarrow> x = y"
+  for x :: any
+  apply (simp add: less_eq_any_def)
+  by (metis (mono_tags, lifting) less_any_def less_eq_any_def less_le_not_le_any rtranclpD)
+
+instance
+  apply (standard)
+  apply (simp add: less_le_not_le_any)
+  apply (simp add: less_eq_any_def)
+  apply (simp add: order_trans_any)
+  apply (simp add: antisym_any)
+  done
+
 end
 
 
-datatype oany =
-  OVoidVal
-| OErrorVal
-| OBooleanVal obool
-| ORealVal real
-| OIntegerVal int
-| OUnlimNaturalVal enat
-| OStringVal string
-| OObjectVal cls oid
-
-instantiation oany :: opt
-begin
-definition "\<bottom> = OErrorVal"
-definition "\<epsilon> = OVoidVal"
-instance ..
-end
-
-(* Сделать индуктивное определение?
-   Или даже включить в определение cast? *)
-
-
-datatype t1 = A | B t1 t1
-datatype t2 = C | D t2 t2
-
-inductive t1t2 :: "t1 \<Rightarrow> t2 \<Rightarrow> bool" where
-  "t1t2 A C"
-| "t1t2 x p \<Longrightarrow> t1t2 y q \<Longrightarrow> t1t2 (B x y) (D p q)"
-
-code_pred [show_modes] t1t2 .
-
-datatype val1 = A | B
-datatype val2 = C | D
-
-inductive cast_val :: "val1 \<Rightarrow> val2 \<Rightarrow> bool" where
-  "cast_val A C"
-| "cast_val B D"
-
-fun cast_val_fun :: "val1 \<Rightarrow> val2" where
-  "cast_val_fun A = C"
-| "cast_val_fun B = D"
-
-inductive cast_list :: "val1 list \<Rightarrow> val2 list \<Rightarrow> bool" where
-  "cast_list [] []"
-| "cast_val x y \<Longrightarrow> cast_list xs ys \<Longrightarrow> cast_list (x#xs) (y#ys)"
-
-code_pred [show_modes] cast_list .
-
-values "{x. cast_list [A, B] x}"
-values "{x. cast_list x [C, D]}"
-
-
-inductive cast_fset1 :: "val1 fset \<Rightarrow> val2 fset \<Rightarrow> bool" where
-  "cast_fset1 {||} {||}"
-| "cast_val x y \<Longrightarrow> cast_fset1 xs ys \<Longrightarrow> cast_fset1 (finsert x xs) (finsert y ys)"
-
-code_pred [show_modes] cast_fset1 .
-
-(*values "{x. cast_fset1 {|A, B|} x}"*)
-
-inductive cast_fset2 :: "val1 fset \<Rightarrow> val2 fset \<Rightarrow> bool" where
-  "\<And>x y. x |\<in>| xs \<Longrightarrow> y |\<in>| ys \<Longrightarrow> cast_val x y \<Longrightarrow>  cast_fset2 xs ys"
-
-code_pred [show_modes] cast_fset2 .
-
-inductive cast_fset3 :: "val1 fset \<Rightarrow> val2 fset \<Rightarrow> bool" where
-  "cast_fset3 x (fimage cast_val_fun x)"
-
-code_pred [show_modes] cast_fset3 .
-
-values "{x. cast_fset3 {|A, B|} x}"
-
-value "sorted_list_of_fset {|A, B|}"
-
-inductive cast_fset4 :: "val1 fset \<Rightarrow> val2 fset \<Rightarrow> bool" where
-  "cast_fset4 x (fimage cast_val_fun x)"
-
-
-
-(*values "{(x, y). cast_list x y}"*)
-
-datatype val3 = RVal val1 | OVal val2 | SVal "val3 fset"
-
-
-inductive_cases cast_strict_elim: "cast x t y"
-inductive_cases cast_strict_elim2[elim!]: "cast (SetVal t1 x) t2 y"
-inductive_cases cast_strict_elim3[elim!]: "cast (SetVal t1 x) t2 (SetVal t2 y)"
-
-thm cast_strict_elim2
-
-schematic_goal q:
-  "cast (SetVal (Boolean[?]) (myset {|RequiredVal (BooleanVal True)|})) (Set (Boolean[1])) ?a"
-  apply (rule cast_strict_elim3)
-
-
-inductive_cases cast_strict_elim: "x as! y"
-
-
-
-(*
-typedef ebool2 = "UNIV :: bool option set" ..
-
-instantiation ebool2 :: errorable
-begin
-
-definition "\<bottom> \<equiv> Abs_ebool2 None"
-
-instance ..
-
-end
-*)
-fun plus_nat where
-  "plus_nat (enat x) (enat y) = x + y"
-| "plus_nat \<infinity> (enat y) = y"
-| "plus_nat (enat x) \<infinity> = x"
-| "plus_nat \<infinity> \<infinity> = (\<infinity> :: enat)"
-
-thm enat_def ebool_def
-thm infinity_enat_def bot_ebool_def
-
-function neg_val :: "enat \<Rightarrow> enat" where
-  "neg_val (Abs_enat (Some a)) = enat a"
-| "neg_val (Abs_enat None) = Abs_enat None"
-  using enat_def infinity_enat_def apply auto[1]
-  apply auto
-(*
-fun and_val :: "ebool \<Rightarrow> ebool \<Rightarrow> ebool" where
-  "and_val (ebool a) (ebool b) = ebool (a \<and> b)"
-| "and_val (ebool False) _ = ebool False"
-| "and_val _ (ebool False) = ebool False"
-| "and_val \<bottom> _ = \<bottom>"
-| "and_val _ \<bottom> = \<bottom>"
-
-term obool
-fun and_val :: "obool \<Rightarrow> obool \<Rightarrow> obool" where
-  "and_val (obool a) (obool b) = obool (a \<and> b)"
-| "and_val (obool False) _ = obool False"
-| "and_val _ (obool False) = obool False"
-| "and_val \<bottom> _ = \<bottom>"
-| "and_val _ \<bottom> = \<bottom>"
-| "and_val \<epsilon> _ = \<epsilon>"
-| "and_val _ \<epsilon> = \<epsilon>"
-
-fun and_val :: "obool \<Rightarrow> obool \<Rightarrow> obool" where
-  "and_val (obool a) (obool b) = obool (a \<and> b)"
-| "and_val (obool False) _ = obool False"
-| "and_val _ (obool False) = obool False"
-| "and_val obool.ErrorVal _ = obool.ErrorVal"
-| "and_val _ obool.ErrorVal = obool.ErrorVal"
-| "and_val obool.VoidVal _ = \<epsilon>"
-| "and_val _ \<epsilon> = obool.VoidVal"
-
-value "and_val obool.ErrorVal (obool True)"
-value "and_val obool.VoidVal (obool True)"
-*)
-datatype 'a errorable = Just 'a | Void | Error
-
-type_synonym ebool = "bool errorable"
-type_synonym eint = "int errorable"
-type_synonym ereal = "real errorable"
-type_synonym eunat = "enat errorable"
-type_synonym estring = "string errorable"
-
-datatype simple_val =
-  NullVal
-| BooleanVal ebool
-| RealVal ereal
-| IntegerVal eint
-| UnlimNatVal eunat
-| StringVal estring
-| AnyVal
-| ObjectVal cls oid
-
-datatype val =
-  Required simple_val
-| Optional simple_val
-(*| SetVal "val set"
-| OrderedSet "val list"
-| Bag "val list"
-| Sequence "val list"
-*)
-inductive cast :: "val \<Rightarrow> val \<Rightarrow> bool" (infix "as!" 55) where
-  "NullVal as! BooleanVal Void"
-| "NullVal as! RealVal Void"
-| "NullVal as! IntegerVal Void"
-| "NullVal as! UnlimNatVal Void"
-| "NullVal as! StringVal Void"
-(*| "c \<in> cls \<Longrightarrow> NullVal as! ObjectVal c ''''"*)
-| "IntegerVal (Just x) as! RealVal (Just x)"
-| "IntegerVal Void as! RealVal Void"
-| "IntegerVal Error as! RealVal Error"
-| "UnlimNatVal (Just (enat x)) as! IntegerVal (Just x)"
-| "UnlimNatVal (Just \<infinity>) as! IntegerVal Error"
-| "UnlimNatVal Void as! IntegerVal Void"
-| "UnlimNatVal Error as! IntegerVal Error"
-| "UnlimNatVal (Just (enat x)) as! RealVal (Just x)"
-| "UnlimNatVal (Just \<infinity>) as! RealVal Error"
-| "UnlimNatVal Void as! RealVal Void"
-| "UnlimNatVal Error as! RealVal Error"
-(*| "\<forall>y. x \<noteq> AnyVal y \<Longrightarrow> x as! AnyVal x"*)
-| "x \<noteq> AnyVal \<Longrightarrow> x as! AnyVal"
-(*  "c |\<in>| cls \<Longrightarrow> cast cls NullVal (ObjectVal c '''')"
-| "cast cls (ObjectVal c i) (ObjectVal c i)"*)
-
-code_pred [show_modes] cast .
-(*
-inductive_cases cast_strict_elim: "x as! y"
-*)
-definition cast_eq :: "val \<Rightarrow> val \<Rightarrow> bool" (infix "as" 55) where
-  "x as y \<equiv> x = y \<or> x as! y"
 
 instantiation val :: order
 begin
