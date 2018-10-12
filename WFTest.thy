@@ -39,9 +39,61 @@ lemma trancl_subtype_Col_x [elim!]:
   "subtype\<^sup>+\<^sup>+ (Col x) y \<Longrightarrow> (\<exists>z. y = Col z \<Longrightarrow> P) \<Longrightarrow> P"
   by (induct rule: tranclp_induct; auto)
 
+lemma rtrancl_subtype_Col_x [elim!]:
+  "subtype\<^sup>*\<^sup>* (Col x) y \<Longrightarrow> (\<exists>z. y = Col z \<Longrightarrow> P) \<Longrightarrow> P"
+  by (induct rule: rtranclp_induct; auto)
+
 lemma trancl_subtype_Set_x [elim!]:
   "subtype\<^sup>+\<^sup>+ (Set x) y \<Longrightarrow> (\<exists>z. y = Set z \<Longrightarrow> P) \<Longrightarrow> (\<exists>z. y = Col z \<Longrightarrow> P) \<Longrightarrow> P"
   by (induct rule: tranclp_induct; blast)
+
+lemma rtrancl_subtype_Set_x [elim!]:
+  "subtype\<^sup>*\<^sup>* (Set x) y \<Longrightarrow> (\<exists>z. y = Set z \<Longrightarrow> P) \<Longrightarrow> (\<exists>z. y = Col z \<Longrightarrow> P) \<Longrightarrow> P"
+  by (induct rule: rtranclp_induct; blast)
+
+lemma q:
+  "subtype\<^sup>*\<^sup>* (Col x) y \<Longrightarrow> subtype\<^sup>*\<^sup>* y (Col z) \<Longrightarrow> y \<in> range Col"
+  by blast
+
+lemma q:
+  "subtype\<^sup>+\<^sup>+ (Set x) y \<Longrightarrow> subtype y (Set z) \<Longrightarrow> y \<in> range Set"
+  by blast
+
+lemma q:
+  "(\<forall>x y. subtype\<^sup>*\<^sup>* x y \<longrightarrow> subtype\<^sup>*\<^sup>* (Set x) (Set y)) \<and>
+   (\<forall>x y. subtype (Set x) (Set y) \<longrightarrow> subtype x y) \<and>
+   inj Set"
+  apply (rule conjI)
+  apply (metis Nitpick.rtranclp_unfold subtype.intros(4) tranclp_fun_preserve_gen_2a)
+  apply (rule conjI)
+  apply blast
+  by (meson injI type.inject(1))
+
+lemma q:
+  "fully_faithful_funct subtype\<^sup>*\<^sup>* subtype\<^sup>*\<^sup>* Set"
+  apply (simp add: fully_faithful_funct_def full_funct_def faithful_funct_def funct_def)
+  apply (rule conjI)
+  apply (metis Nitpick.rtranclp_unfold subtype.intros(4) tranclp_fun_preserve_gen_2a)
+  apply (rule conjI)
+  apply blast
+  apply (rule conjI)
+  apply (simp add: Nitpick.rtranclp_unfold subtype.intros(4) tranclp_fun_preserve_gen_2a)
+  by (meson injI type.inject(1))
+(*  apply (metis Nitpick.rtranclp_unfold subtype.intros(4) tranclp_fun_preserve_gen_2a)
+  apply (metis Nitpick.rtranclp_unfold q84)*)
+
+
+lemma q:
+  "fully_faithful_funct subtype\<^sup>*\<^sup>* subtype\<^sup>*\<^sup>* Col"
+  apply (simp add: fully_faithful_funct_def full_funct_def faithful_funct_def funct_def)
+  apply (rule conjI)
+  apply (simp add: Nitpick.rtranclp_unfold subtype.intros(6) tranclp_fun_preserve_gen_2a)
+  apply (rule conjI)
+  apply blast
+  apply (rule conjI)
+  apply (simp add: Nitpick.rtranclp_unfold subtype.intros(6) tranclp_fun_preserve_gen_2a)
+  by (meson injI type.inject(3))
+
 
 lemma Set_functor:
   "functor_under_rel subtype Set"
@@ -73,6 +125,12 @@ lemma q84:
 
 lemma q84:
   "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Col y)"
+
+lemma q:
+  "(\<And>x y. subtype\<^sup>*\<^sup>* x y \<Longrightarrow> subtype\<^sup>*\<^sup>* (f x) (f y)) \<Longrightarrow>
+   (\<And>x y. subtype\<^sup>*\<^sup>* (f x) (f y) \<Longrightarrow> subtype\<^sup>*\<^sup>* x y) \<Longrightarrow>
+   inj f \<Longrightarrow>
+   subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype y z \<Longrightarrow> x \<in> range f \<Longrightarrow> z \<in> range f \<Longrightarrow> y \<in> range f"
 
 
 lemma q1:

@@ -10,10 +10,56 @@ lemma acyclic_alt:
   by (metis case_prodI mem_Collect_eq rtrancl_into_trancl2)
 
 definition rel_limited_under :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> 'a set \<Rightarrow> bool" where
-  "rel_limited_under R A = 
+  "rel_limited_under R A =
    (\<forall>x y z. R\<^sup>+\<^sup>+ x y \<longrightarrow> R y z \<longrightarrow> x \<in> A \<longrightarrow> z \<in> A \<longrightarrow> y \<in> A)"
 
-(* Подумать что это за функтор *)
+definition rel_limited_under2 :: "('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
+  "rel_limited_under2 R f =
+   (\<forall>x y z. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> R y (f z) \<longrightarrow> y \<in> range f)"
+
+lemma q:
+  "(\<forall>x y. R (f x) (f y) \<longrightarrow> R x y) \<Longrightarrow>
+   (\<forall>x y z. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> R y (f z) \<longrightarrow> y \<in> range f)"
+  nitpick
+
+lemma q:
+  "rel_limited_under2 R f =
+   rel_limited_under R (range f)"
+  using rel_limited_under2_def rel_limited_under_def by fastforce
+
+(*
+  R = S = subtype\<^sup>*\<^sup>*
+  Все эти штуки лучше определять через классы и локали
+*)
+definition funct :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> ('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
+  "funct R S f \<equiv> (\<forall>x y. R x y \<longrightarrow> S (f x) (f y))"
+
+definition faithful_funct :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> ('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
+  "faithful_funct R S f \<equiv> funct R S f \<and> inj f"
+
+definition full_funct :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> ('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
+  "full_funct R S f \<equiv> funct R S f \<and> (\<forall>x y z. S (f x) y \<longrightarrow> S y (f z) \<longrightarrow> y \<in> range f)"
+(*  "full_funct R S f \<equiv> funct R S f \<and> (\<forall>x y. S (f x) (f y) \<longrightarrow> R x y)"*)
+
+definition fully_faithful_funct :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> ('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
+  "fully_faithful_funct R S f \<equiv> full_funct R S f \<and> faithful_funct R S f"
+(*
+lemma q:
+  "(\<And>x y. R\<^sup>*\<^sup>* x y \<Longrightarrow> R\<^sup>*\<^sup>* (f x) (f y)) \<Longrightarrow>
+   (\<And>x y. R (f x) (f y) \<Longrightarrow> R x y) \<Longrightarrow>
+   inj f \<Longrightarrow>
+   R\<^sup>+\<^sup>+ x y \<Longrightarrow> R y z \<Longrightarrow> x \<in> range f \<Longrightarrow> z \<in> range f \<Longrightarrow> y \<in> range f"
+*)
+
+lemma q:
+  "fully_faithful_funct R\<^sup>*\<^sup>* R\<^sup>*\<^sup>* f \<Longrightarrow> rel_limited_under R (range f)"
+  apply (simp add: fully_faithful_funct_def full_funct_def
+    faithful_funct_def funct_def)
+
+(* Подумать что это за функтор
+   fully faithful эндофунктор
+   т.к. это биекция между морфизмами благодаря rel_limited_under
+   *)
 definition functor_under_rel :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'a) \<Rightarrow> bool" where
   "functor_under_rel R f \<equiv>
     rel_limited_under R (range f) \<and>
@@ -30,6 +76,37 @@ definition natural_under_rel :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Righ
     (\<forall>x y. R (f x) (g y) \<longrightarrow> x \<noteq> y \<longrightarrow> R x y) \<and>
     (\<forall>x y. \<not> R\<^sup>+\<^sup>+ (g x) (f y)) \<and>
     (\<forall>x y. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> (\<exists>z. y = f z \<or> y = g z))"
+
+lemma tranclp_fun_preserve_gen_2:
+  fixes f:: "'a \<Rightarrow> 'b"
+    and R :: "'b \<Rightarrow> 'b \<Rightarrow> bool"
+    and x x' :: 'a
+  assumes prem: "(\<lambda>x x'. R (f x) (f x'))\<^sup>+\<^sup>+ x x'"
+  shows "R\<^sup>+\<^sup>+ (f x) (f x')"
+proof -
+  obtain P where P: "P = (\<lambda>x x'. (\<lambda>y y'. R y y')\<^sup>+\<^sup>+ (f x) (f x'))" by auto
+  obtain r where r: "r = (\<lambda>x x'. R (f x) (f x'))" by auto
+  from prem r have major: "r\<^sup>+\<^sup>+ x x'" by blast
+  from P r have cases_1: "\<And>y y'. r y y' \<Longrightarrow> P y y'" by simp
+  from P have cases_2: "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z" by auto
+  from tranclp_trans_induct major cases_1 cases_2 have inv_conc: "P x x'" by smt
+  with P show ?thesis by simp
+qed
+
+lemma tranclp_fun_preserve_gen_2a:
+  assumes as_R: "\<And>x x'. R x x' \<Longrightarrow> R (f x) (f x')"
+      and prem: "R\<^sup>+\<^sup>+ x x'"
+  shows "R\<^sup>+\<^sup>+ (f x) (f x')"
+proof -
+  obtain P where P: "P = (\<lambda>x x'. R\<^sup>+\<^sup>+ (f x) (f x'))" by auto
+  obtain r where r: "r = (\<lambda>x x'. R (f x) (f x'))" by auto
+  from prem r as_R have major: "r\<^sup>+\<^sup>+ x x'"
+    by (smt tranclp.r_into_trancl tranclp_trans tranclp_trans_induct)
+  from P r have cases_1: "\<And>y y'. r y y' \<Longrightarrow> P y y'" by simp
+  from P have cases_2: "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z" by auto
+  from tranclp_trans_induct major cases_1 cases_2 have inv_conc: "P x x'" by smt
+  with P show ?thesis by simp
+qed
 
 lemma tranclp_fun_preserve_gen_1:
   fixes f:: "'a \<Rightarrow> 'b"
@@ -57,27 +134,30 @@ proof -
     by (simp add: the_inv_f_f)
 qed
 
-lemma tranclp_fun_preserve_gen_2:
-  fixes f:: "'a \<Rightarrow> 'b"
-    and R :: "'b \<Rightarrow> 'b \<Rightarrow> bool"
-    and x x' :: 'a
-  assumes prem: "(\<lambda>x x'. R (f x) (f x'))\<^sup>+\<^sup>+ x x'"
-  shows "R\<^sup>+\<^sup>+ (f x) (f x')"
-proof -
-  obtain P where P: "P = (\<lambda>x x'. (\<lambda>y y'. R y y')\<^sup>+\<^sup>+ (f x) (f x'))" by auto
-  obtain r where r: "r = (\<lambda>x x'. R (f x) (f x'))" by auto
-  from prem r have major: "r\<^sup>+\<^sup>+ x x'" by blast
-  from P r have cases_1: "\<And>y y'. r y y' \<Longrightarrow> P y y'" by simp
-  from P have cases_2: "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z" by auto
-  from tranclp_trans_induct major cases_1 cases_2 have inv_conc: "P x x'" by smt
-  with P show ?thesis by simp
-qed
+lemma q:
+  "    R\<^sup>+\<^sup>+ x y \<Longrightarrow>
+       (x \<in> range f \<Longrightarrow>
+       y \<in> range f \<Longrightarrow> R\<^sup>+\<^sup>+ (the_inv f x) (the_inv f y)) \<Longrightarrow>
+       R\<^sup>+\<^sup>+ y z \<Longrightarrow>
+       (y \<in> range f \<Longrightarrow>
+       z \<in> range f \<Longrightarrow> R\<^sup>+\<^sup>+ (the_inv f y) (the_inv f z)) \<Longrightarrow>
+       (*(\<And>x y. R x y \<Longrightarrow> R (f x) (f y)) \<Longrightarrow>
+       (\<And>x y. R (f x) (f y) \<Longrightarrow> R x y) \<Longrightarrow>
+       (\<And>x y. R x y \<Longrightarrow> R (f x) (f y)) \<Longrightarrow>*)
+       inj f \<Longrightarrow>
+       x \<in> range f \<Longrightarrow>
+(*y \<in> range f \<Longrightarrow> *)
+ (\<And>x y z. R\<^sup>+\<^sup>+ x y \<Longrightarrow> R y z \<Longrightarrow> x \<in> range f \<Longrightarrow> z \<in> range f \<Longrightarrow> y \<in> range f) \<Longrightarrow>
+       z \<in> range f \<Longrightarrow> R\<^sup>+\<^sup>+ (the_inv f x) (the_inv f z)"
+(*  by (meson tranclp_trans)*)
+  apply (auto simp: the_inv_f_f)
 
 lemma tranclp_fun_preserve_gen_1a:
   fixes f:: "'a \<Rightarrow> 'a"
     and R :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
     and x x'::'a
   assumes as_f: "functor_under_rel R f"
+          (*as_f: "fully_faithful_funct R R f"*)
       and prem: "R\<^sup>+\<^sup>+ (f x) (f x')"
   shows "R\<^sup>+\<^sup>+ x x'"
 proof -
@@ -89,28 +169,22 @@ proof -
     by (simp add: functor_under_rel_def)
   from prem have major: "R\<^sup>+\<^sup>+ (f x) (f x')" by blast
   from P as_f B g gr have cases_1: "\<And>y y'. R y y' \<Longrightarrow> P y y'"
+(*    by (simp add: P f_the_inv_into_f faithful_funct_def full_funct_def fully_faithful_funct_def tranclp.r_into_trancl)*)
     by (simp add: functor_under_rel_def f_the_inv_into_f tranclp.r_into_trancl)
   from P B as_R2 have cases_2:
     "\<And>x y z. R\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> R\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z"
+(*    apply (auto simp add: P B gr g faithful_funct_def full_funct_def fully_faithful_funct_def funct_def
+            rel_limited_under_def)*)
+(*    apply (rule impI)
+    apply (rule impI)
+    apply (erule conjE)
+    apply (erule conjE)
+    apply (erule conjE)
+  *)
     by (smt cases_1 rel_limited_under_def rtranclp_induct tranclp_into_rtranclp tranclp_rtranclp_tranclp)
   from tranclp_trans_induct major cases_1 cases_2 have inv_conc: "P (f x) (f x')" by smt
   with P B as_f g gr show ?thesis
     by (simp add: functor_under_rel_def the_inv_f_f)
-qed
-
-lemma tranclp_fun_preserve_gen_2a:
-  assumes as_R: "\<And>x x'. R x x' \<Longrightarrow> R (f x) (f x')"
-      and prem: "R\<^sup>+\<^sup>+ x x'"
-  shows "R\<^sup>+\<^sup>+ (f x) (f x')"
-proof -
-  obtain P where P: "P = (\<lambda>x x'. R\<^sup>+\<^sup>+ (f x) (f x'))" by auto
-  obtain r where r: "r = (\<lambda>x x'. R (f x) (f x'))" by auto
-  from prem r as_R have major: "r\<^sup>+\<^sup>+ x x'"
-    by (smt tranclp.r_into_trancl tranclp_trans tranclp_trans_induct)
-  from P r have cases_1: "\<And>y y'. r y y' \<Longrightarrow> P y y'" by simp
-  from P have cases_2: "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z" by auto
-  from tranclp_trans_induct major cases_1 cases_2 have inv_conc: "P x x'" by smt
-  with P show ?thesis by simp
 qed
 
 lemma tranclp_fun_preserve1b:
