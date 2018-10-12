@@ -50,44 +50,13 @@ inductive direct_simple_subtype :: "simple_type \<Rightarrow> simple_type \<Righ
 | "String \<sqsubset>\<^sub>s OclAny"
 | "ObjectType cls \<sqsubset>\<^sub>s OclAny"
 
-inductive_cases direct_simple_subtype_x_Boolean[elim!]: "\<tau> \<sqsubset>\<^sub>s Boolean"
-inductive_cases direct_simple_subtype_Boolean_x[elim!]: "Boolean \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases direct_simple_subtype_x_UnlimitedNatural[elim!]: "\<tau> \<sqsubset>\<^sub>s UnlimitedNatural"
-inductive_cases direct_simple_subtype_UnlimitedNatural_x[elim!]: "UnlimitedNatural \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases direct_simple_subtype_x_Integer[elim!]: "\<tau> \<sqsubset>\<^sub>s Integer"
-inductive_cases direct_simple_subtype_Integer_x[elim!]: "Integer \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases direct_simple_subtype_x_Real[elim!]: "\<tau> \<sqsubset>\<^sub>s Real"
-inductive_cases direct_simple_subtype_Real_x[elim!]: "Real \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases direct_simple_subtype_x_String[elim!]: "\<tau> \<sqsubset>\<^sub>s String"
-inductive_cases direct_simple_subtype_String_x[elim!]: "String \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases direct_simple_subtype_x_ObjectType[elim!]: "\<tau> \<sqsubset>\<^sub>s ObjectType cls"
-inductive_cases direct_simple_subtype_ObjectTypen_x[elim!]: "ObjectType cls \<sqsubset>\<^sub>s \<sigma>"
 inductive_cases direct_simple_subtype_x_OclAny[elim!]: "\<tau> \<sqsubset>\<^sub>s OclAny"
-inductive_cases direct_simple_subtype_OclAny_x[elim!]: "OclAny \<sqsubset>\<^sub>s \<sigma>"
+inductive_cases direct_simple_subtype_x_Real[elim!]: "\<tau> \<sqsubset>\<^sub>s Real"
+inductive_cases direct_simple_subtype_x_Integer[elim!]: "\<tau> \<sqsubset>\<^sub>s Integer"
 
 code_pred [show_modes] direct_simple_subtype .
 
-lemma wf_direct_simple_subtype:
-  "wfP direct_simple_subtype"
-  apply (auto simp add: wfP_def wf_def)
-(*
-  by (smt direct_simple_subtype.simps direct_simple_subtype_OclAny_x direct_simple_subtype_x_UnlimitedNatural simple_type.simps(25) simple_type.simps(7))
-*)
-
-  term "measure"
-  term less_than
-  term wf
-
-lemma q:
-  "wfP R \<Longrightarrow> acyclicP R"
-
-(*
-thm wf
-
-lemma wf_direct_simple_subtype:
-  "wfP direct_simple_subtype"
-  apply (simp add: wfP_def)
-*)
+thm tranclD2
 
 lemma acyclic_direct_simple_subtype:
   "acyclicP direct_simple_subtype"
@@ -103,6 +72,8 @@ lemma acyclic_direct_simple_subtype:
   using direct_simple_subtype.simps apply auto[1]
   using direct_simple_subtype.simps apply auto[1]
   done
+
+print_statement classical
 
 lemma direct_simple_subtype_antisym:
   "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow>
@@ -351,7 +322,7 @@ inductive direct_subtype :: "type \<Rightarrow> type \<Rightarrow> bool" ("_ \<s
 | "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow> Required \<tau> \<sqsubset> Required \<sigma>"
 | "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow> Optional \<tau> \<sqsubset> Optional \<sigma>"
 | "Required \<tau> \<sqsubset> Optional \<tau>"
-(*| "OclInvalid \<sqsubset> Set OclInvalid"
+| "OclInvalid \<sqsubset> Set OclInvalid"
 | "OclInvalid \<sqsubset> OrderedSet OclInvalid"
 | "OclInvalid \<sqsubset> Bag OclInvalid"
 | "OclInvalid \<sqsubset> Sequence OclInvalid"
@@ -365,76 +336,7 @@ inductive direct_subtype :: "type \<Rightarrow> type \<Rightarrow> bool" ("_ \<s
 | "Bag \<tau> \<sqsubset> Collection \<tau>"
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
 | "Optional OclAny \<sqsubset> SupType"
-| "Collection SupType \<sqsubset> SupType"*)
-
-inductive_cases direct_subtype_x_OclInvalid[elim]: "\<tau> \<sqsubset> OclInvalid"
-inductive_cases direct_subtype_OclInvalid_x[elim]: "OclInvalid \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_OclVoid[elim]: "\<tau> \<sqsubset> OclVoid"
-inductive_cases direct_subtype_OclVoid_x[elim]: "OclVoid \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_Required[elim]: "\<tau> \<sqsubset> \<sigma>[1]"
-inductive_cases direct_subtype_Required_x[elim]: "\<tau>[1] \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_Optional[elim]: "\<tau> \<sqsubset> \<sigma>[?]"
-inductive_cases direct_subtype_Optional_x[elim]: "\<tau>[?] \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_Collection[elim]: "\<tau> \<sqsubset> Collection \<sigma>"
-inductive_cases direct_subtype_Collection_x[elim]: "Collection \<tau> \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_Set[elim]: "\<tau> \<sqsubset> Set \<sigma>"
-inductive_cases direct_subtype_Set_x[elim]: "Set \<tau> \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_OrderedSet[elim]: "\<tau> \<sqsubset> OrderedSet \<sigma>"
-inductive_cases direct_subtype_OrderedSet_x[elim]: "OrderedSet \<tau> \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_Bag[elim]: "\<tau> \<sqsubset> Bag \<sigma>"
-inductive_cases direct_subtype_Bag_x[elim]: "Bag \<tau> \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_Sequence[elim]: "\<tau> \<sqsubset> Sequence \<sigma>"
-inductive_cases direct_subtype_Sequence_x[elim]: "Sequence \<tau> \<sqsubset> \<sigma>"
-inductive_cases direct_subtype_x_SupType[elim]: "\<tau> \<sqsubset> SupType"
-inductive_cases direct_subtype_SupType_x[elim]: "SupType \<sqsubset> \<sigma>"
-
-lemma q111:
-  "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow> \<tau> \<noteq> \<sigma>"
-  using less_simple_type_def tranclp.r_into_trancl by fastforce
-
-lemma q112:
-  "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow> \<sigma> \<sqsubset>\<^sub>s \<rho> \<Longrightarrow> \<tau> \<noteq> \<rho>"
-  by (cases \<rho>; auto)
-
-lemma q113:
-  "\<tau>[1] \<sqsubset> \<sigma>[1] \<Longrightarrow> \<sigma>[1] \<sqsubset> \<rho>[1] \<Longrightarrow> \<tau> \<noteq> \<rho>"
-  apply (erule direct_subtype.cases; simp)
-  apply (erule direct_subtype.cases; simp)
-  using q112 by auto
-
-lemma acyclic_direct_subtype:
-  "acyclicP direct_subtype"
-  apply (rule acyclicI)
-  apply (auto)
-  apply (trancl)
-(*
-  apply (erule tranclE)
-  using direct_simple_subtype.simps direct_subtype.simps apply auto[1]
-  apply (erule tranclE)
-  using direct_simple_subtype.simps direct_subtype.simps simple_type.distinct(7) simple_type.distinct(9) snd_conv apply fastforce
-  apply (erule tranclE)
-  using direct_simple_subtype.simps direct_subtype.simps simple_type.distinct(7) simple_type.distinct(9) snd_conv apply fastforce
-  apply (erule tranclE)
-  using direct_simple_subtype.simps direct_subtype.simps simple_type.distinct(7) simple_type.distinct(9) snd_conv apply fastforce
-  apply (erule tranclE)
-  using direct_simple_subtype.simps direct_subtype.simps simple_type.distinct(7) simple_type.distinct(9) snd_conv apply fastforce
-  apply (erule tranclE)
-  using direct_simple_subtype.simps direct_subtype.simps simple_type.distinct(7) simple_type.distinct(9) snd_conv apply fastforce
-  apply (erule tranclE)
-  apply (auto)
-*)
-(*
-  using direct_subtype.cases apply auto[1]
-  apply (erule tranclE)
-  apply (metis CollectD case_prodE direct_subtype.cases prod.simps(1) type.distinct(21) type.distinct(23) type.simps(27) type.simps(45))
-  by (metis Product_Type.Collect_case_prodD direct_subtype.cases fst_conv snd_conv tranclD type.distinct(21) type.distinct(23) type.simps(27) type.simps(45))
-*)
-
-  thm direct_simple_subtype.simps direct_subtype.simps simple_type.distinct(7) simple_type.distinct(9) snd_conv
-
-
-
-
+| "Collection SupType \<sqsubset> SupType"
 
 inductive subtype :: "type \<Rightarrow> type \<Rightarrow> bool" ("_ \<lless> _" [65, 65] 65) where
   "\<sigma> \<noteq> OclInvalid \<Longrightarrow> OclInvalid \<lless> \<sigma>"
@@ -495,6 +397,29 @@ value "Collection (Collection SupType) \<sqsubset> Collection SupType"
 value "Collection (Collection (Collection SupType)) \<sqsubset> Collection (Collection SupType)"
 value "Collection (Collection (Collection (Collection SupType))) \<sqsubset> Collection (Collection (Collection SupType))"
 value "Collection (Collection (Collection SupType)) \<sqsubset> Collection SupType"
+
+inductive_cases direct_subtype_x_OclInvalid[elim]: "\<tau> \<sqsubset> OclInvalid"
+inductive_cases direct_subtype_OclInvalid_x[elim]: "OclInvalid \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_OclVoid[elim]: "\<tau> \<sqsubset> OclVoid"
+inductive_cases direct_subtype_OclVoid_x[elim]: "OclVoid \<sqsubset> \<sigma>"
+print_theorems
+inductive_cases direct_subtype_x_Required[elim]: "\<tau> \<sqsubset> \<sigma>[1]"
+print_theorems
+inductive_cases direct_subtype_Required_x[elim]: "\<tau>[1] \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_Optional[elim]: "\<tau> \<sqsubset> \<sigma>[?]"
+inductive_cases direct_subtype_Optional_x[elim]: "\<tau>[?] \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_Collection[elim]: "\<tau> \<sqsubset> Collection \<sigma>"
+inductive_cases direct_subtype_Collection_x[elim]: "Collection \<tau> \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_Set[elim]: "\<tau> \<sqsubset> Set \<sigma>"
+inductive_cases direct_subtype_Set_x[elim]: "Set \<tau> \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_OrderedSet[elim]: "\<tau> \<sqsubset> OrderedSet \<sigma>"
+inductive_cases direct_subtype_OrderedSet_x[elim]: "OrderedSet \<tau> \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_Bag[elim]: "\<tau> \<sqsubset> Bag \<sigma>"
+inductive_cases direct_subtype_Bag_x[elim]: "Bag \<tau> \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_Sequence[elim]: "\<tau> \<sqsubset> Sequence \<sigma>"
+inductive_cases direct_subtype_Sequence_x[elim]: "Sequence \<tau> \<sqsubset> \<sigma>"
+inductive_cases direct_subtype_x_SupType[elim]: "\<tau> \<sqsubset> SupType"
+inductive_cases direct_subtype_SupType_x[elim]: "SupType \<sqsubset> \<sigma>"
 
 lemma direct_subtype_antisym:
   "\<tau> \<sqsubset> \<sigma> \<Longrightarrow>
@@ -613,9 +538,10 @@ lemma q15:
   apply (auto simp add: rel_limited_under_def)
 *)
 lemma q12:
-  "direct_subtype\<^sup>+\<^sup>+ \<tau>[1] \<sigma>[1] \<Longrightarrow>
+  "rel_limited_under direct_subtype\<^sup>+\<^sup>+ (range Required) \<Longrightarrow>
+   direct_subtype\<^sup>+\<^sup>+ \<tau>[1] \<sigma>[1] \<Longrightarrow>
    (\<lambda>\<tau> \<sigma>. direct_subtype \<tau>[1] \<sigma>[1])\<^sup>+\<^sup>+ \<tau> \<sigma>"
-  apply (simp add: q14 inj_def tranclp_fun_preserve_gen_1)
+  apply (simp add: inj_def tranclp_fun_preserve_gen_1)
   done
 
 lemma q13:
