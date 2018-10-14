@@ -67,27 +67,66 @@ inductive_cases direct_simple_subtype_OclAny_x[elim!]: "OclAny \<sqsubset>\<^sub
 
 code_pred [show_modes] direct_simple_subtype .
 
-lemma wf_direct_simple_subtype:
-  "wfP direct_simple_subtype"
-  apply (auto simp add: wfP_def wf_def)
-(*
-  by (smt direct_simple_subtype.simps direct_simple_subtype_OclAny_x direct_simple_subtype_x_UnlimitedNatural simple_type.simps(25) simple_type.simps(7))
-*)
+lemma simple_subtype_OclAny_x [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ OclAny \<sigma> \<Longrightarrow> False"
+  apply (drule tranclpD)
+  by (simp add: direct_simple_subtype.simps)
 
-  term "measure"
-  term less_than
-  term wf
+lemma simple_subtype_Boolean_x [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ Boolean \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (drule tranclpD)
+  using converse_rtranclpE by fastforce
 
-lemma q:
-  "wfP R \<Longrightarrow> acyclicP R"
+lemma simple_subtype_Real_x [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ Real \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (drule tranclpD)
+  using converse_rtranclpE by fastforce
 
-(*
-thm wf
+lemma simple_subtype_Integer_x [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ Integer \<sigma> \<Longrightarrow> (\<sigma> = Real \<Longrightarrow> P) \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  using converse_tranclpE by fastforce
 
-lemma wf_direct_simple_subtype:
-  "wfP direct_simple_subtype"
-  apply (simp add: wfP_def)
-*)
+lemma simple_subtype_UnlimitedNatural_x [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ UnlimitedNatural \<sigma> \<Longrightarrow> (\<sigma> = Integer \<Longrightarrow> P) \<Longrightarrow> (\<sigma> = Real \<Longrightarrow> P) \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  using converse_tranclpE by fastforce
+
+lemma simple_subtype_String_x [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ String \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (drule tranclpD)
+  using converse_rtranclpE by fastforce
+
+lemma simple_subtype_ObjectType_x [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ (ObjectType cls) \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (drule tranclpD)
+  using converse_rtranclpE by fastforce
+
+lemma simple_subtype_x_Boolean [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ \<tau> Boolean \<Longrightarrow> False"
+  using tranclp.cases by fastforce
+
+lemma simple_subtype_x_UnlimitedNatural [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ \<tau> UnlimitedNatural \<Longrightarrow> False"
+  using tranclp.cases by fastforce
+
+lemma simple_subtype_x_Integer [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ \<tau> Integer \<Longrightarrow> (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (drule tranclpD)
+  apply (unfold Nitpick.rtranclp_unfold)
+  using direct_simple_subtype.cases simple_subtype_OclAny_x by blast
+
+lemma simple_subtype_x_Real [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ \<tau> Real \<Longrightarrow> (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow> (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (drule tranclpD)
+  apply (unfold Nitpick.rtranclp_unfold)
+  using tranclp.cases by fastforce
+
+lemma simple_subtype_x_String [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ \<tau> String \<Longrightarrow> False"
+  using tranclp.cases by fastforce
+
+lemma simple_subtype_x_ObjectType [elim!]:
+  "direct_simple_subtype\<^sup>+\<^sup>+ \<tau> (ObjectType cls) \<Longrightarrow> False"
+  using tranclp.cases by fastforce
 
 lemma acyclic_direct_simple_subtype:
   "acyclicP direct_simple_subtype"
@@ -196,7 +235,6 @@ instance
 
 end
 
-
 fun simple_subtype_fun :: "simple_type \<Rightarrow> simple_type \<Rightarrow> bool" where
   "simple_subtype_fun OclAny _ = False"
 | "simple_subtype_fun Boolean OclAny = True"
@@ -215,70 +253,12 @@ fun simple_subtype_fun :: "simple_type \<Rightarrow> simple_type \<Rightarrow> b
 | "simple_subtype_fun (ObjectType _) OclAny = True"
 | "simple_subtype_fun (ObjectType _) _ = False"
 
-lemma direct_simple_subtype_OclAny_elim [elim!]:
-  "direct_simple_subtype\<^sup>+\<^sup>+ OclAny \<sigma> \<Longrightarrow> False"
-  apply (drule tranclpD)
-  by (simp add: direct_simple_subtype.simps)
-
-lemma direct_simple_subtype_Boolean_intro [intro!]:
-  "\<sigma> = OclAny \<Longrightarrow> direct_simple_subtype\<^sup>+\<^sup>+ Boolean \<sigma>"
-  using direct_simple_subtype.intros(1) by auto
-
-lemma direct_simple_subtype_Boolean_elim [elim!]:
-  "direct_simple_subtype\<^sup>+\<^sup>+ Boolean \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (drule tranclpD)
-  by (metis Nitpick.rtranclp_unfold direct_simple_subtype.intros(1) direct_simple_subtype_OclAny_elim direct_simple_subtype_det)
-
-lemma direct_simple_subtype_Real_intro [intro!]:
-  "\<sigma> = OclAny \<Longrightarrow> direct_simple_subtype\<^sup>+\<^sup>+ Real \<sigma>"
-  using direct_simple_subtype.intros(4) by auto
-
-lemma direct_simple_subtype_Real_elim [elim!]:
-  "direct_simple_subtype\<^sup>+\<^sup>+ Real \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (drule tranclpD)
-  by (metis Nitpick.rtranclp_unfold direct_simple_subtype.intros(4) direct_simple_subtype_OclAny_elim direct_simple_subtype_det)
-
-lemma direct_simple_subtype_Integer_intro [intro!]:
-  "(\<sigma> = Real \<or> \<sigma> = OclAny) \<Longrightarrow> direct_simple_subtype\<^sup>+\<^sup>+ Integer \<sigma>"
-  by (metis direct_simple_subtype.intros(3) direct_simple_subtype.intros(4) tranclp.simps)
-
-lemma direct_simple_subtype_Integer_elim [elim!]:
-  "direct_simple_subtype\<^sup>+\<^sup>+ Integer \<sigma> \<Longrightarrow> (\<sigma> = Real \<Longrightarrow> P) \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (drule tranclpD)
-  by (metis Nitpick.rtranclp_unfold direct_simple_subtype.intros(3) direct_simple_subtype_Real_elim direct_simple_subtype_det)
-
-lemma direct_simple_subtype_UnlimitedNatural_intro [intro!]:
-  "(\<sigma> = Integer \<or> \<sigma> = Real \<or> \<sigma> = OclAny) \<Longrightarrow> direct_simple_subtype\<^sup>+\<^sup>+ UnlimitedNatural \<sigma>"
-  by (meson direct_simple_subtype.intros(2) direct_simple_subtype_Integer_intro tranclp.simps tranclp_into_tranclp2)
-
-lemma direct_simple_subtype_UnlimitedNatural_elim [elim!]:
-  "direct_simple_subtype\<^sup>+\<^sup>+ UnlimitedNatural \<sigma> \<Longrightarrow> (\<sigma> = Integer \<Longrightarrow> P) \<Longrightarrow> (\<sigma> = Real \<Longrightarrow> P) \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (drule tranclpD)
-  by (metis direct_simple_subtype.intros(2) direct_simple_subtype_Integer_elim direct_simple_subtype_det le_neq_trans less_eq_simple_type_def less_simple_type_def)
-
-lemma direct_simple_subtype_String_intro [intro!]:
-  "\<sigma> = OclAny \<Longrightarrow> direct_simple_subtype\<^sup>+\<^sup>+ String \<sigma>"
-  using direct_simple_subtype.intros(5) by auto
-
-lemma direct_simple_subtype_String_elim [elim!]:
-  "direct_simple_subtype\<^sup>+\<^sup>+ String \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (drule tranclpD)
-  by (metis Nitpick.rtranclp_unfold direct_simple_subtype.intros(5) direct_simple_subtype_OclAny_elim direct_simple_subtype_det)
-
-lemma direct_simple_subtype_ObjectType_intro [intro!]:
-  "\<sigma> = OclAny \<Longrightarrow> direct_simple_subtype\<^sup>+\<^sup>+ (ObjectType cls) \<sigma>"
-  using direct_simple_subtype.intros(6) by auto
-
-lemma direct_simple_subtype_ObjectType_elim [elim!]:
-  "direct_simple_subtype\<^sup>+\<^sup>+ (ObjectType cls) \<sigma> \<Longrightarrow> (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (drule tranclpD)
-  by (metis Nitpick.rtranclp_unfold direct_simple_subtype.intros(6) direct_simple_subtype_OclAny_elim direct_simple_subtype_det)
-
 lemma less_simple_type_code [code_abbrev]:
   "simple_subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> < \<sigma>"
   apply (simp add: less_simple_type_def)
   apply (rule iffI)
-  apply (erule simple_subtype_fun.elims; auto)
+  apply (erule simple_subtype_fun.elims)
+  using direct_simple_subtype.intros apply auto
   apply (cases \<tau>; auto)
   done
 
@@ -301,16 +281,6 @@ value "UnlimitedNatural < Real"
 value "UnlimitedNatural \<le> Real"
 value "Real < Real"
 value "Real \<le> Real"
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -387,6 +357,30 @@ inductive_cases direct_subtype_x_Sequence[elim]: "\<tau> \<sqsubset> Sequence \<
 inductive_cases direct_subtype_Sequence_x[elim]: "Sequence \<tau> \<sqsubset> \<sigma>"
 inductive_cases direct_subtype_x_SupType[elim]: "\<tau> \<sqsubset> SupType"
 inductive_cases direct_subtype_SupType_x[elim]: "SupType \<sqsubset> \<sigma>"
+
+lemma subtype_x_Required [elim]:
+  "direct_subtype\<^sup>+\<^sup>+ \<tau> \<sigma>[1] \<Longrightarrow> (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow> (\<exists>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> P) \<Longrightarrow> P"
+
+
+
+lemma Required_functor:
+  "functor_under_rel direct_simple_subtype direct_subtype Required"
+  apply (auto simp add: functor_under_rel_def rel_limited_under_def)
+  apply (metis (no_types, lifting) direct_subtype.cases direct_subtype_x_OclInvalid rangeI tranclp.cases type.simps(57))
+  apply (meson injI type.inject(1))
+  done
+
+lemma Optional_functor:
+  "functor_under_rel direct_simple_subtype direct_subtype Optional"
+  apply (auto simp add: functor_under_rel_def rel_limited_under_def)
+  apply (erule tranclp.cases; auto)
+  apply (erule direct_subtype.cases; auto)
+  apply (metis direct_subtype_x_OclInvalid direct_subtype_x_OclVoid tranclp.cases)
+  apply blast
+
+  apply (meson injI type.inject(1))
+  done
+
 
 lemma q111:
   "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow> \<tau> \<noteq> \<sigma>"

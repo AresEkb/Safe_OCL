@@ -6,14 +6,45 @@ begin
 
 datatype type = Bool | Integer | Real | Any | Set type | Seq type | Col type
 
+term "r\<inverse>\<inverse>"
+(*
+Это единичные морфизмы:
+trancl_refl: "(a, a) \<in> r\<^sup>*"
+Это композиция:
+rtrancl_into_rtrancl: "(a, b) \<in> r\<^sup>* \<Longrightarrow> (b, c) \<in> r \<Longrightarrow> (a, c) \<in> r\<^sup>*"
+Это из определения транзитивного замыкания
+
+А тут просто операция:
+Или это композиция:
+inductive_set relcomp  :: "('a \<times> 'b) set \<Rightarrow> ('b \<times> 'c) set \<Rightarrow> ('a \<times> 'c) set"  (infixr "O" 75)
+  for r :: "('a \<times> 'b) set" and s :: "('b \<times> 'c) set"
+  where relcompI [intro]: "(a, b) \<in> r \<Longrightarrow> (b, c) \<in> s \<Longrightarrow> (a, c) \<in> r O s"
+
+notation relcompp (infixr "OO" 75)
+
+Это транзитивность композиции:
+lemma rtranclp_trans:
+  assumes "r\<^sup>*\<^sup>* x y"
+    and "r\<^sup>*\<^sup>* y z"
+  shows "r\<^sup>*\<^sup>* x z"
+
+
+Это может быть зачем-то полезно:
+lemma mono_rtranclp[mono]: "(\<And>a b. x a b \<longrightarrow> y a b) \<Longrightarrow> x\<^sup>*\<^sup>* a b \<longrightarrow> y\<^sup>*\<^sup>* a b"
+
+Это обращает направление морфизмов: r\<inverse>\<inverse>
+Может быть полезно для обратной категории или контравариантных функторов
+*)
+
+(* Это quiver. А транзитивное замыкание будет свободной категорией на нем *)
 inductive subtype ("_ \<sqsubset> _" [65, 65] 65) where
   "Bool \<sqsubset> Any"
 | "Integer \<sqsubset> Real"
 | "Real \<sqsubset> Any"
-| "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Set \<tau> \<sqsubset> Set \<sigma>"
+| "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Set \<tau> \<sqsubset> Set \<sigma>" (* Функтор *)
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Seq \<tau> \<sqsubset> Seq \<sigma>"
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Col \<tau> \<sqsubset> Col \<sigma>"
-| "Set \<tau> \<sqsubset> Col \<tau>"
+| "Set \<tau> \<sqsubset> Col \<tau>" (* Естественное преобразование *)
 | "Seq \<tau> \<sqsubset> Col \<tau>"
 (*| "Void \<sqsubset> Bool"
 | "Void \<sqsubset> Integer"
@@ -51,6 +82,14 @@ lemma rtrancl_subtype_Set_x [elim!]:
   "subtype\<^sup>*\<^sup>* (Set x) y \<Longrightarrow> (\<exists>z. y = Set z \<Longrightarrow> P) \<Longrightarrow> (\<exists>z. y = Col z \<Longrightarrow> P) \<Longrightarrow> P"
   by (induct rule: rtranclp_induct; blast)
 
+lemma trancl_subtype_Seq_x [elim!]:
+  "subtype\<^sup>+\<^sup>+ (Seq x) y \<Longrightarrow> (\<exists>z. y = Seq z \<Longrightarrow> P) \<Longrightarrow> (\<exists>z. y = Col z \<Longrightarrow> P) \<Longrightarrow> P"
+  by (induct rule: tranclp_induct; blast)
+
+lemma rtrancl_subtype_Seq_x [elim!]:
+  "subtype\<^sup>*\<^sup>* (Seq x) y \<Longrightarrow> (\<exists>z. y = Seq z \<Longrightarrow> P) \<Longrightarrow> (\<exists>z. y = Col z \<Longrightarrow> P) \<Longrightarrow> P"
+  by (induct rule: rtranclp_induct; blast)
+(*
 lemma q:
   "subtype\<^sup>*\<^sup>* (Col x) y \<Longrightarrow> subtype\<^sup>*\<^sup>* y (Col z) \<Longrightarrow> y \<in> range Col"
   by blast
@@ -93,268 +132,63 @@ lemma q:
   apply (rule conjI)
   apply (simp add: Nitpick.rtranclp_unfold subtype.intros(6) tranclp_fun_preserve_gen_2a)
   by (meson injI type.inject(3))
-
+*)
 
 lemma Set_functor:
-  "functor_under_rel subtype Set"
+  "functor_under_rel subtype subtype Set"
   apply (auto simp add: functor_under_rel_def rel_limited_under_def)
-  by (meson injI type.inject(1))
+  apply (meson injI type.inject(1))
+  done
 
 lemma Seq_functor:
-  "functor_under_rel subtype Seq"
+  "functor_under_rel subtype subtype Seq"
   apply (auto simp add: functor_under_rel_def rel_limited_under_def)
-  by (meson injI type.inject(2))
+  apply (meson injI type.inject(2))
+  done
 
 lemma Col_functor:
-  "functor_under_rel subtype Col"
+  "functor_under_rel subtype subtype Col"
   apply (auto simp add: functor_under_rel_def rel_limited_under_def)
-  by (meson injI type.inject(3))
+  apply (meson injI type.inject(3))
+  done
 
 lemma Set_Col_natural:
-  "natural_under_rel subtype Set Col"
+  "natural_under_rel subtype subtype Set Col"
   by (auto simp add: natural_under_rel_def Set_functor Col_functor subtype.intros(7))
 
+lemma Seq_Col_natural:
+  "natural_under_rel subtype subtype Seq Col"
+  by (auto simp add: natural_under_rel_def Seq_functor Col_functor subtype.intros(8))
 
-lemma q83:
+
+lemma trancl_subtype_Set_Set_intro:
+  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Set y)"
+  by (metis fun_preserve_morphism_composition' subtype.intros(4))
+
+lemma trancl_subtype_Seq_Seq_intro:
+  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Seq x) (Seq y)"
+  by (metis fun_preserve_morphism_composition' subtype.intros(5))
+
+lemma trancl_subtype_Col_Col_intro:
+  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Col x) (Col y)"
+  by (metis fun_preserve_morphism_composition' subtype.intros(6))
+
+lemma trancl_subtype_Set_Col_intro:
+  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Col y)"
+  by (meson subtype.intros(7) trancl_subtype_Set_Set_intro tranclp.trancl_into_trancl)
+
+lemma trancl_subtype_Seq_Col_intro:
+  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Seq x) (Col y)"
+  by (meson subtype.intros(8) trancl_subtype_Seq_Seq_intro tranclp.trancl_into_trancl)
+
+lemma trancl_subtype_Set_Col [elim!]:
   "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> subtype\<^sup>+\<^sup>+ x y"
   by (meson Set_Col_natural tranclp_fun_preserve1b)
 
-lemma q84:
-  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Set y)"
-  by (simp add: subtype.intros(4) tranclp_fun_preserve_gen_2a)
+lemma trancl_subtype_Seq_Col [elim!]:
+  "subtype\<^sup>+\<^sup>+ (Seq x) (Col y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> subtype\<^sup>+\<^sup>+ x y"
+  by (meson Seq_Col_natural tranclp_fun_preserve1b)
 
-lemma q84:
-  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Col y)"
-
-lemma q:
-  "(\<And>x y. subtype\<^sup>*\<^sup>* x y \<Longrightarrow> subtype\<^sup>*\<^sup>* (f x) (f y)) \<Longrightarrow>
-   (\<And>x y. subtype\<^sup>*\<^sup>* (f x) (f y) \<Longrightarrow> subtype\<^sup>*\<^sup>* x y) \<Longrightarrow>
-   inj f \<Longrightarrow>
-   subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype y z \<Longrightarrow> x \<in> range f \<Longrightarrow> z \<in> range f \<Longrightarrow> y \<in> range f"
-
-
-lemma q1:
-  "subtype\<^sup>+\<^sup>+ (Col x) (Col y) \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Col y)"
-  apply (rule_tac ?b="Col x" in tranclp_into_tranclp2)
-  apply (simp add: subtype.intros(7))
-  apply (simp)
-  done
-
-lemma q2:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Set y) \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Col y)"
-  apply (rule_tac ?b="Set y" in tranclp.trancl_into_trancl)
-  apply (simp)
-  apply (simp add: subtype.intros(7))
-  done
-
-lemma q3:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Col x) (Col y)"
-  apply (erule converse_tranclpE)
-  apply blast
-
-lemma q4:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Set y)"
-
-
-lemma q4:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> subtype\<^sup>+\<^sup>+ x y"
-
-lemma q:
-  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Col y)"
-  apply (rule_tac ?b="Col x" in tranclp_into_tranclp2)
-  apply (simp add: subtype.intros(7))
-  by (simp add: subtype.intros(6) tranclp_fun_preserve_gen_2a)
-
-
-
-lemma Set_not_less_Seq:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Seq y) \<Longrightarrow> False"
-
-lemma subtype_implies_trancl_subtype:
-  assumes as: "subtype\<^sup>+\<^sup>+ (Set x) (Seq y) \<Longrightarrow>
-               (\<lambda>x y. subtype (Set x) (Seq y))\<^sup>+\<^sup>+ x y"
-    shows "(subtype (Set x) (Seq y) \<Longrightarrow> P) \<Longrightarrow>
-           subtype\<^sup>+\<^sup>+ (Set x) (Seq y) \<Longrightarrow> P"
-  using assms tranclpD by fastforce
-
-lemma q11:
-  "subtype (Set x) y \<Longrightarrow> \<exists>z. y = Set z \<or> y = Col z"
-  by auto
-
-lemma q12:
-  "subtype (Col x) y \<Longrightarrow> \<exists>z. y = Col z"
-  by auto
-
-lemma q13:
-  "subtype x (Seq y) \<Longrightarrow> \<exists>z. x = Seq z"
-  by auto
-
-lemma q21:
-  "subtype\<^sup>+\<^sup>+ (Set x) y \<Longrightarrow> (\<lambda>x y. subtype (Set x) y)\<^sup>+\<^sup>+ x y"
-
-lemma q21:
-  "subtype\<^sup>+\<^sup>+ (Set x) y \<Longrightarrow> \<exists>z. y = Set z \<or> y = Col z"
-
-lemma q:
-  "subtype\<^sup>+\<^sup>+ (Set xa) y \<Longrightarrow>
-   subtype\<^sup>+\<^sup>+ y (Seq xb) \<Longrightarrow>
-   rel_limited_under subtype (range Set) \<Longrightarrow>
-   rel_limited_under subtype (range Seq) \<Longrightarrow>
-   y \<notin> range Set \<Longrightarrow>
-   y \<notin> range Seq \<Longrightarrow>
-   (\<lambda>x x'. Set x \<sqsubset> Seq x')\<^sup>+\<^sup>+ (the_inv Set (Set xa)) (the_inv Seq (Seq xb))"
-
-
-lemma q:
-  "subtype\<^sup>+\<^sup>+ x y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Col y)"
-  apply (rule_tac ?b="Col x" in tranclp_into_tranclp2)
-  apply (simp add: subtype.intros(7))
-  by (simp add: subtype.intros(6) tranclp_fun_preserve_gen_2a)
-
-lemma q21:
-  "Set x \<sqsubset> Col y \<Longrightarrow> x = y"
-  by blast
-
-lemma q22:
-  "Set x \<sqsubset> y \<Longrightarrow> (\<And>z. y = Set z \<Longrightarrow> x \<sqsubset> z \<Longrightarrow> P) \<Longrightarrow> (y = Col x \<Longrightarrow> P) \<Longrightarrow> P"
-
-lemma q23:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> (subtype (Set x) (Col x) \<Longrightarrow> P) \<Longrightarrow> P"
-  by (simp add: subtype.intros(7))
-
-lemma q24:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> subtype (Set x) (Col x)"
-  by (simp add: subtype.intros(7))
-
-lemma q2:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> subtype\<^sup>+\<^sup>+ (Set x) (Set y)"
-  apply (erule tranclp.cases)
-  apply auto[1]
-  apply auto[1]
-  apply (erule subtype_x_Col)
-  
-  apply (rule_tac ?b="Set y" in tranclp_into_tranclp2)
-  apply (frule q24)
-  apply (erule converse_tranclpE)
-  apply (simp add: q21)
-  apply (erule subtype_Set_x; auto)
-(*
-  apply (erule tranclp.cases)
-  apply auto[1]
-*)
-lemma q2:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> (\<lambda>x y. subtype (Col x) (Col y))\<^sup>+\<^sup>+ x y"
-
-lemma q2:
-  "subtype\<^sup>+\<^sup>+ (Set x) (Col y) \<Longrightarrow> subtype (Set x) (Col x) \<and> (\<lambda>x y. subtype (Col x) (Col y))\<^sup>+\<^sup>+ x y"
-  apply (erule converse_tranclpE)
-
-lemma q:
-  "subtype\<^sup>+\<^sup>+ (Set xa) y \<Longrightarrow>
-   subtype\<^sup>+\<^sup>+ y (Col xb) \<Longrightarrow>
-   rel_limited_under subtype (range Set) \<Longrightarrow>
-   rel_limited_under subtype (range Col) \<Longrightarrow>
-   y \<notin> range Set \<Longrightarrow>
-   y \<notin> range Col \<Longrightarrow>
-   (\<lambda>x x'. Set x \<sqsubset> Col x')\<^sup>+\<^sup>+ xa xb"
-
-  thm tranclp_fun_preserve_gen_1
-lemma q:
-       "subtype\<^sup>+\<^sup>+ (Set xa) y \<Longrightarrow>
-       subtype\<^sup>+\<^sup>+ y (Set xb) \<Longrightarrow>
-   inj Set \<Longrightarrow>
-       y \<notin> range Set \<Longrightarrow>
-   rel_limited_under subtype (range Set) \<Longrightarrow>
-       (\<lambda>x x'. Set x \<sqsubset> Set x')\<^sup>+\<^sup>+
-        (the_inv Set (Set xa))
-        (the_inv Set (Set xb))
-"
-  apply (unfold the_inv_f_f)
-  apply (metis (mono_tags) tranclp_fun_preserve_gen_1 tranclp_trans)
-(*
-  apply (simp add: tranclp_fun_preserve_gen_1)
-*)
-
-(*
-       subtype\<^sup>+\<^sup>+ (Set xa) y \<Longrightarrow>
-       subtype\<^sup>+\<^sup>+ y (Set xb) \<Longrightarrow>
-       P =
-       (\<lambda>y y'.
-           y \<in> range Set \<longrightarrow>
-           y' \<in> range Set \<longrightarrow>
-           (\<lambda>x x'. Set x \<sqsubset> Set x')\<^sup>+\<^sup>+
-            (the_inv Set y) (the_inv Set y')) \<Longrightarrow>
-       FR = range Set \<Longrightarrow>
-       GR = range Col \<Longrightarrow>
-       rel_limited_under subtype (range Set) \<Longrightarrow>
-       rel_limited_under subtype (range Col) \<Longrightarrow>
-       R = subtype \<Longrightarrow>
-       f = Set \<Longrightarrow>
-       g = Col \<Longrightarrow>
-       f'' =
-       restrict (the_inv Set) (range Set) \<Longrightarrow>
-       f' = the_inv Set \<Longrightarrow>
-       g'' =
-       restrict (the_inv Col) (range Col) \<Longrightarrow>
-       g' = the_inv Col \<Longrightarrow>
-       inj Set \<Longrightarrow>
-       y \<notin> range Set \<Longrightarrow>
-       (\<lambda>x x'. Set x \<sqsubset> Set x')\<^sup>+\<^sup>+
-        (the_inv Set (Set xa))
-        (the_inv Set (Set xb))
-*)
-
-lemma q:
-  "\<And>x y z. subtype\<^sup>+\<^sup>+ (Set x) y \<Longrightarrow> P x y' \<Longrightarrow> subtype\<^sup>+\<^sup>+ y (Col z) \<Longrightarrow> P y' z \<Longrightarrow> P x z"
-
-lemma z11:
-  "x \<in> range Set \<Longrightarrow> \<exists>z. x = Set z
-   the_inv Set x = x"
-  by auto
-
-lemma z11:
-  "    y \<sqsubset> y' \<Longrightarrow>
-       inj Set \<Longrightarrow>
-       inj Col \<Longrightarrow>
-       bij_betw Set UNIV (range Set) \<Longrightarrow>
-       bij_betw Col UNIV (range Col) \<Longrightarrow>
-       (\<And>x. Set x \<sqsubset> Col x) \<Longrightarrow>
-       (y \<in> range Set \<and> y' \<in> range Set \<longrightarrow>
-        subtype\<^sup>+\<^sup>+ (the_inv Set y) (the_inv Set y')) (*\<and>
-       (y \<in> range Set \<and> y' \<in> range Col \<longrightarrow>
-        subtype\<^sup>+\<^sup>+ (the_inv Set y) (the_inv Col y')) \<and>
-       (y \<in> range Col \<and> y' \<in> range Set \<longrightarrow>
-        subtype\<^sup>+\<^sup>+ (the_inv Col y) (the_inv Set y')) \<and>
-       (y \<in> range Col \<and> y' \<in> range Col \<longrightarrow>
-        subtype\<^sup>+\<^sup>+ (the_inv Col y) (the_inv Col y'))*)"
-  apply (auto)
-  by (simp add: the_inv_f_f)
-(*
-lemma z12:
-  "    y \<sqsubset> y' \<Longrightarrow>
-       inj Set \<Longrightarrow>
-       inj Col \<Longrightarrow>
-       bij_betw Set UNIV (range Set) \<Longrightarrow>
-       bij_betw Col UNIV (range Col) \<Longrightarrow>
-       (\<And>x. Set x \<sqsubset> Col x) \<Longrightarrow>
-       (y \<in> range Set \<and> y' \<in> range Set \<longrightarrow> subtype\<^sup>+\<^sup>+ (the_inv Set y) (the_inv Set y')) \<and>
-       (y \<in> range Set \<and> y' \<in> range Col \<longrightarrow> subtype\<^sup>+\<^sup>+ (the_inv Set y) (the_inv Col y')) \<and>
-       (y \<in> range Col \<longrightarrow> y' \<notin> range Set) \<and>
-       (y \<in> range Col \<and> y' \<in> range Col \<longrightarrow> subtype\<^sup>+\<^sup>+ (the_inv Col y) (the_inv Col y'))"
-  apply (auto)
-  apply (simp add: the_inv_f_f)
-  apply (simp add: the_inv_f_f)
-  by (simp add: the_inv_f_f)
-*)
-
-
-
-lemma q81:
-  "subtype (Seq x) (Set y) \<Longrightarrow> False"
-  using subtype.cases by blast
-
-lemma q82:
-  "subtype\<^sup>+\<^sup>+ (Seq x) (Set y) \<Longrightarrow> False"
 
 datatype t = A | B | C t | D t | E t
 
