@@ -113,14 +113,6 @@ definition natural_under_rel :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Righ
     (\<forall>x y. \<not> R\<^sup>+\<^sup>+ (g x) (f y)) \<and>
     (\<forall>x y. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> (\<exists>z. y = f z \<or> y = g z))"
 *)
-definition natural_under_rel :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> ('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
-  "natural_under_rel R S f g \<equiv>
-    functor_under_rel R S f \<and>
-    functor_under_rel R S g \<and>
-    (\<forall>x. S (f x) (g x)) \<and>
-    (\<forall>x y. S (f x) (g y) \<longrightarrow> x \<noteq> y \<longrightarrow> R x y) \<and>
-    (\<forall>x y. \<not> S\<^sup>+\<^sup>+ (g x) (f y)) \<and>
-    (\<forall>x y. S\<^sup>+\<^sup>+ (f x) y \<longrightarrow> (\<exists>z. y = f z \<or> y = g z))"
 
 lemma fun_preserve_morphism_composition':
   fixes f :: "'a \<Rightarrow> 'b"
@@ -242,6 +234,15 @@ proof -
     by (simp add: functor_under_rel_def the_inv_f_f)
 qed
 
+definition natural_under_rel :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> ('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
+  "natural_under_rel R S f g \<equiv>
+    functor_under_rel R S f \<and>
+    functor_under_rel R S g \<and>
+    (\<forall>x. S (f x) (g x)) \<and>
+    (\<forall>x y. S (f x) (g y) \<longrightarrow> x \<noteq> y \<longrightarrow> R x y) \<and>
+    (\<forall>x y. \<not> S\<^sup>+\<^sup>+ (g x) (f y)) \<and>
+    (\<forall>x y z. S\<^sup>+\<^sup>+ (f x) y \<longrightarrow> S\<^sup>+\<^sup>+ y (g z) \<longrightarrow> (\<exists>u. y = f u \<or> y = g u))"
+
 lemma tranclp_fun_preserve1b:
   fixes f :: "'a \<Rightarrow> 'b"
     and g :: "'a \<Rightarrow> 'b"
@@ -250,6 +251,7 @@ lemma tranclp_fun_preserve1b:
     and x y :: 'a
   assumes as_nat: "natural_under_rel R S f g"
       and as_x: "x \<noteq> y"
+(*      and as_fg: "range f \<inter> range g = {}"*)
       and prem: "S\<^sup>+\<^sup>+ (f x) (g y)"
     shows "R\<^sup>+\<^sup>+ x y"
 proof -
@@ -264,9 +266,26 @@ proof -
      (x \<in> FR \<and> y \<in> GR \<longrightarrow> (f'' x) \<noteq> (g'' y) \<longrightarrow> R\<^sup>+\<^sup>+ (f'' x) (g'' y)) \<and>
      (x \<in> GR \<and> y \<in> FR \<longrightarrow> False) \<and>
      (x \<in> GR \<and> y \<in> GR \<longrightarrow> R\<^sup>+\<^sup>+ (g'' x) (g'' y)))" by auto
+(*
+  obtain P where P: "P = (\<lambda>x y.
+     (\<exists>xa ya. f xa = x \<and> f ya = y \<longrightarrow> R\<^sup>+\<^sup>+ (f'' x) (f'' y)) \<and>
+     (\<exists>xa ya. f xa = x \<and> g ya = y \<and> (f'' x) \<noteq> (g'' y) \<longrightarrow> R\<^sup>+\<^sup>+ (f'' x) (g'' y)) \<and>
+     (\<exists>xa ya. g xa = x \<and> f ya = y \<longrightarrow> False) \<and>
+     (\<exists>xa ya. g xa = x \<and> g ya = y \<longrightarrow> R\<^sup>+\<^sup>+ (g'' x) (g'' y)))" by auto
+*)
+(*
+  obtain P where P: "P = (\<lambda>x y.
+     (case (x, y) of (f _, f _) \<Rightarrow> R\<^sup>+\<^sup>+ (f'' x) (f'' y)
+                   | (f _, g _) \<Rightarrow> (f'' x) = (g'' y) \<or> R\<^sup>+\<^sup>+ (f'' x) (g'' y)
+                   | (g _, f _) \<Rightarrow> False
+                   | (g _, g _) \<Rightarrow> R\<^sup>+\<^sup>+ (g'' x) (g'' y)))" by auto
+*)
+
   from prem have major: "S\<^sup>+\<^sup>+ (f x) (g y)" by blast
-  from as_nat
-  have cases_1: "\<And>x y. S x y \<Longrightarrow> P x y"
+  from as_nat have cases_1: "\<And>x y. S x y \<Longrightarrow> P x y"
+(*
+    apply (unfold P f' f'' g' g'' natural_under_rel_def functor_under_rel_def)
+*)
     apply (unfold P f' f'' g' g'' FR GR natural_under_rel_def functor_under_rel_def)
     apply (rule conjI)
     apply (metis f_the_inv_into_f restrict_apply' tranclp.r_into_trancl)
@@ -278,21 +297,65 @@ proof -
     done
   from as_nat have cases_2:
     "\<And>x y z. S\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> S\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z"
+(*
+    apply (unfold f'' f' g'' g' P natural_under_rel_def functor_under_rel_def)
+    apply (smt as_x inj_def)
+    done
+*)
+(*
+    apply (rule conjI)
+    apply metis
+    apply (rule conjI)
+    apply metis
+    apply (rule conjI)
+    apply (metis tranclp_trans)
+    by (metis (mono_tags, lifting) as_x inv_f_f)
+*)
     apply (unfold f'' f' g'' g' P FR GR natural_under_rel_def functor_under_rel_def)
     apply (rule conjI)
     apply (metis (full_types) f_the_inv_into_f functor_under_rel_def restrict_apply' tranclp_fun_preserve_gen_1a tranclp_trans)
     apply (rule conjI)
     apply (smt f_the_inv_into_f functor_under_rel_def rangeI tranclp_trans)
     apply (rule conjI)
-    apply (metis f_the_inv_into_f tranclp_trans)
-    by (metis (full_types) f_the_inv_into_f functor_under_rel_def restrict_apply' tranclp_fun_preserve_gen_1a tranclp_trans)
+    apply (metis rangeE tranclp_trans)
+(*    apply (metis f_the_inv_into_f tranclp_trans) *)
+    apply (metis (full_types) f_the_inv_into_f functor_under_rel_def restrict_apply' tranclp_fun_preserve_gen_1a tranclp_trans)
+    done
   from major cases_1 cases_2 have inv_conc: "P (f x) (g y)"
     apply (rule_tac ?x="f x" and ?y="g y" and ?r="S" in tranclp_trans_induct)
     apply (simp)
     apply blast
     by blast
-  with P FR GR as_nat f' f'' g' g'' as_x show ?thesis
-    by (simp add: the_inv_f_f natural_under_rel_def functor_under_rel_def)
+(*  from as_x have q: "P (f x) (g y) \<Longrightarrow> (\<exists>xa ya. f x = xa \<longrightarrow> g y = ya \<longrightarrow> R\<^sup>+\<^sup>+ (f'' xa) (g'' ya))"
+    by (metis (full_types) P)
+  from as_x have q2: "\<And>x y. x \<in> range f \<Longrightarrow> y \<in> range g \<Longrightarrow> R\<^sup>+\<^sup>+ (f'' x) (g'' y) \<Longrightarrow> R\<^sup>+\<^sup>+ x y"
+  from as_x have q2: "(\<exists>xa ya. f x = xa \<longrightarrow> g y = ya \<longrightarrow> R\<^sup>+\<^sup>+ (f'' xa) (g'' ya)) \<Longrightarrow> R\<^sup>+\<^sup>+ x y"*)
+  with as_nat as_x show ?thesis
+    apply (simp add: P f' f'' g' g'' the_inv_f_f natural_under_rel_def functor_under_rel_def)
+    by (simp add: FR GR)
 qed
+
+lemma q:
+  "    S\<^sup>+\<^sup>+ x y \<Longrightarrow>
+       (y \<in> range f \<Longrightarrow> R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) x) (restrict (the_inv f) (range f) y)) \<Longrightarrow>
+       (y \<in> range g \<Longrightarrow>
+        restrict (the_inv f) (range f) x \<noteq> restrict (the_inv g) (range g) y \<Longrightarrow>
+        R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) x) (restrict (the_inv g) (range g) y)) \<Longrightarrow>
+       S\<^sup>+\<^sup>+ y z \<Longrightarrow>
+       (y \<in> range f \<Longrightarrow>
+        restrict (the_inv f) (range f) y \<noteq> restrict (the_inv g) (range g) z \<Longrightarrow>
+        R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) y) (restrict (the_inv g) (range g) z)) \<Longrightarrow>
+       (y \<in> range g \<Longrightarrow> R\<^sup>+\<^sup>+ (restrict (the_inv g) (range g) y) (restrict (the_inv g) (range g) z)) \<Longrightarrow>
+       rel_limited_under S f \<Longrightarrow> inj f \<Longrightarrow> (\<forall>x y. S (f x) (f y) \<longrightarrow> R x y) \<Longrightarrow>
+       rel_limited_under S g \<Longrightarrow> inj g \<Longrightarrow> (\<forall>x y. S (g x) (g y) \<longrightarrow> R x y) \<Longrightarrow>
+       (\<And>x. S (f x) (g x)) \<Longrightarrow>
+       (\<And>x y. S (f x) (g y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> R x y) \<Longrightarrow>
+       (\<And>x y. \<not> S\<^sup>+\<^sup>+ (g x) (f y)) \<Longrightarrow>
+       (\<And>x y z. S\<^sup>+\<^sup>+ (f x) y \<Longrightarrow> S\<^sup>+\<^sup>+ y (g z) \<Longrightarrow> (\<exists>z. y = f z \<or> y = g z)) \<Longrightarrow>
+       x \<in> range f \<Longrightarrow>
+       z \<in> range g \<Longrightarrow>
+       restrict (the_inv f) (range f) x \<noteq> restrict (the_inv g) (range g) z \<longrightarrow>
+       R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) x) (restrict (the_inv g) (range g) z)"
+  by (smt f_the_inv_into_f rangeI tranclp_trans)
 
 end

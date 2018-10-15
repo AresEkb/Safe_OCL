@@ -4,7 +4,7 @@ theory WFTest
     Transitive_Closure_Ext
 begin
 
-datatype type = Bool | Integer | Real | Any | Set type | Seq type | Col type
+datatype type = Bool | Integer | Real | Any | Set type | Seq type | Col type | SupType
 
 term "r\<inverse>\<inverse>"
 (*
@@ -188,6 +188,41 @@ lemma trancl_subtype_Set_Col [elim!]:
 lemma trancl_subtype_Seq_Col [elim!]:
   "subtype\<^sup>+\<^sup>+ (Seq x) (Col y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> subtype\<^sup>+\<^sup>+ x y"
   by (meson Seq_Col_natural tranclp_fun_preserve1b)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 datatype t = A | B | C t | D t | E t

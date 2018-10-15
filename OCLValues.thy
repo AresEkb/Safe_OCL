@@ -362,7 +362,7 @@ lemma cast_oany_closed_under_range2:
   using any_to_oany.elims apply blast
   using any_to_oany.elims apply blast
   done
-
+(*
 lemma cast_oany_closed_under_range:
   "rel_closed_under cast_oany (range any_to_oany)"
   by (auto simp: rel_closed_under_def cast_oany_closed_under_range1 cast_oany_closed_under_range2)
@@ -391,7 +391,7 @@ proof -
     by simp
   from tranclp_fun_preserve_gen_2 as B c_f c_R show ?thesis by metis  
 qed
-
+*)
 
 lemma trancl_cast_any_implies_cast_oany':
   "cast_any\<^sup>+\<^sup>+ x y \<Longrightarrow>
@@ -408,13 +408,20 @@ lemma trancl_cast_oany_implies_cast_any':
   by auto
 
 
+lemma any_to_oany_functor:
+  "functor_under_rel cast_any cast_oany any_to_oany"
+  apply (auto simp add: functor_under_rel_def)
+  using cast_oany_closed_under_range2 rel_limited_under_def apply blast
+  apply (simp add: inj_any_to_oany)
+  by (simp add: cast_oany_implies_cast_any)
+
 lemma trancl_cast_oany_implies_cast_any:
   "cast_oany\<^sup>+\<^sup>+ (any_to_oany x) (any_to_oany y) \<Longrightarrow> cast_any\<^sup>+\<^sup>+ x y"
-  by (simp add: any_to_oany_preserve_trancl_cast_oany1 trancl_cast_oany_implies_cast_any')
+  by (meson any_to_oany_functor tranclp_fun_preserve_gen_1a)
 
 lemma trancl_cast_any_implies_cast_oany:
   "cast_any\<^sup>+\<^sup>+ x y \<Longrightarrow> cast_oany\<^sup>+\<^sup>+ (any_to_oany x) (any_to_oany y)"
-  by (simp add: any_to_oany_preserve_trancl_cast_oany2 trancl_cast_any_implies_cast_oany')
+  by (metis cast_any_implies_cast_oany fun_preserve_morphism_composition')
 
 (* any order*)
 
@@ -430,11 +437,9 @@ lemma det_cast_any:
 instantiation any :: order
 begin
 
-definition less_any where
-  "less_any \<equiv> cast_any\<^sup>+\<^sup>+"
+definition "less_any \<equiv> cast_any\<^sup>+\<^sup>+"
 
-definition less_eq_any where
-  "less_eq_any \<equiv> cast_any\<^sup>*\<^sup>*"
+definition "less_eq_any \<equiv> cast_any\<^sup>*\<^sup>*"
 
 lemma antisym_cast_any:
   "cast_any x y \<Longrightarrow> \<not> cast_any y x"
@@ -477,7 +482,7 @@ instance
   apply (standard)
   apply (simp add: less_le_not_le_any)
   apply (simp add: less_eq_any_def)
-  apply (simp add: order_trans_any)
+  apply (erule order_trans_any; simp)
   apply (simp add: antisym_any)
   done
 
@@ -508,11 +513,9 @@ lemma antisym_cast_oany:
 instantiation oany :: order
 begin
 
-definition less_oany where
-  "less_oany \<equiv> cast_oany\<^sup>+\<^sup>+"
+definition "less_oany \<equiv> cast_oany\<^sup>+\<^sup>+"
 
-definition less_eq_oany where
-  "less_eq_oany \<equiv> cast_oany\<^sup>*\<^sup>*"
+definition "less_eq_oany \<equiv> cast_oany\<^sup>*\<^sup>*"
 
 (* TODO: Rename *)
 lemma antisym_cast_oany2:
@@ -549,7 +552,7 @@ instance
   apply (standard)
   apply (simp add: less_le_not_le_oany)
   apply (simp add: less_eq_oany_def)
-  apply (simp add: order_trans_oany)
+  apply (erule order_trans_oany; simp)
   apply (simp add: antisym_oany)
   done
 
@@ -557,7 +560,7 @@ end
 
 
 (* Set *)
-
+(*
 typedef 'a myset = "UNIV :: 'a fset option set" ..
 
 setup_lifting type_definition_myset
@@ -595,7 +598,7 @@ copy_bnf 'a myset
 
 ML \<open>Ctr_Sugar.ctr_sugar_of @{context} @{type_name myset} |> Option.map #ctrs\<close>
 ML \<open>Ctr_Sugar.ctr_sugar_of @{context} @{type_name fset} |> Option.map #ctrs\<close>
-
+*)
 
 (* val *)
 
@@ -642,7 +645,7 @@ inductive cast_val :: "val \<Rightarrow> val \<Rightarrow> bool" where
   "cast_val (InvalidVal \<bottom>) (VoidVal \<bottom>\<^sub>\<box>)"
 | "cast_val (InvalidVal \<bottom>) (RequiredVal (BoolVal \<bottom>))"
 | "cast_val (InvalidVal \<bottom>) (RequiredVal (UnlimNatVal \<bottom>))"
-| "OclInvalid <: \<tau> \<Longrightarrow>
+| "direct_subtype OclInvalid \<tau> \<Longrightarrow>
    cast_val (InvalidVal \<bottom>) (SetVal \<tau> \<bottom>)"
 | "cast_val (VoidVal \<bottom>\<^sub>\<box>) (OptionalVal (OBoolVal \<bottom>\<^sub>\<box>))"
 | "cast_val (VoidVal \<bottom>\<^sub>\<box>) (OptionalVal (OUnlimNatVal \<bottom>\<^sub>\<box>))"
@@ -653,7 +656,7 @@ inductive cast_val :: "val \<Rightarrow> val \<Rightarrow> bool" where
    xs \<noteq> {||} \<Longrightarrow>
    ys \<noteq> {||} \<Longrightarrow>
    cast_val (SetVal xs\<^sub>\<bottom>) (SetVal ys\<^sub>\<bottom>)"*)
-| "\<tau> <: \<sigma> \<Longrightarrow>
+| "direct_subtype \<tau> \<sigma> \<Longrightarrow>
    fBall xs (\<lambda>x. type_of_val x \<le> \<tau>) \<Longrightarrow>
    fBall ys (\<lambda>y. type_of_val y \<le> \<sigma>) \<Longrightarrow>
    cast_val (SetVal \<tau> xs\<^sub>\<bottom>) (SetVal \<sigma> ys\<^sub>\<bottom>)"
