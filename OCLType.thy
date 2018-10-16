@@ -269,6 +269,8 @@ fun simple_subtype_fun :: "simple_type \<Rightarrow> simple_type \<Rightarrow> b
 | "simple_subtype_fun (ObjectType _) OclAny = True"
 | "simple_subtype_fun (ObjectType _) _ = False"
 
+(* TODO: Попоробовать заменить аннотацию на simp,
+   возможно тогда можно будет убрать ссылки на эти леммы далее *)
 lemma less_simple_type_code [code_abbrev]:
   "simple_subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> < \<sigma>"
   apply (simp add: less_simple_type_def)
@@ -351,7 +353,7 @@ inductive direct_subtype :: "type \<Rightarrow> type \<Rightarrow> bool" ("_ \<s
 | "Bag \<tau> \<sqsubset> Collection \<tau>"
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
 | "Optional OclAny \<sqsubset> SupType"
-(*| "Collection SupType \<sqsubset> SupType"*)
+| "Collection SupType \<sqsubset> SupType"
 
 code_pred [show_modes] direct_subtype .
 
@@ -375,6 +377,12 @@ inductive_cases direct_subtype_x_Sequence[elim]: "\<tau> \<sqsubset> Sequence \<
 inductive_cases direct_subtype_Sequence_x[elim]: "Sequence \<tau> \<sqsubset> \<sigma>"
 inductive_cases direct_subtype_x_SupType[elim]: "\<tau> \<sqsubset> SupType"
 inductive_cases direct_subtype_SupType_x[elim]: "SupType \<sqsubset> \<sigma>"
+
+lemma Set_functor:
+  "functor_under_rel direct_subtype direct_subtype Set"
+  apply (auto simp add: functor_under_rel_def rel_limited_under_def inj_def)
+  by (metis direct_subtype_x_OclInvalid direct_subtype_x_Set rangeI tranclp.cases)
+(*  by (auto simp add: functor_under_rel_def rel_limited_under_def inj_def)*)
 
 lemma subtype_OclInvalid_x [elim]:
   "direct_subtype\<^sup>+\<^sup>+ OclInvalid \<sigma> \<Longrightarrow>
@@ -407,53 +415,109 @@ lemma subtype_Required_x [elim]:
 
 lemma subtype_Optional_x [elim]:
   "direct_subtype\<^sup>+\<^sup>+ \<tau>[?] \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = \<rho>[?] \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = \<rho>[?] \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   apply (induct rule: tranclp_induct)
-  apply (metis direct_subtype_Optional_x less_eq_simple_type_def r_into_rtranclp)
-  by (metis (full_types) direct_subtype_Optional_x direct_subtype_SupType_x dual_order.order_iff_strict less_simple_type_def tranclp.simps)
+  apply (metis direct_subtype_Optional_x less_simple_type_def tranclp.r_into_trancl)
+  by (metis (full_types) direct_subtype_Optional_x direct_subtype_SupType_x less_simple_type_def tranclp.simps)
 
-lemma q:
-  "direct_subtype\<^sup>+\<^sup>+ (Set \<tau>) \<sigma> \<Longrightarrow> \<exists>\<rho>. \<sigma> = (Set \<rho>)"
+(* Доказывать это через intro теоремы? *)
+
+lemma subtype_Collection_x [elim]:
+  "direct_subtype\<^sup>+\<^sup>+ (Collection \<tau>) \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: tranclp_induct)
+  apply (auto)
+  by (metis direct_subtype_Collection_x direct_subtype_SupType_x tranclp.trancl_into_trancl)
+
+lemma subtype_Collection_x' [elim]:
+  "direct_subtype\<^sup>*\<^sup>* (Collection \<tau>) \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: rtranclp_induct)
+  apply (auto)
+  by (metis rtranclp_into_tranclp1 subtype_Collection_x tranclp_into_rtranclp)
 
 lemma subtype_Set_x [elim]:
   "direct_subtype\<^sup>+\<^sup>+ (Set \<tau>) \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<sigma> = (Set \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> \<tau> = \<rho> \<or> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
-(*
-  by (induct rule: tranclp_induct; blast)
-*)
+  apply (induct rule: tranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_Set_x direct_subtype_SupType_x tranclp.simps)
+
 lemma subtype_OrderedSet_x [elim]:
   "direct_subtype\<^sup>+\<^sup>+ (OrderedSet \<tau>) \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = (OrderedSet \<rho>) \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (OrderedSet \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> \<tau> = \<rho> \<or> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
-  by (induct rule: tranclp_induct; blast)
+  apply (induct rule: tranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_OrderedSet_x direct_subtype_SupType_x tranclp.simps)
 
 lemma subtype_Bag_x [elim]:
   "direct_subtype\<^sup>+\<^sup>+ (Bag \<tau>) \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = (Bag \<rho>) \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Bag \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> \<tau> = \<rho> \<or> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
-  by (induct rule: tranclp_induct; blast)
+  apply (induct rule: tranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_Bag_x direct_subtype_SupType_x tranclp.simps)
 
 lemma subtype_Sequence_x [elim]:
   "direct_subtype\<^sup>+\<^sup>+ (Sequence \<tau>) \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = (Sequence \<rho>) \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Sequence \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> \<tau> = \<rho> \<or> direct_subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
-  by (induct rule: tranclp_induct; blast)
+  apply (induct rule: tranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_Sequence_x direct_subtype_SupType_x tranclp.simps)
 
-lemma subtype_Collection_x [elim]:
-  "direct_subtype\<^sup>+\<^sup>+ (Collection \<tau>) \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> P) \<Longrightarrow>
+lemma subtype_Set_x' [elim]:
+  "direct_subtype\<^sup>*\<^sup>* (Set \<tau>) \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Set \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
-  by (induct rule: tranclp_induct; blast)
+  apply (induct rule: rtranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_Set_x direct_subtype_SupType_x rtranclp.rtrancl_into_rtrancl)
+
+lemma subtype_OrderedSet_x' [elim]:
+  "direct_subtype\<^sup>*\<^sup>* (OrderedSet \<tau>) \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (OrderedSet \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: rtranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_OrderedSet_x direct_subtype_SupType_x rtranclp.rtrancl_into_rtrancl)
+
+lemma subtype_Bag_x' [elim]:
+  "direct_subtype\<^sup>*\<^sup>* (Bag \<tau>) \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Bag \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: rtranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_Bag_x direct_subtype_SupType_x rtranclp.rtrancl_into_rtrancl)
+
+lemma subtype_Sequence_x' [elim]:
+  "direct_subtype\<^sup>*\<^sup>* (Sequence \<tau>) \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Sequence \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: rtranclp_induct)
+  apply (auto)
+  by (smt direct_subtype_Collection_x direct_subtype_Sequence_x direct_subtype_SupType_x rtranclp.rtrancl_into_rtrancl)
 
 lemma subtype_SupType_x [elim]:
   "direct_subtype\<^sup>+\<^sup>+ SupType \<sigma> \<Longrightarrow> False"
   by (meson direct_subtype_SupType_x tranclpD)
+
+lemma subtype_SupType_x' [elim]:
+  "direct_subtype\<^sup>*\<^sup>* SupType \<sigma> \<Longrightarrow> (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  by (metis converse_rtranclpE direct_subtype_SupType_x)
 
 
 lemma Required_functor:
@@ -468,10 +532,6 @@ lemma Required_Optional_natural:
   "natural_under_rel direct_simple_subtype direct_subtype Required Optional"
   apply (auto simp add: natural_under_rel_def Required_functor Optional_functor direct_subtype.intros(6))
   by (metis direct_subtype_SupType_x subtype_Required_x tranclpD)
-
-lemma Set_functor:
-  "functor_under_rel direct_subtype direct_subtype Set"
-  by (auto simp add: functor_under_rel_def rel_limited_under_def inj_def)
 
 lemma OrderedSet_functor:
   "functor_under_rel direct_subtype direct_subtype OrderedSet"
@@ -507,7 +567,6 @@ lemma subtype_x_Required':
   apply (erule direct_subtype.cases; auto)
   apply (drule rtranclpD; auto)
   apply (unfold Nitpick.rtranclp_unfold; auto)
-  apply (meson converse_rtranclpE direct_subtype_SupType_x type.distinct(5))
   done
 
 lemma subtype_x_Required'':
@@ -547,12 +606,17 @@ lemma subtype_x_Optional [elim]:
    (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
    (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   by (metis eq_refl less_imp_le less_simple_type_def subtype_x_Optional'')
-
+(*
 lemma subtype_x_Set [elim]:
   "direct_subtype\<^sup>+\<^sup>+ \<tau> (Set \<sigma>) \<Longrightarrow>
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = (Set \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (metis direct_subtype_x_Set tranclp.cases)
+  apply (erule tranclp.cases)
+  apply (auto)
+  apply (erule tranclp.cases)
+  apply (auto)
+  apply (smt direct_subtype_x_Set subtype_x_OclInvalid tranclp.r_into_trancl tranclp_into_tranclp2)
+(*  by (metis direct_subtype_x_Set tranclp.cases)*)
 
 lemma subtype_x_Collection [elim]:
   "direct_subtype\<^sup>+\<^sup>+ \<tau> (Collection \<sigma>) \<Longrightarrow>
@@ -562,8 +626,8 @@ lemma subtype_x_Collection [elim]:
    (\<And>\<rho>. \<tau> = (OrderedSet \<rho>) \<Longrightarrow> \<rho> = \<sigma> \<or> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = (Bag \<rho>) \<Longrightarrow> \<rho> = \<sigma> \<or> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = (Sequence \<rho>) \<Longrightarrow> \<rho> = \<sigma> \<or> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (metis direct_subtype_x_Collection tranclp.cases)
-
+(*  by (metis direct_subtype_x_Collection tranclp.cases)*)
+*)
 (*
 lemma subtype_x_SupType [elim]:
   "direct_subtype\<^sup>+\<^sup>+ \<tau> SupType \<Longrightarrow> (\<tau> \<noteq> SupType \<Longrightarrow> P) \<Longrightarrow> P"
@@ -590,18 +654,7 @@ lemma direct_subtype_not_trans:
 
 lemma direct_subtype_acyclic':
   "direct_subtype\<^sup>+\<^sup>+ \<tau> \<tau> \<Longrightarrow> False"
-  apply (induct \<tau>)
-  apply (meson direct_subtype_SupType_x tranclpD)
-  apply auto[1]
-  apply auto[1]
-  using less_simple_type_def apply auto[1]
-  using less_simple_type_def apply auto[1]
-  apply (meson direct_subtype_Collection_x tranclpD)
-  apply (meson direct_subtype_Set_x tranclpD)
-  apply (meson direct_subtype_OrderedSet_x tranclpD)
-  apply (meson direct_subtype_Bag_x tranclpD)
-  apply (meson direct_subtype_Sequence_x tranclpD)
-  done
+  by (induct \<tau>; auto)
 
 lemma direct_subtype_acyclic:
   "acyclicP direct_subtype"
@@ -682,7 +735,9 @@ end
 
 fun subtype_fun :: "type \<Rightarrow> type \<Rightarrow> bool" where
   "subtype_fun OclInvalid \<sigma> = (\<sigma> \<noteq> OclInvalid)"
-| "subtype_fun OclVoid \<sigma> = (\<sigma> \<noteq> OclInvalid \<and> \<sigma> \<noteq> OclVoid)"
+| "subtype_fun OclVoid (Optional \<sigma>) = True"
+| "subtype_fun OclVoid SupType = True"
+| "subtype_fun OclVoid _ = False"
 | "subtype_fun (Required \<tau>) (Required \<sigma>) = simple_subtype_fun \<tau> \<sigma>"
 | "subtype_fun (Required \<tau>) (Optional \<sigma>) = (\<tau> = \<sigma> \<or> simple_subtype_fun \<tau> \<sigma>)"
 | "subtype_fun (Required \<tau>) SupType = True"
@@ -690,10 +745,36 @@ fun subtype_fun :: "type \<Rightarrow> type \<Rightarrow> bool" where
 | "subtype_fun (Optional \<tau>) (Optional \<sigma>) = simple_subtype_fun \<tau> \<sigma>"
 | "subtype_fun (Optional \<tau>) SupType = True"
 | "subtype_fun (Optional \<tau>) _ = False"
-| "subtype_fun _ _ = False"
+| "subtype_fun (Set \<tau>) (Set \<sigma>) = subtype_fun \<tau> \<sigma>"
+| "subtype_fun (Set \<tau>) (Collection \<sigma>) = (\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma>)"
+| "subtype_fun (Set \<tau>) SupType = True"
+| "subtype_fun (Set \<tau>) _ = False"
+| "subtype_fun (OrderedSet \<tau>) (OrderedSet \<sigma>) = subtype_fun \<tau> \<sigma>"
+| "subtype_fun (OrderedSet \<tau>) (Collection \<sigma>) = (\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma>)"
+| "subtype_fun (OrderedSet \<tau>) SupType = True"
+| "subtype_fun (OrderedSet \<tau>) _ = False"
+| "subtype_fun (Bag \<tau>) (Bag \<sigma>) = subtype_fun \<tau> \<sigma>"
+| "subtype_fun (Bag \<tau>) (Collection \<sigma>) = (\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma>)"
+| "subtype_fun (Bag \<tau>) SupType = True"
+| "subtype_fun (Bag \<tau>) _ = False"
+| "subtype_fun (Sequence \<tau>) (Sequence \<sigma>) = subtype_fun \<tau> \<sigma>"
+| "subtype_fun (Sequence \<tau>) (Collection \<sigma>) = (\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma>)"
+| "subtype_fun (Sequence \<tau>) SupType = True"
+| "subtype_fun (Sequence \<tau>) _ = False"
+| "subtype_fun (Collection \<tau>) (Collection \<sigma>) = subtype_fun \<tau> \<sigma>"
+| "subtype_fun (Collection \<tau>) SupType = True"
+| "subtype_fun (Collection \<tau>) _ = False"
+| "subtype_fun SupType _ = False"
 
-value "direct_subtype OclInvalid Boolean[1]"
-value "direct_subtype Boolean[1] OclAny[1]"
+lemma subtype_x_OclVoid_intro' [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> OclVoid"
+  "\<tau> = OclVoid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> OclVoid"
+  apply (simp add: direct_subtype.intros(1) r_into_rtranclp)
+  by (simp)
+
+lemma subtype_x_OclVoid_intro [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> OclVoid"
+  by (simp add: direct_subtype.intros(1) tranclp.r_into_trancl)
 
 lemma subtype_x_Required_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> \<sigma>[1]"
@@ -724,33 +805,213 @@ lemma subtype_x_Optional_intro [intro]:
   using direct_subtype.intros(3) is_min_simple_type_def apply blast
   apply (simp add: direct_subtype.intros(6) tranclp.trancl_into_trancl)
   by (metis direct_subtype.intros(5) fun_preserve_morphism_composition')
-(*
+
+
+lemma subtype_OclInvalid_x_intro' [intro]:
+  "direct_subtype\<^sup>*\<^sup>* OclInvalid \<sigma>"
+  apply (induct)
+  apply (metis (full_types) direct_subtype.intros(1) direct_subtype.intros(20) rtranclp_tranclp_tranclp subtype_x_Optional_intro(1) tranclp.simps tranclp_into_rtranclp)
+  apply simp
+  using direct_subtype.intros(1) apply auto[1]
+  apply (simp add: subtype_x_Required_intro(1) tranclp_into_rtranclp)
+  apply (simp add: subtype_x_Optional_intro(2) subtype_x_Required_intro(1) tranclp_into_rtranclp)
+  apply (rule_tac ?b="Set x" in rtranclp.rtrancl_into_rtrancl)
+  apply (metis (mono_tags, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(11) direct_subtype.intros(7) fun_preserve_morphism_composition)
+  apply (simp add: direct_subtype.intros(16))
+  apply (metis (mono_tags, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(11) direct_subtype.intros(7) fun_preserve_morphism_composition)
+  apply (metis (no_types, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(12) direct_subtype.intros(8) fun_preserve_morphism_composition)
+  apply (metis (no_types, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(13) direct_subtype.intros(9) fun_preserve_morphism_composition)
+  apply (metis (no_types, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(14) direct_subtype.intros(10) fun_preserve_morphism_composition)
+  done
+
+lemma subtype_OclInvalid_x_intro [intro]:
+  "\<sigma> \<noteq> OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ OclInvalid \<sigma>"
+  by (metis rtranclpD subtype_OclInvalid_x_intro')
+
+lemma subtype_OclVoid_x_intro' [intro]:
+  "\<sigma> = OclVoid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* OclVoid \<sigma>"
+  "\<sigma> = \<rho>[?] \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* OclVoid \<sigma>"
+  "\<sigma> = SupType \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* OclVoid \<sigma>"
+  apply (simp)
+  apply (simp add: subtype_x_Optional_intro(1) tranclp_into_rtranclp)
+  by (meson direct_subtype.intros(20) subtype_x_Optional_intro(1) tranclp.trancl_into_trancl tranclp_into_rtranclp)
+
+lemma subtype_OclVoid_x_intro [intro]:
+  "\<sigma> = \<rho>[?] \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ OclVoid \<sigma>"
+  "\<sigma> = SupType \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ OclVoid \<sigma>"
+  apply (simp add: subtype_x_Optional_intro(1))
+  by (meson rtranclpD subtype_OclVoid_x_intro'(3) type.simps(11))
+
+lemma subtype_Optional_x_intro' [intro]:
+  "\<sigma> = \<rho>[?] \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau>[?] \<sigma>"
+  "\<sigma> = SupType \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau>[?] \<sigma>"
+  apply (unfold less_eq_simple_type_def)
+  apply (metis direct_subtype.intros(5) fun_preserve_morphism_composition)
+  apply (rule_tac ?b="OclAny[?]" in rtranclp.rtrancl_into_rtrancl)
+  apply (induct \<tau>)
+  apply simp
+  apply (simp add: direct_simple_subtype.intros(1) direct_subtype.intros(5) r_into_rtranclp)
+  apply (simp add: direct_simple_subtype.intros(4) direct_subtype.intros(5) r_into_rtranclp)
+  apply (metis less_simple_type_code less_simple_type_def simple_subtype_fun.simps(17) subtype_x_Optional_intro(3) tranclp_into_rtranclp)
+  apply (metis less_simple_type_code less_simple_type_def simple_subtype_fun.simps(11) subtype_x_Optional_intro(3) tranclp_into_rtranclp)
+  apply (simp add: direct_simple_subtype.intros(5) direct_subtype.intros(5) r_into_rtranclp)
+  apply (simp add: direct_simple_subtype.intros(6) direct_subtype.intros(5) r_into_rtranclp)
+  by (simp add: direct_subtype.intros(20))
+
+lemma subtype_Optional_x_intro [intro]:
+  "\<sigma> = \<rho>[?] \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau>[?] \<sigma>"
+  "\<sigma> = SupType \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau>[?] \<sigma>"
+  apply (simp add: less_simple_type_def subtype_x_Optional_intro(3))
+  by (metis rtranclpD subtype_Optional_x_intro'(2) type.distinct(7))
+
+lemma subtype_Required_x_intro' [intro]:
+  "\<sigma> = \<rho>[1] \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau>[1] \<sigma>"
+  "\<sigma> = \<rho>[?] \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau>[1] \<sigma>"
+  "\<sigma> = SupType \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau>[1] \<sigma>"
+  apply (unfold less_eq_simple_type_def)
+  apply (metis direct_subtype.intros(4) fun_preserve_morphism_composition)
+  apply (metis (no_types, lifting) direct_subtype.intros(4) direct_subtype.intros(6) fun_preserve_morphism_composition rtranclp.rtrancl_into_rtrancl)
+  by (meson converse_rtranclp_into_rtranclp direct_subtype.intros(6) subtype_Optional_x_intro'(2))
+
+lemma subtype_Required_x_intro [intro]:
+  "\<sigma> = \<rho>[1] \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau>[1] \<sigma>"
+  "\<sigma> = \<rho>[?] \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau>[1] \<sigma>"
+  "\<sigma> = SupType \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau>[1] \<sigma>"
+  apply (simp add: less_simple_type_def subtype_x_Required_intro(2))
+  apply (meson rtranclpD subtype_Required_x_intro'(2) type.distinct(49))
+  by (meson rtranclpD subtype_Required_x_intro'(3) type.simps(13))
+
+
+lemma subtype_x_Set_intro' [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Set \<sigma>)"
+  "\<tau> = (Set \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Set \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro')
+  by (metis direct_subtype.intros(11) fun_preserve_morphism_composition)
+
 lemma subtype_x_Set_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Set \<sigma>)"
   "\<tau> = (Set \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Set \<sigma>)"
-  apply (auto)
-*)
+  apply (simp add: subtype_OclInvalid_x_intro)
+  by (metis direct_subtype.intros(11) fun_preserve_morphism_composition')
 
-lemma subtype_OclInvalid_x_intro [intro]:
-  "\<sigma> \<noteq> OclInvalid \<Longrightarrow>
-   \<nexists>\<rho>. \<sigma> = Set \<rho> \<Longrightarrow>
-   \<nexists>\<rho>. \<sigma> = OrderedSet \<rho> \<Longrightarrow>
-   \<nexists>\<rho>. \<sigma> = Bag \<rho> \<Longrightarrow>
-   \<nexists>\<rho>. \<sigma> = Sequence \<rho> \<Longrightarrow>
-   \<nexists>\<rho>. \<sigma> = Collection \<rho> \<Longrightarrow>
-   direct_subtype\<^sup>+\<^sup>+ OclInvalid \<sigma>"
-  apply (induct)
-  apply (metis direct_simple_subtype.intros(1) direct_simple_subtype_x_Boolean direct_subtype.intros(1) direct_subtype.intros(3) direct_subtype.intros(5) direct_subtype.intros(7) is_min_simple_type_def rtranclp.rtrancl_into_rtrancl rtranclp.rtrancl_refl rtranclpD)
-  apply simp
-  apply (simp add: direct_subtype.intros(1) tranclp.r_into_trancl)
-  apply auto
+lemma subtype_x_OrderedSet_intro' [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (OrderedSet \<sigma>)"
+  "\<tau> = (OrderedSet \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (OrderedSet \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro')
+  by (metis direct_subtype.intros(12) fun_preserve_morphism_composition)
+
+lemma subtype_x_OrderedSet_intro [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (OrderedSet \<sigma>)"
+  "\<tau> = (OrderedSet \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (OrderedSet \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro)
+  by (metis direct_subtype.intros(12) fun_preserve_morphism_composition')
+
+lemma subtype_x_Bag_intro' [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Bag \<sigma>)"
+  "\<tau> = (Bag \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Bag \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro')
+  by (metis direct_subtype.intros(13) fun_preserve_morphism_composition)
+
+lemma subtype_x_Bag_intro [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Bag \<sigma>)"
+  "\<tau> = (Bag \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Bag \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro)
+  by (metis direct_subtype.intros(13) fun_preserve_morphism_composition')
+
+lemma subtype_x_Sequence_intro' [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Sequence \<sigma>)"
+  "\<tau> = (Sequence \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Sequence \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro')
+  by (metis direct_subtype.intros(14) fun_preserve_morphism_composition)
+
+lemma subtype_x_Sequence_intro [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Sequence \<sigma>)"
+  "\<tau> = (Sequence \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Sequence \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro)
+  by (metis direct_subtype.intros(14) fun_preserve_morphism_composition')
+
+lemma subtype_x_Collection_intro' [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Collection \<sigma>)"
+  "\<tau> = (Set \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Collection \<sigma>)"
+  "\<tau> = (OrderedSet \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Collection \<sigma>)"
+  "\<tau> = (Bag \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Collection \<sigma>)"
+  "\<tau> = (Sequence \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Collection \<sigma>)"
+  "\<tau> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<tau> (Collection \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro')
+  apply (meson direct_subtype.intros(16) rtranclp.rtrancl_into_rtrancl subtype_x_Set_intro'(2))
+  apply (meson direct_subtype.intros(17) rtranclp.rtrancl_into_rtrancl subtype_x_OrderedSet_intro'(2))
+  apply (meson direct_subtype.intros(18) rtranclp.rtrancl_into_rtrancl subtype_x_Bag_intro'(2))
+  apply (meson direct_subtype.intros(19) rtranclp.rtrancl_into_rtrancl subtype_x_Sequence_intro'(2))
+  by (metis direct_subtype.intros(15) fun_preserve_morphism_composition)
+
+lemma subtype_x_Collection_intro [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Collection \<sigma>)"
+  "\<tau> = (Set \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Collection \<sigma>)"
+  "\<tau> = (OrderedSet \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Collection \<sigma>)"
+  "\<tau> = (Bag \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Collection \<sigma>)"
+  "\<tau> = (Sequence \<rho>) \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Collection \<sigma>)"
+  "\<tau> = (Collection \<rho>) \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<rho> \<sigma> \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> (Collection \<sigma>)"
+  apply (simp add: subtype_OclInvalid_x_intro)
+  apply (meson rtranclpD subtype_x_Collection_intro'(2) type.simps(79))
+  apply (meson rtranclpD subtype_x_Collection_intro'(3) type.simps(81))
+  apply (meson rtranclpD subtype_x_Collection_intro'(4) type.simps(83))
+  apply (meson rtranclpD subtype_x_Collection_intro'(5) type.simps(85))
+  by (metis direct_subtype.intros(15) fun_preserve_morphism_composition')
+
+lemma subtype_x_SupType_intro' [intro]:
+  "direct_subtype\<^sup>*\<^sup>* \<tau> SupType"
+  apply (induct \<tau>)
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply (meson direct_subtype.intros(21) rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(6))
+  apply (meson direct_subtype.intros(21) rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(2))
+  apply (meson direct_subtype.intros(21) rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(3))
+  apply (meson direct_subtype.intros(21) rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(4))
+  apply (meson direct_subtype.intros(21) rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(5))
   done
+
+lemma subtype_x_SupType_intro [intro]:
+  "\<tau> \<noteq> SupType \<Longrightarrow> direct_subtype\<^sup>+\<^sup>+ \<tau> SupType"
+  by (meson rtranclpD subtype_x_SupType_intro')
+
+
+value "subtype_fun (Set (Set SupType)) (Set SupType)"
+value "subtype_fun (Set (Set SupType)) (Set (Collection SupType))"
+value "subtype_fun (Set (Set SupType)) (Set (Collection SupType))"
+
+value "direct_subtype (Set (Set SupType)) (Set (Collection SupType))"
+value "direct_subtype (Set (Collection SupType)) (Set SupType)"
 
 lemma less_type_code [code_abbrev]:
   "subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> < \<sigma>"
   apply (simp add: less_type_def)
   apply (rule iffI)
-  apply (erule subtype_fun.elims)
+  apply (induct rule: subtype_fun.induct; auto)
+  apply (simp add: less_simple_type_code subtype_Required_x_intro(1))
+  using less_eq_simple_type_code apply blast
+  apply (simp add: less_simple_type_code subtype_Optional_x_intro(1))
+  apply (cases \<tau>)
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply simp
+  apply (erule subtype_Required_x)
+  apply (simp add: less_simple_type_code)
+  apply (simp add: less_eq_simple_type_code)
+  apply simp
+  apply simp
+  apply (erule subtype_Optional_x)
+  apply (simp add: less_simple_type_code)
+  apply (simp add: less_eq_simple_type_code)
+  apply simp
+  apply (erule subtype_Collection_x)
+
+  thm subtype_Required_x
+  thm subtype_OclVoid_x_intro
+(*
   using direct_subtype.intros apply auto
   apply (cases \<tau>; auto)
   done
@@ -758,7 +1019,7 @@ lemma less_type_code [code_abbrev]:
 lemma less_eq_type_code [code_abbrev]:
   "\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma>"
   using le_less less_type_code by auto
-
+*)
 
 value "Optional OclAny \<sqsubset> SupType"
 value "Collection (Optional OclAny) \<sqsubset> SupType"
