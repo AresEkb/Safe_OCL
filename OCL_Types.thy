@@ -96,12 +96,13 @@ definition "only_one p xs ys \<equiv>
 lemma only_one_mono[mono]: "(\<And> x y. x \<in> set xs \<Longrightarrow> y \<in> set ys \<Longrightarrow> p x y \<longrightarrow> q x y) \<Longrightarrow>
   only_one p xs ys \<longrightarrow> only_one q xs ys"
   apply (auto simp add: only_one_def)
+  by (metis (mono_tags, lifting) list.rel_mono_strong)
 
 inductive prec_t ("_ \<prec> _" [65, 65] 65) where
   "A \<prec> B"
 | "C [B] \<prec> B"
 | "C (xs@[B]) \<prec> C xs"
-| "only_one False (\<lambda>x y. x \<prec> y) xs ys \<Longrightarrow>
+| "only_one (\<lambda>x y. x \<prec> y) xs ys \<Longrightarrow>
    C xs \<prec> C ys"
 
 inductive prec_t ("_ \<prec> _" [65, 65] 65) where
