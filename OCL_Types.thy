@@ -315,6 +315,13 @@ lemma only_one_mono [mono]: "(\<And> x y. x \<in> set xs \<Longrightarrow> y \<i
   by (smt UnCI list.set_intros(1) only_one_def set_append)
 
 
+(*
+   В будущем нужно будет определить отдельный тип для непустых списков,
+   чтобы использовать его для Tuple, но сейчас это может усложнить доказательство теорем:
+   https://stackoverflow.com/questions/45995633/how-to-define-a-data-type-with-constraints
+ *)
+
+
 inductive direct_subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" ("_ \<sqsubset> _" [65, 65] 65) where
   "OclInvalid \<sqsubset> OclVoid"
 | "(*is_min_basic_type \<sigma> \<Longrightarrow>*) OclInvalid \<sqsubset> Required \<sigma>"
@@ -337,21 +344,28 @@ inductive direct_subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> 
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
 | "Optional OclAny \<sqsubset> SupType"
 | "Collection SupType \<sqsubset> SupType"
-| "Tuple [SupType] \<sqsubset> SupType"
-| "Tuple (\<pi>@[SupType]) \<sqsubset> Tuple \<pi>"
+| "Tuple [\<tau>] \<sqsubset> SupType"
+| "\<tau> \<noteq> [] \<Longrightarrow>
+   Tuple (\<pi>@\<tau>) \<sqsubset> Tuple \<pi>"
 (*| "\<pi> = xh@[x]@xt \<Longrightarrow>
    \<xi> = xh@[y]@xt \<Longrightarrow>
    x \<sqsubset> y \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>" (* TODO: Check that only one type is changed *)*)
-| "only_one (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
+| "list_all2 (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
+   \<xi> \<noteq> [] \<Longrightarrow>
+   \<pi> \<noteq> \<xi> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>" (* TODO: Check that only one type is changed *)
+(*| "only_one (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
+   \<xi> \<noteq> [] \<Longrightarrow>
+   Tuple \<pi> \<sqsubset> Tuple \<xi>" (* TODO: Check that only one type is changed *)*)
 (*| "length \<pi> = length \<xi> \<Longrightarrow>
    \<pi> \<noteq> \<xi> \<Longrightarrow>
    length \<pi> > 0 \<Longrightarrow>
    list_all2 (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>" (* Попробовать встроить only_one сюда *)*)
-| "OclInvalid \<sqsubset> Tuple \<pi>" (* HACK *)
-| "Tuple \<pi> \<sqsubset> SupType" (* HACK *)
+| "\<pi> \<noteq> [] \<Longrightarrow>
+   OclInvalid \<sqsubset> Tuple \<pi>" (* HACK *)
+| "Tuple [SupType] \<sqsubset> SupType" (* HACK *)
 (*| "only_one False (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>"*)
 (*| "list_all2 (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
@@ -377,6 +391,8 @@ inductive direct_subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> 
    Для простоты вместо fmap можно использовать список
    По сути просто заменяем имена свойств натуральными числами
  *)
+
+print_theorems
 
 code_pred [show_modes] direct_subtype .
 
@@ -445,6 +461,14 @@ lemma q23:
    x = xa \<and> y = ya"
   by (metis hd_append list.sel(1))
 
+lemma q24:
+  "h @ x # t = ha @ xa # ta \<Longrightarrow>
+   h @ y # t = ha @ ya # ta \<Longrightarrow>
+   x \<noteq> y \<Longrightarrow>
+   x = xa \<and> y = ya"
+  by (smt append.assoc append.right_neutral append_Nil2 append_assoc append_eq_append_conv2 list.inject q23 same_append_eq self_append_conv2)
+
+
 lemma direct_subtype_antisym:
   "\<tau> \<sqsubset> \<sigma> \<Longrightarrow>
    \<sigma> \<sqsubset> \<tau> \<Longrightarrow>
@@ -454,18 +478,36 @@ lemma direct_subtype_antisym:
   apply (erule direct_subtype_Tuple_x)
   apply auto[1]
   apply auto[1]
-  apply (auto simp add: only_one_def)[1]
+  using list_all2_lengthD apply fastforce
+  apply simp
+  apply (erule direct_subtype_x_Tuple)
+  using list_all2_lengthD apply fastforce
+  apply (smt list_all2_antisym type.inject(8))
+  apply simp
+  done
+(*  apply (auto simp add: only_one_def)[1]
   apply auto[1]
   unfolding only_one_def
   apply auto[1]
-  apply (erule direct_subtype_Tuple_x)
+  apply (erule direct_subtype_x_Tuple)
+(*  apply (erule direct_subtype_Tuple_x)*)
   apply auto[1]
   apply auto[1]
   unfolding only_one_def
   apply auto[1]
   apply (smt append.assoc append.right_neutral append_Nil2 append_assoc append_eq_append_conv2 append_same_eq list.inject q22 q23 same_append_eq self_append_conv2)
-  by auto
-
+  apply auto
+(*  apply (smt q24)*)
+  apply (erule direct_subtype_x_Tuple)
+  apply auto[1]
+  apply auto[1]
+  unfolding only_one_def
+  apply auto[1]
+  apply (smt q24)
+  apply auto
+(*  apply (smt q24)*)
+  done
+*)
 (*
 lemma direct_subtype_not_trans:
   "\<tau> \<sqsubset> \<sigma> \<Longrightarrow>
@@ -591,11 +633,12 @@ lemma subtype_x_Optional_intro [intro]:
   apply (simp add: direct_subtype.intros(6) less_type_def tranclp.trancl_into_trancl)
   by (metis less_eq_type_def less_imp_le less_type_def rtranclpD subtype_x_Optional_intro'(3) sup.strict_order_iff type.inject(2))*)
 
+thm converse_rtranclp_into_rtranclp
 lemma subtype_OclInvalid_x_intro' [intro]:
   "OclInvalid \<le> \<sigma>"
   unfolding less_eq_type_def
   apply (induct \<sigma>)
-  apply (metis direct_subtype.intros(22) direct_subtype.intros(25) rtranclp.simps)
+  apply (metis direct_subtype.intros(1) direct_subtype.intros(20) direct_subtype.intros(3) rtranclp.simps)
   apply simp
   apply (simp add: direct_subtype.intros(1) r_into_rtranclp)
   apply (simp add: direct_subtype.intros(2) r_into_rtranclp)
@@ -607,7 +650,7 @@ lemma subtype_OclInvalid_x_intro' [intro]:
   apply (metis (mono_tags, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(12) direct_subtype.intros(8) fun_preserve_morphism_composition)
   apply (metis (mono_tags, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(13) direct_subtype.intros(9) fun_preserve_morphism_composition)
   apply (metis (mono_tags, lifting) converse_rtranclp_into_rtranclp direct_subtype.intros(14) direct_subtype.intros(10) fun_preserve_morphism_composition)
-  by (simp add: direct_subtype.intros(25) r_into_rtranclp)
+  by (metis append.simps(1) direct_subtype.intros(23) direct_subtype.intros(25) not_Cons_self r_into_rtranclp rtranclp.simps)
 (*  using less_eq_type_def apply auto[1]
   using less_eq_type_def apply auto[1]
   using less_eq_type_def apply auto[1]
@@ -683,6 +726,208 @@ lemma subtype_Required_x_intro [intro]:
   apply (auto)
   apply (metis (mono_tags) less_eq_type_def less_type_def rtranclpD subtype_Required_x_intro'(2) type.distinct(55))
   by (metis (mono_tags) less_eq_type_def less_type_def rtranclpD subtype_Required_x_intro'(3) type.distinct(6))
+
+
+definition "subtuple (\<pi>::'a type list) \<xi> \<equiv>
+  list_all2 (\<le>) (take (length \<xi>) \<pi>) \<xi>"
+
+lemma direct_subtype_preserve_Tuple:
+  "direct_subtype\<^sup>+\<^sup>+ (Tuple x) (Tuple y) \<Longrightarrow>
+   (\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ x y"
+  apply (rule tranclp_fun_preserve_gen_1)
+  apply (simp add: inj_def)
+  unfolding rel_limited_under_def
+  apply auto[1]
+  apply (metis (mono_tags, lifting) direct_subtype_x_OclInvalid direct_subtype_x_Tuple rangeI tranclp.simps)
+  by simp
+
+lemma direct_subtype_preserve_Tuple':
+  "(\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ x y \<Longrightarrow>
+   length x \<ge> length y"
+  apply (erule tranclp_trans_induct)
+  apply (erule direct_subtype_Tuple_x; auto)
+  apply (simp add: list_all2_lengthD)
+(*  apply (smt eq_iff length_append list.size(4) only_one_def)*)
+  by auto
+
+lemma direct_subtype_preserve_Tuple'':
+  "direct_subtype\<^sup>+\<^sup>+ (Tuple x) (Tuple y) \<Longrightarrow>
+   length x \<ge> length y"
+  by (simp add: direct_subtype_preserve_Tuple direct_subtype_preserve_Tuple')
+
+lemma direct_subtype_preserve_Tuple''':
+  "direct_subtype\<^sup>*\<^sup>* (Tuple x) (Tuple y) \<Longrightarrow>
+   length x \<ge> length y"
+  by (metis Nitpick.rtranclp_unfold direct_subtype_preserve_Tuple'' eq_refl type.inject(8))
+(*
+lemma direct_subtype_preserve_Tuple_a:
+  "(\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
+*)
+lemma list_all2_direct_subtype_tr:
+  "list_all2 direct_subtype\<^sup>*\<^sup>* x y \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* y z \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* x z"
+  by (smt list_all2_trans rtranclp_trans)
+
+thm direct_subtype_Tuple_x
+
+lemma list_all2_direct_subtype_simp1:
+  "(list_all2 direct_subtype)\<^sup>*\<^sup>* x y \<Longrightarrow> list_all2 direct_subtype\<^sup>*\<^sup>* x y"
+  apply (induct rule: rtranclp_induct)
+  apply (simp add: list_all2_refl)
+  by (metis list_all2_direct_subtype_tr list_all2_mono r_into_rtranclp)
+
+lemma q31:
+  "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length \<xi>) (\<pi>)) \<xi> \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* (take (length \<xi>) (\<pi> @ [a])) \<xi>"
+  using list_all2_lengthD by fastforce
+
+lemma q32:
+  "subtuple \<pi> \<xi> \<Longrightarrow>
+   subtuple (\<pi> @ [\<tau>]) \<xi>"
+  unfolding subtuple_def less_eq_type_def
+  using list_all2_lengthD by fastforce
+
+lemma only_one_implies_list_all1:
+  "only_one direct_subtype x y \<Longrightarrow>
+   list_all2 (\<lambda>x y. x = y \<or> direct_subtype x y) x y"
+  apply (auto simp add: only_one_def)
+  by (simp add: list.rel_refl list_all2_appendI)
+
+lemma only_one_implies_list_all2:
+  "only_one direct_subtype x y \<Longrightarrow>
+   list_all2 (\<lambda>x y. x = y \<or> direct_subtype x y)\<^sup>*\<^sup>* x y"
+  by (metis (mono_tags, lifting) list_all2_mono only_one_implies_list_all1 r_into_rtranclp)
+
+lemma only_one_implies_list_all3:
+  "only_one direct_subtype x y \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* x y"
+  by (metis (mono_tags, lifting) Nitpick.rtranclp_unfold list.rel_mono_strong only_one_implies_list_all1 r_into_rtranclp)
+
+lemma only_one_implies_list_all4:
+  "only_one direct_subtype\<^sup>*\<^sup>* x y \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* x y"
+  by (smt Nitpick.rtranclp_unfold list.rel_mono_strong only_one''_def only_one_simp'')
+(*
+lemma list_all_implies_only_one1:
+  "list_all2 direct_subtype x y \<Longrightarrow>
+   (only_one direct_subtype)\<^sup>*\<^sup>* x y"
+
+lemma list_all_implies_only_one2:
+  "(\<lambda>x y. list_all2 direct_subtype x y)\<^sup>*\<^sup>* x y \<Longrightarrow>
+   (\<lambda>x y. only_one direct_subtype x y)\<^sup>*\<^sup>* x y"
+*)
+
+lemma list_all2_direct_subtype:
+  fixes x :: "'a type list"
+    and y :: "'a type list"
+  assumes prem: "direct_subtype\<^sup>*\<^sup>* (Tuple x) (Tuple y)"
+  shows "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length y) x) y"
+proof -
+  obtain P where P: "(P :: 'a type list \<Rightarrow> 'a type list \<Rightarrow> bool) = (\<lambda>x y. list_all2 direct_subtype\<^sup>*\<^sup>* (take (length y) x) y)" by auto
+  obtain r where r: "(r :: 'a type list \<Rightarrow> 'a type list \<Rightarrow> bool) = (\<lambda>x y. direct_subtype (Tuple x) (Tuple y))" by auto
+  from prem r have major: "r\<^sup>*\<^sup>* x y"
+    by (metis Nitpick.rtranclp_unfold direct_subtype_preserve_Tuple type.inject(8))
+  from P r have cases_1: "\<And>x y. r x y \<Longrightarrow> P x y"
+    apply auto
+    apply (erule direct_subtype_Tuple_x; auto)
+    apply (simp add: list.rel_refl)
+    by (smt list_all2_lengthD list_all2_mono order_refl r_into_rtranclp rtranclp.rtrancl_refl take_all)
+(*    using list_all2_lengthD only_one_implies_list_all3 by fastforce*)
+  from P have cases_2: "\<And>x y z. r\<^sup>*\<^sup>* x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>*\<^sup>* y z \<Longrightarrow> P y z \<Longrightarrow> P x z"
+    apply auto
+  proof -
+    fix xa :: "'a type list" and ya :: "'a type list" and z :: "'a type list"
+    assume a1: "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length ya) xa) ya"
+    assume a2: "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length z) ya) z"
+    then have f3: "length (take (length z) ya) = length z"
+by (metis list_all2_lengthD)
+  have f4: "\<forall>n ts. length (take n (ts::'a type list)) = min (length ts) n"
+    by (metis length_take)
+  then have f5: "min (length ya) (length z) = length z"
+    using f3 by metis
+  then have f6: "take (length z) xa @ [] = take (min (length ya) (length z)) (take (length ya) xa @ drop (length ya) xa)"
+    by auto
+  have f7: "length (take (length ya) xa) = length ya"
+    using a1 by (metis list_all2_lengthD)
+  then have "length z = min (min (length xa) (length ya)) (min (length ya) (length z))"
+    using f3 by auto
+  then have "length (take (length z) xa) = min (length ya) (length z)"
+    using f5 f4 by (metis (no_types) min.assoc)
+  then show "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length z) xa) z"
+    using f7 f6 f4 f3 a2 a1 by (metis (no_types) append_eq_append_conv list_all2_direct_subtype_tr list_all2_takeI take_append)
+qed
+  from major cases_1 cases_2 have inv_conc: "P x y"
+    by (smt P converse_rtranclpE converse_rtranclp_into_rtranclp direct_subtype_preserve_Tuple''' list_all2_direct_subtype_simp1 r_into_rtranclp rtranclp.rtrancl_refl rtranclp_induct take_all)
+  with P show ?thesis by simp
+qed
+
+lemma q41:
+  "direct_subtype\<^sup>+\<^sup>+ (Tuple xs) (Tuple ys) \<Longrightarrow>
+   (\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>+\<^sup>+ (xs @ [x]) ys"
+  by (metis direct_subtype.intros(23) direct_subtype_preserve_Tuple not_Cons_self tranclp_into_tranclp2)
+
+lemma q42:
+  "(\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
+   (\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>+\<^sup>+ (xs @ [x]) ys"
+  by (metis (no_types, lifting) direct_subtype.intros(23) list.distinct(1) tranclp_into_tranclp2)
+
+lemma q43:
+  "(\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>*\<^sup>* (xs @ zs) xs"
+  by (metis append_self_conv direct_subtype.intros(23) rtranclp.simps)
+
+lemma q44:
+  "direct_subtype\<^sup>*\<^sup>* (Tuple (xs @ ys)) (Tuple xs)"
+  by (metis Nitpick.rtranclp_unfold append_self_conv direct_subtype.intros(23) r_into_rtranclp)
+
+lemma q45:
+  "(\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
+   (\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>+\<^sup>+ (xs @ zs) ys"
+  using q43 rtranclp_tranclp_tranclp by fastforce
+
+lemma q46:
+  "(\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>*\<^sup>* xs ys \<Longrightarrow>
+   (\<lambda>xs ys. direct_subtype (Tuple xs) (Tuple ys))\<^sup>*\<^sup>* (xs @ zs) ys"
+  by (metis (mono_tags, lifting) q43 rtranclp_trans)
+
+lemma direct_subtype_Tuple_append_any:
+  "Tuple (xs @ [x]) \<sqsubset> Tuple xs"
+  by (simp add: direct_subtype.intros(23))
+
+lemma direct_subtype_Tuple_append_any':
+  "direct_subtype\<^sup>*\<^sup>* (Tuple xs) (Tuple ys) \<Longrightarrow>
+   direct_subtype\<^sup>*\<^sup>* (Tuple (xs @ zs)) (Tuple ys)"
+  by (meson q44 rtranclp_trans)
+
+lemma q:
+  "xs \<noteq> [] \<Longrightarrow>
+   length xs \<ge> length \<xi> \<Longrightarrow>
+   list_all2 P (take (length \<xi>) xs @ [x]) \<xi> \<Longrightarrow>
+   list_all2 P (take (length \<xi>) xs) \<xi>"
+
+
+lemma q:
+  "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length \<xi>) xs @ [x]) \<xi> \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* (take (length \<xi>) xs) \<xi>"
+
+lemma q:
+  "list_all2 direct_subtype\<^sup>*\<^sup>*
+        (take (length \<xi>) xs @
+         take (length \<xi> - length xs) [x]) \<xi> \<Longrightarrow>
+   list_all2 direct_subtype\<^sup>*\<^sup>* (take (length \<xi>) xs) \<xi>"
+
+lemma subtype_Tuple_x_intro' [intro]:
+  "\<sigma> = Tuple \<xi> \<Longrightarrow> \<xi> \<noteq> [] \<Longrightarrow> length \<pi> \<ge> length \<xi> \<Longrightarrow> list_all2 (\<le>) \<pi> \<xi> \<Longrightarrow> Tuple \<pi> \<le> \<sigma>"
+  "\<sigma> = SupType \<Longrightarrow> Tuple \<pi> \<le> \<sigma>"
+  apply (unfold subtuple_def less_eq_type_def)
+(*
+  apply (auto)
+  apply (induct \<pi> arbitrary: \<xi> rule: rev_induct)
+  apply (simp add: OCL_Types.subtuple_def less_eq_type_def)
+  apply (unfold subtuple_def less_eq_type_def)
+  apply (auto)
+*)
 
 (*** Introduction Rules for Collection Types ********************************)
 
@@ -772,6 +1017,20 @@ lemma subtype_x_Collection_intro [intro]:
   apply (simp add: less_type_def)
   by (metis direct_subtype.intros(15) fun_preserve_morphism_composition')
 
+
+
+
+
+lemma subtype_x_Tuple_intro' [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
+  "\<tau> = Tuple \<pi> \<Longrightarrow> list_all2 (\<le>) \<pi> \<xi> \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
+  apply (simp add: subtype_OclInvalid_x_intro')
+
+lemma subtype_x_Tuple_intro [intro]:
+  "\<tau> = OclInvalid \<Longrightarrow> \<tau> < Tuple \<xi>"
+  "\<tau> = Tuple \<pi> \<Longrightarrow> list_all2 \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < Tuple \<xi>"
+  apply (simp add: subtype_OclInvalid_x_intro)
+
 lemma subtype_x_SupType_intro' [intro]:
   "\<tau> \<le> SupType"
   apply (induct \<tau>)
@@ -785,6 +1044,7 @@ lemma subtype_x_SupType_intro' [intro]:
   apply (metis (mono_tags, lifting) direct_subtype.intros(21) less_eq_type_def rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(3))
   apply (metis (mono_tags, lifting) direct_subtype.intros(21) less_eq_type_def rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(4))
   apply (metis (mono_tags, lifting) direct_subtype.intros(21) less_eq_type_def rtranclp.rtrancl_into_rtrancl subtype_x_Collection_intro'(5))
+
   apply (simp add: direct_subtype.intros(26) less_eq_type_def r_into_rtranclp)
   done
 
@@ -964,8 +1224,6 @@ lemma Tuple_functor:
 
 
 (*length \<xi> \<le> length \<pi> \<and>*)
-definition "subtuple (\<pi>::'a type list) \<xi> \<equiv>
-  list_all2 (\<le>) (take (length \<xi>) \<pi>) \<xi>"
 
 lemma subtype_Tuple_x'' [elim]:
   "Tuple \<pi> \<le> \<sigma> \<Longrightarrow>
@@ -1001,54 +1259,10 @@ lemma inj_Tuple:
   "inj Tuple"
   by (simp add: inj_def)
 *)
-lemma direct_subtype_preserve_Tuple:
-  "direct_subtype\<^sup>+\<^sup>+ (Tuple x) (Tuple y) \<Longrightarrow>
-   (\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ x y"
-  apply (rule tranclp_fun_preserve_gen_1)
-  apply (simp add: inj_def)
-  unfolding rel_limited_under_def
-  apply auto[1]
-  apply (metis (mono_tags, lifting) direct_subtype_x_OclInvalid direct_subtype_x_Tuple rangeI tranclp.simps)
-  by simp
 (*  apply (metis direct_subtype_x_OclInvalid direct_subtype_x_Tuple rangeI tranclp.simps)
   apply auto[1]
   done*)
 
-lemma direct_subtype_preserve_Tuple':
-  "(\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ x y \<Longrightarrow>
-   length x \<ge> length y"
-  apply (erule tranclp_trans_induct)
-  apply (erule direct_subtype_Tuple_x; auto)
-  apply (smt eq_iff length_append list.size(4) only_one_def)
-  by auto
-
-lemma direct_subtype_preserve_Tuple'':
-  "direct_subtype\<^sup>+\<^sup>+ (Tuple x) (Tuple y) \<Longrightarrow>
-   length x \<ge> length y"
-  by (simp add: direct_subtype_preserve_Tuple direct_subtype_preserve_Tuple')
-
-lemma direct_subtype_preserve_Tuple''':
-  "direct_subtype\<^sup>*\<^sup>* (Tuple x) (Tuple y) \<Longrightarrow>
-   length x \<ge> length y"
-  by (metis Nitpick.rtranclp_unfold direct_subtype_preserve_Tuple'' eq_refl type.inject(8))
-(*
-lemma direct_subtype_preserve_Tuple_a:
-  "(\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
-   list_all2 direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
-*)
-lemma list_all2_direct_subtype_tr:
-  "list_all2 direct_subtype\<^sup>*\<^sup>* x y \<Longrightarrow>
-   list_all2 direct_subtype\<^sup>*\<^sup>* y z \<Longrightarrow>
-   list_all2 direct_subtype\<^sup>*\<^sup>* x z"
-  by (smt list_all2_trans rtranclp_trans)
-
-thm direct_subtype_Tuple_x
-
-lemma list_all2_direct_subtype_simp1:
-  "(list_all2 direct_subtype)\<^sup>*\<^sup>* x y \<Longrightarrow> list_all2 direct_subtype\<^sup>*\<^sup>* x y"
-  apply (induct rule: rtranclp_induct)
-  apply (simp add: list_all2_refl)
-  by (metis list_all2_direct_subtype_tr list_all2_mono r_into_rtranclp)
   (*by (smt Nitpick.rtranclp_unfold list_all2_refl list_all2_trans rtranclp_induct rtranclp_into_tranclp1)*)
 
 (*
@@ -1065,79 +1279,6 @@ lemma only_one_direct_subtype_simp2:
   apply (induct rule: rtranclp_induct)
    apply (auto simp add: only_one_def)
 *)
-lemma only_one_implies_list_all1:
-  "only_one direct_subtype x y \<Longrightarrow>
-   list_all2 (\<lambda>x y. x = y \<or> direct_subtype x y) x y"
-  apply (auto simp add: only_one_def)
-  by (simp add: list.rel_refl list_all2_appendI)
-
-lemma only_one_implies_list_all2:
-  "only_one direct_subtype x y \<Longrightarrow>
-   list_all2 (\<lambda>x y. x = y \<or> direct_subtype x y)\<^sup>*\<^sup>* x y"
-  by (metis (mono_tags, lifting) list_all2_mono only_one_implies_list_all1 r_into_rtranclp)
-
-lemma only_one_implies_list_all3:
-  "only_one direct_subtype x y \<Longrightarrow>
-   list_all2 direct_subtype\<^sup>*\<^sup>* x y"
-  by (metis (mono_tags, lifting) Nitpick.rtranclp_unfold list.rel_mono_strong only_one_implies_list_all1 r_into_rtranclp)
-
-lemma only_one_implies_list_all4:
-  "only_one direct_subtype\<^sup>*\<^sup>* x y \<Longrightarrow>
-   list_all2 direct_subtype\<^sup>*\<^sup>* x y"
-  by (smt Nitpick.rtranclp_unfold list.rel_mono_strong only_one''_def only_one_simp'')
-(*
-lemma list_all_implies_only_one1:
-  "list_all2 direct_subtype x y \<Longrightarrow>
-   (only_one direct_subtype)\<^sup>*\<^sup>* x y"
-
-lemma list_all_implies_only_one2:
-  "(\<lambda>x y. list_all2 direct_subtype x y)\<^sup>*\<^sup>* x y \<Longrightarrow>
-   (\<lambda>x y. only_one direct_subtype x y)\<^sup>*\<^sup>* x y"
-*)
-
-lemma list_all2_direct_subtype:
-  fixes x :: "'a type list"
-    and y :: "'a type list"
-  assumes prem: "direct_subtype\<^sup>*\<^sup>* (Tuple x) (Tuple y)"
-  shows "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length y) x) y"
-proof -
-  obtain P where P: "(P :: 'a type list \<Rightarrow> 'a type list \<Rightarrow> bool) = (\<lambda>x y. list_all2 direct_subtype\<^sup>*\<^sup>* (take (length y) x) y)" by auto
-  obtain r where r: "(r :: 'a type list \<Rightarrow> 'a type list \<Rightarrow> bool) = (\<lambda>x y. direct_subtype (Tuple x) (Tuple y))" by auto
-  from prem r have major: "r\<^sup>*\<^sup>* x y"
-    by (metis Nitpick.rtranclp_unfold direct_subtype_preserve_Tuple type.inject(8))
-  from P r have cases_1: "\<And>x y. r x y \<Longrightarrow> P x y"
-    apply auto
-    apply (erule direct_subtype_Tuple_x; auto)
-    apply (simp add: list.rel_refl)
-    using list_all2_lengthD only_one_implies_list_all3 by fastforce
-  from P have cases_2: "\<And>x y z. r\<^sup>*\<^sup>* x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>*\<^sup>* y z \<Longrightarrow> P y z \<Longrightarrow> P x z"
-    apply auto
-  proof -
-    fix xa :: "'a type list" and ya :: "'a type list" and z :: "'a type list"
-    assume a1: "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length ya) xa) ya"
-    assume a2: "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length z) ya) z"
-    then have f3: "length (take (length z) ya) = length z"
-by (metis list_all2_lengthD)
-  have f4: "\<forall>n ts. length (take n (ts::'a type list)) = min (length ts) n"
-    by (metis length_take)
-  then have f5: "min (length ya) (length z) = length z"
-    using f3 by metis
-  then have f6: "take (length z) xa @ [] = take (min (length ya) (length z)) (take (length ya) xa @ drop (length ya) xa)"
-    by auto
-  have f7: "length (take (length ya) xa) = length ya"
-    using a1 by (metis list_all2_lengthD)
-  then have "length z = min (min (length xa) (length ya)) (min (length ya) (length z))"
-    using f3 by auto
-  then have "length (take (length z) xa) = min (length ya) (length z)"
-    using f5 f4 by (metis (no_types) min.assoc)
-  then show "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length z) xa) z"
-    using f7 f6 f4 f3 a2 a1 by (metis (no_types) append_eq_append_conv list_all2_direct_subtype_tr list_all2_takeI take_append)
-qed
-  from major cases_1 cases_2 have inv_conc: "P x y"
-    by (smt P converse_rtranclpE converse_rtranclp_into_rtranclp direct_subtype_preserve_Tuple''' list_all2_direct_subtype_simp1 r_into_rtranclp rtranclp.rtrancl_refl rtranclp_induct take_all)
-  with P show ?thesis by simp
-qed
-
 (*
 lemma list_all2_direct_subtype:
   assumes prem: "direct_subtype\<^sup>*\<^sup>* (Tuple x) (Tuple y)"
@@ -1196,6 +1337,12 @@ lemma subtype_Tuple_x' [elim]:
   apply (simp add: less_eq_type_def list.rel_refl subtuple_def)
   by (metis (mono_tags) less_eq_type_def list_all2_direct_subtype rtranclp.rtrancl_into_rtrancl subtype_Tuple_x'')
 
+lemma subtype_Tuple_x''' [elim]:
+  "direct_subtype\<^sup>*\<^sup>* (Tuple \<pi>) \<sigma> \<Longrightarrow>
+   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  by (metis (mono_tags) less_eq_type_def subtype_Tuple_x')
+(*
 lemma q:
   "direct_subtype\<^sup>*\<^sup>* z \<sigma> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> z \<Longrightarrow>
@@ -1204,14 +1351,80 @@ lemma q:
   apply (induct rule: rtranclp_induct)
   apply (metis (mono_tags, lifting) direct_subtype_antisym less_eq_type_def rtranclp.rtrancl_into_rtrancl rtranclp.rtrancl_refl subtuple_def subtype_Tuple_x')
   apply auto
+*)
 (*  by (smt converse_rtranclp_into_rtranclp less_eq_type_def rtranclp.rtrancl_into_rtrancl subtuple_def subtype_Tuple_x')*)
+(*
+lemma list_all2_direct_subtype1:
+  fixes x :: "'a type list"
+    and y :: "'a type list"
+  assumes prem: "direct_subtype\<^sup>+\<^sup>+ (Tuple x) (Tuple y)"
+  shows "x \<noteq> y"
+proof -
+  obtain P where P: "(P :: 'a type list \<Rightarrow> 'a type list \<Rightarrow> bool) = (\<lambda>x y. x \<noteq> y)" by auto
+  obtain r where r: "(r :: 'a type list \<Rightarrow> 'a type list \<Rightarrow> bool) = (\<lambda>x y. direct_subtype (Tuple x) (Tuple y))" by auto
+  from prem r have major: "r\<^sup>+\<^sup>+ x y"
+    by (simp add: direct_subtype_preserve_Tuple tranclp_into_rtranclp)
+  from P r have cases_1: "\<And>x y. r x y \<Longrightarrow> P x y"
+    apply auto
+    apply (erule direct_subtype_Tuple_x; auto)
+    using direct_subtype.intros(24) direct_subtype_antisym by auto
+  from P have cases_2: "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z"
+    apply auto
+    sorry
+(*  from major cases_1 cases_2 have inv_conc: "P x y"
+    by (smt tranclp_trans_induct)
+  with P show ?thesis by simp*)
+qed
+*)
+lemma q:
+  "only_one direct_subtype \<pi> \<xi> \<Longrightarrow> only_one direct_subtype \<xi> \<pi> \<Longrightarrow> False"
+  using direct_subtype.intros(24) direct_subtype_antisym by blast
+
+lemma only_one_implies_list_all5:
+  "only_one direct_subtype x y \<Longrightarrow>
+   (list_all2 (\<lambda>x y. x = y \<or> direct_subtype x y) x y \<Longrightarrow> P) \<Longrightarrow> P"
+  by (simp add: only_one_implies_list_all1)
+(*
+lemma q:
+  "x \<le> y \<Longrightarrow> x = y \<or> x \<sqsubset> y"
+  for x :: "'a type"
+
+lemma q:
+  "list_all2 (\<le>) (take (length ys) xs) ys \<Longrightarrow>
+   list_all2 (\<lambda>x y. x = y \<or> x \<sqsubset> y) ys xs \<Longrightarrow> False"
+
+lemma q:
+  "direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>::'a type) (Tuple \<xi>) \<Longrightarrow> \<pi> \<noteq> \<xi>"
+  apply (drule tranclpD; auto)
+  apply (erule direct_subtype_Tuple_x; auto)
+  apply (metis (mono_tags) OCL_Types.subtype_SupType_x' less_eq_type_def type.simps(28))
+  using direct_subtype_preserve_Tuple''' apply fastforce
+   apply (erule_tac ?\<pi>="\<xi>'" in subtype_Tuple_x''')
+    apply (erule only_one_implies_list_all5)
+  apply (simp add: subtuple_def)
+
+  thm subtype_Tuple_x'''
+lemma subtype_Tuple_x [elim]:
+  "Tuple \<pi> < Tuple \<xi> \<longleftrightarrow> Tuple \<pi> \<le> Tuple \<xi> \<and> \<pi> \<noteq> \<xi>"
+  apply (rule iffI)
+  prefer 2
+  using subtype_x_Collection_intro(2) apply fastforce
+  apply auto
+  unfolding less_type_def less_eq_type_def
+  apply (erule tranclp_induct)
+  apply simp
 
 lemma subtype_Tuple_x [elim]:
+  "Tuple \<pi> < Tuple \<xi> \<Longrightarrow> (Tuple \<pi> \<le> Tuple \<xi> \<Longrightarrow> \<pi> \<noteq> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (auto)
+*)
+lemma subtype_Tuple_x [elim]:
   "Tuple \<pi> < \<sigma> \<Longrightarrow>
-   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> \<pi> \<noteq> \<xi> \<Longrightarrow> subtuple \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> (*\<pi> \<noteq> \<xi> \<Longrightarrow>*) subtuple \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def subtuple_def
-  apply (drule tranclpD; auto)
+  by (metis (mono_tags) less_type_def subtype_Tuple_x''' tranclp_into_rtranclp)
+(*  unfolding less_type_def subtuple_def
+  apply (drule tranclpD; auto)*)
 (*  apply (induct rule: tranclp_induct)
   apply (metis (mono_tags, lifting) direct_subtype_antisym less_eq_type_def rtranclp.rtrancl_into_rtrancl rtranclp.rtrancl_refl subtuple_def subtype_Tuple_x')
   apply (simp add: less_type_def list.rel_refl subtuple_def)
@@ -1311,8 +1524,6 @@ lemma subtype_x_Required':
   apply (metis (mono_tags) less_eq_type_def subtype_SupType_x' type.simps(14))
   apply (metis (mono_tags) less_eq_type_def subtype_SupType_x' type.simps(14))
   apply (metis (mono_tags) less_eq_type_def subtype_SupType_x' type.simps(14))
-  apply (metis (mono_tags) less_eq_type_def subtype_Tuple_x'' type.simps(14) type.simps(76))
-  apply (metis (mono_tags) OCL_Types.subtype_Tuple_x' less_eq_type_def type.distinct(5) type.simps(76))
   by (metis (mono_tags) less_eq_type_def subtype_SupType_x' type.simps(14))
 (*  using less_type_def rtranclpD apply fastforce
   using less_type_def rtranclpD apply fastforce
@@ -1331,6 +1542,28 @@ lemma subtype_x_Required':
   using less_eq_type_def apply auto[1]
   using less_eq_type_def apply auto[1]
   using less_eq_type_def apply auto[1]*)
+
+lemma subtype_x_Optional''' [elim]:
+  "\<tau> \<le> \<sigma>[?] \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_eq_type_def
+
+lemma subtype_x_Optional''' [elim]:
+  "\<tau> \<le> \<sigma>[?] \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_eq_type_def
+  apply (erule rtranclp.cases)
+  apply auto[1]
+  apply auto[1]
+  apply (erule direct_subtype_x_Optional)
+  apply (metis less_eq_type_def subtype_x_OclVoid')
+
 
 lemma subtype_x_Required'' [elim]:
   "\<tau> < \<sigma>[1] \<Longrightarrow>
