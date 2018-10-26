@@ -335,27 +335,78 @@ proof -
     by (simp add: FR GR)
 qed
 
-lemma q:
-  "    S\<^sup>+\<^sup>+ x y \<Longrightarrow>
-       (y \<in> range f \<Longrightarrow> R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) x) (restrict (the_inv f) (range f) y)) \<Longrightarrow>
-       (y \<in> range g \<Longrightarrow>
-        restrict (the_inv f) (range f) x \<noteq> restrict (the_inv g) (range g) y \<Longrightarrow>
-        R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) x) (restrict (the_inv g) (range g) y)) \<Longrightarrow>
-       S\<^sup>+\<^sup>+ y z \<Longrightarrow>
-       (y \<in> range f \<Longrightarrow>
-        restrict (the_inv f) (range f) y \<noteq> restrict (the_inv g) (range g) z \<Longrightarrow>
-        R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) y) (restrict (the_inv g) (range g) z)) \<Longrightarrow>
-       (y \<in> range g \<Longrightarrow> R\<^sup>+\<^sup>+ (restrict (the_inv g) (range g) y) (restrict (the_inv g) (range g) z)) \<Longrightarrow>
-       rel_limited_under S f \<Longrightarrow> inj f \<Longrightarrow> (\<forall>x y. S (f x) (f y) \<longrightarrow> R x y) \<Longrightarrow>
-       rel_limited_under S g \<Longrightarrow> inj g \<Longrightarrow> (\<forall>x y. S (g x) (g y) \<longrightarrow> R x y) \<Longrightarrow>
-       (\<And>x. S (f x) (g x)) \<Longrightarrow>
-       (\<And>x y. S (f x) (g y) \<Longrightarrow> x \<noteq> y \<Longrightarrow> R x y) \<Longrightarrow>
-       (\<And>x y. \<not> S\<^sup>+\<^sup>+ (g x) (f y)) \<Longrightarrow>
-       (\<And>x y z. S\<^sup>+\<^sup>+ (f x) y \<Longrightarrow> S\<^sup>+\<^sup>+ y (g z) \<Longrightarrow> (\<exists>z. y = f z \<or> y = g z)) \<Longrightarrow>
-       x \<in> range f \<Longrightarrow>
-       z \<in> range g \<Longrightarrow>
-       restrict (the_inv f) (range f) x \<noteq> restrict (the_inv g) (range g) z \<longrightarrow>
-       R\<^sup>+\<^sup>+ (restrict (the_inv f) (range f) x) (restrict (the_inv g) (range g) z)"
-  by (smt f_the_inv_into_f rangeI tranclp_trans)
+lemma list_all2_rtrancl1:
+  "(list_all2 P)\<^sup>*\<^sup>* xs ys \<Longrightarrow>
+   list_all2 P\<^sup>*\<^sup>* xs ys"
+  apply (induct rule: rtranclp_induct)
+  apply (simp add: list.rel_refl)
+  by (smt list_all2_trans rtranclp.rtrancl_into_rtrancl)
 
+lemma list_all2_rtrancl1':
+  "(list_all2 P)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
+   list_all2 P\<^sup>+\<^sup>+ xs ys"
+  apply (induct rule: tranclp_induct)
+  apply (simp add: list.rel_mono_strong)
+  by (smt list_all2_trans tranclp.trancl_into_trancl)
+
+lemma list_all2_rtrancl2:
+  assumes as_r: "(\<forall>x. P x x)" 
+  shows "(list_all2 P\<^sup>*\<^sup>*) xs ys \<Longrightarrow> (list_all2 P)\<^sup>*\<^sup>* xs ys"
+proof(induction rule: list_all2_induct)
+  case Nil then show ?case by simp
+next
+  case (Cons x xs y ys) show ?case
+  proof -
+    from as_r obtain zs where 
+      lp_xs_zs: "(list_all2 P) xs zs" and lp_pp_xs_zs: "(list_all2 P)\<^sup>+\<^sup>+ zs ys"
+      by (metis Cons.IH Nitpick.rtranclp_unfold list_all2_refl 
+         tranclp.r_into_trancl)
+    from Cons.hyps(1) have x_xs_y_zs: "(list_all2 P)\<^sup>*\<^sup>* (x#xs) (y#zs)"
+    proof(induction rule: rtranclp_induct)
+      case base then show ?case using as_r lp_xs_zs by blast
+    next
+      case (step y z) then show ?case 
+        using as_r by (metis list.simps(11) list_all2_same rtranclp.simps)
+    qed
+    from lp_pp_xs_zs have "(list_all2 P)\<^sup>*\<^sup>* (y#zs) (y#ys)"
+    proof(induction rule: tranclp_induct)
+      case (base y) then show ?case using as_r by blast
+    next
+      case (step y z) then show ?case 
+        using as_r by (simp add: rtranclp.rtrancl_into_rtrancl)
+    qed
+    with x_xs_y_zs show ?thesis by force
+  qed
+qed
+(*
+lemma list_all2_rtrancl2':
+  assumes as_r: "(\<forall>x. P x x)" 
+  shows "(list_all2 P\<^sup>+\<^sup>+) xs ys \<Longrightarrow> (list_all2 P)\<^sup>+\<^sup>+ xs ys"
+proof(induction rule: list_all2_induct)
+  case Nil then show ?case
+    by (simp add: tranclp.r_into_trancl)
+next
+  case (Cons x xs y ys)
+  show ?case
+  proof -
+    define Q where Q: "Q = (\<lambda> x y. (list_all2 P)\<^sup>+\<^sup>+ (x#xs) (y#ys))"
+    from as_r obtain zs where zs: "(list_all2 P) xs zs \<and> (list_all2 P)\<^sup>+\<^sup>+ zs ys"
+      by (metis Cons.IH list_all2_refl)
+    define R where R: "R = (\<lambda> y. (list_all2 P)\<^sup>+\<^sup>+ (x#xs) (y#zs))"
+    with as_r zs have R_case_1: "R x" by blast
+    from as_r R have R_case_2: "\<And>a b. P\<^sup>+\<^sup>+ x a \<Longrightarrow> P a b \<Longrightarrow> R a \<Longrightarrow> R b"
+ 
+    with rtranclp_induct Cons.hyps R_case_1 have R_y: "R y" by smt
+    define S where S: "S = (\<lambda> ys. (list_all2 P)\<^sup>*\<^sup>* (y#zs) (y#ys))"
+    with as_r have S_case_1: "\<And>ys. (list_all2 P) zs ys \<Longrightarrow> S ys" by blast
+    from as_r S have S_case_2: 
+      "\<And>as bs. (list_all2 P)\<^sup>+\<^sup>+ zs as \<Longrightarrow> (list_all2 P) as bs \<Longrightarrow> S as \<Longrightarrow> S bs"
+      by (simp add: rtranclp.rtrancl_into_rtrancl)
+    with tranclp_induct as_r zs S S_case_1 have "S ys" 
+      by (smt list_all2_refl rtranclp.rtrancl_refl tranclp.r_into_trancl)
+    with Q R_y R S have "Q x y" by force
+    with Q show ?thesis by blast
+  qed
+qed
+*)
 end
