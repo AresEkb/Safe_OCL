@@ -342,7 +342,7 @@ lemma list_all2_rtrancl1:
   apply (simp add: list.rel_refl)
   by (smt list_all2_trans rtranclp.rtrancl_into_rtrancl)
 
-lemma list_all2_rtrancl1':
+lemma list_all2_trancl1:
   "(list_all2 P)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
    list_all2 P\<^sup>+\<^sup>+ xs ys"
   apply (induct rule: tranclp_induct)
@@ -378,35 +378,51 @@ next
     with x_xs_y_zs show ?thesis by force
   qed
 qed
-(*
-lemma list_all2_rtrancl2':
+
+lemma list_all2_trancl2:
   assumes as_r: "(\<forall>x. P x x)" 
   shows "(list_all2 P\<^sup>+\<^sup>+) xs ys \<Longrightarrow> (list_all2 P)\<^sup>+\<^sup>+ xs ys"
 proof(induction rule: list_all2_induct)
   case Nil then show ?case
     by (simp add: tranclp.r_into_trancl)
 next
-  case (Cons x xs y ys)
-  show ?case
+  case (Cons x xs y ys) show ?case
   proof -
-    define Q where Q: "Q = (\<lambda> x y. (list_all2 P)\<^sup>+\<^sup>+ (x#xs) (y#ys))"
-    from as_r obtain zs where zs: "(list_all2 P) xs zs \<and> (list_all2 P)\<^sup>+\<^sup>+ zs ys"
-      by (metis Cons.IH list_all2_refl)
-    define R where R: "R = (\<lambda> y. (list_all2 P)\<^sup>+\<^sup>+ (x#xs) (y#zs))"
-    with as_r zs have R_case_1: "R x" by blast
-    from as_r R have R_case_2: "\<And>a b. P\<^sup>+\<^sup>+ x a \<Longrightarrow> P a b \<Longrightarrow> R a \<Longrightarrow> R b"
- 
-    with rtranclp_induct Cons.hyps R_case_1 have R_y: "R y" by smt
-    define S where S: "S = (\<lambda> ys. (list_all2 P)\<^sup>*\<^sup>* (y#zs) (y#ys))"
-    with as_r have S_case_1: "\<And>ys. (list_all2 P) zs ys \<Longrightarrow> S ys" by blast
-    from as_r S have S_case_2: 
-      "\<And>as bs. (list_all2 P)\<^sup>+\<^sup>+ zs as \<Longrightarrow> (list_all2 P) as bs \<Longrightarrow> S as \<Longrightarrow> S bs"
-      by (simp add: rtranclp.rtrancl_into_rtrancl)
-    with tranclp_induct as_r zs S S_case_1 have "S ys" 
-      by (smt list_all2_refl rtranclp.rtrancl_refl tranclp.r_into_trancl)
-    with Q R_y R S have "Q x y" by force
-    with Q show ?thesis by blast
+    from as_r obtain zs where 
+      lp_xs_zs: "(list_all2 P) xs zs" and lp_pp_xs_zs: "(list_all2 P)\<^sup>+\<^sup>+ zs ys"
+      using Cons.IH list_all2_refl by blast
+    from Cons.hyps(1) have x_xs_y_zs: "(list_all2 P)\<^sup>+\<^sup>+ (x#xs) (y#zs)"
+    proof(induction rule: tranclp_induct)
+      case base then show ?case using as_r lp_xs_zs by blast
+    next
+      case (step y z) then show ?case
+        using as_r by (metis list.rel_inject(2) list_all2_same tranclp.trancl_into_trancl)
+    qed
+    from lp_pp_xs_zs have "(list_all2 P)\<^sup>+\<^sup>+ (y#zs) (y#ys)"
+    proof(induction rule: tranclp_induct)
+      case (base y) then show ?case using as_r by blast
+    next
+      case (step y z) then show ?case
+        using as_r
+        by (metis list.rel_inject(2) tranclp.simps)
+    qed
+    with x_xs_y_zs show ?thesis by force
   qed
 qed
-*)
+
+lemma eq_trancl:
+  "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y =
+   (\<lambda>x y. x = y \<or> P\<^sup>+\<^sup>+ x y) x y"
+  apply auto
+  apply (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp rtranclpD rtranclp_idemp)
+  apply (metis (mono_tags, lifting) mono_rtranclp rtranclpD tranclp.r_into_trancl tranclp_into_rtranclp)
+  done
+
+lemma tranclp_into_rtranclp2:
+  "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y = (\<lambda>x y. P x y)\<^sup>*\<^sup>* x y"
+  apply auto
+  apply (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp rtranclp_idemp tranclp_into_rtranclp) 
+  apply (metis (mono_tags, lifting) mono_rtranclp rtranclpD tranclp.r_into_trancl)
+  done
+
 end
