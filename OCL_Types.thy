@@ -49,7 +49,7 @@ datatype 'a type =
 | OrderedSet "'a type" (* Этого типа почему-то нет в A.2.5, но есть в 8.2 *)
 | Bag "'a type"
 | Sequence "'a type"
-| Tuple "'a type list"
+| Tuple "(nat, 'a type) fmap"
 
 term "Set Real[?]"
 term "Set Real[1]"
@@ -227,39 +227,6 @@ inductive_cases direct_subtype_x_Tuple[elim]: "\<tau> \<sqsubset> Tuple \<pi>"
 inductive_cases direct_subtype_Tuple_x[elim]: "Tuple \<pi> \<sqsubset> \<sigma>"
 inductive_cases direct_subtype_x_SupType[elim]: "\<tau> \<sqsubset> SupType"
 inductive_cases direct_subtype_SupType_x[elim]: "SupType \<sqsubset> \<sigma>"
-(*
-lemma q21:
-  "x # xs = yh @ xa # yt \<Longrightarrow>
-   y # xs = yh @ ya # yt \<Longrightarrow>
-   x \<noteq> y \<Longrightarrow>
-   yh = []"
-  by (metis hd_append list.sel(1))
-
-lemma q22:
-  "x # xs = yh @ xa # yt \<Longrightarrow>
-   y # xs = yh @ ya # yt \<Longrightarrow>
-   x \<noteq> y \<Longrightarrow>
-   xs = yt"
-  by (metis append_eq_Cons_conv list.inject)
-
-lemma q23:
-  "x # xs = yh @ xa # yt \<Longrightarrow>
-   y # xs = yh @ ya # yt \<Longrightarrow>
-   x \<noteq> y \<Longrightarrow>
-   x = xa \<and> y = ya"
-  by (metis hd_append list.sel(1))
-
-lemma q24:
-  "h @ x # t = ha @ xa # ta \<Longrightarrow>
-   h @ y # t = ha @ ya # ta \<Longrightarrow>
-   x \<noteq> y \<Longrightarrow>
-   x = xa \<and> y = ya"
-  by (smt append.assoc append.right_neutral append_Nil2 append_assoc append_eq_append_conv2 list.inject q23 same_append_eq self_append_conv2)
-
-lemma list_all2_not_append2:
-  "list_all2 P xs (xs @ ys) \<Longrightarrow> ys \<noteq> [] \<Longrightarrow> False"
-  unfolding list_all2_append2 by auto
-*)
 
 lemma direct_subtype_antisym:
   "\<tau> \<sqsubset> \<sigma> \<Longrightarrow>
@@ -268,7 +235,8 @@ lemma direct_subtype_antisym:
   apply (induct rule: direct_subtype.induct)
   using direct_basic_subtype_antisym apply auto
   apply (erule direct_subtype_x_Tuple; auto)
-  by (smt length_take list_all2_antisym list_all2_lengthD min.cobounded1 subtuple_def take_all)
+  apply (erule subtuple_antisym; simp)
+  done
 
 instantiation type :: (order) order
 begin
@@ -415,7 +383,7 @@ lemma direct_subtype_preserve_Tuple:
   apply auto[1]
   apply (metis (mono_tags, lifting) direct_subtype_x_OclInvalid direct_subtype_x_Tuple rangeI tranclp.simps)
   by simp
-
+(*
 lemma direct_subtype_preserve_Tuple':
   "(\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ x y \<Longrightarrow>
    length x \<ge> length y"
@@ -450,6 +418,7 @@ lemma q31:
   "list_all2 direct_subtype\<^sup>*\<^sup>* (take (length \<xi>) (\<pi>)) \<xi> \<Longrightarrow>
    list_all2 direct_subtype\<^sup>*\<^sup>* (take (length \<xi>) (\<pi> @ [a])) \<xi>"
   using list_all2_lengthD by fastforce
+*)
 (*
 lemma q32:
   "subtuple \<pi> \<xi> \<Longrightarrow>
@@ -681,13 +650,14 @@ lemma q53:
 lemma fun_preserve_morphism_compositionE:
   "(\<And>x y. R x y \<Longrightarrow> S (f x) (f y)) \<Longrightarrow> R\<^sup>*\<^sup>* x y \<Longrightarrow> S\<^sup>*\<^sup>* (f x) (f y)"
 *)
+(*
 lemma q61:
   "(\<And>\<pi> \<xi>. list_all2 (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
     Tuple \<pi> \<sqsubset> Tuple \<xi>) \<Longrightarrow>
    (list_all2 (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi> \<Longrightarrow>
    (\<lambda>\<pi> \<xi>. Tuple \<pi> \<sqsubset> Tuple \<xi>)\<^sup>*\<^sup>* \<pi> \<xi>"
   using direct_subtype_antisym by blast
-(*  by blast*)
+*)
 
 lemma q62:
   "R\<^sup>*\<^sup>* x y \<Longrightarrow> (\<And>x y. R x y \<Longrightarrow> x \<noteq> y \<Longrightarrow> S x y) \<Longrightarrow> S\<^sup>*\<^sup>* x y"
@@ -1179,7 +1149,7 @@ lemma subtype_Tuple_Tuple:
 
 lemma subtype_Tuple_Tuple':
   "(subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (set \<pi>) \<Longrightarrow>
+   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
   apply (induct rule: tranclp_induct)
   apply (metis (mono_tags, lifting) subtuple_mono tranclp.r_into_trancl)
@@ -1193,14 +1163,14 @@ lemma subtype_Tuple_Tuple'':
 
 lemma subtype_Tuple_Tuple''':
   "direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>) \<Longrightarrow>
-   acyclic_in direct_subtype (set \<pi>) \<Longrightarrow>
+   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
    subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
   by (simp add: subtype_Tuple_Tuple subtype_Tuple_Tuple' subtype_Tuple_Tuple'')
 
 
 lemma subtype_Tuple_x':
   "Tuple \<pi> < \<sigma> \<Longrightarrow>
-   acyclic_in direct_subtype (set \<pi>) \<Longrightarrow>
+   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
    (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
@@ -1208,9 +1178,27 @@ lemma subtype_Tuple_x':
   apply (metis (mono_tags, lifting) Nitpick.rtranclp_unfold direct_subtype_Tuple_x r_into_rtranclp subtuple_mono)
   by (metis (no_types, lifting) direct_subtype_SupType_x direct_subtype_Tuple_x subtype_Tuple_Tuple''' tranclp.trancl_into_trancl)
 
+definition
+  "subtuple' f xs ys \<equiv>
+    fmdom ys |\<subseteq>| fmdom xs \<and>
+    (\<forall>y. y |\<in>| fmdom ys \<longrightarrow> (\<exists>a b. fmlookup xs y = Some a \<and> fmlookup ys y = Some b \<and> f a b))"
+
+lemma subtuple'_mono [mono]:
+  "(\<And>x y. x \<in> fmran' xs \<Longrightarrow> y \<in> fmran' ys \<Longrightarrow> f x y \<longrightarrow> g x y) \<Longrightarrow>
+   subtuple' f xs ys \<longrightarrow> subtuple' g xs ys"
+  by (metis fmran'I subtuple'_def)
+
+lemma subtuple'_code [code]:
+  "subtuple' f xs ys \<longleftrightarrow>
+    fmdom ys |\<subseteq>| fmdom xs \<and>
+    fBall (fmdom ys)
+    (\<lambda>y. (case (fmlookup xs y, fmlookup ys y) of
+      (Some a, Some b) \<Rightarrow> f a b | _ \<Rightarrow> False))"
+  unfolding subtuple'_def fBall_alt_def
+  apply auto
+  by (metis (mono_tags, lifting) fmdomE fset_rev_mp option.simps(5))
+
 (* TODO: Rename subtuple to strict_subtuple? *)
-definition "subtuple' f xs ys \<equiv>
-  list_all2 f (take (length ys) xs) ys"
 
 lemma subtuple_eq:
   "subtuple f xs ys \<longleftrightarrow> xs \<noteq> ys \<and> subtuple' f xs ys"
@@ -1219,7 +1207,7 @@ lemma subtuple_eq:
 lemma subtuple_eq2:
   "(\<And>x. f x x) \<Longrightarrow> subtuple' f xs ys \<longleftrightarrow> xs = ys \<or> subtuple f xs ys"
   apply (auto simp add: subtuple'_def subtuple_def)
-  by (simp add: list_all2_refl)
+  done
 
 lemma subtuple'_elim:
   "subtuple' f xs ys \<Longrightarrow> (\<And>x. f x x) \<Longrightarrow> (xs = ys \<or> subtuple f xs ys \<Longrightarrow> P) \<Longrightarrow> P"
@@ -1227,7 +1215,7 @@ lemma subtuple'_elim:
 
 lemma subtype_Tuple_x''':
   "Tuple \<pi> \<le> \<sigma> \<Longrightarrow>
-   acyclic_in direct_subtype (set \<pi>) \<Longrightarrow>
+   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
    (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple' (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
