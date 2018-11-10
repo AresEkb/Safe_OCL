@@ -4,28 +4,96 @@ theory TupleAcyclicTest6
 begin
 
 datatype t = A | B | C "(nat, t) fmap"
+(*
+abbreviation
+  "suptuple f xs ys \<equiv>
+    fmfilter (\<lambda>k. k |\<notin>| fmdom ys) xs ++\<^sub>f
+    fmmap_keys (\<lambda>k x. f x (the (fmlookup ys k))) (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs) ++\<^sub>f
+    fmfilter (\<lambda>k. k |\<notin>| fmdom xs) ys"
 
-definition "t1 \<equiv> fmupd (1::nat) (A::t) (fmupd (2::nat) (B::t) fmempty)"
-definition "t2 \<equiv> fmupd (3::nat) (B::t) (fmupd (1::nat) (A::t) (fmupd (2::nat) (B::t) fmempty))"
+abbreviation
+  "suptuple f xs ys \<equiv>
+    fmmap (\<lambda>k x. f x (case (fmlookup ys k) of Some y \<Rightarrow> y | None \<Rightarrow> x)) xs"
+*)
+
+
+term fset_of_fmap
+term fmap_of_list
+term sorted_list_of_fmap
+(*
+abbreviation
+  "supc f xs ys \<equiv>
+    fmmap_keys
+      (\<lambda>k x. f x (the (fmlookup ys k)))
+      (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
+
+abbreviation
+  "supc f xs ys \<equiv>
+    fmap_of_list (map
+      (\<lambda>(k, x). (k, f x (the (fmlookup ys k))))
+      (sorted_list_of_fmap (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)))"
+*)
+
+term map
+
+fun supc where
+  "supc f xs ys =
+    fmap_of_list (map
+      (\<lambda>k. (k, f (the (fmlookup xs k)) (the (fmlookup ys k))))
+      (sorted_list_of_fset (fmdom xs |\<inter>| fmdom ys)))"
+
+term fmfilter
+
+fun sup_t (infixl "\<squnion>" 65) where
+  "A \<squnion> _ = A"
+| "B \<squnion> B = B"
+| "B \<squnion> _ = A"
+| "C xs \<squnion> C ys = C (supc (\<squnion>) xs ys)"
+| "C xs \<squnion> _ = A"
+
+(*
+function sup_t (infixl "\<squnion>" 65) where
+  "A \<squnion> _ = A"
+| "B \<squnion> x = (if x = B then B else A)"
+| "C xs \<squnion> x = (case x of C ys \<Rightarrow> C (supc sup_t xs ys) | _ \<Rightarrow> A)"
+  by pat_completeness auto
+termination
+  apply auto
+*)
+
+
+value "size (2::nat)"
+value "\<Sum>x\<in>set [1::nat, 2::nat]. x"
+
+lemma q:
+  "xs \<noteq> fmempty \<Longrightarrow> q = size xa \<Longrightarrow> w = Suc (\<Sum>x\<in>fset (fset_of_fmap xs). Suc (size x)) \<Longrightarrow> q < w"
+  nitpick
+
+  term fset_of_fmap
+
+definition "t3 \<equiv> fmupd (1::nat) (A::t) (fmupd (2::nat) (B::t) fmempty)"
+definition "t4 \<equiv> fmupd (3::nat) (B::t) (fmupd (1::nat) (A::t) (fmupd (2::nat) (B::t) fmempty))"
 
 (* Подумать над направлением этого символа, по идее должно быть наоборот *)
 inductive subtype ("_ \<sqsubset> _" [65, 65] 65) where
   "A \<sqsubset> B"
-| "subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) xs ys \<Longrightarrow>
+| "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) xs ys \<Longrightarrow>
    C xs \<sqsubset> C ys"
 
 code_pred [show_modes] subtype .
 
-value "subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) t1 t1"
-value "subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) t1 t2"
-value "subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) t2 t1"
+value "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) t3 t3"
+value "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) t3 t4"
+value "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y) t4 t3"
 
 lemma subtype_asym:
   "x \<sqsubset> y \<Longrightarrow> y \<sqsubset> x \<Longrightarrow> False"
   apply (induct rule: subtype.induct)
   using subtype.cases apply blast
-  apply (erule subtype.cases; auto simp add: subtuple_def)
-  by (metis fmap_ext fmlookup_restrict_fset fmrestrict_fset_dom option.inject)
+  apply (erule subtype.cases)
+  apply auto[1]
+  apply (rule_tac ?f="subtype" and ?xs="xs" and ?ys="ys" in strict_subtuple_antisym; simp)
+  done
 
 lemma trancl_subtype_x_A [elim]:
   "subtype\<^sup>+\<^sup>+ x A \<Longrightarrow> P"
@@ -38,42 +106,43 @@ lemma trancl_subtype_B_x [elim]:
   using subtype.cases by auto
 
 lemma C_functor:
-  "functor_under_rel (subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)) subtype C"
+  "functor_under_rel (strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)) subtype C"
   unfolding functor_under_rel_def rel_limited_under_def
   apply auto
   apply (metis rangeI subtype.simps t.distinct(5))
   apply (meson injI t.inject)
+  using subtype_asym apply auto[1]
   using subtype.simps by blast
 
 lemma trancl_subtype_C_C:
   "subtype\<^sup>+\<^sup>+ (C xs) (C ys) \<Longrightarrow>
-   (subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ xs ys"
+   (strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ xs ys"
   using C_functor tranclp_fun_preserve_gen_1a by fastforce
 
 lemma trancl_subtype_C_C':
-  "(subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
+  "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
    acyclic_in subtype (fmran' xs) \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ xs ys"
+   strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ xs ys"
   apply (induct rule: tranclp_induct)
-  apply (metis (mono_tags, lifting) subtuple_mono tranclp.r_into_trancl)
-  using subtuple_trans3 by blast
+  apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
+  using strict_subtuple_trans3 by blast
 
 lemma trancl_subtype_C_C'':
-  "subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
-   subtuple subtype\<^sup>*\<^sup>* xs ys"
+  "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
+   strict_subtuple subtype\<^sup>*\<^sup>* xs ys"
   unfolding tranclp_into_rtranclp2
   by simp
 
 lemma trancl_subtype_C_C''':
   "subtype\<^sup>+\<^sup>+ (C xs) (C ys) \<Longrightarrow>
    acyclic_in subtype (fmran' xs) \<Longrightarrow>
-   subtuple subtype\<^sup>*\<^sup>* xs ys"
-  by (simp add: trancl_subtype_C_C trancl_subtype_C_C' trancl_subtype_C_C'')
+   strict_subtuple subtype\<^sup>*\<^sup>* xs ys"
+  using trancl_subtype_C_C trancl_subtype_C_C' trancl_subtype_C_C'' by blast
 
 lemma trancl_subtype_C_x':
   "subtype\<^sup>+\<^sup>+ (C xs) y \<Longrightarrow>
    acyclic_in subtype (fmran' xs) \<Longrightarrow>
-   (\<And>ys. y = C ys \<Longrightarrow> subtuple subtype\<^sup>*\<^sup>* xs ys \<Longrightarrow> P) \<Longrightarrow> P"
+   (\<And>ys. y = C ys \<Longrightarrow> strict_subtuple subtype\<^sup>*\<^sup>* xs ys \<Longrightarrow> P) \<Longrightarrow> P"
   apply (induct rule: tranclp_induct)
   apply (metis subtype.cases t.distinct(3) trancl_subtype_C_C''' tranclp.r_into_trancl)
   by (metis subtype.cases t.distinct(4) trancl_subtype_C_C''' tranclp.trancl_into_trancl)
@@ -83,11 +152,12 @@ lemma trancl_subtype_acyclic:
   apply (induct x arbitrary: y)
   apply auto[1]
   apply auto[1]
-  by (metis subtuple_def trancl_subtype_C_C''' tranclp_trans)
+  by (meson trancl_subtype_C_C''' tranclp_trans)
 
 lemma trancl_subtype_C_x [elim]:
   "subtype\<^sup>+\<^sup>+ (C xs) y \<Longrightarrow>
    (\<And>ys. y = C ys \<Longrightarrow> subtuple subtype\<^sup>*\<^sup>* xs ys \<Longrightarrow> P) \<Longrightarrow> P"
   using trancl_subtype_acyclic trancl_subtype_C_x' by blast
+
 
 end

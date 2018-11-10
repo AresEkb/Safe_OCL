@@ -179,7 +179,7 @@ inductive direct_subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> 
 | "Collection SupType \<sqsubset> SupType"
 | "(*\<pi> \<noteq> [] \<Longrightarrow>*)
    OclInvalid \<sqsubset> Tuple \<pi>" (* HACK *)
-| "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
+| "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>"
 | "Tuple \<pi> \<sqsubset> SupType"
 
@@ -235,7 +235,7 @@ lemma direct_subtype_antisym:
   apply (induct rule: direct_subtype.induct)
   using direct_basic_subtype_antisym apply auto
   apply (erule direct_subtype_x_Tuple; auto)
-  apply (erule subtuple_antisym; simp)
+  apply (rule_tac ?f="direct_subtype" and ?xs="\<pi>" and ?ys="\<pi>'" in strict_subtuple_antisym; simp)
   done
 
 instantiation type :: (order) order
@@ -671,7 +671,7 @@ lemma q63e:
   by simp
 
 lemma Tuple_functor:
-  "functor_under_rel (subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)) direct_subtype Tuple"
+  "functor_under_rel (strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)) direct_subtype Tuple"
   unfolding functor_under_rel_def rel_limited_under_def
   apply auto
   apply (metis (no_types, lifting) direct_subtype_x_OclInvalid direct_subtype_x_Tuple rangeI tranclp.cases)
@@ -1075,7 +1075,7 @@ lemma subtype_Tuple_x'':
   using Tuple_implies_Tuple apply fastforce
   using Tuple_implies_Tuple apply fastforce
   using Tuple_implies_Tuple apply fastforce*)
-
+(*
 lemma q71:
   "list_all2 R\<^sup>*\<^sup>* (take (length y) x) y \<Longrightarrow>
    length x \<ge> length y"
@@ -1086,6 +1086,7 @@ lemma q72:
   "x = y @ zs \<Longrightarrow> list_all2 R\<^sup>*\<^sup>* (take (length y) x) y"
   apply (simp add: list_all2_lengthD)
   by (simp add: list_all2_all_nthI)
+*)
 (*
 lemma subtype_Tuple_x''':
   "Tuple \<pi> \<le> Tuple \<xi> \<Longrightarrow>
@@ -1144,40 +1145,41 @@ lemma subtype_Tuple_Tuple':
 
 lemma subtype_Tuple_Tuple:
   "direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>) \<Longrightarrow>
-   (subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi>"
+   (strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi>"
   using Tuple_functor tranclp_fun_preserve_gen_1a by fastforce
 
 lemma subtype_Tuple_Tuple':
-  "(subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
+  "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
    acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
+   strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
   apply (induct rule: tranclp_induct)
-  apply (metis (mono_tags, lifting) subtuple_mono tranclp.r_into_trancl)
-  using subtuple_trans3 by blast
+  apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
+  using strict_subtuple_trans3 by blast
 
 lemma subtype_Tuple_Tuple'':
-  "subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
-   subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
+  "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
+   strict_subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
   unfolding tranclp_into_rtranclp2
   by simp
 
 lemma subtype_Tuple_Tuple''':
   "direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>) \<Longrightarrow>
    acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
-   subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
-  by (simp add: subtype_Tuple_Tuple subtype_Tuple_Tuple' subtype_Tuple_Tuple'')
-
+   strict_subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
+  by (metis (mono_tags, lifting) subtype_Tuple_Tuple subtype_Tuple_Tuple' subtype_Tuple_Tuple'')
 
 lemma subtype_Tuple_x':
   "Tuple \<pi> < \<sigma> \<Longrightarrow>
    acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
-   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
   apply (induct rule: tranclp_induct)
-  apply (metis (mono_tags, lifting) Nitpick.rtranclp_unfold direct_subtype_Tuple_x r_into_rtranclp subtuple_mono)
+  apply (metis (no_types, lifting) direct_subtype_Tuple_x subtype_Tuple_Tuple''' tranclp.r_into_trancl)
   by (metis (no_types, lifting) direct_subtype_SupType_x direct_subtype_Tuple_x subtype_Tuple_Tuple''' tranclp.trancl_into_trancl)
-
+(*  apply (metis (mono_tags, lifting) Nitpick.rtranclp_unfold direct_subtype_Tuple_x r_into_rtranclp strict_subtuple_mono)
+  by (metis (no_types, lifting) direct_subtype_SupType_x direct_subtype_Tuple_x subtype_Tuple_Tuple''' tranclp.trancl_into_trancl)*)
+(*
 definition
   "subtuple' f xs ys \<equiv>
     fmdom ys |\<subseteq>| fmdom xs \<and>
@@ -1212,16 +1214,16 @@ lemma subtuple_eq2:
 lemma subtuple'_elim:
   "subtuple' f xs ys \<Longrightarrow> (\<And>x. f x x) \<Longrightarrow> (xs = ys \<or> subtuple f xs ys \<Longrightarrow> P) \<Longrightarrow> P"
   by (simp add: subtuple_eq)
-
+*)
 lemma subtype_Tuple_x''':
   "Tuple \<pi> \<le> \<sigma> \<Longrightarrow>
    acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
-   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple' (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
   apply (induct rule: rtranclp_induct)
-  apply (simp add: subtuple_eq2)
-  by (metis (no_types, lifting) direct_subtype_SupType_x direct_subtype_Tuple_x rtranclp_into_tranclp1 subtuple_eq subtype_Tuple_Tuple''')
+  apply (simp add: fmap.rel_refl)
+  by (metis (mono_tags) less_eq_type_def less_type_def rtranclp_into_tranclp1 subtype_Tuple_x')
 
 lemma Tuple_implies_Tuple':
   "Tuple \<pi> < \<sigma> \<Longrightarrow> \<exists>\<xi>. \<sigma> = Tuple \<xi> \<or> \<sigma> = SupType"
@@ -2058,7 +2060,7 @@ lemma direct_subtype_acyclic':
   apply auto[1]
   apply auto[1]
   apply auto[1]
-  by (metis (mono_tags) less_type_def subtuple_eq subtype_Tuple_Tuple''')
+  by (metis (mono_tags) less_type_def subtype_Tuple_Tuple''')
 
 lemma direct_subtype_acyclic:
   "acyclicP direct_subtype"
@@ -2106,7 +2108,37 @@ begin
 
 (*definition "\<tau> \<squnion> \<sigma> \<equiv> (if \<tau> \<le> \<sigma> then \<sigma> else (if \<sigma> \<le> \<tau> then \<tau> else SupType))"*)
 
-fun sup_type where
+
+(*
+definition subtuple where
+  "subtuple f xs ys \<equiv>
+    xs \<noteq> ys \<and> fmdom ys |\<subseteq>| fmdom xs \<and>
+    (\<forall>y. y |\<in>| fmdom ys \<longrightarrow> (\<exists>a b. fmlookup xs y = Some a \<and> fmlookup ys y = Some b \<and> f a b))"
+*)
+
+term "map_of"
+term "fmap_of_list"
+term "a ++\<^sub>f b"
+term "fimage"
+term "fmmap"
+term "fmfilter (\<lambda>k. k |\<notin>| fmdom ys) xs"
+term "fmmap_keys (\<lambda>k x. f x (the (fmlookup ys k))) (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
+term "fmfilter (\<lambda>k. k |\<notin>| fmdom xs) ys"
+
+abbreviation
+  "suptuple f xs ys \<equiv>
+    fmfilter (\<lambda>k. k |\<notin>| fmdom ys) xs ++\<^sub>f
+    fmmap_keys (\<lambda>k x. f x (the (fmlookup ys k))) (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs) ++\<^sub>f
+    fmfilter (\<lambda>k. k |\<notin>| fmdom xs) ys"
+(*
+definition
+  "suptuple f xs ys \<equiv> \<forall>z. z |\<in>| fmdom xs |\<union>| fmdom ys \<longrightarrow>
+    (case (fmlookup xs z, fmlookup ys z)
+      of (Some x, Some y) \<Rightarrow> f x y
+       | (Some x, None) \<Rightarrow> x
+       | (None, Some y) \<Rightarrow> y)"
+*)
+function sup_type where
   "OclInvalid \<squnion> \<sigma> = \<sigma>"
 | "OclVoid \<squnion> \<sigma> = (case \<sigma>
     of OclVoid \<Rightarrow> OclVoid
@@ -2167,7 +2199,7 @@ fun sup_type where
      | OclInvalid \<Rightarrow> Collection \<tau>
      | _ \<Rightarrow> SupType)"
 | "Tuple \<pi> \<squnion> \<sigma> = (case \<sigma>
-    of Tuple \<xi> \<Rightarrow> Tuple (\<tau> \<squnion> \<rho>)
+    of Tuple \<xi> \<Rightarrow> Tuple (suptuple (\<squnion>) \<pi> \<xi>)
      | OclInvalid \<Rightarrow> Tuple \<pi>
      | _ \<Rightarrow> SupType)"
 | "SupType \<squnion> \<sigma> = SupType"
