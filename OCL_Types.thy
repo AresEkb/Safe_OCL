@@ -109,7 +109,7 @@ inductive direct_subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> 
    По сути просто заменяем имена свойств натуральными числами
  *)
 
-code_pred [show_modes] direct_subtype .
+(*code_pred [show_modes] direct_subtype .*)
 
 declare direct_subtype.intros [intro]
 
@@ -176,7 +176,7 @@ lemma subtype_OclInvalid_x_intro' [intro]:
 lemma subtype_OclInvalid_x_intro [intro]:
   "\<sigma> \<noteq> OclInvalid \<Longrightarrow> OclInvalid < \<sigma>"
   by (metis (mono_tags) less_eq_type_def less_type_def rtranclpD subtype_OclInvalid_x_intro')
-
+(*
 lemma subtype_OclVoid_x_intro [intro]:
   "\<sigma> = \<rho>[?] \<Longrightarrow> OclVoid < \<sigma>"
   "\<sigma> = SupType \<Longrightarrow> OclVoid < \<sigma>"
@@ -190,14 +190,14 @@ lemma subtype_OclVoid_x_intro' [intro]:
   apply (simp add: less_eq_type_def)
   apply (simp add: direct_subtype.intros(3) less_eq_type_def r_into_rtranclp)
   by (metis (mono_tags) less_eq_type_def less_type_def subtype_OclVoid_x_intro(2) tranclp_into_rtranclp)
-
+*)
 
 
 lemma subtype_x_OclInvalid_intro' [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> OclInvalid"
   unfolding less_eq_type_def
   by auto
-
+(*
 lemma subtype_x_OclVoid_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> < OclVoid"
   unfolding less_type_def
@@ -215,14 +215,14 @@ lemma subtype_x_Required_intro [intro]:
   unfolding less_type_def less_basic_type_def
   apply auto
   by (rule fun_preserve_morphism_composition'; auto)
-
+*)
 lemma subtype_x_Required_intro' [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> \<sigma>[1]"
   "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[1]"
   unfolding less_eq_type_def less_eq_basic_type_def
   apply auto
   by (rule fun_preserve_morphism_composition; auto)
-
+(*
 lemma subtype_x_Optional_intro [intro]:
   "\<tau> = OclVoid \<Longrightarrow> \<tau> < \<sigma>[?]"
   "\<tau> < \<sigma>[1] \<Longrightarrow> \<tau> < \<sigma>[?]"
@@ -231,7 +231,7 @@ lemma subtype_x_Optional_intro [intro]:
   apply auto
   apply (simp add: direct_subtype.intros(6) tranclp.trancl_into_trancl)
   by (rule fun_preserve_morphism_composition'; auto)
-
+*)
 lemma subtype_x_Optional_intro' [intro]:
   "\<tau> = OclVoid \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
   "\<tau> \<le> \<sigma>[1] \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
@@ -240,56 +240,56 @@ lemma subtype_x_Optional_intro' [intro]:
   apply auto
   apply (simp add: direct_subtype.intros(6) rtranclp_into_tranclp1 tranclp_into_rtranclp)
   by (rule fun_preserve_morphism_composition; auto)
-
+(*
 lemma subtype_x_Set_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> < Set \<sigma>"
   "\<tau> = Set \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Set \<sigma>"
   apply (auto)
   unfolding less_type_def
   by (rule fun_preserve_morphism_composition'; auto)
-
+*)
 lemma subtype_x_Set_intro' [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> Set \<sigma>"
   "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Set \<sigma>"
   apply (auto)
   unfolding less_eq_type_def
   by (rule fun_preserve_morphism_composition; auto)
-
+(*
 lemma subtype_x_OrderedSet_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> < OrderedSet \<sigma>"
   "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < OrderedSet \<sigma>"
   apply (auto)
   unfolding less_type_def
   by (rule fun_preserve_morphism_composition'; auto)
-
+*)
 lemma subtype_x_OrderedSet_intro' [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> OrderedSet \<sigma>"
   "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> OrderedSet \<sigma>"
   apply (auto)
   unfolding less_eq_type_def
   by (rule fun_preserve_morphism_composition; auto)
-
+(*
 lemma subtype_x_Bag_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> < Bag \<sigma>"
   "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Bag \<sigma>"
   apply (auto)
   unfolding less_type_def
   by (rule fun_preserve_morphism_composition'; auto)
-
+*)
 lemma subtype_x_Bag_intro' [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> Bag \<sigma>"
   "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Bag \<sigma>"
   apply (auto)
   unfolding less_eq_type_def
   by (rule fun_preserve_morphism_composition[of direct_subtype]; auto)
-
+(*
 lemma subtype_x_Sequence_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> < Sequence \<sigma>"
   "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Sequence \<sigma>"
   apply (auto)
   unfolding less_type_def
   by (rule fun_preserve_morphism_composition'[of direct_subtype]; auto)
-
+*)
 lemma subtype_x_Sequence_intro' [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> Sequence \<sigma>"
   "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Sequence \<sigma>"
@@ -314,7 +314,7 @@ lemma fun_preserve':
    R\<^sup>*\<^sup>* x y \<Longrightarrow>
    S\<^sup>*\<^sup>* (f x) (g y)"
   by (metis fun_preserve_morphism_composition rtranclp.rtrancl_into_rtrancl)
-
+(*
 lemma subtype_x_Collection_intro [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> < Collection \<sigma>"
   "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < Collection \<sigma>"
@@ -330,7 +330,7 @@ lemma subtype_x_Collection_intro [intro]:
   apply (rule fun_preserve; auto)
   apply (rule fun_preserve_morphism_composition'[of direct_subtype]; auto)
   done
-
+*)
 lemma subtype_x_Collection_intro' [intro]:
   "\<tau> = OclInvalid \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
   "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
@@ -355,20 +355,43 @@ lemma subtype_x_SupType_intro [intro]:
   apply auto[1]
 
   apply (simp add: less_type_def)
+  apply (rule_tac ?y="OclAny[?]" in rtranclp_tranclp_tranclp)
+  apply (simp add: direct_subtype.intros(3) r_into_rtranclp)
+  apply (simp add: direct_subtype.intros(20) tranclp.r_into_trancl)
+
+  apply (simp add: less_type_def)
   apply (rule_tac ?y="OclAny[1]" in rtranclp_tranclp_tranclp)
-  apply (metis (mono_tags) less_eq_type_def subtype_x_OclAny_intro' subtype_x_Required_intro'(2))
+  apply (metis (mono_tags) less_eq_type_def subtype_x_OclAny_intro subtype_x_Required_intro'(2))
   apply (meson direct_subtype.intros(20) direct_subtype.intros(6) tranclp.r_into_trancl tranclp_into_tranclp2)
 
   apply (simp add: less_type_def)
   apply (rule_tac ?b="OclAny[?]" in rtranclp_into_tranclp1)
-  apply (metis (mono_tags) less_eq_type_def subtype_x_OclAny_intro' subtype_x_Optional_intro'(3))
+  apply (metis (mono_tags) less_eq_type_def subtype_x_OclAny_intro subtype_x_Optional_intro'(3))
   apply (simp add: direct_subtype.intros(20))
 
-  apply (metis (mono_tags, lifting) direct_subtype.intros(21) less_type_def subtype_x_Collection_intro(6) tranclp.r_into_trancl tranclp.trancl_into_trancl)
-  apply (metis (mono_tags, lifting) direct_subtype.intros(16) direct_subtype.intros(21) less_eq_type_def less_type_def subtype_x_Collection_intro(2) tranclp.simps tranclp_into_rtranclp)
-  apply (metis (mono_tags, lifting) direct_subtype.intros(17) direct_subtype.intros(21) less_eq_type_def less_type_def r_into_rtranclp rtranclp_into_tranclp1 subtype_x_Collection_intro'(3) tranclp_into_rtranclp)
-  apply (metis (mono_tags, lifting) direct_subtype.intros(18) direct_subtype.intros(21) less_eq_type_def less_type_def r_into_rtranclp rtranclp_into_tranclp1 subtype_x_Collection_intro'(4) tranclp_into_rtranclp)
-  apply (metis (mono_tags, lifting) direct_subtype.intros(19) direct_subtype.intros(21) less_eq_type_def less_type_def r_into_rtranclp rtranclp_into_tranclp1 subtype_x_Collection_intro'(5) tranclp_into_rtranclp)
+  apply (simp add: less_type_def tranclp_into_rtranclp)
+  apply (smt direct_subtype.intros(15) direct_subtype.intros(21) fun_preserve_morphism_composition' tranclp.r_into_trancl tranclp.trancl_into_trancl)
+
+  apply (simp add: less_type_def)
+  apply (rule_tac ?b="Collection \<tau>" in tranclp_into_tranclp2)
+  apply auto[1]
+  apply (smt direct_subtype.intros(15) direct_subtype.intros(21) fun_preserve_morphism_composition' tranclp.r_into_trancl tranclp.trancl_into_trancl)
+
+  apply (simp add: less_type_def)
+  apply (rule_tac ?b="Collection \<tau>" in tranclp_into_tranclp2)
+  apply auto[1]
+  apply (smt direct_subtype.intros(15) direct_subtype.intros(21) fun_preserve_morphism_composition' tranclp.r_into_trancl tranclp.trancl_into_trancl)
+
+  apply (simp add: less_type_def)
+  apply (rule_tac ?b="Collection \<tau>" in tranclp_into_tranclp2)
+  apply auto[1]
+  apply (smt direct_subtype.intros(15) direct_subtype.intros(21) fun_preserve_morphism_composition' tranclp.r_into_trancl tranclp.trancl_into_trancl)
+
+  apply (simp add: less_type_def)
+  apply (rule_tac ?b="Collection \<tau>" in tranclp_into_tranclp2)
+  apply auto[1]
+  apply (smt direct_subtype.intros(15) direct_subtype.intros(21) fun_preserve_morphism_composition' tranclp.r_into_trancl tranclp.trancl_into_trancl)
+
   by (simp add: direct_subtype.intros(24) less_type_def tranclp.r_into_trancl)
 
 lemma subtype_x_SupType_intro' [intro]:
@@ -453,8 +476,8 @@ lemma subtype_Set_x' [elim]:
   unfolding less_eq_type_def
   apply (induct rule: rtranclp_induct)
   apply (auto)
-  by (smt direct_subtype_Collection_x direct_subtype_Set_x direct_subtype_SupType_x rtranclp.rtrancl_into_rtrancl)
-
+  by (erule direct_subtype.cases; auto; meson rtranclp.rtrancl_into_rtrancl)
+(*
 lemma subtype_Set_x [elim]:
   "Set \<tau> < \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<sigma> = Set \<rho> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> P) \<Longrightarrow>
@@ -524,7 +547,7 @@ lemma subtype_Sequence_x' [elim]:
   apply (induct rule: rtranclp_induct)
   apply (auto)
   by (smt direct_subtype_Collection_x direct_subtype_Sequence_x direct_subtype_SupType_x rtranclp.rtrancl_into_rtrancl)
-
+*)
 lemma direct_subtype_preserve_Tuple:
   "direct_subtype\<^sup>+\<^sup>+ (Tuple x) (Tuple y) \<Longrightarrow>
    (\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>+\<^sup>+ x y"
@@ -563,6 +586,24 @@ lemma subtype_Tuple_x'':
   using Tuple_implies_Tuple apply fastforce
   by simp
 
+lemma subtype_x_Required':
+  "\<tau> < \<sigma>[1] \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_type_def
+  apply (induct rule: converse_tranclp_induct)
+  apply auto[1]
+  by blast
+
+(*
+lemma q11:
+  "direct_subtype\<^sup>*\<^sup>* x[?] y \<Longrightarrow> direct_subtype y z[?] \<Longrightarrow> \<exists>ya. y = ya[?]"
+  by (metis (mono_tags) OCL_Types.subtype_Optional_x direct_subtype_SupType_x less_type_def rtranclpD)
+
+lemma q12:
+  "direct_subtype x[?] y \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* y z[?] \<Longrightarrow> \<exists>ya. y = ya[?]"
+  by (metis converse_rtranclpE direct_subtype_Optional_x direct_subtype_SupType_x)
+*)
 lemma subtype_x_OclInvalid' [elim]:
   "\<tau> \<le> OclInvalid \<Longrightarrow>
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow> P"
@@ -587,24 +628,6 @@ lemma subtype_x_OclVoid [elim]:
   unfolding less_type_def
   by (metis (mono_tags, lifting) direct_subtype_x_OclVoid less_type_def subtype_x_OclInvalid tranclp.simps)
 
-lemma subtype_x_Required':
-  "\<tau> < \<sigma>[1] \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply auto[1]
-  by blast
-
-(*
-lemma q11:
-  "direct_subtype\<^sup>*\<^sup>* x[?] y \<Longrightarrow> direct_subtype y z[?] \<Longrightarrow> \<exists>ya. y = ya[?]"
-  by (metis (mono_tags) OCL_Types.subtype_Optional_x direct_subtype_SupType_x less_type_def rtranclpD)
-
-lemma q12:
-  "direct_subtype x[?] y \<Longrightarrow> direct_subtype\<^sup>*\<^sup>* y z[?] \<Longrightarrow> \<exists>ya. y = ya[?]"
-  by (metis converse_rtranclpE direct_subtype_Optional_x direct_subtype_SupType_x)
-*)
 lemma subtype_x_Optional''' [elim]:
   "\<tau> \<le> \<sigma>[?] \<Longrightarrow>
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
@@ -614,7 +637,7 @@ lemma subtype_x_Optional''' [elim]:
   unfolding less_eq_type_def
   apply (induct rule: converse_rtranclp_induct)
   apply simp
-  by (smt OCL_Types.subtype_x_OclInvalid' OCL_Types.subtype_x_OclVoid' converse_rtranclp_into_rtranclp direct_subtype_x_Optional direct_subtype_x_Required less_eq_basic_type_def less_eq_type_def rtranclp.rtrancl_refl)
+  by (erule direct_subtype.cases; auto simp add: converse_rtranclp_into_rtranclp less_eq_basic_type_def)
 
 lemma Tuple_functor:
   "functor_under_rel (strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)) direct_subtype Tuple"
@@ -657,7 +680,8 @@ lemma Required_functor:
 lemma Optional_functor:
   "functor_under_rel direct_basic_subtype direct_subtype Optional"
   apply (auto simp add: functor_under_rel_def rel_limited_under_def inj_def)
-  apply (metis (mono_tags) OCL_Types.subtype_x_OclVoid less_type_def type.distinct(25))
+  apply (metis direct_subtype.intros(3) direct_subtype_x_OclInvalid direct_subtype_x_OclVoid tranclp.cases)
+(*  apply (metis (mono_tags) OCL_Types.subtype_x_OclVoid less_type_def type.distinct(25))*)
   by (metis (mono_tags) OCL_Types.subtype_x_Required' less_type_def type.distinct(25) type.distinct(55))
 
 lemma Required_Optional_natural:
@@ -696,7 +720,8 @@ lemma Set_Collection_natural:
   apply (auto simp add: natural_under_rel_def Set_functor Collection_functor)
 (*  apply (simp add: direct_subtype.intros(16))*)
   apply (metis (mono_tags) OCL_Types.subtype_Collection_x less_type_def type.simps(20) type.simps(90))
-  by (metis (mono_tags) OCL_Types.subtype_Set_x direct_subtype_SupType_x less_type_def tranclpD)
+  by (metis (mono_tags) OCL_Types.subtype_Set_x' direct_subtype_SupType_x less_eq_type_def tranclpD tranclp_into_rtranclp)
+
 
 lemma subtype_x_Required'' [elim]:
   "\<tau> < \<sigma>[1] \<Longrightarrow>
@@ -848,7 +873,7 @@ lemma subtype_x_Collection' [elim]:
   unfolding less_eq_type_def
   apply (induct rule: converse_rtranclp_induct)
   apply simp
-  by (smt OCL_Types.subtype_x_OclInvalid' converse_rtranclp_into_rtranclp direct_subtype_x_Bag direct_subtype_x_Collection direct_subtype_x_OrderedSet direct_subtype_x_Sequence direct_subtype_x_Set less_eq_type_def rtranclp.rtrancl_refl)
+  by (erule direct_subtype.cases; auto simp add: converse_rtranclp_into_rtranclp)
 
 lemma subtype_x_Collection [elim]:
   "\<tau> < Collection \<sigma> \<Longrightarrow>
@@ -861,7 +886,8 @@ lemma subtype_x_Collection [elim]:
   unfolding less_type_def
   apply (induct rule: converse_tranclp_induct)
   apply (metis (mono_tags) Nitpick.rtranclp_unfold direct_subtype_x_Collection less_eq_type_def tranclp.r_into_trancl)
-  by (smt OCL_Types.subtype_x_OclInvalid' converse_rtranclp_into_rtranclp direct_subtype_x_Bag direct_subtype_x_Collection direct_subtype_x_OrderedSet direct_subtype_x_Sequence direct_subtype_x_Set less_eq_type_def rtranclp.rtrancl_refl tranclp_into_rtranclp tranclp_into_tranclp2)
+  by (erule direct_subtype.cases; auto simp add: converse_rtranclp_into_rtranclp
+            less_eq_type_def tranclp_into_tranclp2 tranclp_into_rtranclp)
 
 lemma subtype_x_SupType [elim]:
   "\<tau> < SupType \<Longrightarrow> (\<tau> \<noteq> SupType \<Longrightarrow> P) \<Longrightarrow> P"
