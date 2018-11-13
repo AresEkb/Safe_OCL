@@ -1,9 +1,9 @@
-theory TupleAcyclicTest6
+theory TupleAcyclicTest7
   imports Main "../Transitive_Closure_Ext"
     "../Tuple"
 begin
 
-datatype (plugins del: "size") t = A | B | C "(nat, t) fmap"
+datatype (plugins del: "size") 'a t = A | B | C "(nat, 'a t) fmap"
 
 abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
 
@@ -20,14 +20,15 @@ proof
   qed
 qed
 
-instantiation t :: size 
+instantiation t :: (size) size 
 begin
 
-primrec t_size :: "t \<Rightarrow> nat" where
+primrec t_size :: "'a t \<Rightarrow> nat" where
 AR: "t_size A = 0" |
 BR: "t_size B = 0" |
-CR: "t_size (C x) = 
-  (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap t_size x))" 
+CR: "t_size (C x) =
+  (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap t_size x))"
+(*  (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap t_size x))"*)
 
 definition size_t where
 size_t_def: "size_t = t_size"
@@ -123,6 +124,8 @@ function sup_t (infixl "\<squnion>" 65) where
   "A \<squnion> _ = A"
 | "B \<squnion> x = (if x = B then B else A)"
 | "C xs \<squnion> x = (case x of C ys \<Rightarrow> C (supc sup_t xs ys) | _ \<Rightarrow> A)"
+| "D xs \<squnion> y = (case y of D ys \<Rightarrow> D (xs \<squnion> ys) | _ \<Rightarrow> A)"
+| "E xs \<squnion> y = (case y of E ys \<Rightarrow> E (xs \<squnion> ys) | _ \<Rightarrow> A)"
   by pat_completeness auto
 termination
   apply (relation "measure (\<lambda>(xs, ys). size ys)")

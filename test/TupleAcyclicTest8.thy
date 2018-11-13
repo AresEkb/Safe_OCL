@@ -1,7 +1,64 @@
-theory TupleAcyclicTest6
+theory TupleAcyclicTest8
   imports Main "../Transitive_Closure_Ext"
     "../Tuple"
 begin
+
+datatype (plugins del: "size") t = A | B | C "(nat, t) fmap" | D "t"
+
+instantiation t :: size 
+begin
+
+primrec size_t :: "t \<Rightarrow> nat" where
+  "size_t A = 0"
+| "size_t B = 0"
+| "size_t (C x) = Suc (fsum id (fmran (fmmap size_t x)))"
+| "size_t (D x) = Suc (size_t x)"
+(*  Suc (fsum t_size (fmran x))"*)
+(*  Suc (fsum id (fmran (fmmap t_size x)))"*)
+(*  Suc (ffold (+) 0 ((\<lambda>(k, x). t_size x) |`| (fset_of_fmap x)))"*)
+(*  Suc (ffold (+) 0 (t_size |`| (fmran x)))"*)
+(*  Suc (ffold (+) 0 (fmran (fmmap t_size x)))"*)
+(*  Suc (fsum id (fmran (fmmap t_size x)))"*)
+(*  (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap t_size x))" *)
+
+lemma q:
+  "k |\<in>| fmdom (x :: (nat, t) fmap) \<Longrightarrow>
+   size (the (fmlookup x k)) < Suc (fsum (\<lambda>x. x) (size |`| fmran x))"
+
+
+instance ..
+
+end
+
+abbreviation
+  "supc f xs ys \<equiv>
+    fmmap_keys
+      (\<lambda>k x. if (k |\<in>| fmdom ys) then (f x (the (fmlookup ys k))) else A)
+      (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
+
+function sup_t (infixl "\<squnion>" 65) where
+  "A \<squnion> _ = A"
+| "B \<squnion> x = (if x = B then B else A)"
+| "C xs \<squnion> y = (case y of C ys \<Rightarrow> C (supc sup_t xs ys) | _ \<Rightarrow> A)"
+| "D xs \<squnion> y = (case y of D ys \<Rightarrow> D (xs \<squnion> ys) | _ \<Rightarrow> A)"
+  by pat_completeness auto
+termination
+  apply (relation "measure (\<lambda>(xs, ys). size ys)")
+  apply simp
+  apply auto[1]
+  prefer 2
+  apply simp
+  using measure_cond apply auto
+  done
+
+value "fsum id {|1::nat, 2, 3|}"
+
+lemma q:
+  "k |\<in>| fmdom x \<Longrightarrow>
+   size (the (fmlookup x k)) < Suc (fsum (\<lambda>x. x) (size |`| fmran x))"
+
+
+
 
 datatype (plugins del: "size") t = A | B | C "(nat, t) fmap"
 
@@ -27,7 +84,27 @@ primrec t_size :: "t \<Rightarrow> nat" where
 AR: "t_size A = 0" |
 BR: "t_size B = 0" |
 CR: "t_size (C x) = 
-  (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap t_size x))" 
+  Suc (fsum id (fmran (fmmap t_size x)))"
+(*  Suc (fsum t_size (fmran x))"*)
+(*  Suc (fsum id (fmran (fmmap t_size x)))"*)
+(*  Suc (ffold (+) 0 ((\<lambda>(k, x). t_size x) |`| (fset_of_fmap x)))"*)
+(*  Suc (ffold (+) 0 (t_size |`| (fmran x)))"*)
+(*  Suc (ffold (+) 0 (fmran (fmmap t_size x)))"*)
+(*  Suc (fsum id (fmran (fmmap t_size x)))"*)
+(*  (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap t_size x))" *)
+
+term fsum
+
+lemma q:
+  "fsum id (fmran (fmmap f x)) = ffold (+) 0 (fmran (fmmap f x))"
+  unfolding fsum_def ffold_def
+  nitpick
+lemma q:
+  "k \<in> fmran' xs \<Longrightarrow>
+   fsum id (fmran (fmmap t_size xs)) = fsum id ((fmran (fmmap t_size xs)) - {|k|})"
+
+term fset_of_fmap
+term fsum
 
 definition size_t where
 size_t_def: "size_t = t_size"
@@ -43,19 +120,45 @@ fun supc where
       (\<lambda>k. (k, f (the (fmlookup xs k)) (the (fmlookup ys k))))
       (sorted_list_of_fset (fmdom xs |\<inter>| fmdom ys)))"
 *)
+(*
+lemma ffold_rec_exp:
+  assumes "k |\<in>| fmdom x"
+    and "ky = the (fmlookup (fmmap t_size x) k)"
+  shows "ffold (+) 0 (fmran (fmmap t_size x)) = 
+        ky + (ffold (+) 0 ((fmran (fmmap t_size x)) |-| {|ky|}))"
+  using assms tcf.ffold_rec by auto
+*)
+fun fmdel' where
+  "fmdel' k [] = []"
+| "fmdel' k (x#xs) = (if fst x = k then xs else x#xs)"
+
+definition "fmdel k \<equiv> fmap_of_list \<circ> fmdel' k \<circ> sorted_list_of_fmap"
 
 lemma ffold_rec_exp:
   assumes "k |\<in>| fmdom x"
-    and "ky = (k, the (fmlookup (fmmap t_size x) k))"
-  shows "ffold tcf 0 (fset_of_fmap (fmmap t_size x)) = 
-        tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap t_size x)) |-| {|ky|}))"
-  using assms tcf.ffold_rec by auto
+    and "ky = the (fmlookup (fmmap t_size x) k)"
+  shows "ffold (+) 0 (fmran (fmmap t_size x)) =
+        ky + (ffold (+) 0 (fmran (fmmap t_size (fmdel k x))))"
+  unfolding ffold_def Finite_Set.fold_def
+  apply auto
+  sorry
+
+
+thm ffold_def
+term "q ++\<^sub>f a"
+term "ffold"
+
+lemma q:
+  assumes "k |\<in>| fmdom x"
+  shows "t_size (the (fmlookup x k)) = the (fmlookup (fmmap t_size x) k)"
+  using assms fmdom_notI by auto
 
 lemma elem_le_ffold:
   assumes "k |\<in>| fmdom x"
   shows "t_size (the (fmlookup x k)) < 
-        (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap t_size x))"
-  using ffold_rec_exp assms by auto
+        Suc (ffold (+) 0 (fmran (fmmap t_size x)))"
+  by (metis assms ffold_rec_exp less_add_Suc1 q)
+(*  using ffold_rec_exp assms by auto*)
 
 lemma measure_cond:
   assumes "k |\<in>| fmdom x"
@@ -141,7 +244,7 @@ termination
 
 
 value "size (2::nat)"
-value "\<Sum>x\<in>set [1::nat, 2::nat]. x"
+value "\<Sum> x \<in> set [1::nat, 2::nat]. x"
 
 
 definition "t3 \<equiv> fmupd (1::nat) (A::t) (fmupd (2::nat) (B::t) fmempty)"

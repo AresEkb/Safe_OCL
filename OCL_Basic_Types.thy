@@ -138,8 +138,7 @@ lemma subtype_x_OclAny_intro [intro]:
 proof -
   have "direct_basic_subtype\<^sup>*\<^sup>* Integer OclAny"
     by (rule_tac ?b="Real" in rtranclp.rtrancl_into_rtrancl; auto)
-  moreover
-  have "direct_basic_subtype\<^sup>*\<^sup>* UnlimitedNatural OclAny"
+  also have "direct_basic_subtype\<^sup>*\<^sup>* UnlimitedNatural OclAny"
     by (rule_tac ?b="Integer" in converse_rtranclp_into_rtranclp; auto simp add: calculation)
   ultimately show ?thesis
     unfolding less_eq_basic_type_def
