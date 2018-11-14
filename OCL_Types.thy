@@ -800,84 +800,24 @@ end
 
 lemma ffold_rec_exp:
   assumes "k |\<in>| fmdom x"
-    and "ky = (k, the (fmlookup (fmmap size_type x) k))"
-  shows "ffold tcf 0 (fset_of_fmap (fmmap size_type x)) = 
-        tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap size_type x)) |-| {|ky|}))"
+    and "ky = (k, the (fmlookup (fmmap f x) k))"
+  shows "ffold tcf 0 (fset_of_fmap (fmmap f x)) = 
+        tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap f x)) |-| {|ky|}))"
   using assms tcf.ffold_rec by auto
 
 lemma elem_le_ffold:
   "k |\<in>| fmdom x \<Longrightarrow>
-   size_type (the (fmlookup x k)) < Suc (ffold tcf 0 (fset_of_fmap (fmmap size_type x)))"
+   f (the (fmlookup x k)) < Suc (ffold tcf 0 (fset_of_fmap (fmmap f x)))"
   by (subst ffold_rec_exp, auto)
 
-lemma measure_cond:
+lemma measure_cond [intro]:
   "k |\<in>| fmdom x \<Longrightarrow>
    size (the (fmlookup x k)) < size (Tuple x)"
   using elem_le_ffold by auto
 
 
-(*
-lemma q:
-  "size x < size (Collection x)"
-  apply (auto simp add: size_type_def)
-*)
-(*
-lemma ffold_rec_exp:
-  fixes x :: "(nat, 'a type) fmap"
-  assumes "k |\<in>| fmdom x"
-    and "ky = (k, the (fmlookup (fmmap type_size x) k))"
-  shows "ffold tcf 0 (fset_of_fmap (fmmap type_size x)) = 
-        tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap type_size x)) |-| {|ky|}))"
-  using assms tcf.ffold_rec by auto
-
-lemma elem_le_ffold:
-  fixes x :: "(nat, 'a type) fmap"
-  assumes "k |\<in>| fmdom x"
-  shows "type_size (the (fmlookup x k)) < 
-        (Suc 0) + ffold tcf 0 (fset_of_fmap (fmmap type_size x))"
-  using ffold_rec_exp assms apply auto
-
-lemma measure_cond:
-  assumes "k |\<in>| fmdom x"
-  shows "size (the (fmlookup x k)) < size (C x)"
-  using assms elem_le_ffold size_type_def by auto
-*)
-
-
 instantiation type :: (semilattice_sup) semilattice_sup
 begin
-
-(*definition "\<tau> \<squnion> \<sigma> \<equiv> (if \<tau> \<le> \<sigma> then \<sigma> else (if \<sigma> \<le> \<tau> then \<tau> else SupType))"*)
-
-(*
-definition subtuple where
-  "subtuple f xs ys \<equiv>
-    xs \<noteq> ys \<and> fmdom ys |\<subseteq>| fmdom xs \<and>
-    (\<forall>y. y |\<in>| fmdom ys \<longrightarrow> (\<exists>a b. fmlookup xs y = Some a \<and> fmlookup ys y = Some b \<and> f a b))"
-*)
-(*
-term "map_of"
-term "fmap_of_list"
-term "a ++\<^sub>f b"
-term "fimage"
-term "fmmap"
-term "fmfilter (\<lambda>k. k |\<notin>| fmdom ys) xs"
-term "fmmap_keys (\<lambda>k x. f x (the (fmlookup ys k))) (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
-term "fmfilter (\<lambda>k. k |\<notin>| fmdom xs) ys"
-
-abbreviation
-  "suptuple f xs ys \<equiv>
-    fmfilter (\<lambda>k. k |\<notin>| fmdom ys) xs ++\<^sub>f
-    fmmap_keys (\<lambda>k x. f x (the (fmlookup ys k))) (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs) ++\<^sub>f
-    fmfilter (\<lambda>k. k |\<notin>| fmdom xs) ys"
-
-definition
-  "suptuple f xs ys \<equiv> \<forall>z. z |\<in>| fmdom xs |\<union>| fmdom ys \<longrightarrow>
-    (case (fmlookup xs z, fmlookup ys z)
-      of (Some x, Some y) \<Rightarrow> f x y
-       | (Some x, None) \<Rightarrow> x
-       | (None, Some y) \<Rightarrow> y)"
-*)
 
 abbreviation
   "supc f xs ys \<equiv>
@@ -993,11 +933,98 @@ lemma Collection_less_eq_sup:
   "(\<And>\<sigma>. \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
    Collection \<tau> \<le> Collection \<tau> \<squnion> \<sigma>"
   by (induct \<sigma>; auto)
+(*
+lemma subtype_Tuple_x''':
+  "Tuple \<pi> \<le> \<sigma> \<Longrightarrow>
+   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_type_def less_eq_type_def
+  apply (induct rule: rtranclp_induct)
+  apply (simp add: fmap.rel_refl)
+  by (metis (mono_tags) less_eq_type_def less_type_def rtranclp_into_tranclp1 subtype_Tuple_x')
+*)
+lemma subtype_x_Tuple_intro' [intro]:
+  "\<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
+  unfolding less_eq_type_def less_eq_basic_type_def
+  apply auto
+  sorry
+
+(*
+abbreviation
+  "supc f xs ys \<equiv>
+    fmmap_keys
+      (\<lambda>k x. if (k |\<in>| fmdom ys) then (f x (the (fmlookup ys k))) else OclInvalid)
+      (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
+*)
+
+lemma fmrestrict_fset_ffilter:
+  "fmrestrict_fset (ffilter (\<lambda>k. k |\<in>| fmdom \<xi>) (fmdom \<pi>)) \<pi> =
+   fmfilter (\<lambda>k. k |\<in>| fmdom \<xi>) \<pi>"
+  by (metis ffmember_filter fmdom_notD fmfilter_alt_defs(5) fmfilter_cong option.distinct(1))
+
+lemma fmran_fmmap_keys:
+  "fmran (fmmap_keys (\<lambda>k x. g x y) xs) = (\<lambda>x. g x y) |`| fmran xs"
+  sorry
+
+lemma rel_fset_fmran_fmmap_keys:
+  "(\<And>x y. x |\<in>| fmran xs \<Longrightarrow> f x (g x y)) \<Longrightarrow>
+   rel_fset f (fmran xs) (fmran (fmmap_keys (\<lambda>k x. g x y) xs))"
+  sorry
+
+lemma fmrel_fmmap_keys:
+  "(\<And>x y. x |\<in>| fmran xs \<Longrightarrow> f x (g x y)) \<Longrightarrow>
+   fmrel f xs (fmmap_keys (\<lambda>k x. g x y) xs)"
+  sorry
+
+term fmrel_on_fset
+
+lemma q:
+  "(\<And>\<tau> \<sigma>. \<tau> |\<in>| fmran \<pi> \<Longrightarrow> \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
+   fmrel (\<le>) \<pi> (fmmap_keys (\<lambda>k x. x \<squnion> y) \<pi>)"
+  by (rule fmrel_fmmap_keys; auto)
+
+
+lemma q:
+  "(\<And>\<tau> \<sigma>. \<tau> |\<in>| fmran \<pi> \<Longrightarrow> \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
+   fmrel (\<le>)
+     (fmrestrict_fset
+       (ffilter (\<lambda>k. k |\<in>| fmdom \<xi>) (fmdom \<pi>)) \<pi>)
+     (fmmap_keys
+       (\<lambda>k x. if (k |\<in>| fmdom \<xi>) then x \<squnion> the (fmlookup \<xi> k) else OclInvalid)
+       (fmfilter (\<lambda>k. k |\<in>| fmdom \<xi>) \<pi>))"
+  apply (rule fmrel_fmmap_keys)
+
+
+lemma q:
+  "fmrel (\<le>)
+     (fmrestrict_fset
+       (ffilter (\<lambda>k. k |\<in>| fmdom \<xi>) (fmdom \<pi>)) \<pi>)
+     (supc (\<squnion>) \<pi> \<xi>)"
+
+
+lemma q:
+  "(\<And>\<tau> \<sigma>. \<tau> \<in> fmran' \<pi> \<Longrightarrow> \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
+   Tuple \<pi> \<le> Tuple (supc (\<squnion>) \<pi> \<xi>)"
+  apply (rule subtype_x_Tuple_intro')
+  apply auto[1]
+  apply auto[1]
 
 lemma Tuple_less_eq_sup:
-  "(\<And>xa \<sigma>. xa \<in> fmran' x \<Longrightarrow> xa \<le> xa \<squnion> \<sigma>) \<Longrightarrow>
-   Tuple x \<le> Tuple x \<squnion> \<sigma>"
-  apply (induct \<sigma>; auto)
+  "(\<And>\<tau> \<sigma>. \<tau> \<in> fmran' \<pi> \<Longrightarrow> \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
+   Tuple \<pi> \<le> Tuple \<pi> \<squnion> \<sigma>"
+  apply (cases \<sigma>)
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
   sorry
 
 lemma sup_ge1_type:
