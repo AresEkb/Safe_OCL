@@ -56,7 +56,31 @@ abbreviation
     fmmap_keys
       (\<lambda>k x. if (k |\<in>| fmdom ys) then (f x (the (fmlookup ys k))) else A)
       (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
+(*
+abbreviation
+  "supc f xs ys \<equiv>
+    fmmap_keys
+      (\<lambda>k x. if (k |\<in>| fmdom ys) then (f x (the (fmlookup ys k))) else f x (the None))
+      (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
 
+abbreviation
+  "supc f xs ys \<equiv>
+    fmmap_keys
+      (\<lambda>k x. f x (the (if (k |\<in>| fmdom ys) then fmlookup ys k else None)))
+      (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
+
+lemma q:
+  "k |\<in>| fmdom ys \<Longrightarrow>
+   (\<lambda>k x. if (k |\<in>| fmdom ys) then (f x (the (fmlookup ys k))) else the None) k x =
+   (\<lambda>k x. (f x (if (k |\<in>| fmdom ys) then (the (fmlookup ys k)) else the None))) k x"
+  nitpick
+
+
+lemma q:
+  "(\<lambda>k x. if (k |\<in>| fmdom ys) then (f x (the (fmlookup ys k))) else the None) k x =
+   (\<lambda>k x. f x (the (if (k |\<in>| fmdom ys) then fmlookup ys k else None))) k x"
+  nitpick
+*)
 function sup_t (infixl "\<squnion>" 65) where
   "A \<squnion> _ = A"
 | "B \<squnion> x = (if x = B then B else A)"
