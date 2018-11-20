@@ -596,7 +596,7 @@ lemma subtype_Tuple_x''':
   unfolding less_type_def less_eq_type_def
   apply (induct rule: rtranclp_induct)
   apply (simp add: fmap.rel_refl)
-  by (metis (mono_tags) less_eq_type_def less_type_def rtranclp_into_tranclp1 subtype_Tuple_x')
+(*  by (metis (mono_tags) less_eq_type_def less_type_def rtranclp_into_tranclp1 subtype_Tuple_x')*)
 
 lemma Tuple_implies_Tuple':
   "Tuple \<pi> < \<sigma> \<Longrightarrow> \<exists>\<xi>. \<sigma> = Tuple \<xi> \<or> \<sigma> = SupType"

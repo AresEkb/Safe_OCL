@@ -9,18 +9,7 @@ definition "fmmerge f xm ym \<equiv>
     (\<lambda>k. (k, f (the (fmlookup xm k)) (the (fmlookup ym k))))
     (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
 
-lemma q21:
-  "fmlookup xm k = Some x \<Longrightarrow>
-   fmlookup ym k = Some y \<Longrightarrow>
-   map_of
-    (map (\<lambda>k. (k, f (the (fmlookup xm k)) (the (fmlookup ym k))))
-         (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))
-    k = Some (f x y)"
-  by (auto simp add: map_of_map_restrict fmdom.rep_eq domI)
-
-thm map_of_map_restrict
-
-lemma q22:
+lemma map_of_map_inter_eq_Some:
   "map_of
     (map
       (\<lambda>k. (k, f k xm ym))
@@ -33,7 +22,7 @@ lemma q22:
   using fmdom'_alt_def fmlookup_dom'_iff apply fastforce
   done
 
-lemma q23:
+lemma map_of_map_inter_eq_None:
   "map_of
     (map
       (\<lambda>k. (k, f k xm ym))
@@ -45,10 +34,10 @@ lemma q23:
   by (metis (no_types, lifting) Int_iff comp_apply fmdom'_alt_def
             fmdom'_notD option.simps(3) restrict_map_def)
 
-lemma q61:
+lemma fmrel_on_fset_fmdom:
   "fmrel_on_fset (fmdom ym) f xm ym \<Longrightarrow>
-   x |\<in>| fmdom ym \<Longrightarrow>
-   x |\<in>| fmdom xm"
+   k |\<in>| fmdom ym \<Longrightarrow>
+   k |\<in>| fmdom xm"
   by (metis fmdom_notD fmdom_notI fmrel_on_fsetD option.rel_sel)
 
 lemma fmrel_on_fset_fmmerge1:
@@ -58,8 +47,8 @@ lemma fmrel_on_fset_fmmerge1:
    fmrel_on_fset (fmdom zm) f (fmmerge g xm ym) zm"
   unfolding fmmerge_def
   apply (rule fmrel_on_fsetI)
-  apply (frule_tac ?xm="xm" in q61, simp)
-  apply (frule_tac ?xm="ym" in q61, simp)
+  apply (frule_tac ?xm="xm" in fmrel_on_fset_fmdom, simp)
+  apply (frule_tac ?xm="ym" in fmrel_on_fset_fmdom, simp)
   unfolding fmlookup_of_list fmlookup_dom_iff
   apply auto
   apply (unfold option_rel_Some2)
@@ -73,9 +62,9 @@ lemma fmrel_on_fset_fmmerge2:
     fmrel_on_fset (fmdom ym) f xm (fmmerge g xm ym)"
   apply (rule fmrel_on_fsetI)
   apply (auto simp add: Option.rel_option_iff option.case_eq_if fmmerge_def fmlookup_of_list)
-  apply (drule q23; auto)
-  apply (drule q22; auto)
-  apply (frule q22; auto)
+  apply (drule map_of_map_inter_eq_None; auto)
+  apply (drule map_of_map_inter_eq_Some; auto)
+  apply (frule map_of_map_inter_eq_Some; auto)
   apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI fmranI)
   done
 
@@ -114,5 +103,76 @@ next
             map_filter_def
 *)
   thm fmmerge_def fmrel_code fmlookup_of_list fmap_of_list.abs_eq
+
+
+
+abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
+
+interpretation tcf: comp_fun_commute tcf
+proof 
+  fix x y
+  show "tcf y \<circ> tcf x = tcf x \<circ> tcf y"
+  proof -
+    fix z
+    have "(tcf y \<circ> tcf x) z = snd y + snd x + z" by auto
+    also have "(tcf x \<circ> tcf y) z = snd y + snd x + z" by auto
+    ultimately have "(tcf y \<circ> tcf x) z = (tcf x \<circ> tcf y) z" by auto
+    then show "(tcf y \<circ> tcf x) = (tcf x \<circ> tcf y)" by auto
+  qed
+qed
+
+lemma ffold_rec_exp:
+  assumes "k |\<in>| fmdom x"
+    and "ky = (k, the (fmlookup (fmmap f x) k))"
+  shows "ffold tcf 0 (fset_of_fmap (fmmap f x)) = 
+        tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap f x)) |-| {|ky|}))"
+  using assms tcf.ffold_rec by auto
+
+lemma elem_le_ffold:
+  "k |\<in>| fmdom x \<Longrightarrow>
+   f (the (fmlookup x k)) < Suc (ffold tcf 0 (fset_of_fmap (fmmap f x)))"
+  by (subst ffold_rec_exp, auto)
+
+abbreviation "fmmerge' f xm ym \<equiv>
+  fmap_of_list (map
+    (\<lambda>k. if k |\<in>| fmdom xm \<and> k |\<in>| fmdom ym then (k,
+        f (the (fmlookup xm k)) (the (fmlookup ym k))) else (k, undefined))
+    (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
+
+lemma fmmerge_eq:
+  "fmmerge f xm ym = fmmerge' f xm ym"
+  unfolding fmmerge_def fmap_of_list.abs_eq map_of_map_restrict
+  apply auto
+  by (smt IntD1 IntD2 fmember.rep_eq inf_fset.rep_eq map_eq_conv map_of_map_restrict sorted_list_of_fset_simps(1))
+
+
+(*
+datatype (plugins del: "size") t = A | B | C "(nat, t) fmap"
+
+instantiation t :: size 
+begin
+
+term size_fmap
+
+primrec size_t :: "t \<Rightarrow> nat" where
+  "size_t A = 0"
+| "size_t B = 0"
+| "size_t (C xm) = Suc (ffold tcf 0 (fset_of_fmap (fmmap size_t xm)))"
+
+instance ..
+
+end
+
+function sup_t (infixl "\<squnion>" 65) where
+  "A \<squnion> _ = A"
+| "B \<squnion> x = (if x = B then B else A)"
+| "C xm \<squnion> x = (case x of C ym \<Rightarrow> C (fmmerge' (\<squnion>) xm ym) | _ \<Rightarrow> A)"
+  by pat_completeness auto
+termination
+  apply (relation "measure (\<lambda>(x, y). size y)")
+  apply auto[1]
+  apply auto[1]
+  by (simp add: elem_le_ffold)
+*)
 
 end
