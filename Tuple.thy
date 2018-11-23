@@ -8,7 +8,7 @@ abbreviation
   "subtuple f xs ys \<equiv> fmrel_on_fset (fmdom ys) f xs ys"
 
 abbreviation
-  "strict_subtuple f xs ys \<equiv> xs \<noteq> ys \<and> subtuple f xs ys"
+  "strict_subtuple f xs ys \<equiv> subtuple f xs ys \<and> xs \<noteq> ys"
 
 definition "t1 \<equiv> fmupd (1::nat) (1::nat) (fmupd (2::nat) (2::nat) fmempty)"
 definition "t2 \<equiv> fmupd (3::nat) (3::nat) (fmupd (1::nat) (1::nat) (fmupd (2::nat) (1::nat) fmempty))"
@@ -38,22 +38,83 @@ lemma strict_subtuple_antisym:
   by (smt fmap_ext fmdomE fmdom_notI fmfilter_alt_defs(5) fmlookup_filter fmrel_cases fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom option.simps(1))
 (*  by (smt fmap_ext fmdomE fmdom_notD fmdom_notI fmlookup_restrict_fset fmrel_cases fmrel_fmdom_eq option.inject)*)
 
-abbreviation "acyclic_in R xs \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
+(* TODO: Поменять аргументы местами *)
+abbreviation "acyclic_on R xs \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
 
-lemma subtuple_trans:
-  "acyclic_in P (fmran' xs) \<Longrightarrow>
-   subtuple P\<^sup>+\<^sup>+ xs ys \<Longrightarrow> subtuple P ys zs \<Longrightarrow> subtuple P\<^sup>+\<^sup>+ xs zs"
-  by (smt fmdom_notI fmlookup_dom_iff fmlookup_restrict_fset fmrel_cases fmrel_iff fmrel_on_fset_fmrel_restrict option.rel_sel option.sel tranclp.trancl_into_trancl)
-(*  by (smt fmdom_notI fmfilter_alt_defs(5) fmlookup_filter fmrelI fmrel_iff option.rel_sel tranclp.intros(2))*)
+(* TODO: Определить аналогичный trans_on? *)
+thm trans_def
+thm transp_def
+
+lemma subtuple_fmmerge2 [intro]:
+  "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
+   subtuple f xm (fmmerge g xm ym)"
+  by (rule_tac ?S="fmdom ym" in fmrel_on_fsubset; auto)
+
+lemma fmrel_trans:
+  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
+   fmrel P xm ym \<Longrightarrow> fmrel Q ym zm \<Longrightarrow> fmrel R xm zm"
+  unfolding fmrel_iff
+  by (metis fmdomE fmdom_notD fmran'I option.rel_inject(2) option.rel_sel)
+
+lemma fmrel_on_fset_trans:
+  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) P xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) Q ym zm \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) R xm zm"
+  apply (rule fmrel_on_fsetI)
+  unfolding option.rel_sel
+  apply auto
+  apply (meson fmdom_notI fmrel_on_fset_fmdom)
+  by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom option.rel_sel option.sel)
+
+lemma fmrel_acyclic:
+  "acyclic_on P (fmran' xm) \<Longrightarrow>
+   fmrel P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel P ym xm \<Longrightarrow>
+   xm = ym"
+  by (metis (full_types) fmap_ext fmran'I fmrel_cases option.sel tranclp.trancl_into_trancl)
+
+lemma fmrel_acyclic':
+  "acyclic_on P (fmran' ym) \<Longrightarrow>
+   fmrel P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel P ym xm \<Longrightarrow>
+   xm = ym"
+  by (smt fmran'E fmran'I fmrel_acyclic fmrel_cases option.inject tranclp_into_tranclp2)
+
+lemma fmrel_on_fset_acyclic:
+  "acyclic_on P (fmran' xm) \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom xm) P ym xm \<Longrightarrow>
+   xm = ym"
+  by (smt fmap_ext fmdom_filter fmfilter_alt_defs(5) fmlookup_filter fmrel_acyclic
+          fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom)
+
+lemma fmrel_on_fset_acyclic':
+  "acyclic_on P (fmran' ym) \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom xm) P ym xm \<Longrightarrow>
+   xm = ym"
+  by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff fmrel_on_fset_acyclic
+          fmrel_on_fset_alt_def fmrel_on_fset_fmdom option.simps(11) tranclp_into_tranclp2)
+
+lemma fmrel_trans':
+  "fmrel P\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel P ym zm \<Longrightarrow> fmrel P\<^sup>+\<^sup>+ xm zm"
+  by (rule fmrel_trans, auto)
+
+lemma fmrel_on_fset_trans':
+  "fmrel_on_fset (fmdom ym) P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) P ym zm \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) P\<^sup>+\<^sup>+ xm zm"
+  by (rule fmrel_on_fset_trans, auto)
 
 lemma strict_subtuple_trans:
-  "acyclic_in P (fmran' xs) \<Longrightarrow>
+  "acyclic_on P (fmran' xs) \<Longrightarrow>
    strict_subtuple P\<^sup>+\<^sup>+ xs ys \<Longrightarrow> strict_subtuple P ys zs \<Longrightarrow> strict_subtuple P\<^sup>+\<^sup>+ xs zs"
   apply auto
-  apply (smt fmap_ext fmdom_notI fmlookup_restrict_fset fmran'I fmrel_cases fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom option.simps(1) tranclp.trancl_into_trancl)
-(*  apply (smt fmap_ext fmfilter_alt_defs(5) fmlookup_filter fmran'I fmrel_iff option.collapse option.rel_sel tranclp.trancl_into_trancl)*)
-  using subtuple_trans by blast
+  apply (rule fmrel_on_fset_trans, auto)
+  using fmrel_on_fset_acyclic by auto
 
+(*
 lemma subtuple_trans2:
   "(\<And>x y. x \<in> fmran' xs \<Longrightarrow> P\<^sup>+\<^sup>+ x y \<Longrightarrow> P y x \<Longrightarrow> False) \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
@@ -61,7 +122,7 @@ lemma subtuple_trans2:
    subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs zs"
   by (smt fmdom_notD fmdom_notI fmrel_on_fsetD fmrel_on_fsetI option.rel_sel tranclp.trancl_into_trancl)
 (*  by (smt fmdom_notI fmlookup_restrict_fset fmrel_iff option.rel_sel tranclp.trancl_into_trancl)*)
-
+*)
 lemma eq_trancl':
   "(\<lambda>x y. x = y \<or> P\<^sup>+\<^sup>+ x y) x y =
    (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y"
@@ -73,23 +134,24 @@ lemma strict_subtuple_trans2:
    strict_subtuple (\<lambda>x y. x = y \<or> P x y) ys zs \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs zs"
   apply auto
+  using fmrel_on_fset_trans' apply blast
   unfolding eq_trancl
-  apply (smt fmap_ext fmdomI fmlookup_restrict_fset fmran'I fmrel_cases fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom option.simps(1))
-(*  apply (smt ffmember_filter fmap_ext fmdomI fmdom_filter fmdom_notD fmdom_notI fmfilter_alt_defs(5) fmlookup_dom_iff fmlookup_restrict_fset fmran'I fmrel_fmdom_eq fmrel_iff fmrestrict_fset_dom option.inject option.rel_cases option.rel_sel option.sel)*)
-  unfolding eq_trancl'
-  using subtuple_trans2 by blast
-
+  by (smt fmap_ext fmlookup_restrict_fset fmran'I fmrel_fmdom_eq fmrel_iff
+          fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom option.inject option.rel_cases)
+(*  unfolding fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom fmrel_iff fmlookup_restrict_fset
+  by (smt fmap_rel_eq_rev fmdomE fmdom_notD fmran'I fmrelI option.rel_inject(2) option.rel_sel)*)
+(*
 lemma subtuple_trans3:
-  "acyclic_in P (fmran' xs) \<Longrightarrow>
+  "acyclic_on P (fmran' xs) \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y) ys zs \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs zs"
   apply (rule_tac ?ys="ys" in subtuple_trans2)
   apply (meson notin_fset tranclp.trancl_into_trancl)
   by auto
-
+*)
 lemma strict_subtuple_trans3:
-  "acyclic_in P (fmran' xs) \<Longrightarrow>
+  "acyclic_on P (fmran' xs) \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y) ys zs \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs zs"
@@ -97,29 +159,221 @@ lemma strict_subtuple_trans3:
   apply (meson notin_fset tranclp.trancl_into_trancl)
   by auto
 
-lemma fmrel_to_trancl:
-  "fmrel P\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
+(* Возможно, стоит везде использовать этот предикат *)
+thm transp_def
+term transp
+thm Finite_Map.fmap.rel_transp
+(*
+Это обратное отношение. Обратные отношения использовались при доказательстве
+транзитивности для list_all2, возможно и тут пригодятся
+Finite_Map.Finite_Map.fmap.rel_conversep: fmrel ?R\<inverse>\<inverse> = (fmrel ?R)\<inverse>\<inverse>
+Finite_Map.Finite_Map.fmap.rel_flip: fmrel ?R\<inverse>\<inverse> ?a ?b = fmrel ?R ?b ?a
+*)
+thm fmrel_on_fset_fmrel_restrict fmrel_restrict_fset fmrelD
+
+lemma fmrel_trancl_unfold:
+  "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel f\<^sup>+\<^sup>+ xm ym"
+  apply (induct rule: tranclp_induct)
+  apply (simp add: fmap.rel_mono_strong)
+  using fmrel_trans' by blast
+
+lemma fmrel_trancl_fmdom_eq:
+  "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"
+  by (induct rule: tranclp_induct; simp add: fmrel_fmdom_eq)
+
+
+lemma rel_option_to_trancl:
+  "rel_option P\<^sup>+\<^sup>+ (fmlookup xm x) (fmlookup ym x) \<Longrightarrow>
    (\<And>x. P x x) \<Longrightarrow>
-   (fmrel P)\<^sup>+\<^sup>+ xs ys"
+   (\<lambda>m n. rel_option P (fmlookup m x) (fmlookup n x))\<^sup>+\<^sup>+ xm ym"
+  apply (erule option.rel_cases)
+  apply (simp add: tranclp.r_into_trancl)
   sorry
+(*
+proof -
+  obtain z where "P xa z" and
+    "(\<lambda>m n. rel_option P (fmlookup m x) (fmlookup n x))\<^sup>+\<^sup>+ (fmupd x z fmempty) ym"
+  apply (rule_tac ?b="z" in rtranclp_into_tranclp2)
+
+    term fmupd
+*)
+  thm option.rel_cases rtranclp_into_tranclp2
+(*
+lemma q:
+  assumes as_r: "(\<forall>x. P x x)"
+  shows "(\<And>x. P x x) \<Longrightarrow>
+       fmlookup xm x = Some xa \<Longrightarrow>
+       fmlookup ym x = Some y \<Longrightarrow>
+       P\<^sup>+\<^sup>+ xa y \<Longrightarrow>
+       (\<lambda>m n. rel_option P (fmlookup m x)
+               (fmlookup n x))\<^sup>+\<^sup>+
+        xm ym"
+proof -
+  from as_r obtain zm where "(\<lambda>m n. rel_option P (fmlookup m x) (fmlookup n x)) xm zm" and
+    "(\<lambda>m n. rel_option P (fmlookup m x) (fmlookup n x))\<^sup>+\<^sup>+ zm ym"
+*)
+
+(*  by (metis (no_types, lifting) fmran'I option.rel_cases option.rel_sel tranclp.r_into_trancl)*)
+(*
+lemma q:
+  "\<forall>x. f P\<^sup>+\<^sup>+ x m n \<Longrightarrow>
+   (\<And>x. P x x) \<Longrightarrow>
+   (\<And>x. f P\<^sup>+\<^sup>+ x m n \<Longrightarrow> (\<lambda>m n. f P x m n)\<^sup>+\<^sup>+ m n) \<Longrightarrow>
+   (\<lambda>m n. \<forall>x. f P x m n)\<^sup>+\<^sup>+ m n"
+nitpick
+*)
+thm fBallE
+
+thm fmrel_on_fset_fmdom
+
+(*   (\<And>x y. x \<in> fmran' xm \<Longrightarrow> P\<^sup>+\<^sup>+ x y \<Longrightarrow> P y x \<Longrightarrow> False) \<Longrightarrow>*)
 
 (*
-abbreviation
-  "subtuple f xs ys \<equiv> fmrel f (fmrestrict_fset (fmdom ys) xs) ys"
+  Transitive_Closure.converse_tranclp_induct:
+    ?r\<^sup>+\<^sup>+ ?a ?b \<Longrightarrow>
+    (\<And>y. ?r y ?b \<Longrightarrow> ?P y) \<Longrightarrow> (\<And>y z. ?r y z \<Longrightarrow> ?r\<^sup>+\<^sup>+ z ?b \<Longrightarrow> ?P z \<Longrightarrow> ?P y) \<Longrightarrow> ?P ?a
 *)
+
+thm tranclp_induct
+
+lemma q:
+  "r\<^sup>+\<^sup>+ (fmlookup a x) (fmlookup b x) \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>y. r (fmlookup a x) (fmlookup y x) \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z.
+     (\<lambda>m n. r (fmlookup m x) (fmlookup n x))\<^sup>+\<^sup>+ a y \<Longrightarrow>
+     r (fmlookup y x) (fmlookup z x) \<Longrightarrow>
+     P y \<Longrightarrow> P z) \<Longrightarrow>
+   P b"
+  nitpick
+
+lemma q:
+  "rel_option r\<^sup>+\<^sup>+ (fmlookup a x) (fmlookup b x) \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>y. rel_option r (fmlookup a x) (fmlookup y x) \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z.
+     (\<lambda>m n. rel_option r (fmlookup m x) (fmlookup n x))\<^sup>+\<^sup>+ a y \<Longrightarrow>
+     rel_option r (fmlookup y x) (fmlookup z x) \<Longrightarrow>
+     P y \<Longrightarrow> P z) \<Longrightarrow>
+   P b"
+
+
+lemma fmrel_tranclp_induct':
+  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>y. fmrel r a y \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z. (fmrel r)\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel r y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
+  apply (unfold fmrel_iff)
+  apply (auto)
+
+  thm fmrelI fmrel_code fmap.rel_mono_strong fmrel_cases fmrel_iff
+
+
+lemma fmrel_tranclp_trans_induct:
+  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>x y. fmrel r x y \<Longrightarrow> P x y) \<Longrightarrow>
+   (\<And>x y z. fmrel r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z) \<Longrightarrow> P a b"
+  apply (frule_tac ?zm="a" in fmrel_trans)
+
+lemma fmrel_tranclp_induct:
+  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>y. fmrel r a y \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z. fmrel r\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel r y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
+  apply (frule_tac ?P="r\<^sup>+\<^sup>+" and ?xm="a" and ?ym="b" in fmrel_trans)
+
+  
+  apply (unfold fmrel_code)
+  apply auto
+  apply (unfold fBall_alt_def)
+  apply (erule allE)
+  apply (erule allE)
+  apply auto
+
+
+lemma fmrel_tranclp_induct:
+  assumes as_r: "\<forall>x. r x x"
+  shows
+    "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+     (\<And>y. fmrel r a y \<Longrightarrow> P y) \<Longrightarrow>
+     (\<And>y z. fmrel r\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel r y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
+  apply (frule_tac ?P="r\<^sup>+\<^sup>+" and ?xm="a" in fmrel_trans)
+(*  apply (unfold fmrel_code)
+  apply auto
+  apply (erule fBallE)
+  apply (unfold fmrel_iff)
+  apply auto*)
+
+  thm fmrelI fmrel_code fmap.rel_mono_strong fmrel_cases
+
+proof -
+  from as_r obtain zm where 
+      lp_xm_zm: "fmrel r a zm" and lp_pp_xm_zm: "fmrel r\<^sup>+\<^sup>+ zm b"
+  
+  apply (frule_tac ?zm="a" in fmrel_trans')
+  apply (simp add: fmap.rel_refl)
+
+
+lemma fmrel_converse_tranclp_induct:
+  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   (\<And>y. fmrel r y b \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z. fmrel r y z \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ z b \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow> P a"
+  apply (frule_tac ?zm="a" in fmrel_trans')
+
+lemma fmrel_to_trancl:
+  "fmrel P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   (\<And>x. P x x) \<Longrightarrow>
+   (fmrel P)\<^sup>+\<^sup>+ xm ym"
+  apply (erule_tac ?r="P" in fmrel_tranclp_induct')
+  apply auto
+
+  apply (drule fmrel_trans')
+  apply (rule rtranclp_into_tranclp2)
+  apply (frule_tac ?xm="xm" in fmrel_on_fset_fmdom, simp)
+
+  unfolding fmrel_code
+  apply auto
+  apply (erule fBallE)
+  apply (erule fBallE)
+  apply auto
+(*
+  unfolding fmrel_iff
+  unfolding rel_option_iff option.case_eq_if
+  apply auto*)
+(*
+  apply (drule fmrelD)
+  apply auto
+  apply (erule option.rel_cases)
+*)
+
+lemma subtuple_to_trancl':
+  "subtuple (\<lambda>x y. x = y \<or> P\<^sup>+\<^sup>+ x y) xs ys \<Longrightarrow>
+   acyclic_on P (fmran' xs) \<Longrightarrow>
+   (subtuple (\<lambda>x y. x = y \<or> P x y))\<^sup>+\<^sup>+ xs ys"
+  apply (rule rtranclp_into_tranclp2)
+
+  apply (unfold fmrel_on_fset_fmrel_restrict)
+  apply auto
 
 lemma subtuple_to_trancl':
   "subtuple (\<lambda>x y. x = y \<or> P\<^sup>+\<^sup>+ x y) xs ys \<Longrightarrow>
    (\<And>x y. x \<in> fmran' xs \<Longrightarrow> P\<^sup>+\<^sup>+ x y \<Longrightarrow> P y x \<Longrightarrow> False) \<Longrightarrow>
    (subtuple (\<lambda>x y. x = y \<or> P x y))\<^sup>+\<^sup>+ xs ys"
-  sorry
+  apply (unfold fmrel_on_fset_fmrel_restrict)
+  apply auto
 
+  unfolding fmmerge_def fmap_of_list.abs_eq map_of_map_restrict
+
+  apply auto
+
+(* Использует только эта теорема, в первую очередь нужно доказать её *)
 lemma subtype_Tuple_Tuple'_rev:
   "strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on P (fmran' \<pi>) \<Longrightarrow>
    (strict_subtuple (\<lambda>x y. x = y \<or> P x y))\<^sup>+\<^sup>+ \<pi> \<xi>"
   sorry
-
+(*
 lemma subtuple_to_trancl:
   "subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xs ys \<Longrightarrow>
    (\<And>x y. x \<in> fmran' xs \<Longrightarrow> P\<^sup>+\<^sup>+ x y \<Longrightarrow> P y x \<Longrightarrow> False) \<Longrightarrow>
@@ -137,7 +391,7 @@ lemma strict_subtuple_to_trancl:
    (\<And>x y. x \<in> fmran' xs \<Longrightarrow> P\<^sup>+\<^sup>+ x y \<Longrightarrow> P y x \<Longrightarrow> False) \<Longrightarrow>
    (strict_subtuple (\<lambda>x y. x = y \<or> P x y))\<^sup>+\<^sup>+ xs ys"
   sorry
-
+*)
 
 lemma fmrel_upd_rev:
   "fmrel R (fmupd k x xs) (fmupd k y ys) \<Longrightarrow>

@@ -2,12 +2,40 @@ theory Finite_Map_Ext
   imports Main "~~/src/HOL/Library/Finite_Map"
 begin
 
-(* Попробовать эту функцию size_fmap *)
-
 definition "fmmerge f xm ym \<equiv>
   fmap_of_list (map
     (\<lambda>k. (k, f (the (fmlookup xm k)) (the (fmlookup ym k))))
     (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
+
+lemma fmdom_fmmerge [simp]:
+  "fmdom (fmmerge g xm ym) = fmdom xm |\<inter>| fmdom ym"
+  by (auto simp add: fmmerge_def fmdom_of_list)
+
+lemma fmrel_on_fset_fmdom:
+  "fmrel_on_fset (fmdom ym) f xm ym \<Longrightarrow>
+   k |\<in>| fmdom ym \<Longrightarrow>
+   k |\<in>| fmdom xm"
+  by (metis fmdom_notD fmdom_notI fmrel_on_fsetD option.rel_sel)
+
+lemma fmap_rel_eq_rev:
+  "(xm = ym) = fmrel (=) xm ym"
+  by (simp add: fmap.rel_eq)
+
+lemma fmmerge_commut:
+  "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x y = f y x) \<Longrightarrow>
+   fmmerge f xm ym = fmmerge f ym xm"
+  apply (unfold fmap_rel_eq_rev)
+  apply (rule fmrelI)
+  unfolding fmmerge_def fmlookup_of_list
+  apply (auto simp add: Option.rel_option_iff option.case_eq_if fmmerge_def fmlookup_of_list)
+  apply (smt finterD1 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
+             sorted_list_of_fset_simps(1) inf_commute)
+  apply (smt finterD1 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
+             sorted_list_of_fset_simps(1) inf_commute)
+  apply (smt finterD2 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
+             sorted_list_of_fset_simps(1) inf_commute
+             fmlookup_of_list option.inject prod.inject)
+  done
 
 lemma map_of_map_inter_eq_Some:
   "map_of
@@ -34,14 +62,8 @@ lemma map_of_map_inter_eq_None:
   by (metis (no_types, lifting) Int_iff comp_apply fmdom'_alt_def
             fmdom'_notD option.simps(3) restrict_map_def)
 
-lemma fmrel_on_fset_fmdom:
-  "fmrel_on_fset (fmdom ym) f xm ym \<Longrightarrow>
-   k |\<in>| fmdom ym \<Longrightarrow>
-   k |\<in>| fmdom xm"
-  by (metis fmdom_notD fmdom_notI fmrel_on_fsetD option.rel_sel)
-
-lemma fmrel_on_fset_fmmerge1:
-  "(\<And>x y z. z |\<in>| fmran zm \<Longrightarrow> f x z \<Longrightarrow> f y z \<Longrightarrow> f (g x y) z) \<Longrightarrow>
+lemma fmrel_on_fset_fmmerge1 [intro]:
+  "(\<And>x y z. z \<in> fmran' zm \<Longrightarrow> f x z \<Longrightarrow> f y z \<Longrightarrow> f (g x y) z) \<Longrightarrow>
    fmrel_on_fset (fmdom zm) f xm zm \<Longrightarrow>
    fmrel_on_fset (fmdom zm) f ym zm \<Longrightarrow>
    fmrel_on_fset (fmdom zm) f (fmmerge g xm ym) zm"
@@ -55,56 +77,20 @@ lemma fmrel_on_fset_fmmerge1:
   apply (rule_tac ?x="g aa ab" in exI)
   apply auto
   apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI)
-  by (metis fmdomI fmranI fmrel_on_fsetD option.rel_inject(2))
+  by (metis fmdomI fmran'I fmrel_on_fsetD option.rel_inject(2))
 
-lemma fmrel_on_fset_fmmerge2:
-  "(\<And>x y. x |\<in>| fmran xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
+lemma fmrel_on_fset_fmmerge2 [intro]:
+  "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
     fmrel_on_fset (fmdom ym) f xm (fmmerge g xm ym)"
   apply (rule fmrel_on_fsetI)
   apply (auto simp add: Option.rel_option_iff option.case_eq_if fmmerge_def fmlookup_of_list)
   apply (drule map_of_map_inter_eq_None; auto)
   apply (drule map_of_map_inter_eq_Some; auto)
   apply (frule map_of_map_inter_eq_Some; auto)
-  apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI fmranI)
+  apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI fmran'I)
   done
 
-lemma fmdom_inter_commut:
-  "sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym) =
-   sorted_list_of_fset (fmdom ym |\<inter>| fmdom xm)"
-  by (simp add: inf_commute)
-
-lemma double_fmrestrict_fset_fmdom:
-  "fmrestrict_fset (fmdom (fmrestrict_fset (fmdom xs) ys)) xs =
-   fmrestrict_fset (fmdom ys) xs"
-  unfolding fmfilter_alt_defs(5) fmdom_filter ffmember_filter
-  by (metis (mono_tags, lifting) fmdomI fmfilter_cong)
-
-lemma fmmerge_commut:
-  "(\<And>x y. x |\<in>| fmran xm \<Longrightarrow> f x y = f y x) \<Longrightarrow>
-   fmmerge f xm ym = fmmerge f ym xm"
-  unfolding fmmerge_def
-  sorry
-(* fmap_of_list.abs_eq*)
-(*
-  apply (induct ym)
-  prefer 2
-proof -
-  fix xma :: "('b, 'a) fmap"
-  have "\<forall>f fa fb fc b. fmlookup fb b \<noteq> (None::'a option) \<or> b |\<notin>| fmdom (fmrestrict_fset (fmdom (fc::('b, 'c) fmap)) (fmmerge fa (f::(_, 'a) fmap) fb::(_, 'c) fmap))"
-    by (metis (no_types) fmmerge_def q18)
-  then show "fmmerge f xma fmempty = fmmerge f fmempty xma"
-    by (metis (no_types) all_not_fin_conv fmdom_empty fmempty_lookup fmran_empty fmrel_fmdom_eq fmrestrict_fset_dom fmrestrict_fset_empty fmrestrict_fset_null subtuple_fmmerge)
-next
-
-  unfolding fmmerge_def fmap_of_list.abs_eq
-  apply auto
-
-  unfolding fmlookup_of_list fmrestrict_fset_def map_restrict_set_def
-            map_filter_def
-*)
-  thm fmmerge_def fmrel_code fmlookup_of_list fmap_of_list.abs_eq
-
-
+(*** Finite Map size calculation ********************************************)
 
 abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
 
@@ -139,11 +125,12 @@ abbreviation "fmmerge' f xm ym \<equiv>
         f (the (fmlookup xm k)) (the (fmlookup ym k))) else (k, undefined))
     (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
 
-lemma fmmerge_eq:
-  "fmmerge f xm ym = fmmerge' f xm ym"
+lemma fmmerge_eq [simp]:
+  "fmmerge' f xm ym = fmmerge f xm ym"
   unfolding fmmerge_def fmap_of_list.abs_eq map_of_map_restrict
   apply auto
-  by (smt IntD1 IntD2 fmember.rep_eq inf_fset.rep_eq map_eq_conv map_of_map_restrict sorted_list_of_fset_simps(1))
+  by (smt IntD1 IntD2 fmember.rep_eq inf_fset.rep_eq map_eq_conv
+          map_of_map_restrict sorted_list_of_fset_simps(1))
 
 
 (*

@@ -334,7 +334,7 @@ proof -
     apply (simp add: P f' f'' g' g'' the_inv_f_f natural_under_rel_def functor_under_rel_def)
     by (simp add: FR GR)
 qed
-
+(*
 lemma list_all2_rtrancl1:
   "(list_all2 P)\<^sup>*\<^sup>* xs ys \<Longrightarrow>
    list_all2 P\<^sup>*\<^sup>* xs ys"
@@ -351,7 +351,7 @@ lemma list_all2_trancl1:
 
 lemma list_all2_rtrancl2:
   assumes as_r: "(\<forall>x. P x x)" 
-  shows "(list_all2 P\<^sup>*\<^sup>*) xs ys \<Longrightarrow> (list_all2 P)\<^sup>*\<^sup>* xs ys"
+  shows "(list_all2 P\<^sup>*\<^sup>* ) xs ys \<Longrightarrow> (list_all2 P)\<^sup>*\<^sup>* xs ys"
 proof(induction rule: list_all2_induct)
   case Nil then show ?case by simp
 next
@@ -409,7 +409,7 @@ next
     with x_xs_y_zs show ?thesis by force
   qed
 qed
-
+*)
 lemma eq_trancl:
   "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y =
    (\<lambda>x y. x = y \<or> P\<^sup>+\<^sup>+ x y) x y"

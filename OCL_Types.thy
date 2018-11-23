@@ -595,7 +595,8 @@ lemma subtype_Tuple_x''':
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
   apply (induct rule: rtranclp_induct)
-  apply (simp add: fmap.rel_refl)
+  apply (simp add: fmrel_on_fset_fmrel_restrict fmap.rel_refl)
+  by (metis (mono_tags) OCL_Types.subtype_Tuple_x' less_eq_type_def less_type_def rtranclp_into_tranclp1)
 (*  by (metis (mono_tags) less_eq_type_def less_type_def rtranclp_into_tranclp1 subtype_Tuple_x')*)
 
 lemma Tuple_implies_Tuple':
@@ -640,17 +641,6 @@ lemma subtype_Tuple_Tuple_rev:
   "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
    direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>)"
   by (metis (mono_tags, lifting) direct_subtype.intros(23) fun_preserve_morphism_composition')
-(*
-lemma subtype_Tuple_Tuple'_rev:
-  "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
-   (strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi>"
-  sorry
-
-  apply (induct rule: tranclp_induct)
-  apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
-  using strict_subtuple_trans3 by blast
-*)
 
 lemma subtype_Tuple_Tuple''_rev:
   "strict_subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi> \<Longrightarrow>
@@ -829,11 +819,16 @@ lemma subtype_x_Tuple [elim]:
    (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
   apply (induct rule: converse_tranclp_induct)
-  apply (metis (no_types, lifting) direct_subtype_x_Tuple
-        fmap.rel_mono_strong subtype_Tuple_Tuple'' tranclp.r_into_trancl)
+  apply (metis (no_types, lifting) direct_subtype_x_Tuple less_type_def
+          order.strict_iff_order subtype_Tuple_Tuple''' tranclp.r_into_trancl)
   by (metis (no_types, lifting) direct_subtype_x_OclInvalid
         direct_subtype_x_Tuple less_type_def subtype_Tuple_Tuple'''
         subtype_irrefl tranclp_into_tranclp2)
+(*  apply (metis (no_types, lifting) direct_subtype_x_Tuple
+        fmap.rel_mono_strong subtype_Tuple_Tuple'' tranclp.r_into_trancl)
+  by (metis (no_types, lifting) direct_subtype_x_OclInvalid
+        direct_subtype_x_Tuple less_type_def subtype_Tuple_Tuple'''
+        subtype_irrefl tranclp_into_tranclp2)*)
 
 lemma subtype_x_Tuple' [elim]:
   "\<tau> \<le> Tuple \<xi> \<Longrightarrow>
@@ -841,7 +836,7 @@ lemma subtype_x_Tuple' [elim]:
    (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_type_def
   apply (induct rule: converse_rtranclp_induct)
-  apply (simp add: fmap.rel_refl)
+  apply (simp add: fmrel_on_fset_fmrel_restrict fmap.rel_refl)
   by (metis (no_types, lifting) direct_subtype_x_OclInvalid
         direct_subtype_x_Tuple dual_order.strict_iff_order less_type_def
         rtranclp_into_tranclp2 subtype_Tuple_Tuple''')
@@ -886,25 +881,6 @@ lemma measure_cond [intro]:
   "k |\<in>| fmdom x \<Longrightarrow>
    size (the (fmlookup x k)) < size (Tuple x)"
   using elem_le_ffold by auto
-
-abbreviation
-  "supc f xs ys \<equiv>
-    fmmap_keys
-      (\<lambda>k x. if (k |\<in>| fmdom ys) then (f x (the (fmlookup ys k))) else OclInvalid)
-      (fmfilter (\<lambda>k. k |\<in>| fmdom ys) xs)"
-
-lemma supc_less_eq_sup:
-  "(\<And>x y. x \<in> fmran' xs \<Longrightarrow> f x (g x y)) \<Longrightarrow>
-    fmrel f
-     (fmrestrict_fset (fmdom ys) xs)
-     (supc g xs ys)"
-  sorry
-
-lemma supc_commut:
-  "(\<And>x y. x \<in> fmran' xs \<Longrightarrow> f x y = f y x) \<Longrightarrow>
-   supc f xs ys = supc f ys xs"
-  sorry
-
 
 instantiation type :: (semilattice_sup) semilattice_sup
 begin
@@ -970,7 +946,7 @@ function sup_type where
      | OclInvalid \<Rightarrow> Collection \<tau>
      | _ \<Rightarrow> SupType)"
 | "Tuple \<pi> \<squnion> \<sigma> = (case \<sigma>
-    of Tuple \<xi> \<Rightarrow> Tuple (supc (\<squnion>) \<pi> \<xi>)
+    of Tuple \<xi> \<Rightarrow> Tuple (fmmerge' (\<squnion>) \<pi> \<xi>)
      | OclInvalid \<Rightarrow> Tuple \<pi>
      | _ \<Rightarrow> SupType)"
 | "SupType \<squnion> \<sigma> = SupType"
@@ -1022,7 +998,7 @@ lemma fmrestrict_fset_fmdom:
   "(fmrestrict_fset (ffilter (\<lambda>k. k |\<in>| fmdom ys) (fmdom xs)) xs) =
    (fmrestrict_fset (fmdom ys) xs)"
   by (metis ffmember_filter fmdomI fmfilter_alt_defs(5) fmfilter_cong)
-
+(*
 lemma Tuple_less_eq_sup'':
   "(\<And>x y. x \<in> fmran' xs \<Longrightarrow> f x (g x y)) \<Longrightarrow>
     fmrel f
@@ -1038,13 +1014,14 @@ lemma Tuple_less_eq_sup''':
   apply auto[1]
   apply (auto simp add: Tuple_less_eq_sup'')
   done
-
+*)
 lemma Tuple_less_eq_sup:
   "(\<And>\<tau> \<sigma>. \<tau> \<in> fmran' \<pi> \<Longrightarrow> \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
    Tuple \<pi> \<le> Tuple \<pi> \<squnion> \<sigma>"
-  apply (cases \<sigma>, auto)
-  apply (rule Tuple_less_eq_sup'''; auto)
-  done
+  by (cases \<sigma>, auto)
+(*  apply (rule_tac ?\<pi>="\<pi>" in subtype_x_Tuple_intro', simp)
+  apply (rule subtuple_fmmerge2, simp)
+  done*)
 
 lemma sup_ge1_type:
   "\<tau> \<le> \<tau> \<squnion> \<sigma>"
@@ -1112,7 +1089,7 @@ lemma Tuple_sup_commut:
   "(\<And>xa \<sigma>. xa \<in> fmran' x \<Longrightarrow> xa \<squnion> \<sigma> = \<sigma> \<squnion> xa) \<Longrightarrow>
    Tuple x \<squnion> \<sigma> = \<sigma> \<squnion> Tuple x"
   apply (cases \<sigma>; simp add: less_eq_type_def)
-  using supc_commut by blast
+  using fmmerge_commut by blast
 
 lemma sup_commut_type:
   "\<tau> \<squnion> \<sigma> = \<sigma> \<squnion> \<tau>"
@@ -1147,9 +1124,9 @@ lemma sup_least_type:
   apply (erule subtype_x_Bag'; erule subtype_x_Bag'; auto)
   apply (erule subtype_x_Sequence'; erule subtype_x_Sequence'; auto)
   apply (erule subtype_x_Tuple'; erule subtype_x_Tuple'; auto)
-  apply (rule_tac ?\<pi>="(supc (\<squnion>) \<pi> \<pi>')" in subtype_x_Tuple_intro')
-  apply simp
-  sorry
+  apply (rule_tac ?\<pi>="(fmmerge (\<squnion>) \<pi> \<pi>')" in subtype_x_Tuple_intro';
+          simp add: fmrel_on_fset_fmmerge1)
+  done
 
 instance
   apply intro_classes
