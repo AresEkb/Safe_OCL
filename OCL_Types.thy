@@ -473,7 +473,7 @@ lemma subtype_Tuple_Tuple:
 
 lemma subtype_Tuple_Tuple':
   "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
   apply (induct rule: tranclp_induct)
   apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
@@ -487,7 +487,7 @@ lemma subtype_Tuple_Tuple'':
 
 lemma subtype_Tuple_Tuple''':
   "direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>) \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    strict_subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
   by (metis (mono_tags, lifting) subtype_Tuple_Tuple subtype_Tuple_Tuple' subtype_Tuple_Tuple'')
 
@@ -580,7 +580,7 @@ lemma subtype_x_Set' [elim]:
 
 lemma subtype_Tuple_x':
   "Tuple \<pi> < \<sigma> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
@@ -590,7 +590,7 @@ lemma subtype_Tuple_x':
 
 lemma subtype_Tuple_x''':
   "Tuple \<pi> \<le> \<sigma> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    (\<And>\<xi>. \<sigma> = Tuple \<xi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def less_eq_type_def
@@ -618,7 +618,7 @@ lemma subtype_Tuple_Tuple:
 
 lemma subtype_Tuple_Tuple':
   "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
   apply (induct rule: tranclp_induct)
   apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
@@ -632,11 +632,11 @@ lemma subtype_Tuple_Tuple'':
 
 lemma subtype_Tuple_Tuple''':
   "direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>) \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    strict_subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi>"
   by (metis (mono_tags, lifting) subtype_Tuple_Tuple subtype_Tuple_Tuple' subtype_Tuple_Tuple'')
 *)
-
+(*
 lemma subtype_Tuple_Tuple_rev:
   "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
    direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>)"
@@ -650,24 +650,45 @@ lemma subtype_Tuple_Tuple''_rev:
 
 lemma subtype_Tuple_Tuple'''_rev:
   "strict_subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    direct_subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>)"
-  by (simp add: subtype_Tuple_Tuple''_rev subtype_Tuple_Tuple'_rev subtype_Tuple_Tuple_rev)
+(*  by (simp add: subtype_Tuple_Tuple''_rev subtype_Tuple_Tuple'_rev subtype_Tuple_Tuple_rev)*)
 (*  by (metis (mono_tags, lifting) subtype_Tuple_Tuple_rev subtype_Tuple_Tuple'_rev subtype_Tuple_Tuple''_rev)*)
 
 lemma subtype_x_Tuple_intro'':
   "strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    Tuple \<pi> < Tuple \<xi>"
   unfolding less_type_def less_eq_type_def
-  by (simp add: subtype_Tuple_Tuple'''_rev)
+(*  by (simp add: subtype_Tuple_Tuple'''_rev)*)
+*)
+
+lemma subtype_Tuple_Tuple_rev:
+  "(subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi> \<Longrightarrow>
+   direct_subtype\<^sup>*\<^sup>* (Tuple \<pi>) (Tuple \<xi>)"
+  by (smt direct_subtype.intros(23) fun_preserve_morphism_composition' tranclp_into_rtranclp2)
+
+lemma subtype_Tuple_Tuple''_rev:
+  "subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi> \<Longrightarrow>
+   subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
+  unfolding tranclp_into_rtranclp2
+  by simp
+
+lemma subtype_Tuple_Tuple'''_rev:
+  "subtuple direct_subtype\<^sup>*\<^sup>* \<pi> \<xi> \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   direct_subtype\<^sup>*\<^sup>* (Tuple \<pi>) (Tuple \<xi>)"
+  apply (drule subtype_Tuple_Tuple''_rev)
+  apply (drule subtuple_to_trancl', simp)
+  by (simp add: subtype_Tuple_Tuple_rev)
+
 
 lemma subtype_x_Tuple_intro''':
   "subtuple (\<le>) \<pi> \<xi> \<Longrightarrow>
-   acyclic_in direct_subtype (fmran' \<pi>) \<Longrightarrow>
+   acyclic_on direct_subtype (fmran' \<pi>) \<Longrightarrow>
    Tuple \<pi> \<le> Tuple \<xi>"
   unfolding less_eq_type_def
-  by (metis Nitpick.rtranclp_unfold subtype_Tuple_Tuple'''_rev)
+  by (metis subtype_Tuple_Tuple'''_rev)
 
 
 lemma subtype_x_Set [elim]:
