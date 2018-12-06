@@ -4,6 +4,8 @@ theory Transitive_Closure_Ext
     "HOL-Library.FuncSet"
 begin
 
+abbreviation "acyclic_on xs R \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
+
 lemma acyclic_alt:
   "acyclicP R \<Longrightarrow> R\<^sup>*\<^sup>* x y \<Longrightarrow> \<not> R y x"
   apply (auto simp add: acyclic_def Enum.rtranclp_rtrancl_eq)
@@ -417,12 +419,43 @@ lemma eq_trancl:
   apply (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp rtranclpD rtranclp_idemp)
   apply (metis (mono_tags, lifting) mono_rtranclp rtranclpD tranclp.r_into_trancl tranclp_into_rtranclp)
   done
-
+(*
 lemma tranclp_into_rtranclp2:
   "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y = (\<lambda>x y. P x y)\<^sup>*\<^sup>* x y"
   apply auto
   apply (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp rtranclp_idemp tranclp_into_rtranclp) 
   apply (metis (mono_tags, lifting) mono_rtranclp rtranclpD tranclp.r_into_trancl)
   done
+*)
+lemma tranclp_into_rtranclp2:
+  "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ = (\<lambda>x y. P x y)\<^sup>*\<^sup>*"
+  apply (rule ext)
+  apply (rule ext)
+  apply auto
+  apply (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp rtranclp_idemp tranclp_into_rtranclp) 
+  apply (metis (mono_tags, lifting) mono_rtranclp rtranclpD tranclp.r_into_trancl)
+  done
+
+lemma fun_preserve:
+  "(\<And>x y. R x y \<Longrightarrow> S (f x) (f y)) \<Longrightarrow>
+   (\<And>y. S (f y) (g y)) \<Longrightarrow>
+   R\<^sup>*\<^sup>* x y \<Longrightarrow>
+   S\<^sup>+\<^sup>+ (f x) (g y)"
+  apply (rule_tac ?b="f y" in rtranclp_into_tranclp1)
+  apply (rule fun_preserve_morphism_composition[of R]; auto)
+  by (simp)
+
+lemma fun_preserve':
+  "(\<And>x y. R x y \<Longrightarrow> S (f x) (f y)) \<Longrightarrow>
+   (\<And>y. S (f y) (g y)) \<Longrightarrow>
+   R\<^sup>*\<^sup>* x y \<Longrightarrow>
+   S\<^sup>*\<^sup>* (f x) (g y)"
+  by (metis fun_preserve_morphism_composition rtranclp.rtrancl_into_rtrancl)
+
+lemma fun_preserve'':
+  "(\<And>y. R (f y) (g y)) \<Longrightarrow>
+   R\<^sup>*\<^sup>* x (f y) \<Longrightarrow>
+   R\<^sup>*\<^sup>* x (g y)"
+  by (simp add: rtranclp.rtrancl_into_rtrancl)
 
 end

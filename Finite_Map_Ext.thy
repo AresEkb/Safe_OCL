@@ -1,15 +1,8 @@
 theory Finite_Map_Ext
-  imports Main "~~/src/HOL/Library/Finite_Map"
+  imports Main "~~/src/HOL/Library/Finite_Map" Transitive_Closure_Ext
 begin
 
-definition "fmmerge f xm ym \<equiv>
-  fmap_of_list (map
-    (\<lambda>k. (k, f (the (fmlookup xm k)) (the (fmlookup ym k))))
-    (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
-
-lemma fmdom_fmmerge [simp]:
-  "fmdom (fmmerge g xm ym) = fmdom xm |\<inter>| fmdom ym"
-  by (auto simp add: fmmerge_def fmdom_of_list)
+(*** Base Lemmas ************************************************************)
 
 lemma fmrel_on_fset_fmdom:
   "fmrel_on_fset (fmdom ym) f xm ym \<Longrightarrow>
@@ -20,6 +13,17 @@ lemma fmrel_on_fset_fmdom:
 lemma fmap_rel_eq_rev:
   "(xm = ym) = fmrel (=) xm ym"
   by (simp add: fmap.rel_eq)
+
+(*** Finite Map Merge *******************************************************)
+
+definition "fmmerge f xm ym \<equiv>
+  fmap_of_list (map
+    (\<lambda>k. (k, f (the (fmlookup xm k)) (the (fmlookup ym k))))
+    (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
+
+lemma fmdom_fmmerge [simp]:
+  "fmdom (fmmerge g xm ym) = fmdom xm |\<inter>| fmdom ym"
+  by (auto simp add: fmmerge_def fmdom_of_list)
 
 lemma fmmerge_commut:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x y = f y x) \<Longrightarrow>
@@ -90,6 +94,215 @@ lemma fmrel_on_fset_fmmerge2 [intro]:
   apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI fmran'I)
   done
 
+(*** Transitive Closures ****************************************************)
+
+lemma fmrel_trans:
+  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
+   fmrel P xm ym \<Longrightarrow> fmrel Q ym zm \<Longrightarrow> fmrel R xm zm"
+  unfolding fmrel_iff
+  by (metis fmdomE fmdom_notD fmran'I option.rel_inject(2) option.rel_sel)
+
+lemma fmrel_on_fset_trans:
+  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) P xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) Q ym zm \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) R xm zm"
+  apply (rule fmrel_on_fsetI)
+  unfolding option.rel_sel
+  apply auto
+  apply (meson fmdom_notI fmrel_on_fset_fmdom)
+  by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom option.rel_sel option.sel)
+
+lemma fmrel_acyclic:
+  "acyclic_on (fmran' xm) r \<Longrightarrow>
+   fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel r ym xm \<Longrightarrow>
+   xm = ym"
+  by (metis (full_types) fmap_ext fmran'I fmrel_cases option.sel tranclp.trancl_into_trancl)
+
+lemma fmrel_acyclic':
+  "acyclic_on (fmran' ym) r \<Longrightarrow>
+   fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel r ym xm \<Longrightarrow>
+   xm = ym"
+  by (smt fmran'E fmran'I fmrel_acyclic fmrel_cases option.inject tranclp_into_tranclp2)
+
+lemma fmrel_on_fset_acyclic:
+  "acyclic_on (fmran' xm) r \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom xm) r ym xm \<Longrightarrow>
+   xm = ym"
+  by (smt fmap_ext fmdom_filter fmfilter_alt_defs(5) fmlookup_filter fmrel_acyclic
+          fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom)
+
+lemma fmrel_on_fset_acyclic':
+  "acyclic_on (fmran' ym) r \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom xm) r ym xm \<Longrightarrow>
+   xm = ym"
+  by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff fmrel_on_fset_acyclic
+          fmrel_on_fset_alt_def fmrel_on_fset_fmdom option.simps(11) tranclp_into_tranclp2)
+
+lemma fmrel_trans':
+  "fmrel P\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel P ym zm \<Longrightarrow> fmrel P\<^sup>+\<^sup>+ xm zm"
+  by (rule fmrel_trans, auto)
+
+lemma fmrel_on_fset_trans':
+  "fmrel_on_fset (fmdom ym) P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) P ym zm \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) P\<^sup>+\<^sup>+ xm zm"
+  by (rule fmrel_on_fset_trans, auto)
+
+lemma trancl_to_fmrel:
+  "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel f\<^sup>+\<^sup>+ xm ym"
+  apply (induct rule: tranclp_induct)
+  apply (simp add: fmap.rel_mono_strong)
+  using fmrel_trans' by blast
+
+lemma fmrel_trancl_fmdom_eq:
+  "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"
+  by (induct rule: tranclp_induct; simp add: fmrel_fmdom_eq)
+
+lemma fmap_eqdom_Cons1:
+  assumes as_1: "fmlookup xm i = None"
+    and as_2: "fmdom (fmupd i x xm) = fmdom ym"  
+    and as_3: "fmrel R (fmupd i x xm) ym" 
+  shows 
+    "(\<exists>z zm. 
+    fmlookup zm i = None \<and> ym = (fmupd i z zm) \<and> R x z \<and> fmrel R xm zm)"
+proof - 
+  from as_1 as_2 as_3 obtain y where y: "fmlookup ym i = Some y"
+    by force
+  obtain z zm where z_zm: "ym = (fmupd i z zm) \<and> fmlookup zm i = None"
+    using y by (smt fmap_ext fmlookup_drop fmupd_lookup)
+  {
+    assume "\<not>R x z"
+    with as_1 z_zm have "\<not>fmrel R (fmupd i x xm) ym"
+      by (metis fmrel_iff fmupd_lookup option.simps(11))
+  }
+  with as_3 have c3: "R x z" by auto
+  {
+    assume "\<not>fmrel R xm zm"
+    with as_1 have "\<not>fmrel R (fmupd i x xm) ym" 
+      by (metis fmrel_iff fmupd_lookup option.rel_sel z_zm)
+  }
+  with as_3 have c4: "fmrel R xm zm" by auto
+  from z_zm c3 c4 show ?thesis by auto
+qed
+
+lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
+  assumes R: "fmrel R xm ym"
+    and dom_eq: "fmdom xm = fmdom ym"
+    and nil: "P (fmap_of_list []) (fmap_of_list [])"
+    and step: 
+    "\<And>x xm y ym i. 
+    \<lbrakk>R x y; fmrel R xm ym; fmdom xm = fmdom ym; P xm ym\<rbrakk> \<Longrightarrow> 
+    P (fmupd i x xm) (fmupd i y ym)"
+  shows "P xm ym"
+  using R dom_eq
+proof(induct xm arbitrary: ym)
+  case fmempty
+  then show ?case
+    by (metis fempty_iff fmdom_empty fmempty_of_list fmfilter_alt_defs(5) 
+        fmfilter_false fmrestrict_fset_dom local.nil)
+next
+  case (fmupd i x xm) show ?case 
+  proof -
+    from fmupd.prems(1) obtain y where y: "fmlookup ym i = Some y"
+      by (metis fmupd.prems(1) fmrel_cases fmupd_lookup option.discI)
+    from fmupd.hyps(2) fmupd.prems(2) fmupd.prems(1) obtain z zm where 
+      zm_i_none: "fmlookup zm i = None" and
+      ym_eq_z_zm: "ym = (fmupd i z zm)" and 
+      R_x_z: "R x z" and
+      R_xm_zm: "fmrel R xm zm"
+      using fmap_eqdom_Cons1 by metis
+    then have dom_xm_eq_dom_zm: "fmdom xm = fmdom zm" 
+      using fmrel_fmdom_eq by blast  
+    with R_xm_zm fmupd.hyps(1) have P_xm_zm: "P xm zm" by blast
+    from R_x_z R_xm_zm dom_xm_eq_dom_zm P_xm_zm have 
+      "P (fmupd i x xm) (fmupd i z zm)" 
+      by (rule step)
+    then show ?thesis by (simp add: ym_eq_z_zm)
+  qed
+qed
+
+lemma fmrel_to_rtrancl:
+  assumes as_r: "(\<And>x. r x x)" 
+    and rel_rpp_xm_ym: "(fmrel r\<^sup>*\<^sup>*) xm ym" 
+  shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
+proof-
+  from rel_rpp_xm_ym have dom_xm_eq_dom_ym: "fmdom xm = fmdom ym" 
+    using fmrel_fmdom_eq by blast
+  from rel_rpp_xm_ym dom_xm_eq_dom_ym show "(fmrel r)\<^sup>*\<^sup>* xm ym"
+  proof(induct rule: fmap_eqdom_induct)
+    case nil then show ?case by auto
+  next
+    case (step x xm y ym i) show ?case
+    proof -
+      from as_r have lp_xs_xs: "fmrel r xm xm" by (simp add: fmap.rel_refl)
+      from step.hyps(1) have x_xs_y_zs: 
+        "(fmrel r)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
+      proof(induction rule: rtranclp_induct)
+        case base then show ?case by simp
+      next
+        case (step y z) then show ?case 
+        proof -
+          have rt_step_2: "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i z xm)" 
+            by (rule r_into_rtranclp, simp add: fmrel_upd lp_xs_xs step.hyps(2))
+          from step.IH rt_step_2 show ?thesis by (rule rtranclp_trans) 
+        qed      
+      qed
+      from step.hyps(4) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i y ym)"
+      proof(induction rule: rtranclp_induct)
+        case base then show ?case by simp
+      next
+        case (step ya za) show ?case
+        proof -
+          have rt_step_2: "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)" 
+            by (rule r_into_rtranclp, simp add: as_r fmrel_upd step.hyps(2)) 
+          from step.IH rt_step_2 show ?thesis by (rule rtranclp_trans)
+        qed
+      qed
+      with x_xs_y_zs show ?thesis by simp
+    qed
+  qed
+qed
+
+lemma fmrel_to_trancl:
+  "fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (fmrel r)\<^sup>+\<^sup>+ xm ym" 
+  by (metis fmrel_to_rtrancl fmap.rel_mono_strong fmap.rel_refl 
+      r_into_rtranclp reflclp_tranclp rtranclpD rtranclp_idemp 
+      rtranclp_reflclp tranclp.r_into_trancl)
+
+lemma fmrel_tranclp_induct:
+  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>y. fmrel r a y \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z. (fmrel r)\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel r y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
+  apply (drule fmrel_to_trancl, simp)
+  apply (erule tranclp_induct; simp)
+  done
+
+lemma fmrel_converse_tranclp_induct:
+  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>y. fmrel r y b \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z. fmrel r y z \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ z b \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow> P a"
+  apply (drule fmrel_to_trancl, simp)
+  apply (erule converse_tranclp_induct; simp add: trancl_to_fmrel)
+  done
+
+lemma fmrel_tranclp_trans_induct:
+  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   (\<And>x. r x x) \<Longrightarrow>
+   (\<And>x y. fmrel r x y \<Longrightarrow> P x y) \<Longrightarrow>
+   (\<And>x y z. fmrel r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z) \<Longrightarrow> P a b"
+  apply (drule fmrel_to_trancl, simp)
+  apply (erule tranclp_trans_induct, simp)
+  using trancl_to_fmrel by blast
+
 (*** Finite Map size calculation ********************************************)
 
 abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
@@ -131,35 +344,5 @@ lemma fmmerge_eq [simp]:
   apply auto
   by (smt IntD1 IntD2 fmember.rep_eq inf_fset.rep_eq map_eq_conv
           map_of_map_restrict sorted_list_of_fset_simps(1))
-
-
-(*
-datatype (plugins del: "size") t = A | B | C "(nat, t) fmap"
-
-instantiation t :: size 
-begin
-
-term size_fmap
-
-primrec size_t :: "t \<Rightarrow> nat" where
-  "size_t A = 0"
-| "size_t B = 0"
-| "size_t (C xm) = Suc (ffold tcf 0 (fset_of_fmap (fmmap size_t xm)))"
-
-instance ..
-
-end
-
-function sup_t (infixl "\<squnion>" 65) where
-  "A \<squnion> _ = A"
-| "B \<squnion> x = (if x = B then B else A)"
-| "C xm \<squnion> x = (case x of C ym \<Rightarrow> C (fmmerge' (\<squnion>) xm ym) | _ \<Rightarrow> A)"
-  by pat_completeness auto
-termination
-  apply (relation "measure (\<lambda>(x, y). size y)")
-  apply auto[1]
-  apply auto[1]
-  by (simp add: elem_le_ffold)
-*)
 
 end
