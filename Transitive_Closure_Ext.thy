@@ -2,6 +2,10 @@ theory Transitive_Closure_Ext
   imports Main "HOL-Library.FuncSet"
 begin
 
+section{* Extensions of Transitive Closure Theory \label{sec:trancl}*}
+
+subsection{* Extensions of Transitive Closure Theory \label{sec:trancl}*}
+
 (*** Base Properties ********************************************************)
 
 abbreviation surj_on_trancl :: "('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
