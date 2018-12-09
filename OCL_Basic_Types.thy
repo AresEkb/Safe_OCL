@@ -357,28 +357,22 @@ instance
 
 end
 
-(*** Code Setup for Basic Types *********************************************)
+(*** Code Setup *************************************************************)
+
+code_pred direct_basic_subtype .
 
 fun basic_subtype_fun :: "'a::order basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" where
   "basic_subtype_fun OclAny _ = False"
-| "basic_subtype_fun Boolean OclAny = True"
-| "basic_subtype_fun Boolean _ = False"
-| "basic_subtype_fun UnlimitedNatural Integer = True"
-| "basic_subtype_fun UnlimitedNatural Real = True"
-| "basic_subtype_fun UnlimitedNatural OclAny = True"
-| "basic_subtype_fun UnlimitedNatural _ = False"
-| "basic_subtype_fun Integer Real = True"
-| "basic_subtype_fun Integer OclAny = True"
-| "basic_subtype_fun Integer _ = False"
-| "basic_subtype_fun Real OclAny = True"
-| "basic_subtype_fun Real _ = False"
-| "basic_subtype_fun String OclAny = True"
-| "basic_subtype_fun String _ = False"
-| "basic_subtype_fun (ObjectType c) (ObjectType d) = (c < d)"
-| "basic_subtype_fun (ObjectType _) OclAny = True"
-| "basic_subtype_fun (ObjectType _) _ = False"
-| "basic_subtype_fun (Enum _) OclAny = True"
-| "basic_subtype_fun (Enum _) _ = False"
+| "basic_subtype_fun Boolean \<sigma> = (\<sigma> = OclAny)"
+| "basic_subtype_fun UnlimitedNatural \<sigma> = (\<sigma> = Integer \<or> \<sigma> = Real \<or> \<sigma> = OclAny)"
+| "basic_subtype_fun Integer \<sigma> = (\<sigma> = Real \<or> \<sigma> = OclAny)"
+| "basic_subtype_fun Real \<sigma> = (\<sigma> = OclAny)"
+| "basic_subtype_fun String \<sigma> = (\<sigma> = OclAny)"
+| "basic_subtype_fun (ObjectType c) \<sigma> = (case \<sigma>
+    of ObjectType d \<Rightarrow> c < d
+     | OclAny \<Rightarrow> True
+     | _ \<Rightarrow> False)"
+| "basic_subtype_fun (Enum _) \<sigma> = (\<sigma> = OclAny)"
 
 lemma less_eq_basic_type_code [code_abbrev, simp]:
   "\<tau> = \<sigma> \<or> basic_subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma>"
@@ -394,7 +388,6 @@ lemma less_basic_type_code [code_abbrev, simp]:
   using less_eq_basic_type_code apply blast
   apply (erule basic_subtype_fun.elims; auto)
   using less_eq_basic_type_code by blast
-
 
 (*** Test Cases *************************************************************)
 

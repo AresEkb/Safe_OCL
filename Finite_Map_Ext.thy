@@ -1,5 +1,5 @@
 theory Finite_Map_Ext
-  imports Main "~~/src/HOL/Library/Finite_Map" Transitive_Closure_Ext
+  imports Main "~~/src/HOL/Library/Finite_Map"
 begin
 
 (*** Base Lemmas ************************************************************)
@@ -113,6 +113,8 @@ lemma fmrel_on_fset_trans:
   apply (meson fmdom_notI fmrel_on_fset_fmdom)
   by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom option.rel_sel option.sel)
 
+abbreviation "acyclic_on xs R \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
+
 lemma fmrel_acyclic:
   "acyclic_on (fmran' xm) r \<Longrightarrow>
    fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
@@ -143,21 +145,11 @@ lemma fmrel_on_fset_acyclic':
   by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff fmrel_on_fset_acyclic
           fmrel_on_fset_alt_def fmrel_on_fset_fmdom option.simps(11) tranclp_into_tranclp2)
 
-lemma fmrel_trans':
-  "fmrel P\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel P ym zm \<Longrightarrow> fmrel P\<^sup>+\<^sup>+ xm zm"
-  by (rule fmrel_trans, auto)
-
-lemma fmrel_on_fset_trans':
-  "fmrel_on_fset (fmdom ym) P\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   fmrel_on_fset (fmdom zm) P ym zm \<Longrightarrow>
-   fmrel_on_fset (fmdom zm) P\<^sup>+\<^sup>+ xm zm"
-  by (rule fmrel_on_fset_trans, auto)
-
 lemma trancl_to_fmrel:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel f\<^sup>+\<^sup>+ xm ym"
   apply (induct rule: tranclp_induct)
   apply (simp add: fmap.rel_mono_strong)
-  using fmrel_trans' by blast
+  by (rule fmrel_trans; auto)
 
 lemma fmrel_trancl_fmdom_eq:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"
@@ -228,13 +220,13 @@ qed
 
 lemma fmrel_to_rtrancl:
   assumes as_r: "(\<And>x. r x x)" 
-    and rel_rpp_xm_ym: "(fmrel r\<^sup>*\<^sup>*) xm ym" 
-  shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
-proof-
+      and rel_rpp_xm_ym: "(fmrel r\<^sup>*\<^sup>*) xm ym" 
+    shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
+proof -
   from rel_rpp_xm_ym have dom_xm_eq_dom_ym: "fmdom xm = fmdom ym" 
     using fmrel_fmdom_eq by blast
   from rel_rpp_xm_ym dom_xm_eq_dom_ym show "(fmrel r)\<^sup>*\<^sup>* xm ym"
-  proof(induct rule: fmap_eqdom_induct)
+  proof (induct rule: fmap_eqdom_induct)
     case nil then show ?case by auto
   next
     case (step x xm y ym i) show ?case
@@ -269,8 +261,8 @@ proof-
 qed
 
 lemma fmrel_to_trancl:
-  "fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   (\<And>x. r x x) \<Longrightarrow>
+  "(\<And>x. r x x) \<Longrightarrow>
+   fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    (fmrel r)\<^sup>+\<^sup>+ xm ym" 
   by (metis fmrel_to_rtrancl fmap.rel_mono_strong fmap.rel_refl 
       r_into_rtranclp reflclp_tranclp rtranclpD rtranclp_idemp 
@@ -332,14 +324,16 @@ lemma elem_le_ffold:
    f (the (fmlookup x k)) < Suc (ffold tcf 0 (fset_of_fmap (fmmap f x)))"
   by (subst ffold_rec_exp, auto)
 
-abbreviation "fmmerge' f xm ym \<equiv>
+(*** Code Setup *************************************************************)
+
+abbreviation "fmmerge_fun f xm ym \<equiv>
   fmap_of_list (map
     (\<lambda>k. if k |\<in>| fmdom xm \<and> k |\<in>| fmdom ym then (k,
         f (the (fmlookup xm k)) (the (fmlookup ym k))) else (k, undefined))
     (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
 
-lemma fmmerge_eq [simp]:
-  "fmmerge' f xm ym = fmmerge f xm ym"
+lemma fmmerge_fun_simp [simp]:
+  "fmmerge_fun f xm ym = fmmerge f xm ym"
   unfolding fmmerge_def fmap_of_list.abs_eq map_of_map_restrict
   apply auto
   by (smt IntD1 IntD2 fmember.rep_eq inf_fset.rep_eq map_eq_conv

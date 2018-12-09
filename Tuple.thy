@@ -18,6 +18,7 @@ value "subtuple (\<le>) t1 t2"
 value "subtuple (\<le>) t2 t1"
 value "subtuple (\<le>) t2 t3"
 value "subtuple (\<le>) t3 t2"
+value "strict_subtuple (\<le>) t3 t2"
 
 (*** Base Lemmas ************************************************************)
 
@@ -77,7 +78,6 @@ lemma subtuple_acyclic:
    subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y) ym xm \<Longrightarrow>
    xm = ym"
-  unfolding eq_trancl
   apply (frule subtuple_fmdom, simp)
   apply (unfold fmrel_on_fset_fmrel_restrict, simp)
   apply (rule fmap_ext)
@@ -85,7 +85,11 @@ lemma subtuple_acyclic:
   apply (metis fmrestrict_fset_dom)
   apply (erule_tac ?x="x" in fmrel_cases)
   apply (metis fmrestrict_fset_dom)
-  by (metis fmran'I fmrestrict_fset_dom option.inject tranclp.trancl_into_trancl)
+  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp1)
+(*
+  by (smt fmap_ext fmran'I fmrel_cases fmrestrict_fset_dom option.simps(1)
+          rtranclp_into_tranclp1 subtuple_eq_fmrel_fmrestrict_fset subtuple_fmdom)
+*)
 
 lemma strict_subtuple_trans:
   "acyclic_on (fmran' xm) P \<Longrightarrow>
@@ -93,7 +97,7 @@ lemma strict_subtuple_trans:
    strict_subtuple (\<lambda>x y. x = y \<or> P x y) ym zm \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm zm"
   apply auto
-  using fmrel_on_fset_trans' apply blast
+  apply (rule fmrel_on_fset_trans, auto)
   by (drule_tac ?ym="ym" in subtuple_acyclic; auto)
 
 (*** Transitive Closure Unfolding *******************************************)
@@ -103,7 +107,15 @@ lemma trancl_to_subtuple:
    subtuple r\<^sup>+\<^sup>+ xm ym"
   apply (induct rule: tranclp_induct)
   apply (metis subtuple_mono tranclp.r_into_trancl)
-  using fmrel_on_fset_trans' by auto
+  by (rule fmrel_on_fset_trans, auto)
+
+lemma rtrancl_to_subtuple:
+  "(subtuple r)\<^sup>*\<^sup>* xm ym \<Longrightarrow>
+   subtuple r\<^sup>*\<^sup>* xm ym"
+  apply (induct rule: rtranclp_induct)
+  apply (simp add: fmap.rel_refl_strong fmrel_to_subtuple)
+  apply (rule fmrel_on_fset_trans; auto)
+  done
 
 lemma fmrel_to_subtuple_trancl:
   "(fmrel r)\<^sup>+\<^sup>+ (fmrestrict_fset (fmdom ym) xm) ym \<Longrightarrow>
@@ -125,13 +137,23 @@ lemma subtuple_to_trancl:
   apply simp
   done
 
-(*** Misc *******************************************************************)
+(*** Code Setup *************************************************************)
 
-lemma subtuple_rtrancl_to_trancl:
-  "subtuple r\<^sup>*\<^sup>* xm ym \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> r x y)\<^sup>+\<^sup>+ xm ym"
-  unfolding tranclp_into_rtranclp2
+abbreviation "subtuple_fun f xm ym \<equiv>
+  fBall (fmdom ym) (\<lambda>x. rel_option f (fmlookup xm x) (fmlookup ym x))"
+
+abbreviation "strict_subtuple_fun f xm ym \<equiv>
+  subtuple_fun f xm ym \<and> xm \<noteq> ym"
+
+lemma subtuple_fun_simp [simp]:
+  "subtuple_fun f xm ym = subtuple f xm ym"
+  by (auto simp add: fmrel_on_fsetD)
+
+lemma strict_subtuple_fun_simp [simp]:
+  "strict_subtuple_fun f xm ym = strict_subtuple f xm ym"
   by simp
+
+(*** Misc *******************************************************************)
 
 lemma subtuple_fmmerge2 [intro]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
