@@ -1,5 +1,6 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper]{book}
 \usepackage{isabelle,isabellesym}
+\usepackage{amsmath,amssymb}
 
 % this should be the last package used
 \usepackage{pdfsetup}
@@ -9,15 +10,24 @@
 \isabellestyle{it}
 
 
+\makeatletter
+\newenvironment{abstract}{%
+  \small
+  \begin{center}%
+    {\bfseries \abstractname\vspace{-.5em}\vspace{\z@}}%
+  \end{center}%
+  \quotation}{\endquotation}
+\makeatother
+
 \begin{document}
 
 \title{Simple OCL}
 \author{Denis Nikiforov}
 \maketitle
 
-\begin{abstract}
-  A simple formalization of the OCL type system.
-\end{abstract}
+%\begin{abstract}
+%  A simple formalization of the OCL type system. It's based on deep embedding approach.
+%\end{abstract}
 
 \tableofcontents
 

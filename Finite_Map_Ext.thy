@@ -1,8 +1,11 @@
+section{* Finite Maps *}
 theory Finite_Map_Ext
-  imports Main "~~/src/HOL/Library/Finite_Map"
+  imports Main "HOL-Library.Finite_Map"
 begin
 
-(*** Base Lemmas ************************************************************)
+(*** Helper Lemmas **********************************************************)
+
+subsection{* Helper Lemmas *}
 
 lemma fmrel_on_fset_fmdom:
   "fmrel_on_fset (fmdom ym) f xm ym \<Longrightarrow>
@@ -15,6 +18,8 @@ lemma fmap_rel_eq_rev:
   by (simp add: fmap.rel_eq)
 
 (*** Finite Map Merge *******************************************************)
+
+subsection{* Merge Operation *}
 
 definition "fmmerge f xm ym \<equiv>
   fmap_of_list (map
@@ -31,7 +36,8 @@ lemma fmmerge_commut:
   apply (unfold fmap_rel_eq_rev)
   apply (rule fmrelI)
   unfolding fmmerge_def fmlookup_of_list
-  apply (auto simp add: Option.rel_option_iff option.case_eq_if fmmerge_def fmlookup_of_list)
+  apply (auto simp add: Option.rel_option_iff option.case_eq_if fmmerge_def
+             fmlookup_of_list)
   apply (smt finterD1 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
              sorted_list_of_fset_simps(1) inf_commute)
   apply (smt finterD1 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
@@ -87,7 +93,8 @@ lemma fmrel_on_fset_fmmerge2 [intro]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
     fmrel_on_fset (fmdom ym) f xm (fmmerge g xm ym)"
   apply (rule fmrel_on_fsetI)
-  apply (auto simp add: Option.rel_option_iff option.case_eq_if fmmerge_def fmlookup_of_list)
+  apply (auto simp add: Option.rel_option_iff option.case_eq_if
+          fmmerge_def fmlookup_of_list)
   apply (drule map_of_map_inter_eq_None; auto)
   apply (drule map_of_map_inter_eq_Some; auto)
   apply (frule map_of_map_inter_eq_Some; auto)
@@ -95,6 +102,8 @@ lemma fmrel_on_fset_fmmerge2 [intro]:
   done
 
 (*** Transitive Closures ****************************************************)
+
+subsection{* Transitive Closures *}
 
 lemma fmrel_trans:
   "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
@@ -111,7 +120,8 @@ lemma fmrel_on_fset_trans:
   unfolding option.rel_sel
   apply auto
   apply (meson fmdom_notI fmrel_on_fset_fmdom)
-  by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom option.rel_sel option.sel)
+  by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom
+            option.rel_sel option.sel)
 
 abbreviation "acyclic_on xs R \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
 
@@ -120,30 +130,34 @@ lemma fmrel_acyclic:
    fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel r ym xm \<Longrightarrow>
    xm = ym"
-  by (metis (full_types) fmap_ext fmran'I fmrel_cases option.sel tranclp.trancl_into_trancl)
+  by (metis (full_types) fmap_ext fmran'I fmrel_cases option.sel
+            tranclp.trancl_into_trancl)
 
 lemma fmrel_acyclic':
   "acyclic_on (fmran' ym) r \<Longrightarrow>
    fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel r ym xm \<Longrightarrow>
    xm = ym"
-  by (smt fmran'E fmran'I fmrel_acyclic fmrel_cases option.inject tranclp_into_tranclp2)
+  by (smt fmran'E fmran'I fmrel_acyclic fmrel_cases option.inject
+          tranclp_into_tranclp2)
 
 lemma fmrel_on_fset_acyclic:
   "acyclic_on (fmran' xm) r \<Longrightarrow>
    fmrel_on_fset (fmdom ym) r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel_on_fset (fmdom xm) r ym xm \<Longrightarrow>
    xm = ym"
-  by (smt fmap_ext fmdom_filter fmfilter_alt_defs(5) fmlookup_filter fmrel_acyclic
-          fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom)
+  by (smt fmap_ext fmdom_filter fmfilter_alt_defs(5) fmlookup_filter
+          fmrel_acyclic fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict
+          fmrestrict_fset_dom)
 
 lemma fmrel_on_fset_acyclic':
   "acyclic_on (fmran' ym) r \<Longrightarrow>
    fmrel_on_fset (fmdom ym) r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel_on_fset (fmdom xm) r ym xm \<Longrightarrow>
    xm = ym"
-  by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff fmrel_on_fset_acyclic
-          fmrel_on_fset_alt_def fmrel_on_fset_fmdom option.simps(11) tranclp_into_tranclp2)
+  by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff
+          fmrel_on_fset_acyclic fmrel_on_fset_alt_def fmrel_on_fset_fmdom
+          option.simps(11) tranclp_into_tranclp2)
 
 lemma trancl_to_fmrel:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel f\<^sup>+\<^sup>+ xm ym"
@@ -195,7 +209,7 @@ lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
 proof(induct xm arbitrary: ym)
   case fmempty
   then show ?case
-    by (metis fempty_iff fmdom_empty fmempty_of_list fmfilter_alt_defs(5) 
+    by (metis fempty_iff fmdom_empty fmempty_of_list fmfilter_alt_defs(5)
         fmfilter_false fmrestrict_fset_dom local.nil)
 next
   case (fmupd i x xm) show ?case 
@@ -290,12 +304,15 @@ lemma fmrel_tranclp_trans_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
    (\<And>x. r x x) \<Longrightarrow>
    (\<And>x y. fmrel r x y \<Longrightarrow> P x y) \<Longrightarrow>
-   (\<And>x y z. fmrel r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z) \<Longrightarrow> P a b"
+   (\<And>x y z. fmrel r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z) \<Longrightarrow>
+   P a b"
   apply (drule fmrel_to_trancl, simp)
   apply (erule tranclp_trans_induct, simp)
   using trancl_to_fmrel by blast
 
-(*** Finite Map size calculation ********************************************)
+(*** Finite Map Size Calculation ********************************************)
+
+subsection{* Size Calculation *}
 
 abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
 
@@ -326,13 +343,16 @@ lemma elem_le_ffold:
 
 (*** Code Setup *************************************************************)
 
+subsection{* Code Setup *}
+
 abbreviation "fmmerge_fun f xm ym \<equiv>
   fmap_of_list (map
-    (\<lambda>k. if k |\<in>| fmdom xm \<and> k |\<in>| fmdom ym then (k,
-        f (the (fmlookup xm k)) (the (fmlookup ym k))) else (k, undefined))
+    (\<lambda>k. if k |\<in>| fmdom xm \<and> k |\<in>| fmdom ym
+         then (k, f (the (fmlookup xm k)) (the (fmlookup ym k)))
+         else (k, undefined))
     (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))"
 
-lemma fmmerge_fun_simp [simp]:
+lemma fmmerge_fun_simp [code_abbrev, simp]:
   "fmmerge_fun f xm ym = fmmerge f xm ym"
   unfolding fmmerge_def fmap_of_list.abs_eq map_of_map_restrict
   apply auto

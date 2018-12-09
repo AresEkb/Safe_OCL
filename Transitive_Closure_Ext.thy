@@ -1,21 +1,34 @@
+chapter{* Preliminaries *}
+section{* Transitive Closures *}
 theory Transitive_Closure_Ext
   imports Main "HOL-Library.FuncSet"
 begin
 
-section{* Extensions of Transitive Closure Theory \label{sec:trancl}*}
+(*** Basic Properties *******************************************************)
 
-subsection{* Extensions of Transitive Closure Theory \label{sec:trancl}*}
+subsection{* Basic Properties *}
 
-(*** Base Properties ********************************************************)
+text {* @{text "R\<^sup>+\<^sup>+"} is a transitive closure of a relation @{text R}. *}
+
+text {* @{text "R\<^sup>*\<^sup>*"} is a reflexive transitive closure of a relation @{text R}. *}
+
+text {* A function @{text f} is surjective on a transitive closure of a
+ relation @{text R} iff for any two elements in the range of @{text f},
+ related through @{text "R\<^sup>+\<^sup>+"}, all intermediate elements
+ belong to the range of @{text f}. *}
 
 abbreviation surj_on_trancl :: "('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
-  "surj_on_trancl R f \<equiv>
-   (\<forall>x y z. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> R y (f z) \<longrightarrow> y \<in> range f)"
+  "surj_on_trancl R f \<equiv> (\<forall>x y z. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> R y (f z) \<longrightarrow> y \<in> range f)"
+
+text {* A function @{text f} is bijective on a transitive closure of a
+ relation @{text R} iff it's injective and surjective on @{text "R\<^sup>+\<^sup>+"}. *}
 
 abbreviation bij_on_trancl :: "('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
   "bij_on_trancl R f \<equiv> inj f \<and> surj_on_trancl R f"
 
-(*** Base Lemmas ************************************************************)
+(*** Helper Lemmas **********************************************************)
+
+subsection{* Helper Lemmas *}
 
 lemma tranclp_eq_rtranclp [simp]:
   "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ = P\<^sup>*\<^sup>*"
@@ -46,6 +59,11 @@ qed
 
 (*** Transitive Closure Preservation & Reflection ***************************)
 
+subsection{* Transitive Closure Preservation *}
+
+text {* A function @{text f} preserves a transitive closure of a relation
+  @{text R} if @{text f} preserves @{text R}. *}
+
 lemma preserve_tranclp:
   assumes "\<And>x y. R x y \<Longrightarrow> S (f x) (f y)"
       and "R\<^sup>+\<^sup>+ x y"
@@ -54,11 +72,17 @@ proof -
   obtain P where P: "P = (\<lambda>x y. S\<^sup>+\<^sup>+ (f x) (f y))" by auto
   obtain r where r: "r = (\<lambda>x y. S (f x) (f y))" by auto
   have major: "r\<^sup>+\<^sup>+ x y" by (insert assms r; erule tranclp_trans_induct; auto)
-  from P r have cases_1: "\<And>x y. r x y \<Longrightarrow> P x y" by simp
-  from P have cases_2: "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z" by auto
-  from major cases_1 cases_2 have "P x y" by (rule tranclp_trans_induct, auto)
+  have cases_1: "\<And>x y. r x y \<Longrightarrow> P x y"
+    unfolding P r by simp
+  have cases_2: "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z"
+    unfolding P by auto
+  from major cases_1 cases_2 have "P x y"
+    by (rule tranclp_trans_induct, auto)
   with P show ?thesis by simp
 qed
+
+text {* A function @{text f} preserves a reflexive transitive closure
+  of a relation @{text R} if @{text f} preserves @{text R}. *}
 
 lemma preserve_rtranclp:
   "(\<And>x y. R x y \<Longrightarrow> S (f x) (f y)) \<Longrightarrow>
@@ -66,11 +90,22 @@ lemma preserve_rtranclp:
   unfolding Nitpick.rtranclp_unfold
   by (metis preserve_tranclp)
 
+text {* If one needs to prove that @{text "(f x)"} and @{text "(g y)"}
+  are related through a reflexive transitive closure of a
+  relation @{text S} then one can use the previous lemma and
+  add a one more step from @{text "(f y)"} to @{text "(g y)"}. *}
+
 lemma preserve_rtranclp':
   "(\<And>x y. R x y \<Longrightarrow> S (f x) (f y)) \<Longrightarrow>
    (\<And>y. S (f y) (g y)) \<Longrightarrow>
    R\<^sup>*\<^sup>* x y \<Longrightarrow> S\<^sup>*\<^sup>* (f x) (g y)"
   by (metis preserve_rtranclp rtranclp.rtrancl_into_rtrancl)
+
+subsection{* Transitive Closure Reflection *}
+
+text {* A function @{text f} reflects a transitive closure of a relation
+  @{text S} if @{text f} reflects @{text S} and @{text f} is bijective
+  on @{text "S\<^sup>+\<^sup>+"}. *}
 
 lemma reflect_tranclp:
   assumes refl_f: "\<And>x y. S (f x) (f y) \<Longrightarrow> R x y"
@@ -81,12 +116,14 @@ proof -
   obtain B where B: "B = range f" by auto
   obtain g where g: "g = the_inv_into UNIV f" by auto
   obtain gr where gr: "gr = restrict g B" by auto
-  obtain P where P: "P = (\<lambda>x y. x \<in> B \<longrightarrow> y \<in> B \<longrightarrow> R\<^sup>+\<^sup>+ (gr x) (gr y))" by auto
+  obtain P where P: "P = (\<lambda>x y. x \<in> B \<longrightarrow> y \<in> B \<longrightarrow> R\<^sup>+\<^sup>+ (gr x) (gr y))"
+    by auto
   from prem have major: "S\<^sup>+\<^sup>+ (f x) (f y)" by blast
   from refl_f bij_f have cases_1: "\<And>x y. S x y \<Longrightarrow> P x y"
     unfolding B P g gr
     by (simp add: f_the_inv_into_f tranclp.r_into_trancl)
-  from refl_f bij_f have "(\<And>x y z. S\<^sup>+\<^sup>+ x y \<Longrightarrow> S\<^sup>+\<^sup>+ y z \<Longrightarrow> x \<in> B \<Longrightarrow> z \<in> B \<Longrightarrow> y \<in> B)"
+  from refl_f bij_f
+  have "(\<And>x y z. S\<^sup>+\<^sup>+ x y \<Longrightarrow> S\<^sup>+\<^sup>+ y z \<Longrightarrow> x \<in> B \<Longrightarrow> z \<in> B \<Longrightarrow> y \<in> B)"
     unfolding B
     by (rule_tac ?z="z" in tranclp_tranclp_to_tranclp_r, auto, blast)
   with P have cases_2:
@@ -95,9 +132,14 @@ proof -
     by auto
   from major cases_1 cases_2 have "P (f x) (f y)"
     by (rule tranclp_trans_induct, auto)
-  with P B g gr refl_f bij_f show ?thesis
+  with bij_f show ?thesis
+    unfolding P B g gr
     by (simp add: the_inv_f_f)
 qed
+
+text {* A function @{text f} reflects a reflexive transitive closure
+  of a relation @{text S} if @{text f} reflects @{text S} and @{text f}
+  is bijective on @{text "S\<^sup>+\<^sup>+"}. *}
 
 lemma reflect_rtranclp:
   "(\<And>x y. S (f x) (f y) \<Longrightarrow> R x y) \<Longrightarrow>

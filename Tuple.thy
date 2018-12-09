@@ -1,7 +1,9 @@
+section{* Tuples *}
 theory Tuple
-  imports Main Transitive_Closure_Ext
-    Finite_Map_Ext
+  imports Main Finite_Map_Ext Transitive_Closure_Ext
 begin
+
+subsection{* Definitions *}
 
 abbreviation
   "subtuple f xm ym \<equiv> fmrel_on_fset (fmdom ym) f xm ym"
@@ -9,18 +11,9 @@ abbreviation
 abbreviation
   "strict_subtuple f xm ym \<equiv> subtuple f xm ym \<and> xm \<noteq> ym"
 
-definition "t1 \<equiv> fmupd (1::nat) (1::nat) (fmupd (2::nat) (2::nat) fmempty)"
-definition "t2 \<equiv> fmupd (3::nat) (3::nat) (fmupd (1::nat) (1::nat) (fmupd (2::nat) (1::nat) fmempty))"
-definition "t3 \<equiv> fmupd (3::nat) (4::nat) (fmupd (1::nat) (1::nat) (fmupd (2::nat) (1::nat) fmempty))"
+(*** Helper Lemmas **********************************************************)
 
-value "subtuple (\<le>) t1 t1"
-value "subtuple (\<le>) t1 t2"
-value "subtuple (\<le>) t2 t1"
-value "subtuple (\<le>) t2 t3"
-value "subtuple (\<le>) t3 t2"
-value "strict_subtuple (\<le>) t3 t2"
-
-(*** Base Lemmas ************************************************************)
+subsection{* Helper Lemmas *}
 
 lemma fmrel_to_subtuple:
   "fmrel r xm ym \<Longrightarrow>
@@ -39,6 +32,8 @@ lemma subtuple_fmdom:
   by (meson fmrel_on_fset_fmdom fset_eqI)
 
 (*** Basic Properties *******************************************************)
+
+subsection{* Basic Properties *}
 
 lemma subtuple_mono [mono]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> y \<in> fmran' ym \<Longrightarrow> f x y \<longrightarrow> g x y) \<Longrightarrow>
@@ -100,7 +95,14 @@ lemma strict_subtuple_trans:
   apply (rule fmrel_on_fset_trans, auto)
   by (drule_tac ?ym="ym" in subtuple_acyclic; auto)
 
-(*** Transitive Closure Unfolding *******************************************)
+lemma subtuple_fmmerge2 [intro]:
+  "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
+   subtuple f xm (fmmerge g xm ym)"
+  by (rule_tac ?S="fmdom ym" in fmrel_on_fsubset; auto)
+
+(*** Transitive Closures ****************************************************)
+
+subsection{* Transitive Closures *}
 
 lemma trancl_to_subtuple:
   "(subtuple r)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
@@ -118,8 +120,8 @@ lemma rtrancl_to_subtuple:
   done
 
 lemma fmrel_to_subtuple_trancl:
-  "(fmrel r)\<^sup>+\<^sup>+ (fmrestrict_fset (fmdom ym) xm) ym \<Longrightarrow>
-   (\<And>x. r x x) \<Longrightarrow>
+  "(\<And>x. r x x) \<Longrightarrow>
+   (fmrel r)\<^sup>+\<^sup>+ (fmrestrict_fset (fmdom ym) xm) ym \<Longrightarrow>
    (subtuple r)\<^sup>+\<^sup>+ xm ym"
   apply (frule trancl_to_fmrel)
   apply (rule_tac ?r="r" in fmrel_tranclp_induct, auto)
@@ -128,16 +130,16 @@ lemma fmrel_to_subtuple_trancl:
   by (meson fmrel_to_subtuple tranclp.simps)
 
 lemma subtuple_to_trancl:
-  "subtuple r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   (\<And>x. r x x) \<Longrightarrow>
+  "(\<And>x. r x x) \<Longrightarrow>
+   subtuple r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    (subtuple r)\<^sup>+\<^sup>+ xm ym"
   apply (rule fmrel_to_subtuple_trancl)
-  apply (unfold fmrel_on_fset_fmrel_restrict)
-  apply (simp add: fmrel_to_trancl)
-  apply simp
-  done
+  unfolding fmrel_on_fset_fmrel_restrict
+  by (simp_all add: fmrel_to_trancl)
 
 (*** Code Setup *************************************************************)
+
+subsection{* Code Setup *}
 
 abbreviation "subtuple_fun f xm ym \<equiv>
   fBall (fmdom ym) (\<lambda>x. rel_option f (fmlookup xm x) (fmlookup ym x))"
@@ -145,19 +147,27 @@ abbreviation "subtuple_fun f xm ym \<equiv>
 abbreviation "strict_subtuple_fun f xm ym \<equiv>
   subtuple_fun f xm ym \<and> xm \<noteq> ym"
 
-lemma subtuple_fun_simp [simp]:
+lemma subtuple_fun_simp [code_abbrev, simp]:
   "subtuple_fun f xm ym = subtuple f xm ym"
-  by (auto simp add: fmrel_on_fsetD)
+  by (simp add: fmrel_on_fset_alt_def)
 
-lemma strict_subtuple_fun_simp [simp]:
+lemma strict_subtuple_fun_simp [code_abbrev, simp]:
   "strict_subtuple_fun f xm ym = strict_subtuple f xm ym"
   by simp
 
-(*** Misc *******************************************************************)
+(*** Test Cases *************************************************************)
 
-lemma subtuple_fmmerge2 [intro]:
-  "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
-   subtuple f xm (fmmerge g xm ym)"
-  by (rule_tac ?S="fmdom ym" in fmrel_on_fsubset; auto)
+subsection{* Test Cases *}
+
+definition "t1 \<equiv> fmupd (1::nat) (1::nat) (fmupd (2::nat) (2::nat) fmempty)"
+definition "t2 \<equiv> fmupd (3::nat) (3::nat) (fmupd (1::nat) (1::nat) (fmupd (2::nat) (1::nat) fmempty))"
+definition "t3 \<equiv> fmupd (3::nat) (4::nat) (fmupd (1::nat) (1::nat) (fmupd (2::nat) (1::nat) fmempty))"
+
+value "subtuple (\<le>) t1 t1"
+value "subtuple (\<le>) t1 t2"
+value "subtuple (\<le>) t2 t1"
+value "subtuple (\<le>) t2 t3"
+value "subtuple (\<le>) t3 t2"
+value "strict_subtuple (\<le>) t3 t2"
 
 end
