@@ -101,27 +101,9 @@ lemma fmrel_on_fset_fmmerge2 [intro]:
   apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI fmran'I)
   done
 
-(*** Transitive Closures ****************************************************)
+(*** Acyclicity *************************************************************)
 
-subsection{* Transitive Closures *}
-
-lemma fmrel_trans:
-  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
-   fmrel P xm ym \<Longrightarrow> fmrel Q ym zm \<Longrightarrow> fmrel R xm zm"
-  unfolding fmrel_iff
-  by (metis fmdomE fmdom_notD fmran'I option.rel_inject(2) option.rel_sel)
-
-lemma fmrel_on_fset_trans:
-  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
-   fmrel_on_fset (fmdom ym) P xm ym \<Longrightarrow>
-   fmrel_on_fset (fmdom zm) Q ym zm \<Longrightarrow>
-   fmrel_on_fset (fmdom zm) R xm zm"
-  apply (rule fmrel_on_fsetI)
-  unfolding option.rel_sel
-  apply auto
-  apply (meson fmdom_notI fmrel_on_fset_fmdom)
-  by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom
-            option.rel_sel option.sel)
+subsection{* Acyclicity *}
 
 abbreviation "acyclic_on xs R \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
 
@@ -158,6 +140,28 @@ lemma fmrel_on_fset_acyclic':
   by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff
           fmrel_on_fset_acyclic fmrel_on_fset_alt_def fmrel_on_fset_fmdom
           option.simps(11) tranclp_into_tranclp2)
+
+(*** Transitive Closures ****************************************************)
+
+subsection{* Transitive Closures *}
+
+lemma fmrel_trans:
+  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
+   fmrel P xm ym \<Longrightarrow> fmrel Q ym zm \<Longrightarrow> fmrel R xm zm"
+  unfolding fmrel_iff
+  by (metis fmdomE fmdom_notD fmran'I option.rel_inject(2) option.rel_sel)
+
+lemma fmrel_on_fset_trans:
+  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) P xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) Q ym zm \<Longrightarrow>
+   fmrel_on_fset (fmdom zm) R xm zm"
+  apply (rule fmrel_on_fsetI)
+  unfolding option.rel_sel
+  apply auto
+  apply (meson fmdom_notI fmrel_on_fset_fmdom)
+  by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom
+            option.rel_sel option.sel)
 
 lemma trancl_to_fmrel:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel f\<^sup>+\<^sup>+ xm ym"

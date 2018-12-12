@@ -62,38 +62,38 @@ datatype 'a basic_type =
 *)
 
 inductive basic_subtype ::
-    "('a :: order) basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" ("_ \<sqsubset>\<^sub>s _" [65, 65] 65) where
-  "Boolean \<sqsubset>\<^sub>s OclAny"
-| "UnlimitedNatural \<sqsubset>\<^sub>s Integer"
-| "Integer \<sqsubset>\<^sub>s Real"
-| "Real \<sqsubset>\<^sub>s OclAny"
-| "String \<sqsubset>\<^sub>s OclAny"
-| "ObjectType c \<sqsubset>\<^sub>s OclAny"
-| "c < d \<Longrightarrow> ObjectType c \<sqsubset>\<^sub>s ObjectType d"
-| "Enum literals \<sqsubset>\<^sub>s OclAny"
+    "('a :: order) basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
+  "Boolean \<sqsubset>\<^sub>B OclAny"
+| "UnlimitedNatural \<sqsubset>\<^sub>B Integer"
+| "Integer \<sqsubset>\<^sub>B Real"
+| "Real \<sqsubset>\<^sub>B OclAny"
+| "String \<sqsubset>\<^sub>B OclAny"
+| "ObjectType c \<sqsubset>\<^sub>B OclAny"
+| "c < d \<Longrightarrow> ObjectType c \<sqsubset>\<^sub>B ObjectType d"
+| "Enum literals \<sqsubset>\<^sub>B OclAny"
 
 declare basic_subtype.intros [intro]
 
-inductive_cases basic_subtype_x_Boolean[elim!]: "\<tau> \<sqsubset>\<^sub>s Boolean"
-inductive_cases basic_subtype_Boolean_x[elim!]: "Boolean \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases basic_subtype_x_UnlimitedNatural[elim!]: "\<tau> \<sqsubset>\<^sub>s UnlimitedNatural"
-inductive_cases basic_subtype_UnlimitedNatural_x[elim!]: "UnlimitedNatural \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases basic_subtype_x_Integer[elim!]: "\<tau> \<sqsubset>\<^sub>s Integer"
-inductive_cases basic_subtype_Integer_x[elim!]: "Integer \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases basic_subtype_x_Real[elim!]: "\<tau> \<sqsubset>\<^sub>s Real"
-inductive_cases basic_subtype_Real_x[elim!]: "Real \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases basic_subtype_x_String[elim!]: "\<tau> \<sqsubset>\<^sub>s String"
-inductive_cases basic_subtype_String_x[elim!]: "String \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases basic_subtype_x_ObjectType[elim!]: "\<tau> \<sqsubset>\<^sub>s ObjectType c"
-inductive_cases basic_subtype_ObjectType_x[elim!]: "ObjectType c \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases basic_subtype_x_OclAny[elim!]: "\<tau> \<sqsubset>\<^sub>s OclAny"
-inductive_cases basic_subtype_OclAny_x[elim!]: "OclAny \<sqsubset>\<^sub>s \<sigma>"
-inductive_cases basic_subtype_x_Enum[elim!]: "\<tau> \<sqsubset>\<^sub>s Enum literals"
-inductive_cases basic_subtype_Enum_x[elim!]: "Enum literals \<sqsubset>\<^sub>s \<sigma>"
+inductive_cases basic_subtype_x_Boolean[elim!]: "\<tau> \<sqsubset>\<^sub>B Boolean"
+inductive_cases basic_subtype_Boolean_x[elim!]: "Boolean \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_UnlimitedNatural[elim!]: "\<tau> \<sqsubset>\<^sub>B UnlimitedNatural"
+inductive_cases basic_subtype_UnlimitedNatural_x[elim!]: "UnlimitedNatural \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_Integer[elim!]: "\<tau> \<sqsubset>\<^sub>B Integer"
+inductive_cases basic_subtype_Integer_x[elim!]: "Integer \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_Real[elim!]: "\<tau> \<sqsubset>\<^sub>B Real"
+inductive_cases basic_subtype_Real_x[elim!]: "Real \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_String[elim!]: "\<tau> \<sqsubset>\<^sub>B String"
+inductive_cases basic_subtype_String_x[elim!]: "String \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_ObjectType[elim!]: "\<tau> \<sqsubset>\<^sub>B ObjectType c"
+inductive_cases basic_subtype_ObjectType_x[elim!]: "ObjectType c \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_OclAny[elim!]: "\<tau> \<sqsubset>\<^sub>B OclAny"
+inductive_cases basic_subtype_OclAny_x[elim!]: "OclAny \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_Enum[elim!]: "\<tau> \<sqsubset>\<^sub>B Enum literals"
+inductive_cases basic_subtype_Enum_x[elim!]: "Enum literals \<sqsubset>\<^sub>B \<sigma>"
 
 lemma basic_subtype_asym:
-  "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow>
-   \<sigma> \<sqsubset>\<^sub>s \<tau> \<Longrightarrow>
+  "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow>
+   \<sigma> \<sqsubset>\<^sub>B \<tau> \<Longrightarrow>
    False"
   by (induct rule: basic_subtype.induct; auto)
 
@@ -278,7 +278,7 @@ lemma basic_subtype_irrefl:
   by (cases \<tau>; auto)
 
 lemma tranclp_less_basic_type:
-  "(\<tau>, \<sigma>) \<in> {(\<tau>, \<sigma>). \<tau> \<sqsubset>\<^sub>s \<sigma>}\<^sup>+ \<longleftrightarrow> \<tau> < \<sigma>"
+  "(\<tau>, \<sigma>) \<in> {(\<tau>, \<sigma>). \<tau> \<sqsubset>\<^sub>B \<sigma>}\<^sup>+ \<longleftrightarrow> \<tau> < \<sigma>"
   by (simp add: tranclp_unfold less_basic_type_def)
 
 lemma basic_subtype_acyclic:

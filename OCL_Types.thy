@@ -54,6 +54,8 @@ datatype (plugins del: "size") 'a type =
 | Sequence "'a type"
 | Tuple "(nat, 'a type) fmap"
 
+(* TODO: Prove for an arbitrary finite map key types *)
+
 instantiation type :: (type) size
 begin
 
@@ -91,8 +93,8 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
   "OclInvalid \<sqsubset> OclVoid"
 | "OclInvalid \<sqsubset> \<sigma>[1]"
 | "OclVoid \<sqsubset> \<sigma>[?]"
-| "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow> \<tau>[1] \<sqsubset> \<sigma>[1]"
-| "\<tau> \<sqsubset>\<^sub>s \<sigma> \<Longrightarrow> \<tau>[?] \<sqsubset> \<sigma>[?]"
+| "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[1] \<sqsubset> \<sigma>[1]"
+| "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[?] \<sqsubset> \<sigma>[?]"
 | "\<tau>[1] \<sqsubset> \<tau>[?]"
 | "OclInvalid \<sqsubset> Set OclInvalid"
 | "OclInvalid \<sqsubset> OrderedSet OclInvalid"
@@ -109,7 +111,7 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
 | "Optional OclAny \<sqsubset> SupType"
 | "Collection SupType \<sqsubset> SupType"
-| "OclInvalid \<sqsubset> Tuple \<pi>"
+| "OclInvalid \<sqsubset> Tuple \<xi>"
 | "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>"
 | "Tuple \<pi> \<sqsubset> SupType"
@@ -466,16 +468,7 @@ lemma type_less_x_OclVoid [elim]:
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def
   by (metis (mono_tags, lifting) subtype_x_OclVoid less_type_def type_less_x_OclInvalid tranclp.simps)
-(*
-lemma type_less_x_Required'':
-  "\<tau> < \<sigma>[1] \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply auto[1]
-  by blast
-*)
+
 lemma type_less_x_Required [elim]:
   "\<tau> < \<sigma>[1] \<Longrightarrow>
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
@@ -1070,8 +1063,7 @@ lemma less_type_code [code_abbrev, simp]:
 
 section{* Test Cases *}
 
-value "((Optional OclAny)::classes1 type) < SupType"
-value "Optional (OclAny::classes1 basic_type) < SupType"
+value "OclAny[?] < (SupType::classes1 type)"
 value "Collection (Optional OclAny) < (SupType::classes1 type)"
 value "Collection (Collection (Optional OclAny)) < (SupType::classes1 type)"
 value "Collection SupType \<sqsubset> (SupType::classes1 type)"
