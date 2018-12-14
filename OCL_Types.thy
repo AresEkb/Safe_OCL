@@ -568,24 +568,8 @@ lemma type_less_x_Collection [elim]:
   by (erule subtype.cases; auto simp add: converse_rtranclp_into_rtranclp
             less_eq_type_def tranclp_into_tranclp2 tranclp_into_rtranclp)
 
-lemma subtype_Tuple_into_strict_subtuple:
-  assumes "acyclic_on (fmran' \<xi>) subtype"
-      and "subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>)"
-    shows "strict_subtuple subtype\<^sup>*\<^sup>* \<pi> \<xi>"
-proof -
-  have "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi>"
-    apply (insert assms(2))
-    by (rule reflect_tranclp; auto)
-  from this assms(1)
-  have "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
-    apply (induct rule: converse_tranclp_induct)
-    apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
-    using strict_subtuple_trans' by blast
-  then show ?thesis by simp
-qed
-
-(* We can remove an acyclicity assumption only after we prove that
-   subtype is acyclic *)
+(* We'll be able to remove the acyclicity assumption only after
+   we prove that the subtype relation is acyclic *)
 lemma type_less_x_Tuple':
   assumes "\<tau> < Tuple \<xi>"
       and "acyclic_on (fmran' \<xi>) subtype"
@@ -597,9 +581,10 @@ proof -
   then obtain \<pi> where "\<tau> = OclInvalid \<or> \<tau> = Tuple \<pi>"
     unfolding less_type_def
     by (induct rule: converse_tranclp_induct; auto)
-  moreover from assms(2) have "\<And>\<pi>. Tuple \<pi> < Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi>"
+  moreover have "\<And>\<pi>. Tuple \<pi> < Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi>"
+    using assms(2)
     unfolding less_type_def less_eq_type_def
-    using subtype_Tuple_into_strict_subtuple by auto
+    by (rule_tac ?f="Tuple" in strict_subtuple_rtranclp_intro; auto)
   ultimately show ?thesis
     using assms by auto
 qed
