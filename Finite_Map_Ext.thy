@@ -1,3 +1,8 @@
+(*  Title:       Simple OCL Semantics
+    Author:      Denis Nikiforov, December 2018
+    Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
+    License:     LGPL
+*)
 section{* Finite Maps *}
 theory Finite_Map_Ext
   imports Main "HOL-Library.Finite_Map"
@@ -173,6 +178,10 @@ lemma fmrel_trancl_fmdom_eq:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"
   by (induct rule: tranclp_induct; simp add: fmrel_fmdom_eq)
 
+(* The proof was derived from the accepted answer on the website
+   Stack Overflow that is available at
+   https://stackoverflow.com/a/53585232/632199 
+   and provided with the permission of the author of the answer *)
 lemma fmap_eqdom_Cons1:
   assumes as_1: "fmlookup xm i = None"
     and as_2: "fmdom (fmupd i x xm) = fmdom ym"  
@@ -200,6 +209,10 @@ proof -
   from z_zm c3 c4 show ?thesis by auto
 qed
 
+(* The proof was derived from the accepted answer on the website
+   Stack Overflow that is available at
+   https://stackoverflow.com/a/53585232/632199 
+   and provided with the permission of the author of the answer *)
 lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
   assumes R: "fmrel R xm ym"
     and dom_eq: "fmdom xm = fmdom ym"
@@ -236,9 +249,13 @@ next
   qed
 qed
 
+(* The proof was derived from the accepted answer on the website
+   Stack Overflow that is available at
+   https://stackoverflow.com/a/53585232/632199 
+   and provided with the permission of the author of the answer *)
 lemma fmrel_to_rtrancl:
   assumes as_r: "(\<And>x. r x x)" 
-      and rel_rpp_xm_ym: "(fmrel r\<^sup>*\<^sup>*) xm ym" 
+      and rel_rpp_xm_ym: "fmrel r\<^sup>*\<^sup>* xm ym" 
     shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
 proof -
   from rel_rpp_xm_ym have dom_xm_eq_dom_ym: "fmdom xm = fmdom ym" 
@@ -278,13 +295,17 @@ proof -
   qed
 qed
 
+(* The proof was derived from the accepted answer on the website
+   Stack Overflow that is available at
+   https://stackoverflow.com/a/53585232/632199 
+   and provided with the permission of the author of the answer *)
 lemma fmrel_to_trancl:
   "(\<And>x. r x x) \<Longrightarrow>
    fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    (fmrel r)\<^sup>+\<^sup>+ xm ym" 
-  by (metis fmrel_to_rtrancl fmap.rel_mono_strong fmap.rel_refl 
-      r_into_rtranclp reflclp_tranclp rtranclpD rtranclp_idemp 
-      rtranclp_reflclp tranclp.r_into_trancl)
+  by (metis fmrel_to_rtrancl fmap.rel_mono_strong fmap.rel_refl
+            r_into_rtranclp reflclp_tranclp rtranclpD rtranclp_idemp
+            rtranclp_reflclp tranclp.r_into_trancl)
 
 lemma fmrel_tranclp_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
@@ -317,6 +338,11 @@ lemma fmrel_tranclp_trans_induct:
 (*** Finite Map Size Calculation ********************************************)
 
 subsection{* Size Calculation *}
+
+(* The contents of the subsection was derived from the accepted answer
+   on the website Stack Overflow that is available at
+   https://stackoverflow.com/a/53244203/632199 
+   and provided with the permission of the author of the answer *)
 
 abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
 

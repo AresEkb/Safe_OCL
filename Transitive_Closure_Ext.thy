@@ -1,3 +1,8 @@
+(*  Title:       Simple OCL Semantics
+    Author:      Denis Nikiforov, December 2018
+    Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
+    License:     LGPL
+*)
 chapter{* Preliminaries *}
 section{* Transitive Closures *}
 theory Transitive_Closure_Ext
@@ -17,14 +22,12 @@ text {* A function @{text f} is surjective on a transitive closure of a
  related through @{text "R\<^sup>+\<^sup>+"}, all intermediate elements
  belong to the range of @{text f}. *}
 
-abbreviation surj_on_trancl :: "('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
-  "surj_on_trancl R f \<equiv> (\<forall>x y z. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> R y (f z) \<longrightarrow> y \<in> range f)"
+abbreviation "surj_on_trancl R f \<equiv> (\<forall>x y z. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> R y (f z) \<longrightarrow> y \<in> range f)"
 
 text {* A function @{text f} is bijective on a transitive closure of a
  relation @{text R} iff it's injective and surjective on @{text "R\<^sup>+\<^sup>+"}. *}
 
-abbreviation bij_on_trancl :: "('b \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> 'b) \<Rightarrow> bool" where
-  "bij_on_trancl R f \<equiv> inj f \<and> surj_on_trancl R f"
+abbreviation "bij_on_trancl R f \<equiv> inj f \<and> surj_on_trancl R f"
 
 (*** Helper Lemmas **********************************************************)
 
@@ -64,6 +67,10 @@ subsection{* Transitive Closure Preservation *}
 text {* A function @{text f} preserves a transitive closure of a relation
   @{text R} if @{text f} preserves @{text R}. *}
 
+(* The proof was derived from the accepted answer on the website
+   Stack Overflow that is available at
+   https://stackoverflow.com/a/52573551/632199 
+   and provided with the permission of the author of the answer *)
 lemma preserve_tranclp:
   assumes "\<And>x y. R x y \<Longrightarrow> S (f x) (f y)"
       and "R\<^sup>+\<^sup>+ x y"
@@ -107,6 +114,10 @@ text {* A function @{text f} reflects a transitive closure of a relation
   @{text S} if @{text f} reflects @{text S} and @{text f} is bijective
   on @{text "S\<^sup>+\<^sup>+"}. *}
 
+(* The proof was derived from the accepted answer on the website
+   Stack Overflow that is available at
+   https://stackoverflow.com/a/52573551/632199 
+   and provided with the permission of the author of the answer *)
 lemma reflect_tranclp:
   assumes refl_f: "\<And>x y. S (f x) (f y) \<Longrightarrow> R x y"
       and bij_f: "bij_on_trancl S f"

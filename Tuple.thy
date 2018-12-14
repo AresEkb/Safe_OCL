@@ -1,3 +1,8 @@
+(*  Title:       Simple OCL Semantics
+    Author:      Denis Nikiforov, December 2018
+    Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
+    License:     LGPL
+*)
 section{* Tuples *}
 theory Tuple
   imports Main Finite_Map_Ext Transitive_Closure_Ext
@@ -34,6 +39,10 @@ lemma subtuple_fmdom:
 (*** Basic Properties *******************************************************)
 
 subsection{* Basic Properties *}
+
+lemma subtuple_refl:
+  "(\<And>x. R x x) \<Longrightarrow> subtuple R xm xm"
+  by (simp add: fmrel_on_fset_refl_strong)
 
 lemma subtuple_mono [mono]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> y \<in> fmran' ym \<Longrightarrow> f x y \<longrightarrow> g x y) \<Longrightarrow>
@@ -136,6 +145,20 @@ lemma subtuple_to_trancl:
   apply (rule fmrel_to_subtuple_trancl)
   unfolding fmrel_on_fset_fmrel_restrict
   by (simp_all add: fmrel_to_trancl)
+
+lemma subtuple_rtranclp_intro:
+  assumes "bij_on_trancl R f"
+      and "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow> subtuple R xm ym"
+      and "R\<^sup>*\<^sup>* (f xm) (f ym)"
+    shows "subtuple R\<^sup>*\<^sup>* xm ym"
+proof -
+  have "(\<lambda>xm ym. R (f xm) (f ym))\<^sup>*\<^sup>* xm ym"
+    apply (insert assms(1) assms(3))
+    by (rule reflect_rtranclp; auto)
+  hence "(subtuple R)\<^sup>*\<^sup>* xm ym" by (smt assms(2) mono_rtranclp)
+  hence "subtuple R\<^sup>*\<^sup>* xm ym" by (rule rtrancl_to_subtuple)
+  thus ?thesis by (simp)
+qed
 
 (*** Code Setup *************************************************************)
 

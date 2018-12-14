@@ -1,3 +1,8 @@
+(*  Title:       Simple OCL Semantics
+    Author:      Denis Nikiforov, December 2018
+    Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
+    License:     LGPL
+*)
 chapter{* OCL Types *}
 theory OCL_Types
   imports Main OCL_Basic_Types Tuple
@@ -75,11 +80,6 @@ primrec size_type :: "'a type \<Rightarrow> nat" where
 instance ..
 
 end
-
-lemma measure_cond [intro]:
-  "k |\<in>| fmdom x \<Longrightarrow>
-   size (the (fmlookup x k)) < size (Tuple x)"
-  using elem_le_ffold by auto
 
 (* Иерархия типов описана в A.2.7 Type Hierarchy *)
 
@@ -169,7 +169,7 @@ lemma subtype_antisym:
 
 section{* Constructors Bijectivity on Transitive Closures *}
 
-lemma Required_bij_on_trancl:
+lemma Required_bij_on_trancl [simp]:
   "bij_on_trancl subtype Required"
   by (metis (no_types, lifting) subtype_x_OclInvalid subtype_x_Required inj_def rangeI tranclp.simps type.inject(1))
 
@@ -179,28 +179,28 @@ lemma not_subtype_Optional_Required:
   apply auto[1]
   by (metis subtype_x_OclInvalid subtype_x_Required tranclp.cases)
 
-lemma Optional_bij_on_trancl:
+lemma Optional_bij_on_trancl [simp]:
   "bij_on_trancl subtype Optional"
   apply (auto simp add: inj_def)
   apply (metis subtype.intros(3) subtype_x_OclInvalid subtype_x_OclVoid tranclp.cases)
   using not_subtype_Optional_Required by blast
 
-lemma Set_bij_on_trancl:
+lemma Set_bij_on_trancl [simp]:
   "bij_on_trancl subtype Set"
   apply (auto simp add: inj_def)
   by (metis subtype_x_OclInvalid subtype_x_Set rangeI tranclp.cases)
 
-lemma OrderedSet_bij_on_trancl:
+lemma OrderedSet_bij_on_trancl [simp]:
   "bij_on_trancl subtype OrderedSet"
   apply (auto simp add: inj_def)
   by (metis subtype_x_OclInvalid subtype_x_OrderedSet rangeI tranclp.cases)
 
-lemma Bag_bij_on_trancl:
+lemma Bag_bij_on_trancl [simp]:
   "bij_on_trancl subtype Bag"
   apply (auto simp add: inj_def)
   by (metis subtype_x_OclInvalid subtype_x_Bag rangeI tranclp.cases)
 
-lemma Sequence_bij_on_trancl:
+lemma Sequence_bij_on_trancl [simp]:
   "bij_on_trancl subtype Sequence"
   apply (auto simp add: inj_def)
   by (metis subtype_x_OclInvalid subtype_x_Sequence rangeI tranclp.cases)
@@ -213,12 +213,12 @@ lemma subtype_tranclp_Collection_x:
   apply (auto)[1]
   by (metis subtype_Collection_x subtype_SupType_x tranclp.trancl_into_trancl)
 
-lemma Collection_bij_on_trancl:
+lemma Collection_bij_on_trancl [simp]:
   "bij_on_trancl subtype Collection"
   apply (auto simp add: inj_def)
   by (metis subtype_SupType_x rangeI subtype_tranclp_Collection_x)
 
-lemma Tuple_bij_on_trancl:
+lemma Tuple_bij_on_trancl [simp]:
   "bij_on_trancl subtype Tuple"
   apply (auto simp add: inj_def)
   by (metis subtype_x_OclInvalid subtype_x_Tuple rangeI tranclp.simps)
@@ -353,11 +353,11 @@ lemma type_less_eq_x_Tuple_intro [intro]:
 proof -
   have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>*\<^sup>* \<pi> \<xi>"
     by (metis assms(2) less_eq_type_def rtranclp_eq_rtranclp)
-  then have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>+\<^sup>+ \<pi> \<xi>"
+  hence "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>+\<^sup>+ \<pi> \<xi>"
     by auto
-  then have "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
+  hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
     by (simp add: subtuple_to_trancl)
-  then have "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
+  hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
     by simp
   thus ?thesis
     unfolding less_eq_type_def
@@ -441,27 +441,14 @@ next
     by (simp add: subtype.intros(24) r_into_rtranclp)
 qed
 
-(*** Elimination Rules ******************************************************)
+(*** Strict Elimination Rules ***********************************************)
 
-subsection{* Elimination Rules *}
-
-lemma type_less_eq_x_OclInvalid [elim]:
-  "\<tau> \<le> OclInvalid \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  by (metis subtype_x_OclInvalid rtranclp.cases)
+subsection{* Strict Elimination Rules *}
 
 lemma type_less_x_OclInvalid [elim]:
   "\<tau> < OclInvalid \<Longrightarrow> P"
   unfolding less_type_def
   by (metis subtype_x_OclInvalid tranclp.cases)
-
-lemma type_less_eq_x_OclVoid [elim]:
-  "\<tau> \<le> OclVoid \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  by (metis (mono_tags, lifting) subtype_x_OclVoid less_eq_type_def rtranclp.cases type_less_eq_x_OclInvalid)
 
 lemma type_less_x_OclVoid [elim]:
   "\<tau> < OclVoid \<Longrightarrow>
@@ -470,33 +457,21 @@ lemma type_less_x_OclVoid [elim]:
   by (metis (mono_tags, lifting) subtype_x_OclVoid less_type_def type_less_x_OclInvalid tranclp.simps)
 
 lemma type_less_x_Required [elim]:
-  "\<tau> < \<sigma>[1] \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def less_basic_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply auto
-  by (metis subtype_x_OclInvalid subtype_x_Required tranclp_into_tranclp2)
-
-lemma type_less_eq_x_Required [elim]:
-  "\<tau> \<le> \<sigma>[1] \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def less_eq_basic_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply simp
-  by (metis converse_rtranclp_into_rtranclp subtype_x_OclInvalid subtype_x_Required)
-
-lemma type_less_eq_x_Optional [elim]:
-  "\<tau> \<le> \<sigma>[?] \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply simp
-  by (erule subtype.cases; auto simp add: converse_rtranclp_into_rtranclp less_eq_basic_type_def)
+  assumes "\<tau> < \<sigma>[1]"
+      and "\<tau> = OclInvalid \<Longrightarrow> P"
+      and "\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  have "\<tau> < \<sigma>[1]" by (simp add: assms(1))
+  then obtain \<rho> where "\<tau> = OclInvalid \<or> \<tau> = \<rho>[1]"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. \<tau>[1] < \<sigma>[1] \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type_def less_basic_type_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
 
 lemma type_less_x_Optional [elim]:
   "\<tau> < \<sigma>[?] \<Longrightarrow>
@@ -511,90 +486,73 @@ lemma type_less_x_Optional [elim]:
   apply (simp add: converse_rtranclp_into_rtranclp less_eq_basic_type_def)
   by (simp add: less_basic_type_def tranclp_into_tranclp2)
 
-lemma type_less_eq_x_Set [elim]:
-  "\<tau> \<le> Set \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply simp
-  by (metis converse_rtranclp_into_rtranclp subtype_x_OclInvalid subtype_x_Set)
-
 lemma type_less_x_Set [elim]:
-  "\<tau> < Set \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Set \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply blast
-  by (metis subtype_x_OclInvalid subtype_x_Set tranclp_into_tranclp2)
-
-lemma type_less_eq_x_OrderedSet [elim]:
-  "\<tau> \<le> OrderedSet \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply simp
-  by (metis converse_rtranclp_into_rtranclp subtype_x_OclInvalid subtype_x_OrderedSet)
+  assumes "\<tau> < Set \<sigma>"
+      and "\<tau> = OclInvalid \<Longrightarrow> P"
+      and "\<And>\<rho>. \<tau> = Set \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  have "\<tau> < Set \<sigma>" by (simp add: assms(1))
+  then obtain \<rho> where "\<tau> = OclInvalid \<or> \<tau> = Set \<rho>"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. Set \<tau> < Set \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
 
 lemma type_less_x_OrderedSet [elim]:
-  "\<tau> < OrderedSet \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply blast
-  by (metis subtype_x_OclInvalid subtype_x_OrderedSet tranclp_into_tranclp2)
-
-lemma type_less_eq_x_Bag [elim]:
-  "\<tau> \<le> Bag \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply simp
-  by (metis converse_rtranclp_into_rtranclp subtype_x_OclInvalid subtype_x_Bag)
+  assumes "\<tau> < OrderedSet \<sigma>"
+      and "\<tau> = OclInvalid \<Longrightarrow> P"
+      and "\<And>\<rho>. \<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  have "\<tau> < OrderedSet \<sigma>" by (simp add: assms(1))
+  then obtain \<rho> where "\<tau> = OclInvalid \<or> \<tau> = OrderedSet \<rho>"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. OrderedSet \<tau> < OrderedSet \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
 
 lemma type_less_x_Bag [elim]:
-  "\<tau> < Bag \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Bag \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply blast
-  by (metis subtype_x_OclInvalid subtype_x_Bag tranclp_into_tranclp2)
-
-lemma type_less_eq_x_Sequence [elim]:
-  "\<tau> \<le> Sequence \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply simp
-  by (metis converse_rtranclp_into_rtranclp subtype_x_OclInvalid subtype_x_Sequence)
+  assumes "\<tau> < Bag \<sigma>"
+      and "\<tau> = OclInvalid \<Longrightarrow> P"
+      and "\<And>\<rho>. \<tau> = Bag \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  have "\<tau> < Bag \<sigma>" by (simp add: assms(1))
+  then obtain \<rho> where "\<tau> = OclInvalid \<or> \<tau> = Bag \<rho>"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. Bag \<tau> < Bag \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
 
 lemma type_less_x_Sequence [elim]:
-  "\<tau> < Sequence \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply blast
-  by (metis subtype_x_OclInvalid subtype_x_Sequence tranclp_into_tranclp2)
-
-lemma type_less_eq_x_Collection [elim]:
-  "\<tau> \<le> Collection \<sigma> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply simp
-  by (erule subtype.cases; auto simp add: converse_rtranclp_into_rtranclp)
+  assumes "\<tau> < Sequence \<sigma>"
+      and "\<tau> = OclInvalid \<Longrightarrow> P"
+      and "\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  have "\<tau> < Sequence \<sigma>" by (simp add: assms(1))
+  then obtain \<rho> where "\<tau> = OclInvalid \<or> \<tau> = Sequence \<rho>"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. Sequence \<tau> < Sequence \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
 
 lemma type_less_x_Collection [elim]:
   "\<tau> < Collection \<sigma> \<Longrightarrow>
@@ -610,30 +568,15 @@ lemma type_less_x_Collection [elim]:
   by (erule subtype.cases; auto simp add: converse_rtranclp_into_rtranclp
             less_eq_type_def tranclp_into_tranclp2 tranclp_into_rtranclp)
 
-
-lemma subtype_preserve_Tuple2:
-  "subtype\<^sup>*\<^sup>* (Tuple x) (Tuple y) \<Longrightarrow>
-   (\<lambda>x y. Tuple x \<sqsubset> Tuple y)\<^sup>*\<^sup>* x y"
-  apply (rule reflect_rtranclp, auto)
-  apply (simp add: Tuple_bij_on_trancl)
-  apply (metis subtype_x_OclInvalid subtype_x_Tuple rangeI tranclp.cases)
-  done
-
-lemma Tuple_implies_TupleE2:
-  "\<tau> \<le> Tuple \<xi> \<Longrightarrow> (\<And>\<pi>. \<tau> = Tuple \<pi> \<or> \<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_type_def
-  by (induct rule: converse_rtranclp_induct; auto)
-
-
 lemma subtype_Tuple_into_strict_subtuple:
-  assumes "subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>)"
-      and "acyclic_on (fmran' \<pi>) subtype"
+  assumes "acyclic_on (fmran' \<pi>) subtype"
+      and "subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>)"
     shows "strict_subtuple subtype\<^sup>*\<^sup>* \<pi> \<xi>"
 proof -
   have "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi>"
-    apply (insert assms(1))
+    apply (insert assms(2))
     by (rule reflect_tranclp; auto simp add: Tuple_bij_on_trancl)
-  from this assms(2)
+  from this assms(1)
   have "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
     apply (induct rule: tranclp_induct)
     apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
@@ -641,48 +584,7 @@ proof -
   then show ?thesis by simp
 qed
 
-lemma subtype_Tuple_into_subtuple:
-  assumes "subtype\<^sup>*\<^sup>* (Tuple \<pi>) (Tuple \<xi>)"
-    shows "subtuple subtype\<^sup>*\<^sup>* \<pi> \<xi>"
-proof -
-  have "(subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>*\<^sup>* \<pi> \<xi>"
-    apply (insert assms)
-    apply (drule subtype_preserve_Tuple2)
-    by (smt subtype_x_Tuple mono_rtranclp type.inject(8) type.simps(46))
-  then have "subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>*\<^sup>* \<pi> \<xi>"
-    by (rule rtrancl_to_subtuple)
-  thus ?thesis
-    by (simp)
-qed
-
-lemma type_less_eq_x_Tuple [elim]:
-  "\<tau> \<le> Tuple \<xi> \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def less_eq_type_def
-  apply (induct rule: converse_rtranclp_induct)
-  apply (simp add: rtrancl_to_subtuple)
-  by (metis (mono_tags) OCL_Types.Tuple_implies_TupleE2 converse_rtranclp_into_rtranclp
-        less_eq_type_def subtype_Tuple_into_subtuple)
-
-lemma type_less_x_Tuple2:
-  "\<tau> < Tuple \<xi> \<Longrightarrow>
-   acyclic_on (fmran' \<xi>) subtype \<Longrightarrow>
-   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def less_eq_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply (metis subtype_x_Tuple r_into_rtranclp subtype_Tuple_into_subtuple)
-  by (metis (no_types, lifting) subtype_x_OclInvalid subtype_x_Tuple
-      subtype_Tuple_into_strict_subtuple subtype_Tuple_into_subtuple tranclp_into_rtranclp
-      tranclp_into_tranclp2)
-
-
-
-
-
-
-lemma type_less_eq_x_SupType [elim]:
+lemma type_less_x_SupType [elim]:
   "\<tau> < SupType \<Longrightarrow> (\<tau> \<noteq> SupType \<Longrightarrow> P) \<Longrightarrow> P"
   by (metis (mono_tags) subtype_SupType_x less_type_def tranclpD)
 
@@ -734,9 +636,93 @@ instance
 
 end
 
-(* Мы доказали ацикличность, теперь из этих теорем можно убрать
-   лишние предусловия: *)
+(*** Non-strict Elimination Rules *******************************************)
 
+subsection{* Non-strict Elimination Rules *}
+
+lemma type_less_eq_x_OclInvalid [elim]:
+  "\<tau> \<le> OclInvalid \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_OclVoid [elim]:
+  "\<tau> \<le> OclVoid \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Required [elim]:
+  "\<tau> \<le> \<sigma>[1] \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Optional [elim]:
+  "\<tau> \<le> \<sigma>[?] \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq, auto)
+
+lemma type_less_eq_x_Set [elim]:
+   "\<tau> \<le> Set \<sigma> \<Longrightarrow>
+    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<rho>. \<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_OrderedSet [elim]:
+   "\<tau> \<le> OrderedSet \<sigma> \<Longrightarrow>
+    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<rho>. \<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Bag [elim]:
+   "\<tau> \<le> Bag \<sigma> \<Longrightarrow>
+    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<rho>. \<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Sequence [elim]:
+   "\<tau> \<le> Sequence \<sigma> \<Longrightarrow>
+    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Collection [elim]:
+  "\<tau> \<le> Collection \<sigma> \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+(* It's easier to prove non-strict lemma first *)
+lemma type_less_eq_x_Tuple [elim]:
+  assumes "\<tau> \<le> Tuple \<xi>"
+      and "\<tau> = OclInvalid \<Longrightarrow> P"
+      and "\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P"
+    shows "P"
+proof -
+  have subtype_rtranclp_unfold:
+    "subtype\<^sup>*\<^sup>* = (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>*\<^sup>*"
+    by simp
+  have "\<tau> \<le> Tuple \<xi>" by (simp add: assms(1))
+  then obtain \<pi> where "\<tau> = OclInvalid \<or> \<tau> = Tuple \<pi>"
+    unfolding less_eq_type_def
+    by (induct rule: converse_rtranclp_induct; auto)
+  moreover have "\<And>\<pi> \<xi>. Tuple \<pi> \<le> Tuple \<xi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi>"
+    unfolding less_eq_type_def
+    apply (unfold subtype_rtranclp_unfold)
+    apply (rule subtuple_rtranclp_intro, auto simp add: subtuple_refl)
+    by (metis Nitpick.rtranclp_unfold Tuple_bij_on_trancl rangeI)
+  ultimately show ?thesis
+    using assms by auto
+qed
+
+(* This lemma can't be proven until we prove subtype acyclicity *)
 lemma type_less_x_Tuple [elim]:
   "\<tau> < Tuple \<xi> \<Longrightarrow>
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
@@ -749,6 +735,11 @@ section{* Upper Semilattice of Types *}
 
 instantiation type :: (semilattice_sup) semilattice_sup
 begin
+
+lemma measure_cond [intro]:
+  "k |\<in>| fmdom x \<Longrightarrow>
+   size (the (fmlookup x k)) < size (Tuple x)"
+  using elem_le_ffold by auto
 
 function sup_type where
   "OclInvalid \<squnion> \<sigma> = \<sigma>"
@@ -973,8 +964,7 @@ function subtype_fun :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool
 | "subtype_fun SupType _ = False"
   by pat_completeness auto
 termination
-  apply (relation "measure (\<lambda>(xs, ys). size ys)")
-  apply auto
+  apply (relation "measure (\<lambda>(xs, ys). size ys)"; auto)
   using measure_cond by force
 
 lemma less_eq_type_code [code_abbrev, simp]:
@@ -982,12 +972,12 @@ lemma less_eq_type_code [code_abbrev, simp]:
   apply (rule iffI)
   apply (induct \<sigma> arbitrary: \<tau>; auto)
   apply (erule subtype_fun.elims; auto)
-           apply (erule subtype_fun.elims; auto)
+  apply (erule subtype_fun.elims; auto)
   apply (erule subtype_fun.elims; auto)
 
   apply (erule subtype_fun.elims; auto)
   using le_less apply auto[1]
-  apply (simp add: type_less_eq_x_Optional_intro(2))
+  apply (auto)[1]
 
   apply (erule subtype_fun.elims; auto simp add: type_less_eq_x_Collection_intro)
 
@@ -998,50 +988,41 @@ lemma less_eq_type_code [code_abbrev, simp]:
   apply (erule subtype_fun.elims; auto)
   apply (metis (mono_tags, lifting) subtuple_mono type_less_eq_x_Tuple_intro)
 proof (induct \<sigma> arbitrary: \<tau>)
-  case SupType thus ?case
-    by (cases \<tau>, auto)
+  case SupType thus ?case by (cases \<tau>, auto)
 next
   case OclInvalid thus ?case by auto
 next
   case OclVoid thus ?case by auto
 next
-  case (Required x)
-  then show ?case
+  case (Required x) thus ?case
     apply (insert Required)
     by (erule type_less_eq_x_Required; auto simp add: dual_order.order_iff_strict)
 next
-  case (Optional x)
-  then show ?case
+  case (Optional x) thus ?case
     apply (insert Optional)
     by (erule type_less_eq_x_Optional; auto simp add: dual_order.order_iff_strict)
 next
-  case (Collection \<sigma>)
-  then show ?case
+  case (Collection \<sigma>) thus ?case
     apply (insert Collection)
     by (erule type_less_eq_x_Collection, auto)
 next
-  case (Set \<sigma>)
-  then show ?case
+  case (Set \<sigma>) thus ?case
     apply (insert Set)
     by (erule type_less_eq_x_Set, auto)
 next
-  case (OrderedSet \<sigma>)
-  then show ?case
+  case (OrderedSet \<sigma>) thus ?case
     apply (insert OrderedSet)
     by (erule type_less_eq_x_OrderedSet, auto)
 next
-  case (Bag \<sigma>)
-  then show ?case
+  case (Bag \<sigma>) thus ?case
     apply (insert Bag)
     by (erule type_less_eq_x_Bag, auto)
 next
-  case (Sequence \<sigma>)
-  then show ?case
+  case (Sequence \<sigma>) thus ?case
     apply (insert Sequence)
     by (erule type_less_eq_x_Sequence, auto)
 next
-  case (Tuple x)
-  then show ?case
+  case (Tuple x) thus ?case
     apply (insert Tuple)
     apply (erule type_less_eq_x_Tuple; auto)
     by (smt subtuple_mono)

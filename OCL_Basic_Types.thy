@@ -1,3 +1,8 @@
+(*  Title:       Simple OCL Semantics
+    Author:      Denis Nikiforov, December 2018
+    Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
+    License:     LGPL
+*)
 chapter{* Basic OCL Types *}
 theory OCL_Basic_Types
   imports Main "HOL-Library.FSet" OCL_Common
@@ -305,16 +310,11 @@ lemma order_refl_basic_type [iff]:
   for \<tau> :: "'a basic_type"
   by (simp add: less_eq_basic_type_def)
 
-lemma order_trans_basic_type:
-  "\<tau> \<le> \<sigma> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow> \<tau> \<le> \<rho>"
-  for \<tau> \<sigma> \<rho> :: "'a basic_type"
-  by (auto simp add: less_eq_basic_type_def)
-
 instance
   apply intro_classes
   apply (simp add: less_le_not_le_basic_type)
   apply (simp)
-  using order_trans_basic_type apply blast
+  apply (auto simp add: less_eq_basic_type_def)[1]
   by (simp add: antisym_basic_type)
 
 end

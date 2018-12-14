@@ -1,3 +1,8 @@
+(*  Title:       Simple OCL Semantics
+    Author:      Denis Nikiforov, December 2018
+    Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
+    License:     LGPL
+*)
 theory List_Ext
   imports Main
 begin
@@ -16,6 +21,10 @@ lemma trancl_to_list_all2:
   apply (simp add: list.rel_mono_strong)
   by (smt list_all2_trans tranclp.trancl_into_trancl)
 
+(* The proof was derived from the accepted answer on the website
+   Stack Overflow that is available at
+   https://stackoverflow.com/a/52970733/632199 
+   and provided with the permission of the author of the answer *)
 lemma list_all2_to_rtrancl:
   assumes as_r: "(\<forall>x. P x x)" 
   shows "list_all2 P\<^sup>*\<^sup>* xs ys \<Longrightarrow> (list_all2 P)\<^sup>*\<^sup>* xs ys"
@@ -48,7 +57,7 @@ qed
 
 lemma list_all2_to_trancl:
   assumes as_r: "(\<forall>x. P x x)" 
-  shows "(list_all2 P\<^sup>+\<^sup>+) xs ys \<Longrightarrow> (list_all2 P)\<^sup>+\<^sup>+ xs ys"
+  shows "list_all2 P\<^sup>+\<^sup>+ xs ys \<Longrightarrow> (list_all2 P)\<^sup>+\<^sup>+ xs ys"
   by (metis (mono_tags, lifting) assms list_all2_refl list_all2_to_rtrancl
             r_into_rtranclp reflclp_tranclp rtrancl_to_list_all2 rtranclpD
             rtranclp_idemp rtranclp_reflclp tranclp.r_into_trancl)
