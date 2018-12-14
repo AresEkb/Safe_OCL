@@ -13,11 +13,11 @@ begin
 
 subsection{* Basic Properties *}
 
-text {* @{text "R\<^sup>+\<^sup>+"} is a transitive closure of a relation @{text R}. *}
+text{* @{text "R\<^sup>+\<^sup>+"} is a transitive closure of a relation @{text R}. *}
 
-text {* @{text "R\<^sup>*\<^sup>*"} is a reflexive transitive closure of a relation @{text R}. *}
+text{* @{text "R\<^sup>*\<^sup>*"} is a reflexive transitive closure of a relation @{text R}. *}
 
-text {* A function @{text f} is surjective on a transitive closure of a
+text{* A function @{text f} is surjective on a transitive closure of a
  relation @{text R} iff for any two elements in the range of @{text f},
  related through @{text "R\<^sup>+\<^sup>+"}, all intermediate elements
  belong to the range of @{text f}. *}
@@ -69,7 +69,7 @@ text {* A function @{text f} preserves a transitive closure of a relation
 
 (* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
-   https://stackoverflow.com/a/52573551/632199 
+   https://stackoverflow.com/a/52573551/632199
    and provided with the permission of the author of the answer *)
 lemma preserve_tranclp:
   assumes "\<And>x y. R x y \<Longrightarrow> S (f x) (f y)"
@@ -116,7 +116,7 @@ text {* A function @{text f} reflects a transitive closure of a relation
 
 (* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
-   https://stackoverflow.com/a/52573551/632199 
+   https://stackoverflow.com/a/52573551/632199
    and provided with the permission of the author of the answer *)
 lemma reflect_tranclp:
   assumes refl_f: "\<And>x y. S (f x) (f y) \<Longrightarrow> R x y"

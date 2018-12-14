@@ -23,7 +23,7 @@ lemma trancl_to_list_all2:
 
 (* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
-   https://stackoverflow.com/a/52970733/632199 
+   https://stackoverflow.com/a/52970733/632199
    and provided with the permission of the author of the answer *)
 lemma list_all2_to_rtrancl:
   assumes as_r: "(\<forall>x. P x x)" 

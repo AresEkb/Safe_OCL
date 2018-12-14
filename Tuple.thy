@@ -90,10 +90,20 @@ lemma subtuple_acyclic:
   apply (erule_tac ?x="x" in fmrel_cases)
   apply (metis fmrestrict_fset_dom)
   by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp1)
-(*
-  by (smt fmap_ext fmran'I fmrel_cases fmrestrict_fset_dom option.simps(1)
-          rtranclp_into_tranclp1 subtuple_eq_fmrel_fmrestrict_fset subtuple_fmdom)
-*)
+
+lemma subtuple_acyclic':
+  "acyclic_on (fmran' ym) P \<Longrightarrow>
+   subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   subtuple (\<lambda>x y. x = y \<or> P x y) ym xm \<Longrightarrow>
+   xm = ym"
+  apply (frule subtuple_fmdom, simp)
+  apply (unfold fmrel_on_fset_fmrel_restrict, simp)
+  apply (rule fmap_ext)
+  apply (erule_tac ?x="x" in fmrel_cases)
+  apply (metis fmrestrict_fset_dom)
+  apply (erule_tac ?x="x" in fmrel_cases)
+  apply (metis fmrestrict_fset_dom)
+  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp2)
 
 lemma strict_subtuple_trans:
   "acyclic_on (fmran' xm) P \<Longrightarrow>
@@ -103,6 +113,15 @@ lemma strict_subtuple_trans:
   apply auto
   apply (rule fmrel_on_fset_trans, auto)
   by (drule_tac ?ym="ym" in subtuple_acyclic; auto)
+
+lemma strict_subtuple_trans':
+  "acyclic_on (fmran' zm) P \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. x = y \<or> P x y) xm ym \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ ym zm \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm zm"
+  apply auto
+  apply (rule fmrel_on_fset_trans, auto)
+  by (drule_tac ?xm="ym" in subtuple_acyclic'; auto)
 
 lemma subtuple_fmmerge2 [intro]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
@@ -147,15 +166,15 @@ lemma subtuple_to_trancl:
   by (simp_all add: fmrel_to_trancl)
 
 lemma subtuple_rtranclp_intro:
-  assumes "bij_on_trancl R f"
-      and "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow> subtuple R xm ym"
+  assumes "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow> subtuple R xm ym"
+      and "bij_on_trancl R f"
       and "R\<^sup>*\<^sup>* (f xm) (f ym)"
     shows "subtuple R\<^sup>*\<^sup>* xm ym"
 proof -
   have "(\<lambda>xm ym. R (f xm) (f ym))\<^sup>*\<^sup>* xm ym"
-    apply (insert assms(1) assms(3))
+    apply (insert assms(2) assms(3))
     by (rule reflect_rtranclp; auto)
-  hence "(subtuple R)\<^sup>*\<^sup>* xm ym" by (smt assms(2) mono_rtranclp)
+  hence "(subtuple R)\<^sup>*\<^sup>* xm ym" by (smt assms(1) mono_rtranclp)
   hence "subtuple R\<^sup>*\<^sup>* xm ym" by (rule rtrancl_to_subtuple)
   thus ?thesis by (simp)
 qed

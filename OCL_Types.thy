@@ -569,19 +569,39 @@ lemma type_less_x_Collection [elim]:
             less_eq_type_def tranclp_into_tranclp2 tranclp_into_rtranclp)
 
 lemma subtype_Tuple_into_strict_subtuple:
-  assumes "acyclic_on (fmran' \<pi>) subtype"
+  assumes "acyclic_on (fmran' \<xi>) subtype"
       and "subtype\<^sup>+\<^sup>+ (Tuple \<pi>) (Tuple \<xi>)"
     shows "strict_subtuple subtype\<^sup>*\<^sup>* \<pi> \<xi>"
 proof -
   have "(strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y))\<^sup>+\<^sup>+ \<pi> \<xi>"
     apply (insert assms(2))
-    by (rule reflect_tranclp; auto simp add: Tuple_bij_on_trancl)
+    by (rule reflect_tranclp; auto)
   from this assms(1)
   have "strict_subtuple (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>+\<^sup>+ \<pi> \<xi>"
-    apply (induct rule: tranclp_induct)
+    apply (induct rule: converse_tranclp_induct)
     apply (metis (mono_tags, lifting) strict_subtuple_mono tranclp.r_into_trancl)
-    using strict_subtuple_trans by blast
+    using strict_subtuple_trans' by blast
   then show ?thesis by simp
+qed
+
+(* We can remove an acyclicity assumption only after we prove that
+   subtype is acyclic *)
+lemma type_less_x_Tuple':
+  assumes "\<tau> < Tuple \<xi>"
+      and "acyclic_on (fmran' \<xi>) subtype"
+      and "\<tau> = OclInvalid \<Longrightarrow> P"
+      and "\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P"
+    shows "P"
+proof -
+  have "\<tau> < Tuple \<xi>" by (simp add: assms(1))
+  then obtain \<pi> where "\<tau> = OclInvalid \<or> \<tau> = Tuple \<pi>"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover from assms(2) have "\<And>\<pi>. Tuple \<pi> < Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi>"
+    unfolding less_type_def less_eq_type_def
+    using subtype_Tuple_into_strict_subtuple by auto
+  ultimately show ?thesis
+    using assms by auto
 qed
 
 lemma type_less_x_SupType [elim]:
@@ -596,7 +616,8 @@ lemma subtype_irrefl:
   "\<tau> < \<tau> \<Longrightarrow> False"
   for \<tau> :: "'a type"
   apply (induct \<tau>, auto)
-  by (metis (mono_tags) less_type_def subtype_Tuple_into_strict_subtuple)
+  apply (erule type_less_x_Tuple', auto)
+  by (metis (mono_tags) less_type_def)
 
 lemma subtype_acyclic:
   "acyclicP subtype"
@@ -699,35 +720,18 @@ lemma type_less_eq_x_Collection [elim]:
    (\<And>\<rho>. \<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
 
-(* It's easier to prove non-strict lemma first *)
-lemma type_less_eq_x_Tuple [elim]:
-  assumes "\<tau> \<le> Tuple \<xi>"
-      and "\<tau> = OclInvalid \<Longrightarrow> P"
-      and "\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P"
-    shows "P"
-proof -
-  have subtype_rtranclp_unfold:
-    "subtype\<^sup>*\<^sup>* = (\<lambda>x y. x = y \<or> x \<sqsubset> y)\<^sup>*\<^sup>*"
-    by simp
-  have "\<tau> \<le> Tuple \<xi>" by (simp add: assms(1))
-  then obtain \<pi> where "\<tau> = OclInvalid \<or> \<tau> = Tuple \<pi>"
-    unfolding less_eq_type_def
-    by (induct rule: converse_rtranclp_induct; auto)
-  moreover have "\<And>\<pi> \<xi>. Tuple \<pi> \<le> Tuple \<xi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi>"
-    unfolding less_eq_type_def
-    apply (unfold subtype_rtranclp_unfold)
-    apply (rule subtuple_rtranclp_intro, auto simp add: subtuple_refl)
-    by (metis Nitpick.rtranclp_unfold Tuple_bij_on_trancl rangeI)
-  ultimately show ?thesis
-    using assms by auto
-qed
-
-(* This lemma can't be proven until we prove subtype acyclicity *)
 lemma type_less_x_Tuple [elim]:
   "\<tau> < Tuple \<xi> \<Longrightarrow>
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
-  using less_imp_le by blast
+  by (metis less_le_not_le_type less_type_def type_less_x_Tuple')
+
+lemma type_less_eq_x_Tuple [elim]:
+  "\<tau> \<le> Tuple \<xi> \<Longrightarrow>
+   (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (metis order.not_eq_order_implies_strict order_refl_type
+            subtuple_refl type_less_x_Tuple)
 
 (*** Upper Semilattice of Types *********************************************)
 

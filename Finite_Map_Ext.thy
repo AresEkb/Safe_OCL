@@ -180,7 +180,7 @@ lemma fmrel_trancl_fmdom_eq:
 
 (* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
-   https://stackoverflow.com/a/53585232/632199 
+   https://stackoverflow.com/a/53585232/632199
    and provided with the permission of the author of the answer *)
 lemma fmap_eqdom_Cons1:
   assumes as_1: "fmlookup xm i = None"
@@ -211,7 +211,7 @@ qed
 
 (* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
-   https://stackoverflow.com/a/53585232/632199 
+   https://stackoverflow.com/a/53585232/632199
    and provided with the permission of the author of the answer *)
 lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
   assumes R: "fmrel R xm ym"
@@ -223,7 +223,7 @@ lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
     P (fmupd i x xm) (fmupd i y ym)"
   shows "P xm ym"
   using R dom_eq
-proof(induct xm arbitrary: ym)
+proof (induct xm arbitrary: ym)
   case fmempty
   then show ?case
     by (metis fempty_iff fmdom_empty fmempty_of_list fmfilter_alt_defs(5)
@@ -251,7 +251,7 @@ qed
 
 (* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
-   https://stackoverflow.com/a/53585232/632199 
+   https://stackoverflow.com/a/53585232/632199
    and provided with the permission of the author of the answer *)
 lemma fmrel_to_rtrancl:
   assumes as_r: "(\<And>x. r x x)" 
@@ -297,7 +297,7 @@ qed
 
 (* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
-   https://stackoverflow.com/a/53585232/632199 
+   https://stackoverflow.com/a/53585232/632199
    and provided with the permission of the author of the answer *)
 lemma fmrel_to_trancl:
   "(\<And>x. r x x) \<Longrightarrow>
@@ -341,7 +341,7 @@ subsection{* Size Calculation *}
 
 (* The contents of the subsection was derived from the accepted answer
    on the website Stack Overflow that is available at
-   https://stackoverflow.com/a/53244203/632199 
+   https://stackoverflow.com/a/53244203/632199
    and provided with the permission of the author of the answer *)
 
 abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
