@@ -54,8 +54,7 @@ lemma tranclp_tranclp_to_tranclp_r:
 proof -
   have "(\<And>x y z. R\<^sup>+\<^sup>+ x y \<Longrightarrow> R y z \<Longrightarrow> P x \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow>
         R\<^sup>+\<^sup>+ y z \<Longrightarrow> R\<^sup>+\<^sup>+ x y \<Longrightarrow> P x \<longrightarrow> P z \<longrightarrow> P y"
-    apply (erule tranclp_induct, auto)
-    by (meson tranclp_trans)
+    by (erule tranclp_induct, auto) (meson tranclp_trans)
   thus ?thesis
     using assms by auto
 qed
@@ -76,8 +75,8 @@ lemma preserve_tranclp:
       and "R\<^sup>+\<^sup>+ x y"
     shows "S\<^sup>+\<^sup>+ (f x) (f y)"
 proof -
-  obtain P where P: "P = (\<lambda>x y. S\<^sup>+\<^sup>+ (f x) (f y))" by auto
-  obtain r where r: "r = (\<lambda>x y. S (f x) (f y))" by auto
+  define P where P: "P = (\<lambda>x y. S\<^sup>+\<^sup>+ (f x) (f y))" 
+  define r where r: "r = (\<lambda>x y. S (f x) (f y))"
   have major: "r\<^sup>+\<^sup>+ x y" by (insert assms r; erule tranclp_trans_induct; auto)
   have cases_1: "\<And>x y. r x y \<Longrightarrow> P x y"
     unfolding P r by simp
@@ -124,11 +123,10 @@ lemma reflect_tranclp:
       and prem: "S\<^sup>+\<^sup>+ (f x) (f y)"
   shows "R\<^sup>+\<^sup>+ x y"
 proof -
-  obtain B where B: "B = range f" by auto
-  obtain g where g: "g = the_inv_into UNIV f" by auto
-  obtain gr where gr: "gr = restrict g B" by auto
-  obtain P where P: "P = (\<lambda>x y. x \<in> B \<longrightarrow> y \<in> B \<longrightarrow> R\<^sup>+\<^sup>+ (gr x) (gr y))"
-    by auto
+  define B where B: "B = range f"
+  define g where g: "g = the_inv_into UNIV f"
+  define gr where gr: "gr = restrict g B"
+  define P where P: "P = (\<lambda>x y. x \<in> B \<longrightarrow> y \<in> B \<longrightarrow> R\<^sup>+\<^sup>+ (gr x) (gr y))"
   from prem have major: "S\<^sup>+\<^sup>+ (f x) (f y)" by blast
   from refl_f bij_f have cases_1: "\<And>x y. S x y \<Longrightarrow> P x y"
     unfolding B P g gr
