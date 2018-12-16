@@ -36,17 +36,17 @@ lemma tranclp_fun_preserve1b:
       and prem: "S\<^sup>+\<^sup>+ (f x) (g y)"
     shows "R\<^sup>+\<^sup>+ x y"
 proof -
-  obtain f' where f': "f' = the_inv_into UNIV f" by auto
-  obtain g' where g': "g' = the_inv_into UNIV g" by auto
-  obtain f'' where f'': "f'' = restrict f' (range f)" by auto
-  obtain g'' where g'': "g'' = restrict g' (range g)" by auto
-  obtain FR where FR: "FR = range f" by auto
-  obtain GR where GR: "GR = range g" by auto
-  obtain P where P: "P = (\<lambda>x y.
+  define f' where f': "f' = the_inv_into UNIV f"
+  define g' where g': "g' = the_inv_into UNIV g" 
+  define f'' where f'': "f'' = restrict f' (range f)"
+  define g'' where g'': "g'' = restrict g' (range g)"
+  define FR where FR: "FR = range f"
+  define GR where GR: "GR = range g"
+  define P where P: "P = (\<lambda>x y.
      (x \<in> FR \<and> y \<in> FR \<longrightarrow> R\<^sup>+\<^sup>+ (f'' x) (f'' y)) \<and>
      (x \<in> FR \<and> y \<in> GR \<longrightarrow> (f'' x) \<noteq> (g'' y) \<longrightarrow> R\<^sup>+\<^sup>+ (f'' x) (g'' y)) \<and>
      (x \<in> GR \<and> y \<in> FR \<longrightarrow> False) \<and>
-     (x \<in> GR \<and> y \<in> GR \<longrightarrow> R\<^sup>+\<^sup>+ (g'' x) (g'' y)))" by auto
+     (x \<in> GR \<and> y \<in> GR \<longrightarrow> R\<^sup>+\<^sup>+ (g'' x) (g'' y)))"
   from prem have major: "S\<^sup>+\<^sup>+ (f x) (g y)" by blast
   from as_nat have cases_1: "\<And>x y. S x y \<Longrightarrow> P x y"
     apply (unfold P f' f'' g' g'' FR GR natural_under_rel_def functor_under_rel_def)
