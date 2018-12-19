@@ -400,14 +400,17 @@ lemma less_basic_type_code [code_abbrev, simp]:
 
 section{* Test Cases *}
 
-datatype classes1 = ClassA | ClassB | Object
+datatype classes1 = Object | Person | Employee | Customer
+| Project | Task | Sprint
 
 instantiation classes1 :: semilattice_sup
 begin
 
 inductive subclass1 where
-  "subclass1 ClassA Object"
-| "subclass1 ClassB Object"
+  "c \<noteq> Object \<Longrightarrow>
+   subclass1 c Object"
+| "subclass1 Employee Person"
+| "subclass1 Customer Person"
 
 code_pred [show_modes] subclass1 .
 
@@ -416,26 +419,64 @@ definition "less_classes1 \<equiv> subclass1"
 definition "(c::classes1) \<le> d \<equiv> c = d \<or> c < d"
 
 fun sup_classes1 where
-  "ClassA \<squnion> ClassA = ClassA"
-| "ClassA \<squnion> _ = Object"
-| "ClassB \<squnion> ClassB = ClassB"
-| "ClassB \<squnion> _ = Object"
-| "Object \<squnion> _ = Object"
+  "Object \<squnion> _ = Object"
+| "Person \<squnion> c = (if c = Person \<or> c = Employee \<or> c = Customer
+    then Person else Object)"
+| "Employee \<squnion> c = (if c = Employee then Employee else
+    if c = Person \<or> c = Customer then Person else Object)"
+| "Customer \<squnion> c = (if c = Customer then Customer else
+    if c = Person \<or> c = Employee then Person else Object)"
+| "Project \<squnion> c = (if c = Project then Project else Object)"
+| "Task \<squnion> c = (if c = Task then Task else Object)"
+| "Sprint \<squnion> c = (if c = Sprint then Sprint else Object)"
+
+lemma less_le_not_le_classes1:
+  "c < d \<longleftrightarrow> c \<le> d \<and> \<not> d \<le> c"
+  for c d :: classes1
+  unfolding less_classes1_def less_eq_classes1_def
+  using subclass1.simps by auto
+
+lemma order_refl_classes1:
+  "c \<le> c"
+  for c :: classes1
+  unfolding less_eq_classes1_def by simp
+
+lemma order_trans_classes1:
+  "c \<le> d \<Longrightarrow> d \<le> e \<Longrightarrow> c \<le> e"
+  for c d e :: classes1
+  using less_eq_classes1_def less_classes1_def subclass1.simps by auto
+
+lemma antisym_classes1:
+  "c \<le> d \<Longrightarrow> d \<le> c \<Longrightarrow> c = d"
+  for c d :: classes1
+  using less_eq_classes1_def less_classes1_def subclass1.simps by auto
 
 lemma sup_ge1_classes1:
   "c \<le> c \<squnion> d"
   for c d :: classes1
-  by (smt classes1.distinct(1) classes1.distinct(3) less_classes1_def less_eq_classes1_def subclass1.intros(1) subclass1.intros(2) sup_classes1.elims)
+  by (induct c; auto simp add: less_eq_classes1_def less_classes1_def subclass1.simps)
+
+lemma sup_ge2_classes1:
+  "d \<le> c \<squnion> d"
+  for c d :: classes1
+  by (induct c; auto simp add: less_eq_classes1_def less_classes1_def subclass1.simps)
+
+lemma sup_least_classes1:
+  "c \<le> e \<Longrightarrow> d \<le> e \<Longrightarrow> c \<squnion> d \<le> e"
+  for c d e :: classes1
+  by (induct c; induct d;
+      auto simp add: less_eq_classes1_def less_classes1_def subclass1.simps)
 
 instance
   apply intro_classes
-  using less_classes1_def less_eq_classes1_def subclass1.simps apply auto[1]
-  apply (simp add: less_eq_classes1_def)
-  using less_classes1_def subclass1.simps less_eq_classes1_def apply auto[1]
-  using less_classes1_def subclass1.simps less_eq_classes1_def apply auto[1]
+  apply (simp add: less_le_not_le_classes1)
+  apply (simp add: order_refl_classes1)
+  apply (rule order_trans_classes1; auto)
+  apply (simp add: antisym_classes1)
   apply (simp add: sup_ge1_classes1)
-  apply (smt less_classes1_def less_eq_classes1_def subclass1.intros(1) subclass1.intros(2) sup_classes1.elims sup_classes1.simps(3) sup_classes1.simps(5))
-  by (smt less_classes1_def subclass1.simps less_eq_classes1_def sup_classes1.simps(1) sup_classes1.simps(4) sup_ge1_classes1)
+  apply (simp add: sup_ge2_classes1)
+  apply (simp add: sup_least_classes1)
+  done
 
 end
 

@@ -66,10 +66,11 @@ subsection{* Transitive Closure Preservation *}
 text {* A function @{text f} preserves a transitive closure of a relation
   @{text R} if @{text f} preserves @{text R}. *}
 
-(* The proof was derived from the accepted answer on the website
-   Stack Overflow that is available at
-   https://stackoverflow.com/a/52573551/632199
-   and provided with the permission of the author of the answer *)
+text{* The proof was derived from the accepted answer on the website
+ Stack Overflow that is available at
+ https://stackoverflow.com/a/52573551/632199
+ and provided with the permission of the author of the answer *}
+
 lemma preserve_tranclp:
   assumes "\<And>x y. R x y \<Longrightarrow> S (f x) (f y)"
       and "R\<^sup>+\<^sup>+ x y"
@@ -113,10 +114,11 @@ text {* A function @{text f} reflects a transitive closure of a relation
   @{text S} if @{text f} reflects @{text S} and @{text f} is bijective
   on @{text "S\<^sup>+\<^sup>+"}. *}
 
-(* The proof was derived from the accepted answer on the website
-   Stack Overflow that is available at
-   https://stackoverflow.com/a/52573551/632199
-   and provided with the permission of the author of the answer *)
+text{* The proof was derived from the accepted answer on the website
+ Stack Overflow that is available at
+ https://stackoverflow.com/a/52573551/632199
+ and provided with the permission of the author of the answer *}
+
 lemma reflect_tranclp:
   assumes refl_f: "\<And>x y. S (f x) (f y) \<Longrightarrow> R x y"
       and bij_f: "bij_on_trancl S f"

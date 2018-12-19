@@ -6,12 +6,12 @@
 chapter{* OCL Common *}
 theory OCL_Common
   imports
-    Main
+    Main "HOL-Library.Extended_Nat"
 begin
 
 (*** Kinds ******************************************************************)
 
-type_synonym cls = "string"
+(*type_synonym cls = "string"*)
 type_synonym attr = "string"
 type_synonym assoc = "string"
 type_synonym role = "string"
@@ -25,10 +25,10 @@ type_synonym 'a env = "vname \<rightharpoonup> 'a"
 (* Для бесконечности правила указаны явно, хотя можно было бы упростить.
    Но просто это не очень тривиально, обычно результат бесконечность, а не ошибка.
    Чтобы было явно видно *)
-
+(*
 class infinity =
   fixes infinity :: "'a"  ("\<infinity>")
-
+*)
 typedef unat = "UNIV :: nat option set" ..
 
 definition "unat x \<equiv> Abs_unat (Some x)"

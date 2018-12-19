@@ -21,10 +21,11 @@ lemma trancl_to_list_all2:
   apply (simp add: list.rel_mono_strong)
   by (smt list_all2_trans tranclp.trancl_into_trancl)
 
-(* The proof was derived from the accepted answer on the website
-   Stack Overflow that is available at
-   https://stackoverflow.com/a/52970733/632199
-   and provided with the permission of the author of the answer *)
+text{* The proof was derived from the accepted answer on the website
+ Stack Overflow that is available at
+ https://stackoverflow.com/a/52970733/632199
+ and provided with the permission of the author of the answer *}
+
 lemma list_all2_to_rtrancl:
   assumes as_r: "(\<forall>x. P x x)" 
   shows "list_all2 P\<^sup>*\<^sup>* xs ys \<Longrightarrow> (list_all2 P)\<^sup>*\<^sup>* xs ys"
