@@ -8,244 +8,334 @@ theory OCL_Typing
   imports OCL_Syntax OCL_Types Object_Model "HOL-Library.Transitive_Closure_Table"
 begin
 
-inductive is_collection_of where
-  "is_collection_of (Collection t) t"
-| "is_collection_of (Set t) t"
-| "is_collection_of (OrderedSet t) t"
-| "is_collection_of (Bag t) t"
-| "is_collection_of (Sequence t) t"
-
 (*** Standard Library Operations Typing *************************************)
 
 subsection{* Standard Library Operations Typing *}
 
+text{* The following rules are more restrictive than rules given in
+ the OCL Specification. This allows one to identify more errors
+ in expressions. However, these restrictions may be revised if necessary.
+ Perhaps some of them could be separated and should cause warnings
+ instead of errors. *}
+
+text{* Only casting to a subtype makes sense. *}
+
+text{* According to the section 7.4.7 of the OCL specification
+ oclAsType() can be applied to collections as well as to single
+ values. I guess we can allow oclIsTypeOf() and oclIsKindOf()
+ for collections too. *}
+
 inductive typeop_type where
-  "t1 \<le> OclAny[?] \<Longrightarrow>
-   typeop_type OclAsTypeOp t1 t2 t2"
-| "t1 \<le> OclAny[?] \<Longrightarrow>
-   typeop_type OclIsTypeOfOp t1 t2 Boolean[1]"
-| "t1 \<le> OclAny[?] \<Longrightarrow>
-   typeop_type OclIsKindOfOp t1 t2 Boolean[1]"
-| "is_collection_of t1 _ \<Longrightarrow>
-   typeop_type SelectByKindOp t1 t2 t1"
-| "is_collection_of t1 _ \<Longrightarrow>
-   typeop_type SelectByTypeOp t1 t2 t1"
+  "\<sigma> < \<tau> \<Longrightarrow>
+   typeop_type OclAsTypeOp \<tau> \<sigma> \<sigma>"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   typeop_type OclIsTypeOfOp \<tau> \<sigma> Boolean[1]"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   typeop_type OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
+| "strict_subcollection \<tau> \<sigma> \<rho> \<Longrightarrow>
+   typeop_type SelectByKindOp \<tau> \<sigma> \<rho>"
+| "strict_subcollection \<tau> \<sigma> \<rho> \<Longrightarrow>
+   typeop_type SelectByTypeOp \<tau> \<sigma> \<rho>"
+
+code_pred [show_modes] typeop_type .
+
+values "{x. typeop_type SelectByKindOp (Set Real[?] :: classes1 type) Integer[1] x}"
+
+text{* It makes sense to compare values only with compatible types. *}
+
+inductive suptype_binop_type where
+  "\<tau> \<le> \<sigma> \<Longrightarrow>
+   suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<le> \<sigma> \<Longrightarrow>
+   suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
+
+text{* The OCL specification defines toString() operation only for
+ boolean and numeric types. However, I guess it's a good idea to
+ define it once for all basic types. *}
 
 inductive any_unop_type where
-  "t \<le> OclAny[?] \<Longrightarrow>
-   any_unop_type OclAsSetOp t (Set t)"
-| "t \<le> OclAny[?] \<Longrightarrow>
-   any_unop_type OclIsNewOp t Boolean[1]"
-| "t \<le> OclAny[?] \<Longrightarrow>
-   any_unop_type OclIsUndefinedOp t Boolean[1]"
-| "t \<le> OclAny[?] \<Longrightarrow>
-   any_unop_type OclIsInvalidOp t Boolean[1]"
-| "t \<le> OclAny[?] \<Longrightarrow>
-   any_unop_type OclLocaleOp t String[1]"
-
-inductive any_binop_type where
-  "\<lbrakk>t1 \<le> OclAny[?]; t2 \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
-   any_binop_type any_binop.EqualOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<le> OclAny[?]; t2 \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
-   any_binop_type any_binop.NotEqualOp t1 t2 Boolean[1]"
+  "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type OclAsSetOp \<tau> (Set \<tau>)"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type OclIsNewOp \<tau> Boolean[1]"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type OclIsUndefinedOp \<tau> Boolean[1]"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type OclIsInvalidOp \<tau> Boolean[1]"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type OclLocaleOp \<tau> String[1]"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type ToStringOp \<tau> String[1]"
 
 inductive boolean_unop_type where
-  "t \<le> Boolean[?] \<Longrightarrow>
-   boolean_unop_type NotOp t t"
-| "t \<le> Boolean[?] \<Longrightarrow>
-   boolean_unop_type boolean_unop.ToStringOp t String[1]"
+  "\<tau> \<le> Boolean[?] \<Longrightarrow>
+   boolean_unop_type NotOp \<tau> \<tau>"
 
 inductive boolean_binop_type where
-  "\<lbrakk>t1 \<squnion> t2 = t; t \<le> Boolean[?]\<rbrakk> \<Longrightarrow>
-   boolean_binop_type (op :: boolean_binop) t1 t2 t"
+  "\<lbrakk>\<tau> \<squnion> \<sigma> = \<rho>; \<rho> \<le> Boolean[?]\<rbrakk> \<Longrightarrow>
+   boolean_binop_type AndOp \<tau> \<sigma> \<rho>"
+| "\<lbrakk>\<tau> \<squnion> \<sigma> = \<rho>; \<rho> \<le> Boolean[?]\<rbrakk> \<Longrightarrow>
+   boolean_binop_type OrOp \<tau> \<sigma> \<rho>"
+| "\<lbrakk>\<tau> \<squnion> \<sigma> = \<rho>; \<rho> \<le> Boolean[?]\<rbrakk> \<Longrightarrow>
+   boolean_binop_type XorOp \<tau> \<sigma> \<rho>"
+| "\<lbrakk>\<tau> \<squnion> \<sigma> = \<rho>; \<rho> \<le> Boolean[?]\<rbrakk> \<Longrightarrow>
+   boolean_binop_type ImpliesOp \<tau> \<sigma> \<rho>"
+
+text{* Formally null conforms to numeric types. However expressions
+ like 'null + null' makes no sense. So we use UnlimitedNatural[1]
+ as a lower bound. *}
+
+text{* Please take a note that many operations automatically casts
+ unlimited naturals to integers. *}
+
+text{* The difference between oclAsType(Integer) and toInteger()
+ for unlimited naturals is unclear. *}
 
 inductive numeric_unop_type where
-  "\<lbrakk>Real[1] \<le> t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type UMinusOp t Real[1]"
-| "\<lbrakk>Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type UMinusOp t Integer[1]"
-| "\<lbrakk>t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type UMinusOp t UnlimitedNatural[1]"
+  "\<tau> \<simeq> Real \<Longrightarrow>
+   numeric_unop_type UMinusOp \<tau> Real[1]"
+| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+   numeric_unop_type UMinusOp \<tau> Integer[1]"
 
-| "\<lbrakk>Real[1] \<le> t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type AbsOp t Real[1]"
-| "\<lbrakk>t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type AbsOp t Integer[1]"
+| "\<tau> \<simeq> Real \<Longrightarrow>
+   numeric_unop_type AbsOp \<tau> Real[1]"
+| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+   numeric_unop_type AbsOp \<tau> Integer[1]"
 
-| "\<lbrakk>t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type FloorOp t Real[1]"
-| "\<lbrakk>t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type RoundOp t Real[1]"
+| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+   numeric_unop_type FloorOp \<tau> Integer[1]"
+| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+   numeric_unop_type RoundOp \<tau> Integer[1]"
 
-| "\<lbrakk>t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type numeric_unop.ToStringOp t String[1]"
-
-| "\<lbrakk>t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_unop_type numeric_unop.ToIntegerOp t Integer[1]"
+| "\<tau> \<simeq> UnlimitedNatural \<Longrightarrow>
+   numeric_unop_type numeric_unop.ToIntegerOp \<tau> Integer[1]"
 
 inductive numeric_binop_type where
-  "\<lbrakk>t1 \<squnion> t2 = t; Real[1] \<le> t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type PlusOp t1 t2 Real[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type PlusOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type PlusOp t1 t2 UnlimitedNatural[1]"
+  "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
+   numeric_binop_type PlusOp \<tau> \<sigma> Real[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
+   numeric_binop_type PlusOp \<tau> \<sigma> Integer[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
+   numeric_binop_type PlusOp \<tau> \<sigma> UnlimitedNatural[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; Real[1] \<le> t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type MinusOp t1 t2 Real[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type MinusOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type MinusOp t1 t2 UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
+   numeric_binop_type MinusOp \<tau> \<sigma> Real[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+   numeric_binop_type MinusOp \<tau> \<sigma> Integer[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; Real[1] \<le> t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type MultOp t1 t2 Real[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type MultOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type MultOp t1 t2 UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
+   numeric_binop_type MultOp \<tau> \<sigma> Real[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
+   numeric_binop_type MultOp \<tau> \<sigma> Integer[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
+   numeric_binop_type MultOp \<tau> \<sigma> UnlimitedNatural[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type DivideOp t1 t2 Real[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+   numeric_binop_type DivideOp \<tau> \<sigma> Real[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type DivOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type DivOp t1 t2 UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
+   numeric_binop_type DivOp \<tau> \<sigma> Integer[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
+   numeric_binop_type DivOp \<tau> \<sigma> UnlimitedNatural[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type ModOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type ModOp t1 t2 UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
+   numeric_binop_type ModOp \<tau> \<sigma> Integer[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
+   numeric_binop_type ModOp \<tau> \<sigma> UnlimitedNatural[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; Real[1] \<le> t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.MaxOp t1 t2 Real[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.MaxOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.MaxOp t1 t2 UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
+   numeric_binop_type MaxOp \<tau> \<sigma> Real[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
+   numeric_binop_type MaxOp \<tau> \<sigma> Integer[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
+   numeric_binop_type MaxOp \<tau> \<sigma> UnlimitedNatural[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; Real[1] \<le> t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.MinOp t1 t2 Real[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; Integer[1] \<le> t; t \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.MinOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> UnlimitedNatural[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.MinOp t1 t2 UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
+   numeric_binop_type MinOp \<tau> \<sigma> Real[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
+   numeric_binop_type MinOp \<tau> \<sigma> Integer[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
+   numeric_binop_type MinOp \<tau> \<sigma> UnlimitedNatural[1]"
 
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.LessOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.LessEqOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.GreaterOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   numeric_binop_type numeric_binop.GreaterEqOp t1 t2 Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+   numeric_binop_type numeric_binop.LessOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+   numeric_binop_type numeric_binop.LessEqOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+   numeric_binop_type numeric_binop.GreaterOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+   numeric_binop_type numeric_binop.GreaterEqOp \<tau> \<sigma> Boolean[1]"
 
 inductive string_unop_type where
-  "t \<le> String[?] \<Longrightarrow>
-   string_unop_type string_unop.SizeOp t Integer[1]"
-| "t \<le> String[?] \<Longrightarrow>
-   string_unop_type CharactersOp t (Sequence String[1])"
-| "t \<le> String[?] \<Longrightarrow>
-   string_unop_type ToUpperCaseOp t String[1]"
-| "t \<le> String[?] \<Longrightarrow>
-   string_unop_type ToLowerCaseOp t String[1]"
-| "t \<le> String[?] \<Longrightarrow>
-   string_unop_type ToBooleanOp t Boolean[1]"
-| "t \<le> String[?] \<Longrightarrow>
-   string_unop_type ToIntegerOp t Integer[1]"
-| "t \<le> String[?] \<Longrightarrow>
-   string_unop_type ToRealOp t Real[1]"
+  "\<tau> \<simeq> String \<Longrightarrow>
+   string_unop_type SizeOp \<tau> Integer[1]"
+| "\<tau> \<simeq> String \<Longrightarrow>
+   string_unop_type CharactersOp \<tau> (Sequence String[1])"
+| "\<tau> \<simeq> String \<Longrightarrow>
+   string_unop_type ToUpperCaseOp \<tau> String[1]"
+| "\<tau> \<simeq> String \<Longrightarrow>
+   string_unop_type ToLowerCaseOp \<tau> String[1]"
+| "\<tau> \<simeq> String \<Longrightarrow>
+   string_unop_type ToBooleanOp \<tau> Boolean[1]"
+| "\<tau> \<simeq> String \<Longrightarrow>
+   string_unop_type ToIntegerOp \<tau> Integer[1]"
+| "\<tau> \<simeq> String \<Longrightarrow>
+   string_unop_type ToRealOp \<tau> Real[1]"
 
 inductive string_binop_type where
-  "\<lbrakk>t1 \<squnion> t2 = t; t \<le> String[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type ConcatOp t1 t2 String[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> String[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type EqualsIgnoreCaseOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> String[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type LessOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> String[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type LessEqOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> String[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type GreaterOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<squnion> t2 = t; t \<le> String[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type GreaterEqOp t1 t2 Boolean[1]"
-| "\<lbrakk>t1 \<le> String[?]; t2 \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type IndexOfOp t1 t2 Integer[1]"
-| "\<lbrakk>t1 \<le> String[?]; t2 \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   string_binop_type AtOp t1 t2 String[1]"
+  "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
+   string_binop_type ConcatOp \<tau> \<sigma> String[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
+   string_binop_type EqualsIgnoreCaseOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
+   string_binop_type LessOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
+   string_binop_type LessEqOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
+   string_binop_type GreaterOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
+   string_binop_type GreaterEqOp \<tau> \<sigma> Boolean[1]"
+| "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> String\<rbrakk> \<Longrightarrow>
+   string_binop_type IndexOfOp \<tau> \<sigma> Integer[1]"
+| "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+   string_binop_type AtOp \<tau> \<sigma> String[1]"
 
 inductive string_ternop_type where
-  "\<lbrakk>t1 \<le> String[?]; t2 \<le> Integer[?]; t3 \<le> Integer[?]\<rbrakk> \<Longrightarrow>
-   string_ternop_type SubstringOp t1 t2 t3 String[1]"
+  "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> Integer; \<rho> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+   string_ternop_type SubstringOp \<tau> \<sigma> \<rho> String[1]"
+
+text{* Please take a note, that flatten() preserves collection kind. *}
 
 inductive collection_unop_type where
-  "is_collection_of t _ \<Longrightarrow>
-   collection_unop_type collection_unop.SizeOp t Integer[1]"
-| "is_collection_of t _ \<Longrightarrow>
-   collection_unop_type IsEmptyOp t Boolean[1]"
-| "is_collection_of t _ \<Longrightarrow>
-   collection_unop_type NotEmptyOp t Boolean[1]"
-| "\<lbrakk>is_collection_of t t1; UnlimitedNatural[1] \<le> t1; t1 \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   collection_unop_type MaxOp t t1"
-| "\<lbrakk>is_collection_of t t1; UnlimitedNatural[1] \<le> t1; t1 \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   collection_unop_type MinOp t t1"
-| "\<lbrakk>is_collection_of t t1; UnlimitedNatural[1] \<le> t1; t1 \<le> Real[?]\<rbrakk> \<Longrightarrow>
-   collection_unop_type SumOp t t1"
-| "\<lbrakk>is_collection_of t t1\<rbrakk> \<Longrightarrow>
-   collection_unop_type AsSetOp t (Set t1)"
-| "\<lbrakk>is_collection_of t t1\<rbrakk> \<Longrightarrow>
-   collection_unop_type AsOrderedSetOp t (OrderedSet t1)"
-| "\<lbrakk>is_collection_of t t1\<rbrakk> \<Longrightarrow>
-   collection_unop_type AsBagOp t (Bag t1)"
-| "\<lbrakk>is_collection_of t t1\<rbrakk> \<Longrightarrow>
-   collection_unop_type AsSequenceOp t (Sequence t1)"
-| "\<lbrakk>is_collection_of t t1; t1 \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
-   collection_unop_type FlattenOp t t"
-| "\<lbrakk>is_collection_of t t1;
-    collection_unop_type FlattenOp t1 t2;
-    is_collection_of t2 t3\<rbrakk> \<Longrightarrow>
-   collection_unop_type FlattenOp t (Collection t3)"
+  "\<lbrakk>is_collection_of \<tau> _\<rbrakk> \<Longrightarrow>
+   collection_unop_type CollectionSizeOp \<tau> Integer[1]"
+| "\<lbrakk>is_collection_of \<tau> _\<rbrakk> \<Longrightarrow>
+   collection_unop_type IsEmptyOp \<tau> Boolean[1]"
+| "\<lbrakk>is_collection_of \<tau> _\<rbrakk> \<Longrightarrow>
+   collection_unop_type NotEmptyOp \<tau> Boolean[1]"
+
+| "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
+   collection_unop_type CollectionMaxOp \<tau> \<sigma>"
+| "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
+   collection_unop_type CollectionMinOp \<tau> \<sigma>"
+| "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
+   collection_unop_type SumOp \<tau> \<sigma>"
+
+| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+   collection_unop_type AsSetOp \<tau> (Set \<sigma>)"
+| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+   collection_unop_type AsOrderedSetOp \<tau> (OrderedSet \<sigma>)"
+| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+   collection_unop_type AsBagOp \<tau> (Bag \<sigma>)"
+| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+   collection_unop_type AsSequenceOp \<tau> (Sequence \<sigma>)"
+
+| "\<lbrakk>inner_element_type \<tau> \<sigma>; update_element_type \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+   collection_unop_type FlattenOp \<tau> \<rho>"
+
+| "collection_unop_type FirstOp (OrderedSet \<tau>) \<tau>"
+| "collection_unop_type FirstOp (Sequence \<tau>) \<tau>"
+| "collection_unop_type LastOp (OrderedSet \<tau>) \<tau>"
+| "collection_unop_type LastOp (Sequence \<tau>) \<tau>"
+| "collection_unop_type ReverseOp (OrderedSet \<tau>) (OrderedSet \<tau>)"
+| "collection_unop_type ReverseOp (Sequence \<tau>) (Sequence \<tau>)"
 
 code_pred [show_modes] collection_unop_type .
 
 values "{x. collection_unop_type FlattenOp
     (Set Integer[1] :: classes1 type) (x :: classes1 type)}"
 values "{x. collection_unop_type FlattenOp
-    (Sequence (Set Integer[?] :: classes1 type)) (x :: classes1 type)}"
+    (Sequence (Set Boolean[?] :: classes1 type)) (x :: classes1 type)}"
 values "{x. collection_unop_type FlattenOp
-    (Sequence (Set (Bag Integer[?] :: classes1 type))) (x :: classes1 type)}"
-values "{x. collection_unop_type collection_unop.MaxOp
+    (Bag (Set (Sequence Real[?] :: classes1 type))) (x :: classes1 type)}"
+values "{x. collection_unop_type CollectionMaxOp
     (Collection Integer[1] :: classes1 type) (x :: classes1 type)}"
-values "{x. collection_unop_type collection_unop.MaxOp
+values "{x. collection_unop_type CollectionMaxOp
     (Set Integer[1] :: classes1 type) (x :: classes1 type)}"
-values "{x. collection_unop_type collection_unop.SizeOp
+values "{x. collection_unop_type CollectionSizeOp
     (Integer[1] :: classes1 type) (x :: classes1 type)}"
-values "{x. collection_unop_type collection_unop.SizeOp
+values "{x. collection_unop_type CollectionSizeOp
     (Set Boolean[1] :: classes1 type) (x :: classes1 type)}"
 
+text{* Tuples must support string keys and the rule for the product()
+ operation must be updated. *}
+
+text{* Please take a note that if both arguments are collections,
+ then an element type of the resulting collection is a super type
+ of element types of orginal collections. However for single-valued
+ operations (including(), insertAt(), ...) this behavior looks
+ undesirable. So we restrict such arguments to have a subtype of
+ the collection element type. *}
+
+text{* It's unclear what is the result of the indexOf() operation
+ if the item not found: null or invalid? *}
+
 inductive collection_binop_type where
-  "\<lbrakk>is_collection_of t1 _; is_collection_of t2 _\<rbrakk>\<Longrightarrow>
-   collection_binop_type collection_binop.EqualOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 _; is_collection_of t2 _\<rbrakk>\<Longrightarrow>
-   collection_binop_type collection_binop.NotEqualOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t2\<rbrakk>\<Longrightarrow>
+  "\<lbrakk>is_collection_of t1 t3; t2 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
    collection_binop_type IncludesOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t2\<rbrakk>\<Longrightarrow>
+| "\<lbrakk>is_collection_of t1 t3; t2 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
    collection_binop_type ExcludesOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t2\<rbrakk>\<Longrightarrow>
+| "\<lbrakk>is_collection_of t1 t3; t2 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
    collection_binop_type CountOp t1 t2 Integer[1]"
-| "\<lbrakk>is_collection_of t1 t3; is_collection_of t2 t3\<rbrakk>\<Longrightarrow>
+| "\<lbrakk>is_collection_of t1 t3; is_collection_of t2 t4; t4 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
    collection_binop_type IncludesAllOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t3; is_collection_of t2 t3\<rbrakk>\<Longrightarrow>
+| "\<lbrakk>is_collection_of t1 t3; is_collection_of t2 t4; t4 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
    collection_binop_type ExcludesAllOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t3; is_collection_of t2 t4\<rbrakk>\<Longrightarrow>
-   collection_binop_type ProductOp t1 t2 (Tuple (fmap_of_list [(0, t3), (1, t4)]))"
+| "\<lbrakk>is_collection_of \<tau> \<rho>; is_collection_of \<sigma> \<upsilon>\<rbrakk> \<Longrightarrow>
+   collection_binop_type ProductOp \<tau> \<sigma> (Tuple (fmap_of_list [(0, \<rho>), (1, \<upsilon>)]))"
+| "collection_binop_type UnionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type UnionOp (Set \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type UnionOp (Bag \<tau>) (Set \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type UnionOp (Bag \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type IntersectionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type IntersectionOp (Set \<tau>) (Bag \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type IntersectionOp (Bag \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type IntersectionOp (Bag \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type IncludingOp (Set \<tau>) \<sigma> (Set \<tau>)"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type IncludingOp (Bag \<tau>) \<sigma> (Bag \<tau>)"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type ExcludingOp (Set \<tau>) \<sigma> (Set \<tau>)"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type ExcludingOp (Bag \<tau>) \<sigma> (Bag \<tau>)"
+| "collection_binop_type SetMinusOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type SymmetricDifferenceOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type AppendOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type AppendOp (Sequence \<tau>) \<sigma> (Sequence \<tau>)"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type PrependOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type PrependOp (Sequence \<tau>) \<sigma> (Sequence \<tau>)"
+| "\<lbrakk>\<sigma> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+   collection_binop_type CollectionAtOp (OrderedSet \<tau>) \<sigma> \<tau>"
+| "\<lbrakk>\<sigma> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+   collection_binop_type CollectionAtOp (Sequence \<tau>) \<sigma> \<tau>"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type CollectionIndexOfOp (OrderedSet \<tau>) \<sigma> Integer[1]"
+| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_binop_type CollectionIndexOfOp (Sequence \<tau>) \<sigma> Integer[1]"
 
 code_pred [show_modes] collection_binop_type .
 
 values "{x. collection_binop_type ProductOp
     (Set Boolean[1] :: classes1 type) (Sequence Integer[?] :: classes1 type) (x :: classes1 type)}"
+
+inductive collection_ternop_type where
+  "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_ternop_type InsertAtOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
+| "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+   collection_ternop_type InsertAtOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
+| "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+   collection_ternop_type SubOrderedSetOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
+| "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+   collection_ternop_type SubSequenceOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
 
 inductive unop_type where
   "any_unop_type op t1 t \<Longrightarrow>
@@ -260,7 +350,7 @@ inductive unop_type where
    unop_type (Inr (Inr (Inr (Inr op)))) t1 t"
 
 inductive binop_type where
-  "any_binop_type op t1 t2 t \<Longrightarrow>
+  "suptype_binop_type op t1 t2 t \<Longrightarrow>
    binop_type (Inl op) t1 t2 t"
 | "boolean_binop_type op t1 t2 t \<Longrightarrow>
    binop_type (Inr (Inl op)) t1 t2 t"
@@ -273,7 +363,9 @@ inductive binop_type where
 
 inductive ternop_type where
   "string_ternop_type op t1 t2 t3 t \<Longrightarrow>
-   ternop_type op t1 t2 t3 t"
+   ternop_type (Inl op) t1 t2 t3 t"
+| "collection_ternop_type op t1 t2 t3 t \<Longrightarrow>
+   ternop_type (Inr op) t1 t2 t3 t"
 
 code_pred [show_modes] typeop_type .
 code_pred [show_modes] unop_type .
@@ -297,7 +389,8 @@ fun collection_parts_type where
 
 inductive typing :: "('a :: semilattice_sup) type env \<times> 'a model \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
     ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
-    and collection_parts_type where
+    and collection_parts_type
+    and iterator_typing where
  NullLiteralT:
   "\<Gamma> \<turnstile> NullLiteral : OclVoid"
 |InvalidLiteralT:
@@ -386,6 +479,60 @@ inductive typing :: "('a :: semilattice_sup) type env \<times> 'a model \<Righta
    \<tau> \<le> res_t \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> Iterate src its res res_t res_init body : \<tau>"
 
+|AnyIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<tau> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator AnyIter src its body : t1"
+|ClosureIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<tau> \<le> Set t1 \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator ClosureIter src its body : Set t1"
+|CollectIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<tau> \<le> t1 \<Longrightarrow>
+   (* TODO *)
+   (\<Gamma>, \<M>) \<turnstile> Iterator CollectIter src its body : t1"
+|CollectNestedIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   (* TODO *)
+   (\<Gamma>, \<M>) \<turnstile> Iterator CollectNestedIter src its body : \<tau>"
+|ExistsIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   \<tau> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator ExistsIter src its body : \<tau>"
+|ForAllIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   \<tau> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator ForAllIter src its body : \<tau>"
+|IsUniqueIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator IsUniqueIter src its body : Boolean[1]"
+|OneIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<tau> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator OneIter src its body : Boolean[1]"
+|RejectIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<tau> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator RejectIter src its body : t"
+|SelectIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<tau> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator SelectIter src its body : t"
+
+| "(\<Gamma>, \<M>) \<turnstile> src : t \<Longrightarrow>
+   is_collection_of t t1 \<Longrightarrow>
+   (\<Gamma> ++ (map_of (map (\<lambda>it. (it, t1)) its)), \<M>) \<turnstile> body : \<tau> \<Longrightarrow>
+   iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau>"
+
 |AttributeCallT:
   "\<M> = (attrs, assocs) \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> src : t \<Longrightarrow>
@@ -405,6 +552,7 @@ inductive typing :: "('a :: semilattice_sup) type env \<times> 'a model \<Righta
 section{* Code Setup *}
 
 code_pred [show_modes] typing .
+
 (*
 code_pred (modes:
     i * i * i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool as check_type,

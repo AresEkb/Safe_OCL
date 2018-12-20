@@ -901,6 +901,52 @@ instance
 
 end
 
+(*** Helper Relations *******************************************************)
+
+section{* Helper Relations *}
+
+abbreviation simeq_type ("(_/ \<simeq> _)"  [51, 51] 50) where
+  "\<tau> \<simeq> \<sigma> \<equiv> \<sigma>[1] \<le> \<tau> \<and> \<tau> \<le> \<sigma>[?]"
+
+abbreviation simeq_between_type ("(_/ \<simeq> _\<midarrow>_)"  [51, 51, 51] 50) where
+  "\<tau> \<simeq> \<sigma>\<midarrow>\<rho> \<equiv> \<sigma>[1] \<le> \<tau> \<and> \<tau> \<le> \<rho>[?]"
+
+inductive is_collection_of where
+  "is_collection_of (Collection \<tau>) \<tau>"
+| "is_collection_of (Set \<tau>) \<tau>"
+| "is_collection_of (OrderedSet \<tau>) \<tau>"
+| "is_collection_of (Bag \<tau>) \<tau>"
+| "is_collection_of (Sequence \<tau>) \<tau>"
+
+inductive is_ordered_collection_of where
+  "is_ordered_collection_of (OrderedSet \<tau>) \<tau>"
+| "is_ordered_collection_of (Sequence \<tau>) \<tau>"
+
+inductive strict_subcollection where
+  "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Collection \<tau>) \<sigma> (Collection \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Set \<tau>) \<sigma> (Set \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (OrderedSet \<tau>) \<sigma> (OrderedSet \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Bag \<tau>) \<sigma> (Bag \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Sequence \<tau>) \<sigma> (Sequence \<sigma>)"
+
+inductive inner_element_type where
+  "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
+   inner_element_type \<tau> \<sigma>"
+| "\<lbrakk>is_collection_of \<tau> \<sigma>; inner_element_type \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+   inner_element_type \<tau> \<rho>"
+
+inductive update_element_type where
+  "update_element_type (Collection _) \<tau> (Collection \<tau>)"
+| "update_element_type (Set _) \<tau> (Set \<tau>)"
+| "update_element_type (OrderedSet _) \<tau> (OrderedSet \<tau>)"
+| "update_element_type (Bag _) \<tau> (Bag \<tau>)"
+| "update_element_type (Sequence _) \<tau> (Sequence \<tau>)"
+
 (*** Code Setup *************************************************************)
 
 section{* Code Setup *}

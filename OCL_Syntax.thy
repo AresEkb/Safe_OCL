@@ -26,16 +26,17 @@ subsection{* Standard Library Operations *}
 datatype typeop = OclAsTypeOp | OclIsTypeOfOp | OclIsKindOfOp
 | SelectByKindOp | SelectByTypeOp
 
-datatype any_unop = OclAsSetOp | OclIsNewOp
-| OclIsUndefinedOp | OclIsInvalidOp | OclLocaleOp
-datatype any_binop = EqualOp | NotEqualOp
+datatype suptype_binop = EqualOp | NotEqualOp
 
-datatype boolean_unop = NotOp | ToStringOp
+datatype any_unop = OclAsSetOp | OclIsNewOp
+| OclIsUndefinedOp | OclIsInvalidOp | OclLocaleOp | ToStringOp
+
+datatype boolean_unop = NotOp
 datatype boolean_binop = AndOp | OrOp | XorOp | ImpliesOp
 
 datatype numeric_unop =
   UMinusOp | AbsOp | FloorOp | RoundOp
-| ToStringOp | ToIntegerOp
+| ToIntegerOp
 datatype numeric_binop =
   PlusOp | MinusOp | MultOp | DivideOp
 | DivOp | ModOp
@@ -50,27 +51,35 @@ datatype string_binop =
 | LessOp | LessEqOp | GreaterOp | GreaterEqOp
 datatype string_ternop = SubstringOp
 
-datatype collection_unop = SizeOp | IsEmptyOp | NotEmptyOp
-| MaxOp | MinOp | SumOp
+datatype collection_unop = CollectionSizeOp | IsEmptyOp | NotEmptyOp
+| CollectionMaxOp | CollectionMinOp | SumOp
 | AsSetOp | AsOrderedSetOp | AsSequenceOp | AsBagOp | FlattenOp
-datatype collection_binop = EqualOp | NotEqualOp
-| IncludesOp | ExcludesOp | CountOp| IncludesAllOp | ExcludesAllOp
-| ProductOp
+| FirstOp | LastOp | ReverseOp
+datatype collection_binop = IncludesOp | ExcludesOp
+| CountOp| IncludesAllOp | ExcludesAllOp | ProductOp
+| UnionOp | IntersectionOp | SetMinusOp | SymmetricDifferenceOp
+| IncludingOp | ExcludingOp
+| AppendOp | PrependOp | CollectionAtOp | CollectionIndexOfOp
+datatype collection_ternop = InsertAtOp | SubOrderedSetOp | SubSequenceOp
 
 type_synonym unop = "any_unop + boolean_unop + numeric_unop + string_unop + collection_unop"
-type_synonym binop = "any_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
-type_synonym ternop = string_ternop
+type_synonym binop = "suptype_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
+type_synonym ternop = "string_ternop + collection_ternop"
 
 declare [[coercion "Inl :: any_unop \<Rightarrow> unop"]]
-declare [[coercion "Inl :: any_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_unop \<Rightarrow> unop"]]
-declare [[coercion "Inr \<circ> Inl :: boolean_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> unop"]]
-declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> unop"]]
-declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> unop"]]
+
+declare [[coercion "Inl :: suptype_binop \<Rightarrow> binop"]]
+declare [[coercion "Inr \<circ> Inl :: boolean_binop \<Rightarrow> binop"]]
+declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> binop"]]
+declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_binop \<Rightarrow> binop"]]
+
+declare [[coercion "Inl :: string_ternop \<Rightarrow> ternop"]]
+declare [[coercion "Inr :: collection_ternop \<Rightarrow> ternop"]]
 
 datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
 | ExistsIter | ForAllIter | IsUniqueIter | OneIter
@@ -116,7 +125,7 @@ and 'a call_expr =
 | Iterate (source : "'a expr") (iterators : "vname list")
     (var : vname) (type : "'a type") (init_expr : "'a expr")
     (body_expr : "'a expr")
-| Iterator (source : "'a expr") iterator
+| Iterator iterator (source : "'a expr")
     (iterators : "vname list") (body_expr : "'a expr")
 | AttributeCall (source : "'a expr") attr
 | AssociationEndCall (source : "'a expr") role
