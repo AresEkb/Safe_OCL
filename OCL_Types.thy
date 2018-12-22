@@ -725,12 +725,7 @@ section{* Upper Semilattice of Types *}
 instantiation type :: (semilattice_sup) semilattice_sup
 begin
 
-lemma measure_cond [intro]:
-  "k |\<in>| fmdom x \<Longrightarrow>
-   size (the (fmlookup x k)) < size (Tuple x)"
-  using elem_le_ffold by auto
-
-function sup_type where
+fun sup_type where
   "OclInvalid \<squnion> \<sigma> = \<sigma>"
 | "OclVoid \<squnion> \<sigma> = (case \<sigma>
     of OclVoid \<Rightarrow> OclVoid
@@ -795,11 +790,6 @@ function sup_type where
      | OclInvalid \<Rightarrow> Tuple \<pi>
      | _ \<Rightarrow> SupType)"
 | "SupType \<squnion> \<sigma> = SupType"
-  by pat_completeness auto
-termination
-  apply (relation "measure (\<lambda>(xs, ys). size ys)")
-  using measure_cond apply auto
-  done
 
 lemma sup_ge1_type:
   "\<tau> \<le> \<tau> \<squnion> \<sigma>"
@@ -999,8 +989,8 @@ function subtype_fun :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool
 | "subtype_fun SupType _ = False"
   by pat_completeness auto
 termination
-  apply (relation "measure (\<lambda>(xs, ys). size ys)"; auto)
-  using measure_cond by force
+  by (relation "measure (\<lambda>(xs, ys). size ys)";
+      auto simp add: elem_le_ffold' fmran'I)
 
 lemma less_eq_type_code [code_abbrev, simp]:
   "\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma>"

@@ -370,9 +370,16 @@ lemma ffold_rec_exp:
         tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap f x)) |-| {|ky|}))"
   using assms tcf.ffold_rec by auto
 
-lemma elem_le_ffold:
+lemma elem_le_ffold [intro]:
   "k |\<in>| fmdom x \<Longrightarrow>
    f (the (fmlookup x k)) < Suc (ffold tcf 0 (fset_of_fmap (fmmap f x)))"
+  by (subst ffold_rec_exp, auto)
+
+lemma elem_le_ffold' [intro]:
+  "z \<in> fmran' x \<Longrightarrow>
+   f z < Suc (ffold tcf 0 (fset_of_fmap (fmmap f x)))"
+  apply (erule fmran'E)
+  apply (frule fmdomI)
   by (subst ffold_rec_exp, auto)
 
 (*** Code Setup *************************************************************)

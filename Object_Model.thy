@@ -152,7 +152,8 @@ definition "attrs1 \<equiv> fmap_of_list [
   (Task, fmap_of_list [
     (''description'', String[1])])]"
 
-definition "assocs1 \<equiv> fmap_of_list [
+definition assocs1 :: "classes1 assocs" where
+  "assocs1 \<equiv> fmap_of_list [
   (''ProjectManager'', fmap_of_list [
     (''manages'', (Project, 0::nat, \<infinity>)),
     (''manager'', (Employee, 1, 1))]),

@@ -274,20 +274,33 @@ text{* Please take a note that if both arguments are collections,
 text{* It's unclear what is the result of the indexOf() operation
  if the item not found: null or invalid? *}
 
+fun type_to_optional where
+  "type_to_optional SupType = SupType"
+| "type_to_optional OclInvalid = OclVoid"
+| "type_to_optional OclVoid = OclVoid"
+| "type_to_optional \<tau>[1] = \<tau>[?]"
+| "type_to_optional \<tau>[?] = \<tau>[?]"
+| "type_to_optional (Collection \<tau>) = Collection (type_to_optional \<tau>)"
+| "type_to_optional (Set \<tau>) = Set (type_to_optional \<tau>)"
+| "type_to_optional (OrderedSet \<tau>) = OrderedSet (type_to_optional \<tau>)"
+| "type_to_optional (Bag \<tau>) = Bag (type_to_optional \<tau>)"
+| "type_to_optional (Sequence \<tau>) = Sequence (type_to_optional \<tau>)"
+| "type_to_optional (Tuple \<pi>) = Tuple (fmmap type_to_optional \<pi>)"
+
 inductive collection_binop_type where
-  "\<lbrakk>is_collection_of t1 t3; t2 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
-   collection_binop_type IncludesOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t3; t2 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
-   collection_binop_type ExcludesOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t3; t2 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
-   collection_binop_type CountOp t1 t2 Integer[1]"
-| "\<lbrakk>is_collection_of t1 t3; is_collection_of t2 t4; t4 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
-   collection_binop_type IncludesAllOp t1 t2 Boolean[1]"
-| "\<lbrakk>is_collection_of t1 t3; is_collection_of t2 t4; t4 \<le> t3 \<squnion> OclVoid\<rbrakk> \<Longrightarrow>
-   collection_binop_type ExcludesAllOp t1 t2 Boolean[1]"
+(*  "\<lbrakk>is_collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+   collection_binop_type IncludesOp \<tau> \<sigma> Boolean[1]"
+| "\<lbrakk>is_collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+   collection_binop_type ExcludesOp \<tau> \<sigma> Boolean[1]"
+| "\<lbrakk>is_collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+   collection_binop_type CountOp \<tau> \<sigma> Integer[1]"
+| "\<lbrakk>is_collection_of \<tau> \<rho>; is_collection_of \<sigma> \<upsilon>; \<upsilon> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+   collection_binop_type IncludesAllOp \<tau> \<sigma> Boolean[1]"
+| "\<lbrakk>is_collection_of \<tau> \<rho>; is_collection_of \<sigma> \<upsilon>; \<upsilon> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+   collection_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
 | "\<lbrakk>is_collection_of \<tau> \<rho>; is_collection_of \<sigma> \<upsilon>\<rbrakk> \<Longrightarrow>
    collection_binop_type ProductOp \<tau> \<sigma> (Tuple (fmap_of_list [(0, \<rho>), (1, \<upsilon>)]))"
-| "collection_binop_type UnionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+|*) "collection_binop_type UnionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Set \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Bag \<tau>) (Set \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Bag \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
@@ -326,6 +339,10 @@ code_pred [show_modes] collection_binop_type .
 
 values "{x. collection_binop_type ProductOp
     (Set Boolean[1] :: classes1 type) (Sequence Integer[?] :: classes1 type) (x :: classes1 type)}"
+values "{x. collection_binop_type IncludesOp
+    (Set Integer[1] :: classes1 type) (Integer[?] :: classes1 type) (x :: classes1 type)}"
+values "{x. collection_binop_type IncludesAllOp
+    (Set Real[1] :: classes1 type) (Sequence Integer[?] :: classes1 type) (x :: classes1 type)}"
 
 inductive collection_ternop_type where
   "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
@@ -563,9 +580,23 @@ code_pred (modes:
 
 section{* Test Cases *}
 
-values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
+abbreviation BinaryOperationCall'
+  :: "binop \<Rightarrow> classes1 expr \<Rightarrow> classes1 expr \<Rightarrow> classes1 call_expr" where
+  "BinaryOperationCall' \<equiv> BinaryOperationCall"
+
+abbreviation Let'
+  :: "string \<Rightarrow> classes1 type \<Rightarrow> classes1 expr \<Rightarrow> classes1 expr \<Rightarrow> classes1 expr" where
+  "Let' \<equiv> Let"
+
+term model1
+
+values "{x :: classes1 type. (Map.empty :: classes1 type env, model1) \<turnstile>
+  Let' ''x'' Integer[1] (IntegerLiteral 5)
+    (Var ''x'') : x}"
+
+values "{x :: classes1 type. (Map.empty :: classes1 type env, model1) \<turnstile>
   Let ''x'' Integer[1] (IntegerLiteral 5)
-    (BinaryOperationCall PlusOp (Var ''x'') (IntegerLiteral 7)): x}"
+    (BinaryOperationCall' PlusOp (Var ''x'') (IntegerLiteral 7)) : x}"
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
   Let ''x'' Real[?] (IntegerLiteral 5)
     (BinaryOperationCall PlusOp (Var ''x'') (IntegerLiteral 7)): x}"
