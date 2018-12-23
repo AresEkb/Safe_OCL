@@ -5,12 +5,12 @@
 *)
 chapter{* OCL Typing Rules *}
 theory OCL_Typing
-  imports OCL_Syntax OCL_Types Object_Model "HOL-Library.Transitive_Closure_Table"
+  imports OCL_Syntax Object_Model
 begin
 
 (*** Standard Library Operations Typing *************************************)
 
-subsection{* Standard Library Operations Typing *}
+section{* Standard Library Operations Typing *}
 
 text{* The following rules are more restrictive than rules given in
  the OCL Specification. This allows one to identify more errors
@@ -20,7 +20,7 @@ text{* The following rules are more restrictive than rules given in
 
 text{* Only casting to a subtype makes sense. *}
 
-text{* According to the section 7.4.7 of the OCL specification
+text{* According to the section 7.4.7 of the OCL Specification
  oclAsType() can be applied to collections as well as to single
  values. I guess we can allow oclIsTypeOf() and oclIsKindOf()
  for collections too. *}
@@ -43,7 +43,10 @@ values "{x. typeop_type SelectByKindOp (Set Real[?] :: classes1 type) Integer[1]
 
 text{* It makes sense to compare values only with compatible types. *}
 
-inductive suptype_binop_type where
+(* We have to specify predicate type explicitly to let
+ a generated code work *)
+inductive suptype_binop_type
+    :: "suptype_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
   "\<tau> \<le> \<sigma> \<Longrightarrow>
    suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
@@ -53,7 +56,9 @@ inductive suptype_binop_type where
 | "\<sigma> < \<tau> \<Longrightarrow>
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
-text{* The OCL specification defines toString() operation only for
+code_pred [show_modes] suptype_binop_type .
+
+text{* The OCL Specification defines toString() operation only for
  boolean and numeric types. However, I guess it's a good idea to
  define it once for all basic types. *}
 
@@ -201,37 +206,37 @@ inductive string_binop_type where
    string_binop_type GreaterEqOp \<tau> \<sigma> Boolean[1]"
 | "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> String\<rbrakk> \<Longrightarrow>
    string_binop_type IndexOfOp \<tau> \<sigma> Integer[1]"
-| "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer\<rbrakk> \<Longrightarrow>
    string_binop_type AtOp \<tau> \<sigma> String[1]"
 
 inductive string_ternop_type where
-  "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> Integer; \<rho> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+  "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<simeq> UnlimitedNatural\<midarrow>Integer\<rbrakk> \<Longrightarrow>
    string_ternop_type SubstringOp \<tau> \<sigma> \<rho> String[1]"
 
 text{* Please take a note, that flatten() preserves collection kind. *}
 
 inductive collection_unop_type where
-  "\<lbrakk>is_collection_of \<tau> _\<rbrakk> \<Longrightarrow>
+  "\<lbrakk>collection_of \<tau> _\<rbrakk> \<Longrightarrow>
    collection_unop_type CollectionSizeOp \<tau> Integer[1]"
-| "\<lbrakk>is_collection_of \<tau> _\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> _\<rbrakk> \<Longrightarrow>
    collection_unop_type IsEmptyOp \<tau> Boolean[1]"
-| "\<lbrakk>is_collection_of \<tau> _\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> _\<rbrakk> \<Longrightarrow>
    collection_unop_type NotEmptyOp \<tau> Boolean[1]"
 
-| "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
-| "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
    collection_unop_type CollectionMinOp \<tau> \<sigma>"
-| "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
    collection_unop_type SumOp \<tau> \<sigma>"
 
-| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
    collection_unop_type AsSetOp \<tau> (Set \<sigma>)"
-| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
    collection_unop_type AsOrderedSetOp \<tau> (OrderedSet \<sigma>)"
-| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
    collection_unop_type AsBagOp \<tau> (Bag \<sigma>)"
-| "\<lbrakk>is_collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
    collection_unop_type AsSequenceOp \<tau> (Sequence \<sigma>)"
 
 | "\<lbrakk>inner_element_type \<tau> \<sigma>; update_element_type \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
@@ -274,33 +279,20 @@ text{* Please take a note that if both arguments are collections,
 text{* It's unclear what is the result of the indexOf() operation
  if the item not found: null or invalid? *}
 
-fun type_to_optional where
-  "type_to_optional SupType = SupType"
-| "type_to_optional OclInvalid = OclVoid"
-| "type_to_optional OclVoid = OclVoid"
-| "type_to_optional \<tau>[1] = \<tau>[?]"
-| "type_to_optional \<tau>[?] = \<tau>[?]"
-| "type_to_optional (Collection \<tau>) = Collection (type_to_optional \<tau>)"
-| "type_to_optional (Set \<tau>) = Set (type_to_optional \<tau>)"
-| "type_to_optional (OrderedSet \<tau>) = OrderedSet (type_to_optional \<tau>)"
-| "type_to_optional (Bag \<tau>) = Bag (type_to_optional \<tau>)"
-| "type_to_optional (Sequence \<tau>) = Sequence (type_to_optional \<tau>)"
-| "type_to_optional (Tuple \<pi>) = Tuple (fmmap type_to_optional \<pi>)"
-
 inductive collection_binop_type where
-(*  "\<lbrakk>is_collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+  "\<lbrakk>collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
    collection_binop_type IncludesOp \<tau> \<sigma> Boolean[1]"
-| "\<lbrakk>is_collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
    collection_binop_type ExcludesOp \<tau> \<sigma> Boolean[1]"
-| "\<lbrakk>is_collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<rho>; \<sigma> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
    collection_binop_type CountOp \<tau> \<sigma> Integer[1]"
-| "\<lbrakk>is_collection_of \<tau> \<rho>; is_collection_of \<sigma> \<upsilon>; \<upsilon> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<rho>; collection_of \<sigma> \<upsilon>; \<upsilon> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
    collection_binop_type IncludesAllOp \<tau> \<sigma> Boolean[1]"
-| "\<lbrakk>is_collection_of \<tau> \<rho>; is_collection_of \<sigma> \<upsilon>; \<upsilon> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<rho>; collection_of \<sigma> \<upsilon>; \<upsilon> \<le> type_to_optional \<rho>\<rbrakk> \<Longrightarrow>
    collection_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
-| "\<lbrakk>is_collection_of \<tau> \<rho>; is_collection_of \<sigma> \<upsilon>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<rho>; collection_of \<sigma> \<upsilon>\<rbrakk> \<Longrightarrow>
    collection_binop_type ProductOp \<tau> \<sigma> (Tuple (fmap_of_list [(0, \<rho>), (1, \<upsilon>)]))"
-|*) "collection_binop_type UnionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type UnionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Set \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Bag \<tau>) (Set \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Bag \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
@@ -308,31 +300,31 @@ inductive collection_binop_type where
 | "collection_binop_type IntersectionOp (Set \<tau>) (Bag \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type IntersectionOp (Bag \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type IntersectionOp (Bag \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type IncludingOp (Set \<tau>) \<sigma> (Set \<tau>)"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type IncludingOp (Bag \<tau>) \<sigma> (Bag \<tau>)"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type ExcludingOp (Set \<tau>) \<sigma> (Set \<tau>)"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type ExcludingOp (Bag \<tau>) \<sigma> (Bag \<tau>)"
 | "collection_binop_type SetMinusOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type SymmetricDifferenceOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type AppendOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type AppendOp (Sequence \<tau>) \<sigma> (Sequence \<tau>)"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type PrependOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type PrependOp (Sequence \<tau>) \<sigma> (Sequence \<tau>)"
-| "\<lbrakk>\<sigma> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
    collection_binop_type CollectionAtOp (OrderedSet \<tau>) \<sigma> \<tau>"
-| "\<lbrakk>\<sigma> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
    collection_binop_type CollectionAtOp (Sequence \<tau>) \<sigma> \<tau>"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (OrderedSet \<tau>) \<sigma> Integer[1]"
-| "\<lbrakk>\<sigma> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (Sequence \<tau>) \<sigma> Integer[1]"
 
 code_pred [show_modes] collection_binop_type .
@@ -345,44 +337,44 @@ values "{x. collection_binop_type IncludesAllOp
     (Set Real[1] :: classes1 type) (Sequence Integer[?] :: classes1 type) (x :: classes1 type)}"
 
 inductive collection_ternop_type where
-  "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+  "\<lbrakk>\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
    collection_ternop_type InsertAtOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
-| "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
    collection_ternop_type InsertAtOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
-| "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<simeq> UnlimitedNatural\<midarrow>Integer\<rbrakk> \<Longrightarrow>
    collection_ternop_type SubOrderedSetOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
-| "\<lbrakk>\<sigma> \<simeq> Integer; \<rho> \<simeq> Integer\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<simeq> UnlimitedNatural\<midarrow>Integer\<rbrakk> \<Longrightarrow>
    collection_ternop_type SubSequenceOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
 
 inductive unop_type where
-  "any_unop_type op t1 t \<Longrightarrow>
-   unop_type (Inl op) t1 t"
-| "boolean_unop_type op t1 t \<Longrightarrow>
-   unop_type (Inr (Inl op)) t1 t"
-| "numeric_unop_type op t1 t \<Longrightarrow>
-   unop_type (Inr (Inr (Inl op))) t1 t"
-| "string_unop_type op t1 t \<Longrightarrow>
-   unop_type (Inr (Inr (Inr (Inl op)))) t1 t"
-| "collection_unop_type op t1 t \<Longrightarrow>
-   unop_type (Inr (Inr (Inr (Inr op)))) t1 t"
+  "any_unop_type op \<tau> \<sigma> \<Longrightarrow>
+   unop_type (Inl op) \<tau> \<sigma>"
+| "boolean_unop_type op \<tau> \<sigma> \<Longrightarrow>
+   unop_type (Inr (Inl op)) \<tau> \<sigma>"
+| "numeric_unop_type op \<tau> \<sigma> \<Longrightarrow>
+   unop_type (Inr (Inr (Inl op))) \<tau> \<sigma>"
+| "string_unop_type op \<tau> \<sigma> \<Longrightarrow>
+   unop_type (Inr (Inr (Inr (Inl op)))) \<tau> \<sigma>"
+| "collection_unop_type op \<tau> \<sigma> \<Longrightarrow>
+   unop_type (Inr (Inr (Inr (Inr op)))) \<tau> \<sigma>"
 
 inductive binop_type where
-  "suptype_binop_type op t1 t2 t \<Longrightarrow>
-   binop_type (Inl op) t1 t2 t"
-| "boolean_binop_type op t1 t2 t \<Longrightarrow>
-   binop_type (Inr (Inl op)) t1 t2 t"
-| "numeric_binop_type op t1 t2 t \<Longrightarrow>
-   binop_type (Inr (Inr (Inl op))) t1 t2 t"
-| "string_binop_type op t1 t2 t \<Longrightarrow>
-   binop_type (Inr (Inr (Inr (Inl op)))) t1 t2 t"
-| "collection_binop_type op t1 t2 t \<Longrightarrow>
-   binop_type (Inr (Inr (Inr (Inr op)))) t1 t2 t"
+  "suptype_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
+   binop_type (Inl op) \<tau> \<sigma> \<rho>"
+| "boolean_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
+   binop_type (Inr (Inl op)) \<tau> \<sigma> \<rho>"
+| "numeric_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
+   binop_type (Inr (Inr (Inl op))) \<tau> \<sigma> \<rho>"
+| "string_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
+   binop_type (Inr (Inr (Inr (Inl op)))) \<tau> \<sigma> \<rho>"
+| "collection_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
+   binop_type (Inr (Inr (Inr (Inr op)))) \<tau> \<sigma> \<rho>"
 
 inductive ternop_type where
-  "string_ternop_type op t1 t2 t3 t \<Longrightarrow>
-   ternop_type (Inl op) t1 t2 t3 t"
-| "collection_ternop_type op t1 t2 t3 t \<Longrightarrow>
-   ternop_type (Inr op) t1 t2 t3 t"
+  "string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
+   ternop_type (Inl op) \<tau> \<sigma> \<rho> \<upsilon>"
+| "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
+   ternop_type (Inr op) \<tau> \<sigma> \<rho> \<upsilon>"
 
 code_pred [show_modes] typeop_type .
 code_pred [show_modes] unop_type .
@@ -391,21 +383,11 @@ code_pred [show_modes] ternop_type .
 
 (*** Expressions Typing *****************************************************)
 
-subsection{* Expressions Typing *}
+section{* Expressions Typing *}
 
-term "map (\<lambda>x. (fst x, fst (snd x)))"
-
-inductive class_of :: "'a type \<Rightarrow> 'a \<Rightarrow> bool" where
-  "class_of (ObjectType cls)[1] cls"
-| "class_of (ObjectType cls)[?] cls"
-(*
-fun collection_parts_type where
-  "collection_parts_type [] = OclVoid"
-| "collection_parts_type (x # xs) = x \<squnion> collection_parts_type xs"
-*)
-
-inductive typing :: "('a :: semilattice_sup) type env \<times> 'a model \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
-    ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
+inductive typing
+    :: "('a :: semilattice_sup) type env \<times> 'a model \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
+       ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
     and collection_parts_type
     and iterator_typing where
  NullLiteralT:
@@ -423,7 +405,7 @@ inductive typing :: "('a :: semilattice_sup) type env \<times> 'a model \<Righta
 |StringLiteralT:
   "\<Gamma> \<turnstile> StringLiteral c : String[1]"
 |EnumLiteralT:
-  "\<Gamma> \<turnstile> EnumLiteral t lit : t"
+  "\<Gamma> \<turnstile> EnumLiteral \<tau> lit : \<tau>"
 
 |CollectionLiteralT:
   "collection_parts_type \<Gamma> prts \<tau> \<Longrightarrow>
@@ -441,57 +423,47 @@ inductive typing :: "('a :: semilattice_sup) type env \<times> 'a model \<Righta
   "collection_parts_type \<Gamma> prts \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectionLiteral SequenceKind prts : Sequence \<tau>"
 
-| "collection_parts_type \<Gamma> [] OclInvalid"
-| "\<Gamma> \<turnstile> x : t1 \<Longrightarrow> collection_parts_type \<Gamma> xs t2 \<Longrightarrow>
-   collection_parts_type \<Gamma> (CollectionItem x # xs) (t1 \<squnion> t2)"
-| "\<lbrakk>\<Gamma> \<turnstile> a : t1; Integer[1] \<le> t1; t1 \<le> Integer[?];
-    \<Gamma> \<turnstile> b : t2; Integer[1] \<le> t2; t2 \<le> Integer[?];
-    collection_parts_type \<Gamma> xs t3\<rbrakk> \<Longrightarrow>
-   collection_parts_type \<Gamma> (CollectionRange a b # xs) (Integer[1] \<squnion> t3)"
+|CollectionPartsNilT:
+  "collection_parts_type \<Gamma> [] OclInvalid"
+|CollectionPartsItemT:
+  "\<lbrakk>\<Gamma> \<turnstile> x : \<tau>; collection_parts_type \<Gamma> xs \<sigma>\<rbrakk> \<Longrightarrow>
+   collection_parts_type \<Gamma> (CollectionItem x # xs) (\<tau> \<squnion> \<sigma>)"
+|CollectionPartsRangeT:
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<tau> \<simeq> UnlimitedNatural\<midarrow>Integer;
+    \<Gamma> \<turnstile> b : \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer;
+    collection_parts_type \<Gamma> xs \<rho>\<rbrakk> \<Longrightarrow>
+   collection_parts_type \<Gamma> (CollectionRange a b # xs) (Integer[1] \<squnion> \<rho>)"
 
 |TupleLiteralT:
-  "\<Gamma> \<turnstile> TupleLiteral el : Tuple (fmap_of_list (map (\<lambda>x. (fst x, fst (snd x))) el))"
+  "\<Gamma> \<turnstile> TupleLiteral elems : Tuple (fmap_of_list (map (\<lambda>x. (fst x, fst (snd x))) elems))"
 
 |LetT:
-  "(\<Gamma>, \<M>) \<turnstile> init : \<tau>\<^sub>1 \<Longrightarrow>
-   \<tau>\<^sub>1 \<le> t \<Longrightarrow>
-   (\<Gamma>(v\<mapsto>t), \<M>) \<turnstile> body : \<tau> \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Let v t init body : \<tau>"
+  "\<lbrakk>(\<Gamma>, \<M>) \<turnstile> init : \<sigma>; \<sigma> \<le> \<tau>; (\<Gamma>(v\<mapsto>\<tau>), \<M>) \<turnstile> body : \<rho>\<rbrakk> \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Let v \<tau> init body : \<rho>"
 |VarT:
   "\<Gamma> v = Some \<tau> \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> Var v : \<tau>"
 
 |IfT:
-  "\<Gamma> \<turnstile> a : t1 \<Longrightarrow>
-   \<Gamma> \<turnstile> b : t2 \<Longrightarrow>
-   \<Gamma> \<turnstile> c : t3 \<Longrightarrow>
-   t1 \<le> Boolean[?] \<Longrightarrow>
-   t2 \<squnion> t3 = \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> If a b c : \<tau>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<tau> \<le> Boolean[?]; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> If a b c : \<sigma> \<squnion> \<rho>"
 
 |TypeOperationCallT:
-  "\<Gamma> \<turnstile> a : t1 \<Longrightarrow>
-   typeop_type op t1 t2 \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> TypeOperationCall op a t2 : \<tau>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; typeop_type op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> TypeOperationCall op a \<sigma> : \<rho>"
 |UnaryOperationCallT:
-  "\<Gamma> \<turnstile> a : t1 \<Longrightarrow>
-   unop_type op t1 \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> UnaryOperationCall op a : \<tau>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; unop_type op \<tau> \<sigma> \<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> UnaryOperationCall op a : \<sigma>"
 |BinaryOperationCallT:
-  "\<Gamma> \<turnstile> a : t1 \<Longrightarrow>
-   \<Gamma> \<turnstile> b : t2 \<Longrightarrow>
-   binop_type op t1 t2 \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> BinaryOperationCall op a b : \<tau>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; binop_type op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> BinaryOperationCall op a b : \<rho>"
 |TernaryOperationCallT:
-  "\<Gamma> \<turnstile> a : t1 \<Longrightarrow>
-   \<Gamma> \<turnstile> b : t2 \<Longrightarrow>
-   \<Gamma> \<turnstile> c : t3 \<Longrightarrow>
-   ternop_type op t1 t2 t3 \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> TernaryOperationCall op a b c : \<tau>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>; ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> TernaryOperationCall op a b c : \<upsilon>"
 
 |IterateT:
   "(\<Gamma>, \<M>) \<turnstile> src : t \<Longrightarrow>
-   is_collection_of t t1 \<Longrightarrow>
+   collection_of t t1 \<Longrightarrow>
    (\<Gamma> ++ (map_of (map (\<lambda>it. (it, t1)) its)), \<M>) \<turnstile> Let res res_t res_init body : \<tau> \<Longrightarrow>
    \<tau> \<le> res_t \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> Iterate src its res res_t res_init body : \<tau>"
@@ -545,22 +517,22 @@ inductive typing :: "('a :: semilattice_sup) type env \<times> 'a model \<Righta
    \<tau> \<le> Boolean[?] \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> Iterator SelectIter src its body : t"
 
-| "(\<Gamma>, \<M>) \<turnstile> src : t \<Longrightarrow>
-   is_collection_of t t1 \<Longrightarrow>
-   (\<Gamma> ++ (map_of (map (\<lambda>it. (it, t1)) its)), \<M>) \<turnstile> body : \<tau> \<Longrightarrow>
-   iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau>"
+| "(\<Gamma>, \<M>) \<turnstile> src : \<tau> \<Longrightarrow>
+   collection_of \<tau> \<sigma> \<Longrightarrow>
+   (\<Gamma> ++ (map_of (map (\<lambda>it. (it, \<sigma>)) its)), \<M>) \<turnstile> body : \<rho> \<Longrightarrow>
+   iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho>"
 
 |AttributeCallT:
   "\<M> = (attrs, assocs) \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> src : t \<Longrightarrow>
-   class_of t cls \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> src : \<tau> \<Longrightarrow>
+   class_of \<tau> cls \<Longrightarrow>
    fmlookup attrs cls = Some cls_attrs \<Longrightarrow>
-   fmlookup cls_attrs prop = Some \<tau> \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> AttributeCall src prop : \<tau>"
+   fmlookup cls_attrs prop = Some \<sigma> \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> AttributeCall src prop : \<sigma>"
 |AssociationEndCallT:
   "\<M> = (attrs, assocs) \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> src : t \<Longrightarrow>
-   class_of t cls \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> src : \<tau> \<Longrightarrow>
+   class_of \<tau> cls \<Longrightarrow>
    find_assoc_end assocs cls role = Some end \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> AssociationEndCall src role : assoc_end_type end"
 
@@ -590,6 +562,11 @@ abbreviation Let'
 
 term model1
 
+value "(Integer[1] :: classes1 type) \<le> Integer[1]"
+
+values "{x :: classes1 type. (Map.empty :: classes1 type env, model1) \<turnstile>
+  (IntegerLiteral 5) : x}"
+
 values "{x :: classes1 type. (Map.empty :: classes1 type env, model1) \<turnstile>
   Let' ''x'' Integer[1] (IntegerLiteral 5)
     (Var ''x'') : x}"
@@ -613,6 +590,12 @@ values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
   (CollectionLiteral SequenceKind
     [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5), CollectionItem (RealLiteral 5)]) : x}"
+
+values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
+  Iterate (CollectionLiteral SequenceKind
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)]) [''x'']
+      ''acc'' Integer[?] (IntegerLiteral 5)
+    (BinaryOperationCall PlusOp (Var ''x'') (Var ''acc'')): x}"
 
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
   Iterate (CollectionLiteral SequenceKind

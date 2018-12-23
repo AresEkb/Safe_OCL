@@ -8,7 +8,7 @@ theory OCL_Syntax
   imports Complex_Main OCL_Common OCL_Types
 begin
 
-subsection{* Standard Library Operations *}
+section{* Standard Library Operations *}
 
 (* Only BasicOCL (EssentialOCL) is defined. So there is no states, messages, etc. *)
 
@@ -34,20 +34,14 @@ datatype any_unop = OclAsSetOp | OclIsNewOp
 datatype boolean_unop = NotOp
 datatype boolean_binop = AndOp | OrOp | XorOp | ImpliesOp
 
-datatype numeric_unop =
-  UMinusOp | AbsOp | FloorOp | RoundOp
-| ToIntegerOp
-datatype numeric_binop =
-  PlusOp | MinusOp | MultOp | DivideOp
-| DivOp | ModOp
-| MaxOp | MinOp
+datatype numeric_unop = UMinusOp | AbsOp | FloorOp | RoundOp | ToIntegerOp
+datatype numeric_binop = PlusOp | MinusOp | MultOp | DivideOp
+| DivOp | ModOp | MaxOp | MinOp
 | LessOp | LessEqOp | GreaterOp | GreaterEqOp
 
-datatype string_unop =
-  SizeOp | ToUpperCaseOp | ToLowerCaseOp | CharactersOp
+datatype string_unop = SizeOp | ToUpperCaseOp | ToLowerCaseOp | CharactersOp
 | ToBooleanOp | ToIntegerOp | ToRealOp
-datatype string_binop =
-  ConcatOp | IndexOfOp | EqualsIgnoreCaseOp | AtOp
+datatype string_binop = ConcatOp | IndexOfOp | EqualsIgnoreCaseOp | AtOp
 | LessOp | LessEqOp | GreaterOp | GreaterEqOp
 datatype string_ternop = SubstringOp
 
@@ -62,9 +56,12 @@ datatype collection_binop = IncludesOp | ExcludesOp
 | AppendOp | PrependOp | CollectionAtOp | CollectionIndexOfOp
 datatype collection_ternop = InsertAtOp | SubOrderedSetOp | SubSequenceOp
 
-type_synonym unop = "any_unop + boolean_unop + numeric_unop + string_unop + collection_unop"
-type_synonym binop = "suptype_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
-type_synonym ternop = "string_ternop + collection_ternop"
+type_synonym unop =
+  "any_unop + boolean_unop + numeric_unop + string_unop + collection_unop"
+type_synonym binop =
+  "suptype_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
+type_synonym ternop =
+  "string_ternop + collection_ternop"
 
 declare [[coercion "Inl :: any_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_unop \<Rightarrow> unop"]]
@@ -85,7 +82,7 @@ datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
 | ExistsIter | ForAllIter | IsUniqueIter | OneIter
 | RejectIter | SelectIter | SortedByIter
 
-subsection{* Expressions *}
+section{* Expressions *}
 
 datatype collection_literal_kind =
   CollectionKind | SetKind | OrderedSetKind | BagKind | SequenceKind
@@ -99,14 +96,13 @@ datatype 'a expr =
 and 'a literal_expr =
   NullLiteral
 | InvalidLiteral
-| BooleanLiteral (booleanSymbol : bool)
-| RealLiteral (realSymbol : real)
-| IntegerLiteral (integerSymbol : int)
-| UnlimitedNaturalLiteral (unlimitedNaturalSymbol : unat)
-| StringLiteral (stringSymbol : string)
+| BooleanLiteral (boolean_symbol : bool)
+| RealLiteral (real_symbol : real)
+| IntegerLiteral (integer_symbol : int)
+| UnlimitedNaturalLiteral (unlimited_natural_symbol : unat)
+| StringLiteral (string_symbol : string)
 | EnumLiteral (type : "'a type") (literal : vname)
-| CollectionLiteral
-    (kind : collection_literal_kind)
+| CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
 | TupleLiteral (elements : "(nat \<times> 'a type \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
@@ -114,29 +110,18 @@ and 'a collection_literal_part_expr =
 | CollectionRange (first : "'a expr") (last : "'a expr")
 and 'a call_expr =
   OclType (source : "'a expr")
-| TypeOperationCall typeop
-    (source : "'a expr") (type : "'a type")
-| UnaryOperationCall unop
-    (source : "'a expr")
-| BinaryOperationCall binop
-    (source : "'a expr") (arg1 : "'a expr")
-| TernaryOperationCall ternop
-    (source : "'a expr") (arg1 : "'a expr") (arg2 : "'a expr")
+| TypeOperationCall typeop (source : "'a expr") (type : "'a type")
+| UnaryOperationCall unop (source : "'a expr")
+| BinaryOperationCall binop (source : "'a expr") (arg1 : "'a expr")
+| TernaryOperationCall ternop (source : "'a expr") (arg1 : "'a expr") (arg2 : "'a expr")
 | Iterate (source : "'a expr") (iterators : "vname list")
-    (var : vname) (type : "'a type") (init_expr : "'a expr")
-    (body_expr : "'a expr")
-| Iterator iterator (source : "'a expr")
-    (iterators : "vname list") (body_expr : "'a expr")
+    (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
+| Iterator iterator (source : "'a expr") (iterators : "vname list") (body_expr : "'a expr")
 | AttributeCall (source : "'a expr") attr
 | AssociationEndCall (source : "'a expr") role
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]
-
-term BinaryOperationCall
-
-value "(BinaryOperationCall :: binop \<Rightarrow> classes1 expr \<Rightarrow> classes1 expr \<Rightarrow> classes1 call_expr)
-  EqualOp NullLiteral NullLiteral"
 
 
 (*

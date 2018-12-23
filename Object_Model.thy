@@ -5,13 +5,7 @@
 *)
 chapter{* Object Model *}
 theory Object_Model
-  imports
-    Main
-    (*OCL_Common*)
-    OCL_Types
-    "HOL-Library.Extended_Nat"
-    "HOL-Library.FSet"
-    "HOL-Library.Finite_Map"
+  imports OCL_Types "HOL-Library.Extended_Nat" "HOL-Library.Finite_Map"
 begin
 
 type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)

@@ -901,16 +901,16 @@ abbreviation simeq_type ("(_/ \<simeq> _)"  [51, 51] 50) where
 abbreviation simeq_between_type ("(_/ \<simeq> _\<midarrow>_)"  [51, 51, 51] 50) where
   "\<tau> \<simeq> \<sigma>\<midarrow>\<rho> \<equiv> \<sigma>[1] \<le> \<tau> \<and> \<tau> \<le> \<rho>[?]"
 
-inductive is_collection_of where
-  "is_collection_of (Collection \<tau>) \<tau>"
-| "is_collection_of (Set \<tau>) \<tau>"
-| "is_collection_of (OrderedSet \<tau>) \<tau>"
-| "is_collection_of (Bag \<tau>) \<tau>"
-| "is_collection_of (Sequence \<tau>) \<tau>"
+inductive class_of :: "'a type \<Rightarrow> 'a \<Rightarrow> bool" where
+  "class_of (ObjectType cls)[1] cls"
+| "class_of (ObjectType cls)[?] cls"
 
-inductive is_ordered_collection_of where
-  "is_ordered_collection_of (OrderedSet \<tau>) \<tau>"
-| "is_ordered_collection_of (Sequence \<tau>) \<tau>"
+inductive collection_of where
+  "collection_of (Collection \<tau>) \<tau>"
+| "collection_of (Set \<tau>) \<tau>"
+| "collection_of (OrderedSet \<tau>) \<tau>"
+| "collection_of (Bag \<tau>) \<tau>"
+| "collection_of (Sequence \<tau>) \<tau>"
 
 inductive strict_subcollection where
   "\<sigma> < \<tau> \<Longrightarrow>
@@ -925,9 +925,9 @@ inductive strict_subcollection where
    strict_subcollection (Sequence \<tau>) \<sigma> (Sequence \<sigma>)"
 
 inductive inner_element_type where
-  "\<lbrakk>is_collection_of \<tau> \<sigma>; \<sigma> \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
+  "\<lbrakk>collection_of \<tau> \<sigma>; \<sigma> \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
    inner_element_type \<tau> \<sigma>"
-| "\<lbrakk>is_collection_of \<tau> \<sigma>; inner_element_type \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+| "\<lbrakk>collection_of \<tau> \<sigma>; inner_element_type \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
    inner_element_type \<tau> \<rho>"
 
 inductive update_element_type where
@@ -936,6 +936,19 @@ inductive update_element_type where
 | "update_element_type (OrderedSet _) \<tau> (OrderedSet \<tau>)"
 | "update_element_type (Bag _) \<tau> (Bag \<tau>)"
 | "update_element_type (Sequence _) \<tau> (Sequence \<tau>)"
+
+fun type_to_optional where
+  "type_to_optional SupType = SupType"
+| "type_to_optional OclInvalid = OclVoid"
+| "type_to_optional OclVoid = OclVoid"
+| "type_to_optional \<tau>[1] = \<tau>[?]"
+| "type_to_optional \<tau>[?] = \<tau>[?]"
+| "type_to_optional (Collection \<tau>) = Collection (type_to_optional \<tau>)"
+| "type_to_optional (Set \<tau>) = Set (type_to_optional \<tau>)"
+| "type_to_optional (OrderedSet \<tau>) = OrderedSet (type_to_optional \<tau>)"
+| "type_to_optional (Bag \<tau>) = Bag (type_to_optional \<tau>)"
+| "type_to_optional (Sequence \<tau>) = Sequence (type_to_optional \<tau>)"
+| "type_to_optional (Tuple \<pi>) = Tuple (fmmap type_to_optional \<pi>)"
 
 (*** Code Setup *************************************************************)
 
