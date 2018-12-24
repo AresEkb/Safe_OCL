@@ -564,161 +564,20 @@ inductive_cases Call_OclType_typing[elim]: "\<Gamma> \<turnstile> Call (OclType 
 
 inductive_cases collection_parts_typing[elim]: "collection_parts_typing \<Gamma> prts \<tau>"
 
-lemma collection_parts_typing_det:
-  "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
-   collection_parts_typing \<Gamma> prts \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  apply (induct prts, auto)
-  apply (
-         erule typing_collection_parts_typing_iterator_typing.inducts(2), auto)
-  sorry
-(*  apply (induct arbitrary: prts
-         rule: typing_collection_parts_typing_iterator_typing.inducts(2), auto)*)
-(*  using collection_parts_typing.cases apply blast*)
-
-
-lemma literal_typing_det:
-  "\<Gamma> \<turnstile> Literal expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> Literal expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  apply (induct expr, auto)
-  by (erule CollectionLiteral_typing;
-      erule CollectionLiteral_typing;
-      auto simp add: collection_parts_typing_det)
-
-term Call
-
-thm Call_OclType_typing OclTypeT
-
-lemma OclType_typing_det:
-  "\<Gamma> \<turnstile> OclType expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> OclType expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  apply (erule Call_OclType_typing)
-
-  thm expr.simps
-
-  thm list_all2_conv_all_nth listrel_iff_nth
-
-  term listrel
-
-lemma set_listrel_eq_list_all2: 
-  "listrel {(x, y). r x y} = {(xs, ys). list_all2 r xs ys}"
-  using list_all2_conv_all_nth listrel_iff_nth by fastforce
-
-thm listrel_rtrancl_eq_rtrancl_listrel1
-
-term listrel1
-
-lemma listrel_tclosure_1: "(listrel r)\<^sup>* \<subseteq> listrel (r\<^sup>*)"
-  by (simp add: listrel_rtrancl_eq_rtrancl_listrel1 
-      listrel_subset_rtrancl_listrel1 rtrancl_subset_rtrancl)
-
-lemma listrel_tclosure_2: "refl r \<Longrightarrow> listrel (r\<^sup>*) \<subseteq> (listrel r)\<^sup>*"
-  by (simp add: listrel1_subset_listrel listrel_rtrancl_eq_rtrancl_listrel1 
-      rtrancl_mono)
-
-context includes lifting_syntax
-begin
-
-lemma listrel_list_all2_transfer [transfer_rule]:
-  "((=) ===> (=) ===> (=) ===> (=)) 
-  (\<lambda>r xs ys. (xs, ys) \<in> listrel {(x, y). r x y}) list_all2"
-  unfolding rel_fun_def using set_listrel_eq_list_all2 listrel_iff_nth by blast
-
-end
-
-lemma list_all2_rtrancl_1:
-  "(list_all2 r)\<^sup>*\<^sup>* xs ys \<Longrightarrow> list_all2 r\<^sup>*\<^sup>* xs ys"
-proof(transfer)
-  fix r :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
-  fix xs :: "'a list"
-  fix ys:: "'a list"
-  assume "(\<lambda>xs ys. (xs, ys) \<in> listrel {(x, y). r x y})\<^sup>*\<^sup>* xs ys"
-  then have "(xs, ys) \<in> (listrel {(x, y). r x y})\<^sup>*"
-    unfolding rtranclp_def rtrancl_def by auto  
-  then have "(xs, ys) \<in> listrel ({(x, y). r x y}\<^sup>*)" 
-    using listrel_tclosure_1 by auto
-  then show "(xs, ys) \<in> listrel {(x, y). r\<^sup>*\<^sup>* x y}"
-    unfolding rtranclp_def rtrancl_def by auto  
-qed
-
-lemma list_all2_rtrancl_2:
-  "reflp r \<Longrightarrow> list_all2 r\<^sup>*\<^sup>* xs ys \<Longrightarrow> (list_all2 r)\<^sup>*\<^sup>* xs ys"
-proof(transfer)
-  fix r :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
-  fix xs :: "'a list"
-  fix ys :: "'a list"
-  assume as_reflp: "reflp r" 
-  assume p_in_lr: "(xs, ys) \<in> listrel {(x, y). r\<^sup>*\<^sup>* x y}"
-  from as_reflp have refl: "refl {(x, y). r x y}" 
-    using reflp_refl_eq by fastforce
-  from p_in_lr have "(xs, ys) \<in> listrel ({(x, y). r x y}\<^sup>*)"
-    unfolding rtranclp_def rtrancl_def by auto
-  with refl have "(xs, ys) \<in> (listrel {(x, y). r x y})\<^sup>*"
-    using listrel_tclosure_2 by auto
-  then show "(\<lambda>xs ys. (xs, ys) \<in> listrel {(x, y). r x y})\<^sup>*\<^sup>* xs ys" 
-    unfolding rtranclp_def rtrancl_def by auto
-qed
-
-end
+lemma
+  typing_det: "\<Gamma>1 \<turnstile> expr : \<tau>1 \<Longrightarrow> \<Gamma>1 \<turnstile> expr : \<sigma>1 \<Longrightarrow> \<tau>1 = \<sigma>1" and
+  collection_parts_typing_det:
+    "collection_parts_typing \<Gamma>2 prts \<tau>2 \<Longrightarrow>
+     collection_parts_typing \<Gamma>2 prts \<sigma>2 \<Longrightarrow> \<tau>2 = \<sigma>2" and
+  iterator_typing_det:
+    "iterator_typing \<Gamma>3 src its body \<tau>31 \<sigma>31 \<rho>31 \<Longrightarrow>
+     iterator_typing \<Gamma>3 src its body \<tau>32 \<sigma>32 \<rho>32 \<Longrightarrow>
+     \<tau>31 = \<tau>32 \<and> \<sigma>31 = \<sigma>32 \<and> \<rho>31 = \<rho>32"
+  apply (induct expr and prts and src body)
+  apply (induct rule: typing_collection_parts_typing_iterator_typing.inducts)
 
 
 
-
-
-
-datatype t1 = A | B t2
-     and t2 = C | D t1
-
-inductive rel1 and rel2 where
-  "rel1 A 0"
-| "rel2 x n \<Longrightarrow>
-   rel1 (B x) n"
-| "rel2 C 1"
-| "rel1 x n \<Longrightarrow>
-   rel2 (D x) n"
-
-print_theorems
-
-lemma rel1_det:
-  "rel1 x n \<Longrightarrow> rel1 x m \<Longrightarrow> n = m"
-  apply (induct rule: rel1_rel2.inducts(1), auto)
-  apply (simp add: rel1.simps)
-  apply (simp add: rel1.simps)
-
-fun rel1_fun and rel2_fun where
-  "rel1_fun A = 0"
-| "rel1_fun (B x) = rel2_fun x"
-| "rel2_fun C = 1"
-| "rel2_fun (D x) = rel1_fun x"
-
-print_theorems
-
-lemma q:
-  "rel1_fun x = n \<Longrightarrow> rel1 x n"
-  apply (erule rel1_fun.elims, auto)
-  apply (simp add: rel1_rel2.intros(1))
-
-
-lemma call_typing_det:
-  "\<Gamma> \<turnstile> Call expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> Call expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  apply (induct expr)
-(*  apply (erule Call_typing, auto)
-  apply (erule Call_OclType_typing)*)
-
-lemma typing_det':
-  "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  apply (induct arbitrary: \<Gamma> \<tau> \<sigma> rule: typing_collection_parts_typing_iterator_typing.induct)
-
-lemma typing_det:
-  "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  apply (induct expr arbitrary: \<Gamma> \<tau> \<sigma>, auto)
-      apply (simp add: literal_typing_det)
-  apply (erule Let_typing; erule Let_typing; auto)
-  apply fastforce
-  apply fastforce
-(*
-  apply (induct rule: typing_collection_parts_typing_iterator_typing.inducts(1),
-         auto simp add: collection_parts_typing_det)
-*)
-
-  apply (erule If_typing, auto)
 
 
 
