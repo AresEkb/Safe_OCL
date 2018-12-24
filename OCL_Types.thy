@@ -937,6 +937,33 @@ inductive update_element_type where
 | "update_element_type (Bag _) \<tau> (Bag \<tau>)"
 | "update_element_type (Sequence _) \<tau> (Sequence \<tau>)"
 
+inductive to_unique_collection where
+  "to_unique_collection (Collection \<tau>) (Set \<tau>)"
+| "to_unique_collection (Set \<tau>) (Set \<tau>)"
+| "to_unique_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
+| "to_unique_collection (Bag \<tau>) (Set \<tau>)"
+| "to_unique_collection (Sequence \<tau>) (OrderedSet \<tau>)"
+
+inductive to_ordered_collection where
+  "to_ordered_collection (Collection \<tau>) (Sequence \<tau>)"
+| "to_ordered_collection (Set \<tau>) (OrderedSet \<tau>)"
+| "to_ordered_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
+| "to_ordered_collection (Bag \<tau>) (Sequence \<tau>)"
+| "to_ordered_collection (Sequence \<tau>) (Sequence \<tau>)"
+
+fun type_to_single where
+  "type_to_single SupType = SupType"
+| "type_to_single OclInvalid = OclInvalid"
+| "type_to_single OclVoid = OclVoid"
+| "type_to_single \<tau>[1] = \<tau>[1]"
+| "type_to_single \<tau>[?] = \<tau>[?]"
+| "type_to_single (Collection \<tau>) = type_to_single \<tau>"
+| "type_to_single (Set \<tau>) = type_to_single \<tau>"
+| "type_to_single (OrderedSet \<tau>) = type_to_single \<tau>"
+| "type_to_single (Bag \<tau>) = type_to_single \<tau>"
+| "type_to_single (Sequence \<tau>) = type_to_single \<tau>"
+| "type_to_single (Tuple \<pi>) = Tuple \<pi>"
+
 fun type_to_optional where
   "type_to_optional SupType = SupType"
 | "type_to_optional OclInvalid = OclVoid"

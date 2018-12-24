@@ -388,7 +388,7 @@ section{* Expressions Typing *}
 inductive typing
     :: "('a :: semilattice_sup) type env \<times> 'a model \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
        ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
-    and collection_parts_type
+    and collection_parts_typing
     and iterator_typing where
  NullLiteralT:
   "\<Gamma> \<turnstile> NullLiteral : OclVoid"
@@ -408,31 +408,31 @@ inductive typing
   "\<Gamma> \<turnstile> EnumLiteral \<tau> lit : \<tau>"
 
 |CollectionLiteralT:
-  "collection_parts_type \<Gamma> prts \<tau> \<Longrightarrow>
+  "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectionLiteral CollectionKind prts : Collection \<tau>"
 |SetLiteralT:
-  "collection_parts_type \<Gamma> prts \<tau> \<Longrightarrow>
+  "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectionLiteral SetKind prts : Set \<tau>"
 |OrderedSetLiteralT:
-  "collection_parts_type \<Gamma> prts \<tau> \<Longrightarrow>
+  "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectionLiteral OrderedSetKind prts : OrderedSet \<tau>"
 |BagLiteralT:
-  "collection_parts_type \<Gamma> prts \<tau> \<Longrightarrow>
+  "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectionLiteral BagKind prts : Bag \<tau>"
 |SequenceLiteralT:
-  "collection_parts_type \<Gamma> prts \<tau> \<Longrightarrow>
+  "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectionLiteral SequenceKind prts : Sequence \<tau>"
 
 |CollectionPartsNilT:
-  "collection_parts_type \<Gamma> [] OclInvalid"
+  "collection_parts_typing \<Gamma> [] OclInvalid"
 |CollectionPartsItemT:
-  "\<lbrakk>\<Gamma> \<turnstile> x : \<tau>; collection_parts_type \<Gamma> xs \<sigma>\<rbrakk> \<Longrightarrow>
-   collection_parts_type \<Gamma> (CollectionItem x # xs) (\<tau> \<squnion> \<sigma>)"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; collection_parts_typing \<Gamma> xs \<sigma>\<rbrakk> \<Longrightarrow>
+   collection_parts_typing \<Gamma> (CollectionItem a # xs) (\<tau> \<squnion> \<sigma>)"
 |CollectionPartsRangeT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<tau> \<simeq> UnlimitedNatural\<midarrow>Integer;
     \<Gamma> \<turnstile> b : \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer;
-    collection_parts_type \<Gamma> xs \<rho>\<rbrakk> \<Longrightarrow>
-   collection_parts_type \<Gamma> (CollectionRange a b # xs) (Integer[1] \<squnion> \<rho>)"
+    collection_parts_typing \<Gamma> xs \<rho>\<rbrakk> \<Longrightarrow>
+   collection_parts_typing \<Gamma> (CollectionRange a b # xs) (Integer[1] \<squnion> \<rho>)"
 
 |TupleLiteralT:
   "\<Gamma> \<turnstile> TupleLiteral elems : Tuple (fmap_of_list (map (\<lambda>x. (fst x, fst (snd x))) elems))"
@@ -448,6 +448,9 @@ inductive typing
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<tau> \<le> Boolean[?]; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> If a b c : \<sigma> \<squnion> \<rho>"
 
+|OclTypeT:
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> OclType a : \<tau>"
 |TypeOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; typeop_type op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> TypeOperationCall op a \<sigma> : \<rho>"
@@ -461,66 +464,69 @@ inductive typing
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>; ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> TernaryOperationCall op a b c : \<upsilon>"
 
-|IterateT:
-  "(\<Gamma>, \<M>) \<turnstile> src : t \<Longrightarrow>
-   collection_of t t1 \<Longrightarrow>
-   (\<Gamma> ++ (map_of (map (\<lambda>it. (it, t1)) its)), \<M>) \<turnstile> Let res res_t res_init body : \<tau> \<Longrightarrow>
-   \<tau> \<le> res_t \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterate src its res res_t res_init body : \<tau>"
-
-|AnyIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<le> Boolean[?] \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator AnyIter src its body : t1"
-|ClosureIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<le> Set t1 \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator ClosureIter src its body : Set t1"
-|CollectIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<le> t1 \<Longrightarrow>
-   (* TODO *)
-   (\<Gamma>, \<M>) \<turnstile> Iterator CollectIter src its body : t1"
-|CollectNestedIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   (* TODO *)
-   (\<Gamma>, \<M>) \<turnstile> Iterator CollectNestedIter src its body : \<tau>"
-|ExistsIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   \<tau> \<le> Boolean[?] \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator ExistsIter src its body : \<tau>"
-|ForAllIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   \<tau> \<le> Boolean[?] \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator ForAllIter src its body : \<tau>"
-|IsUniqueIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator IsUniqueIter src its body : Boolean[1]"
-|OneIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<le> Boolean[?] \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator OneIter src its body : Boolean[1]"
-|RejectIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<le> Boolean[?] \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator RejectIter src its body : t"
-|SelectIteratorT:
-  "iterator_typing (\<Gamma>, \<M>) src its body t t1 \<tau> \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<le> Boolean[?] \<Longrightarrow>
-   (\<Gamma>, \<M>) \<turnstile> Iterator SelectIter src its body : t"
-
-| "(\<Gamma>, \<M>) \<turnstile> src : \<tau> \<Longrightarrow>
+|IteratorT:
+  "(\<Gamma>, \<M>) \<turnstile> src : \<tau> \<Longrightarrow>
    collection_of \<tau> \<sigma> \<Longrightarrow>
    (\<Gamma> ++ (map_of (map (\<lambda>it. (it, \<sigma>)) its)), \<M>) \<turnstile> body : \<rho> \<Longrightarrow>
    iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho>"
+
+|IterateT:
+  "\<lbrakk>iterator_typing (\<Gamma>, \<M>) src its (Let res res_t res_init body) \<tau> \<sigma> \<rho>; \<rho> \<le> res_t\<rbrakk> \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterate src its res res_t res_init body : \<rho>"
+
+|AnyIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator AnyIter src its body : \<sigma>"
+|ClosureIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   type_to_single \<rho> \<le> \<sigma> \<Longrightarrow>
+   to_unique_collection \<tau> \<upsilon> \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator ClosureIter src its body : \<upsilon>"
+|CollectIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   update_element_type \<tau> (type_to_single \<rho>) \<upsilon> \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator CollectIter src its body : \<upsilon>"
+|CollectNestedIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   update_element_type \<tau> \<rho> \<upsilon> \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator CollectNestedIter src its body : \<upsilon>"
+|ExistsIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator ExistsIter src its body : \<rho>"
+|ForAllIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator ForAllIter src its body : \<rho>"
+|OneIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator OneIter src its body : Boolean[1]"
+|IsUniqueIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator IsUniqueIter src its body : Boolean[1]"
+|RejectIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator RejectIter src its body : \<tau>"
+|SelectIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator SelectIter src its body : \<tau>"
+|SortedByIteratorT:
+  "iterator_typing (\<Gamma>, \<M>) src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   to_ordered_collection \<tau> \<upsilon> \<Longrightarrow>
+   (\<Gamma>, \<M>) \<turnstile> Iterator SortedByIter src its body : \<upsilon>"
 
 |AttributeCallT:
   "\<M> = (attrs, assocs) \<Longrightarrow>
@@ -535,6 +541,187 @@ inductive typing
    class_of \<tau> cls \<Longrightarrow>
    find_assoc_end assocs cls role = Some end \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> AssociationEndCall src role : assoc_end_type end"
+
+(*** Properties *************************************************************)
+
+section{* Properties *}
+
+inductive_cases NullLiteral_typing[elim]: "\<Gamma> \<turnstile> NullLiteral : \<tau>"
+inductive_cases InvalidLiteral_typing[elim]: "\<Gamma> \<turnstile> InvalidLiteral : \<tau>"
+inductive_cases BooleanLiteral_typing[elim]: "\<Gamma> \<turnstile> BooleanLiteral c : \<tau>"
+inductive_cases RealLiteral_typing[elim]: "\<Gamma> \<turnstile> RealLiteral c : \<tau>"
+inductive_cases IntegerLiteral_typing[elim]: "\<Gamma> \<turnstile> IntegerLiteral c : \<tau>"
+inductive_cases UnlimitedNaturalLiteral_typing[elim]: "\<Gamma> \<turnstile> UnlimitedNaturalLiteral c : \<tau>"
+inductive_cases StringLiteral_typing[elim]: "\<Gamma> \<turnstile> StringLiteral c : \<tau>"
+inductive_cases EnumLiteral_typing[elim]: "\<Gamma> \<turnstile> EnumLiteral enm lit : \<tau>"
+inductive_cases CollectionLiteral_typing[elim]: "\<Gamma> \<turnstile> CollectionLiteral k prts : \<tau>"
+inductive_cases TupleLiteral_typing[elim]: "\<Gamma> \<turnstile> TupleLiteral elems : \<tau>"
+inductive_cases Let_typing[elim]: "\<Gamma> \<turnstile> Let v \<tau> init body : \<sigma>"
+inductive_cases Var_typing[elim]: "\<Gamma> \<turnstile> Var v : \<tau>"
+inductive_cases If_typing[elim]: "\<Gamma> \<turnstile> If a b c : \<tau>"
+inductive_cases Call_typing[elim]: "\<Gamma> \<turnstile> Call a : \<tau>"
+inductive_cases Call_OclType_typing[elim]: "\<Gamma> \<turnstile> Call (OclType a) : \<tau>"
+
+inductive_cases collection_parts_typing[elim]: "collection_parts_typing \<Gamma> prts \<tau>"
+
+lemma collection_parts_typing_det:
+  "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
+   collection_parts_typing \<Gamma> prts \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  apply (induct prts, auto)
+  apply (
+         erule typing_collection_parts_typing_iterator_typing.inducts(2), auto)
+  sorry
+(*  apply (induct arbitrary: prts
+         rule: typing_collection_parts_typing_iterator_typing.inducts(2), auto)*)
+(*  using collection_parts_typing.cases apply blast*)
+
+
+lemma literal_typing_det:
+  "\<Gamma> \<turnstile> Literal expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> Literal expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  apply (induct expr, auto)
+  by (erule CollectionLiteral_typing;
+      erule CollectionLiteral_typing;
+      auto simp add: collection_parts_typing_det)
+
+term Call
+
+thm Call_OclType_typing OclTypeT
+
+lemma OclType_typing_det:
+  "\<Gamma> \<turnstile> OclType expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> OclType expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  apply (erule Call_OclType_typing)
+
+  thm expr.simps
+
+  thm list_all2_conv_all_nth listrel_iff_nth
+
+  term listrel
+
+lemma set_listrel_eq_list_all2: 
+  "listrel {(x, y). r x y} = {(xs, ys). list_all2 r xs ys}"
+  using list_all2_conv_all_nth listrel_iff_nth by fastforce
+
+thm listrel_rtrancl_eq_rtrancl_listrel1
+
+term listrel1
+
+lemma listrel_tclosure_1: "(listrel r)\<^sup>* \<subseteq> listrel (r\<^sup>*)"
+  by (simp add: listrel_rtrancl_eq_rtrancl_listrel1 
+      listrel_subset_rtrancl_listrel1 rtrancl_subset_rtrancl)
+
+lemma listrel_tclosure_2: "refl r \<Longrightarrow> listrel (r\<^sup>*) \<subseteq> (listrel r)\<^sup>*"
+  by (simp add: listrel1_subset_listrel listrel_rtrancl_eq_rtrancl_listrel1 
+      rtrancl_mono)
+
+context includes lifting_syntax
+begin
+
+lemma listrel_list_all2_transfer [transfer_rule]:
+  "((=) ===> (=) ===> (=) ===> (=)) 
+  (\<lambda>r xs ys. (xs, ys) \<in> listrel {(x, y). r x y}) list_all2"
+  unfolding rel_fun_def using set_listrel_eq_list_all2 listrel_iff_nth by blast
+
+end
+
+lemma list_all2_rtrancl_1:
+  "(list_all2 r)\<^sup>*\<^sup>* xs ys \<Longrightarrow> list_all2 r\<^sup>*\<^sup>* xs ys"
+proof(transfer)
+  fix r :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
+  fix xs :: "'a list"
+  fix ys:: "'a list"
+  assume "(\<lambda>xs ys. (xs, ys) \<in> listrel {(x, y). r x y})\<^sup>*\<^sup>* xs ys"
+  then have "(xs, ys) \<in> (listrel {(x, y). r x y})\<^sup>*"
+    unfolding rtranclp_def rtrancl_def by auto  
+  then have "(xs, ys) \<in> listrel ({(x, y). r x y}\<^sup>*)" 
+    using listrel_tclosure_1 by auto
+  then show "(xs, ys) \<in> listrel {(x, y). r\<^sup>*\<^sup>* x y}"
+    unfolding rtranclp_def rtrancl_def by auto  
+qed
+
+lemma list_all2_rtrancl_2:
+  "reflp r \<Longrightarrow> list_all2 r\<^sup>*\<^sup>* xs ys \<Longrightarrow> (list_all2 r)\<^sup>*\<^sup>* xs ys"
+proof(transfer)
+  fix r :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
+  fix xs :: "'a list"
+  fix ys :: "'a list"
+  assume as_reflp: "reflp r" 
+  assume p_in_lr: "(xs, ys) \<in> listrel {(x, y). r\<^sup>*\<^sup>* x y}"
+  from as_reflp have refl: "refl {(x, y). r x y}" 
+    using reflp_refl_eq by fastforce
+  from p_in_lr have "(xs, ys) \<in> listrel ({(x, y). r x y}\<^sup>*)"
+    unfolding rtranclp_def rtrancl_def by auto
+  with refl have "(xs, ys) \<in> (listrel {(x, y). r x y})\<^sup>*"
+    using listrel_tclosure_2 by auto
+  then show "(\<lambda>xs ys. (xs, ys) \<in> listrel {(x, y). r x y})\<^sup>*\<^sup>* xs ys" 
+    unfolding rtranclp_def rtrancl_def by auto
+qed
+
+end
+
+
+
+
+
+
+datatype t1 = A | B t2
+     and t2 = C | D t1
+
+inductive rel1 and rel2 where
+  "rel1 A 0"
+| "rel2 x n \<Longrightarrow>
+   rel1 (B x) n"
+| "rel2 C 1"
+| "rel1 x n \<Longrightarrow>
+   rel2 (D x) n"
+
+print_theorems
+
+lemma rel1_det:
+  "rel1 x n \<Longrightarrow> rel1 x m \<Longrightarrow> n = m"
+  apply (induct rule: rel1_rel2.inducts(1), auto)
+  apply (simp add: rel1.simps)
+  apply (simp add: rel1.simps)
+
+fun rel1_fun and rel2_fun where
+  "rel1_fun A = 0"
+| "rel1_fun (B x) = rel2_fun x"
+| "rel2_fun C = 1"
+| "rel2_fun (D x) = rel1_fun x"
+
+print_theorems
+
+lemma q:
+  "rel1_fun x = n \<Longrightarrow> rel1 x n"
+  apply (erule rel1_fun.elims, auto)
+  apply (simp add: rel1_rel2.intros(1))
+
+
+lemma call_typing_det:
+  "\<Gamma> \<turnstile> Call expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> Call expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  apply (induct expr)
+(*  apply (erule Call_typing, auto)
+  apply (erule Call_OclType_typing)*)
+
+lemma typing_det':
+  "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  apply (induct arbitrary: \<Gamma> \<tau> \<sigma> rule: typing_collection_parts_typing_iterator_typing.induct)
+
+lemma typing_det:
+  "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  apply (induct expr arbitrary: \<Gamma> \<tau> \<sigma>, auto)
+      apply (simp add: literal_typing_det)
+  apply (erule Let_typing; erule Let_typing; auto)
+  apply fastforce
+  apply fastforce
+(*
+  apply (induct rule: typing_collection_parts_typing_iterator_typing.inducts(1),
+         auto simp add: collection_parts_typing_det)
+*)
+
+  apply (erule If_typing, auto)
+
+
+
 
 (*** Code Setup *************************************************************)
 
@@ -552,28 +739,54 @@ code_pred (modes:
 
 section{* Test Cases *}
 
-abbreviation BinaryOperationCall'
-  :: "binop \<Rightarrow> classes1 expr \<Rightarrow> classes1 expr \<Rightarrow> classes1 call_expr" where
-  "BinaryOperationCall' \<equiv> BinaryOperationCall"
 
-abbreviation Let'
-  :: "string \<Rightarrow> classes1 type \<Rightarrow> classes1 expr \<Rightarrow> classes1 expr \<Rightarrow> classes1 expr" where
-  "Let' \<equiv> Let"
+values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
+  Iterate (CollectionLiteral SequenceKind
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)]) [''x'']
+      ''acc'' Real[?] (IntegerLiteral 5)
+    (BinaryOperationCall PlusOp (Var ''x'') (Var ''acc'')): x}"
 
-term model1
 
-value "(Integer[1] :: classes1 type) \<le> Integer[1]"
+values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
+  Let ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
+    [CollectionItem (StringLiteral ''abc''),
+     CollectionItem (StringLiteral ''zxc'')])
+  (Iterator AnyIter (Var ''x'') [''it'']
+    (BinaryOperationCall EqualOp (Var ''it'') (StringLiteral ''test''))): x}"
+
+
+values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
+  Let ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
+    [CollectionItem (StringLiteral ''abc''),
+     CollectionItem (StringLiteral ''zxc'')])
+  (Iterator ClosureIter (Var ''x'') [''it'']
+    (Var ''it'')): x}"
+
+values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
+  Let ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
+    [CollectionItem (StringLiteral ''abc''),
+     CollectionItem (StringLiteral ''zxc'')])
+  (Iterator ClosureIter (Var ''x'') [''it'']
+    (Var ''x'')): x}"
+
+values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
+  Let ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
+    [CollectionItem (StringLiteral ''abc''),
+     CollectionItem (StringLiteral ''zxc'')])
+  (Iterator ClosureIter (Var ''x'') [''it'']
+    (IntegerLiteral 1)): x}"
+
 
 values "{x :: classes1 type. (Map.empty :: classes1 type env, model1) \<turnstile>
   (IntegerLiteral 5) : x}"
 
 values "{x :: classes1 type. (Map.empty :: classes1 type env, model1) \<turnstile>
-  Let' ''x'' Integer[1] (IntegerLiteral 5)
+  Let ''x'' Integer[1] (IntegerLiteral 5)
     (Var ''x'') : x}"
 
 values "{x :: classes1 type. (Map.empty :: classes1 type env, model1) \<turnstile>
   Let ''x'' Integer[1] (IntegerLiteral 5)
-    (BinaryOperationCall' PlusOp (Var ''x'') (IntegerLiteral 7)) : x}"
+    (BinaryOperationCall PlusOp (Var ''x'') (IntegerLiteral 7)) : x}"
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
   Let ''x'' Real[?] (IntegerLiteral 5)
     (BinaryOperationCall PlusOp (Var ''x'') (IntegerLiteral 7)): x}"

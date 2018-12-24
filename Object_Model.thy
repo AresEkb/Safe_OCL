@@ -154,6 +154,9 @@ definition assocs1 :: "classes1 assocs" where
   (''ProjectMember'', fmap_of_list [
     (''member_of'', (Project, 0, \<infinity>)),
     (''members'', (Employee, 1, 20))]),
+  (''ManagerEmployee'', fmap_of_list [
+    (''manager'', (Employee, 0::nat, 1)),
+    (''employees'', (Employee, 0, \<infinity>))]),
   (''ProjectCustomer'', fmap_of_list [
     (''projects'', (Project, 0, \<infinity>)),
     (''customer'', (Customer, 1, 1))]),
