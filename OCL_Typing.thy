@@ -36,11 +36,11 @@ inductive typeop_type where
    typeop_type SelectByKindOp \<tau> \<sigma> \<rho>"
 | "strict_subcollection \<tau> \<sigma> \<rho> \<Longrightarrow>
    typeop_type SelectByTypeOp \<tau> \<sigma> \<rho>"
-
+(*
 code_pred [show_modes] typeop_type .
 
 values "{x. typeop_type SelectByKindOp (Set Real[?] :: classes1 type) Integer[1] x}"
-
+*)
 text{* It makes sense to compare values only with compatible types. *}
 
 (* We have to specify predicate type explicitly to let
@@ -55,9 +55,9 @@ inductive suptype_binop_type
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
-
+(*
 code_pred [show_modes] suptype_binop_type .
-
+*)
 text{* The OCL Specification defines toString() operation only for
  boolean and numeric types. However, I guess it's a good idea to
  define it once for all basic types. *}
@@ -248,7 +248,7 @@ inductive collection_unop_type where
 | "collection_unop_type LastOp (Sequence \<tau>) \<tau>"
 | "collection_unop_type ReverseOp (OrderedSet \<tau>) (OrderedSet \<tau>)"
 | "collection_unop_type ReverseOp (Sequence \<tau>) (Sequence \<tau>)"
-
+(*
 code_pred [show_modes] collection_unop_type .
 
 values "{x. collection_unop_type FlattenOp
@@ -265,7 +265,7 @@ values "{x. collection_unop_type CollectionSizeOp
     (Integer[1] :: classes1 type) (x :: classes1 type)}"
 values "{x. collection_unop_type CollectionSizeOp
     (Set Boolean[1] :: classes1 type) (x :: classes1 type)}"
-
+*)
 text{* Tuples must support string keys and the rule for the product()
  operation must be updated. *}
 
@@ -326,7 +326,7 @@ inductive collection_binop_type where
    collection_binop_type CollectionIndexOfOp (OrderedSet \<tau>) \<sigma> Integer[1]"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (Sequence \<tau>) \<sigma> Integer[1]"
-
+(*
 code_pred [show_modes] collection_binop_type .
 
 values "{x. collection_binop_type ProductOp
@@ -335,7 +335,7 @@ values "{x. collection_binop_type IncludesOp
     (Set Integer[1] :: classes1 type) (Integer[?] :: classes1 type) (x :: classes1 type)}"
 values "{x. collection_binop_type IncludesAllOp
     (Set Real[1] :: classes1 type) (Sequence Integer[?] :: classes1 type) (x :: classes1 type)}"
-
+*)
 inductive collection_ternop_type where
   "\<lbrakk>\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
    collection_ternop_type InsertAtOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
@@ -375,12 +375,12 @@ inductive ternop_type where
    ternop_type (Inl op) \<tau> \<sigma> \<rho> \<upsilon>"
 | "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    ternop_type (Inr op) \<tau> \<sigma> \<rho> \<upsilon>"
-
+(*
 code_pred [show_modes] typeop_type .
 code_pred [show_modes] unop_type .
 code_pred [show_modes] binop_type .
 code_pred [show_modes] ternop_type .
-
+*)
 (*** Expressions Typing *****************************************************)
 
 section{* Expressions Typing *}
@@ -555,31 +555,354 @@ inductive_cases UnlimitedNaturalLiteral_typing[elim]: "\<Gamma> \<turnstile> Unl
 inductive_cases StringLiteral_typing[elim]: "\<Gamma> \<turnstile> StringLiteral c : \<tau>"
 inductive_cases EnumLiteral_typing[elim]: "\<Gamma> \<turnstile> EnumLiteral enm lit : \<tau>"
 inductive_cases CollectionLiteral_typing[elim]: "\<Gamma> \<turnstile> CollectionLiteral k prts : \<tau>"
+inductive_cases collection_parts_typing[elim]: "collection_parts_typing \<Gamma> prts \<tau>"
+inductive_cases collection_parts_item_typing[elim]: "collection_parts_typing \<Gamma> (CollectionItem x # xs) \<tau>"
+inductive_cases collection_parts_range_typing[elim]: "collection_parts_typing \<Gamma> (CollectionRange x y # xs) \<tau>"
 inductive_cases TupleLiteral_typing[elim]: "\<Gamma> \<turnstile> TupleLiteral elems : \<tau>"
 inductive_cases Let_typing[elim]: "\<Gamma> \<turnstile> Let v \<tau> init body : \<sigma>"
 inductive_cases Var_typing[elim]: "\<Gamma> \<turnstile> Var v : \<tau>"
 inductive_cases If_typing[elim]: "\<Gamma> \<turnstile> If a b c : \<tau>"
 inductive_cases Call_typing[elim]: "\<Gamma> \<turnstile> Call a : \<tau>"
-inductive_cases Call_OclType_typing[elim]: "\<Gamma> \<turnstile> Call (OclType a) : \<tau>"
+inductive_cases OclType_typing[elim]: "\<Gamma> \<turnstile> OclType a : \<tau>"
+inductive_cases TypeOperationCall_typing[elim]: "\<Gamma> \<turnstile> TypeOperationCall op a \<sigma> : \<tau>"
+inductive_cases UnaryOperationCall_typing[elim]: "\<Gamma> \<turnstile> UnaryOperationCall op a : \<tau>"
+inductive_cases BinaryOperationCall_typing[elim]: "\<Gamma> \<turnstile> BinaryOperationCall op a b : \<tau>"
+inductive_cases TernaryOperationCall_typing[elim]: "\<Gamma> \<turnstile> TernaryOperationCall op a b c : \<tau>"
+inductive_cases iterator_typing[elim]: "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho>"
+inductive_cases Iterate_typing[elim]: "\<Gamma> \<turnstile> Iterate src its res res_t res_init body : \<tau>"
+inductive_cases ClosureIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator ClosureIter src its body : \<tau>"
+inductive_cases CollectIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator CollectIter src its body : \<tau>"
+inductive_cases CollectNestedIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator CollectNestedIter src its body : \<tau>"
+inductive_cases ExistsIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator ExistsIter src its body : \<tau>"
+inductive_cases ForAllIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator ForAllIter src its body : \<tau>"
+inductive_cases OneIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator OneIter src its body : \<tau>"
+inductive_cases IsUniqueIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator IsUniqueIter src its body : \<tau>"
+inductive_cases RejectIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator RejectIter src its body : \<tau>"
+inductive_cases SelectIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator SelectIter src its body : \<tau>"
+inductive_cases SortedByIterator_typing[elim]: "\<Gamma> \<turnstile> Iterator SortedByIter src its body : \<tau>"
+inductive_cases AttributeCall_typing[elim]: "\<Gamma> \<turnstile> AttributeCall src prop : \<tau>"
+inductive_cases AssociationEndCall_typing[elim]: "\<Gamma> \<turnstile> AssociationEndCall src role : \<tau>"
 
-inductive_cases collection_parts_typing[elim]: "collection_parts_typing \<Gamma> prts \<tau>"
+lemma strict_subcollection_det:
+  "strict_subcollection \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   strict_subcollection \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: strict_subcollection.induct;
+      simp add: strict_subcollection.simps)
+
+lemma typeop_type_det:
+  "typeop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   typeop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: typeop_type.induct;
+      simp add: typeop_type.simps strict_subcollection_det)
+
+lemma any_unop_type_det:
+  "any_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   any_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: any_unop_type.induct;
+      simp add: any_unop_type.simps)
+
+lemma boolean_unop_type_det:
+  "boolean_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   boolean_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: boolean_unop_type.induct;
+      simp add: boolean_unop_type.simps)
+
+lemma numeric_unop_type_det:
+  "numeric_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   numeric_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: numeric_unop_type.induct;
+      auto simp add: numeric_unop_type.simps)
+
+lemma string_unop_type_det:
+  "string_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   string_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: string_unop_type.induct;
+      simp add: string_unop_type.simps)
+
+lemma collection_of_det:
+  "collection_of \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   collection_of \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: collection_of.induct;
+      simp add: collection_of.simps)
+
+(*
+inductive inner_element_type where
+  "\<lbrakk>collection_of \<tau> \<sigma>; \<sigma> \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
+   inner_element_type \<tau> \<sigma>"
+| "\<lbrakk>collection_of \<tau> \<sigma>; inner_element_type \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+   inner_element_type \<tau> \<rho>"
+*)
+
+inductive_cases inner_element_type_elim[elim]: "inner_element_type \<tau> \<sigma>"
+print_theorems
+
+lemma inner_element_type_det:
+  "inner_element_type \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   inner_element_type \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  apply (induct rule: inner_element_type.induct)
+  sorry
+(*  apply (erule inner_element_type.cases, auto simp add: collection_of_det)*)
+
+lemma update_element_type_det:
+  "update_element_type \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   update_element_type \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: update_element_type.induct;
+      simp add: update_element_type.simps)
+
+lemma collection_unop_type_det:
+  "collection_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   collection_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  apply (induct rule: collection_unop_type.induct)
+  apply (erule collection_unop_type.cases;
+         auto simp add: collection_of_det
+           update_element_type_det inner_element_type_det)+
+  using inner_element_type_det update_element_type_det apply blast
+  apply (erule collection_unop_type.cases; auto)+
+  done 
+
+lemma unop_type_det:
+  "unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: unop_type.induct;
+      simp add: unop_type.simps any_unop_type_det
+                boolean_unop_type_det numeric_unop_type_det
+                string_unop_type_det collection_unop_type_det)
+
+lemma suptype_binop_type_det:
+  "suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: suptype_binop_type.induct;
+      auto simp add: suptype_binop_type.simps)
+
+lemma boolean_binop_type_det:
+  "boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: boolean_binop_type.induct;
+      simp add: boolean_binop_type.simps)
+
+lemma numeric_binop_type_det:
+  "numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: numeric_binop_type.induct;
+      auto simp add: numeric_binop_type.simps;
+      drule_tac ?y="\<tau>" and ?z="\<sigma>" in sup_least; auto)
+
+lemma string_binop_type_det:
+  "string_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   string_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: string_binop_type.induct;
+      simp add: string_binop_type.simps)
+
+lemma collection_binop_type_det:
+  "collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  apply (induct rule: collection_binop_type.induct;
+         simp add: collection_binop_type.simps)
+  using collection_of_det by blast
+
+lemma binop_type_det:
+  "binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: binop_type.induct;
+      simp add: binop_type.simps suptype_binop_type_det
+                boolean_binop_type_det numeric_binop_type_det
+                string_binop_type_det collection_binop_type_det)
+
+lemma string_ternop_type_det:
+  "string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
+   string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
+  by (induct rule: string_ternop_type.induct;
+      simp add: string_ternop_type.simps)
+
+lemma collection_ternop_type_det:
+  "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
+   collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
+  by (induct rule: collection_ternop_type.induct;
+      simp add: collection_ternop_type.simps)
+
+lemma ternop_type_det:
+  "ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
+   ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
+  by (induct rule: ternop_type.induct;
+      simp add: ternop_type.simps string_ternop_type_det
+                collection_ternop_type_det)
+
+lemma to_unique_collection_det:
+  "to_unique_collection \<tau> \<sigma> \<Longrightarrow>
+   to_unique_collection \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
+  by (induct rule: to_unique_collection.induct;
+      simp add: to_unique_collection.simps)
+
+lemma to_ordered_collection_det:
+  "to_ordered_collection \<tau> \<sigma> \<Longrightarrow>
+   to_ordered_collection \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
+  by (induct rule: to_ordered_collection.induct;
+      simp add: to_ordered_collection.simps)
+
+lemma class_of_det:
+  "class_of \<tau> c \<Longrightarrow> class_of \<tau> d \<Longrightarrow> c = d"
+  by (induct rule: class_of.induct;
+      simp add: class_of.simps)
 
 lemma
-  typing_det: "\<Gamma>1 \<turnstile> expr : \<tau>1 \<Longrightarrow> \<Gamma>1 \<turnstile> expr : \<sigma>1 \<Longrightarrow> \<tau>1 = \<sigma>1" and
+  typing_det: "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   collection_parts_typing_det:
-    "collection_parts_typing \<Gamma>2 prts \<tau>2 \<Longrightarrow>
-     collection_parts_typing \<Gamma>2 prts \<sigma>2 \<Longrightarrow> \<tau>2 = \<sigma>2" and
+    "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
+     collection_parts_typing \<Gamma> prts \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   iterator_typing_det:
-    "iterator_typing \<Gamma>3 src its body \<tau>31 \<sigma>31 \<rho>31 \<Longrightarrow>
-     iterator_typing \<Gamma>3 src its body \<tau>32 \<sigma>32 \<rho>32 \<Longrightarrow>
-     \<tau>31 = \<tau>32 \<and> \<sigma>31 = \<sigma>32 \<and> \<rho>31 = \<rho>32"
-  apply (induct expr and prts and src body)
-  apply (induct rule: typing_collection_parts_typing_iterator_typing.inducts)
-
-
-
-
-
+    "iterator_typing \<Gamma> src its body \<tau>\<^sub>1 \<sigma>\<^sub>1 \<rho>\<^sub>1 \<Longrightarrow>
+     iterator_typing \<Gamma> src its body \<tau>\<^sub>2 \<sigma>\<^sub>2 \<rho>\<^sub>2 \<Longrightarrow>
+     \<tau>\<^sub>1 = \<tau>\<^sub>2 \<and> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+proof (induct \<Gamma> expr \<tau> and \<Gamma> prts \<tau> and \<Gamma> src its body \<tau>\<^sub>1 \<sigma>\<^sub>1 \<rho>\<^sub>1
+         arbitrary: \<sigma> and \<sigma> and \<tau>\<^sub>2 \<sigma>\<^sub>2 \<rho>\<^sub>2
+         rule: typing_collection_parts_typing_iterator_typing.inducts)
+  case (NullLiteralT \<Gamma>) thus ?case by auto
+next
+  case (InvalidLiteralT \<Gamma>) thus ?case by auto
+next
+  case (BooleanLiteralT \<Gamma> c) thus ?case by auto
+next
+  case (RealLiteralT \<Gamma> c) thus ?case by auto
+next
+  case (IntegerLiteralT \<Gamma> c) thus ?case by auto
+next
+  case (UnlimNatLiteralT \<Gamma> c) thus ?case by auto
+next
+  case (StringLiteralT \<Gamma> c) thus ?case by auto
+next
+  case (EnumLiteralT \<Gamma> \<tau> lit) thus ?case by auto
+next
+  case (CollectionLiteralT \<Gamma> prts \<tau>) thus ?case by blast
+next
+  case (SetLiteralT \<Gamma> prts \<tau>) thus ?case by blast
+next
+  case (OrderedSetLiteralT \<Gamma> prts \<tau>) thus ?case by blast
+next
+  case (BagLiteralT \<Gamma> prts \<tau>) thus ?case by blast
+next
+  case (SequenceLiteralT \<Gamma> prts \<tau>) thus ?case by blast
+next
+  case (CollectionPartsNilT \<Gamma>) thus ?case by auto
+next
+  case (CollectionPartsItemT \<Gamma> a \<tau> xs \<sigma>) thus ?case by blast
+next
+  case (CollectionPartsRangeT \<Gamma> a \<tau> b \<sigma> xs \<rho>) thus ?case
+    apply (insert CollectionPartsRangeT.prems)
+    apply (erule collection_parts_range_typing)
+    by (simp add: CollectionPartsRangeT.hyps(8))
+next
+  case (TupleLiteralT \<Gamma> elems) thus ?case by auto
+next
+  case (LetT \<Gamma> \<M> init \<sigma> \<tau> v body \<rho>) thus ?case by blast
+next
+  case (VarT \<Gamma> v \<tau> \<M>) thus ?case by auto
+next
+  case (IfT \<Gamma> a \<tau> b \<sigma> c \<rho>) thus ?case
+    apply (insert IfT.prems)
+    apply (erule If_typing)
+    using IfT.hyps(5) IfT.hyps(7) by auto
+next
+  case (OclTypeT \<Gamma> a \<tau>) thus ?case by blast
+next
+  case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
+    by (metis TypeOperationCall_typing typeop_type_det)
+next
+  case (UnaryOperationCallT \<Gamma> a \<tau> op \<sigma>) thus ?case
+    by (metis UnaryOperationCall_typing unop_type_det)
+next
+  case (BinaryOperationCallT \<Gamma> a \<tau> b \<sigma> op \<rho>) thus ?case
+    by (metis BinaryOperationCall_typing binop_type_det)
+next
+  case (TernaryOperationCallT \<Gamma> a \<tau> b \<sigma> c \<rho> op \<upsilon>) thus ?case
+    by (metis TernaryOperationCall_typing ternop_type_det)
+next
+  case (IteratorT \<Gamma> \<M> src \<tau> \<sigma> its body \<rho>) thus ?case
+    apply (insert IteratorT.prems)
+    apply (erule iterator_typing)
+    using IteratorT.hyps(2) IteratorT.hyps(3)
+          IteratorT.hyps(5) collection_of_det
+    by fastforce
+next
+  case (IterateT \<Gamma> \<M> src its res res_t res_init body \<tau> \<sigma> \<rho>) thus ?case
+    by (insert IterateT.prems) (auto simp add: IterateT.hyps(2))
+next
+  case (AnyIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+    by (insert AnyIteratorT.prems) (auto simp add: AnyIteratorT.hyps(2))
+next
+  case (ClosureIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+    apply (insert ClosureIteratorT.prems)
+    apply (erule ClosureIterator_typing)
+    using ClosureIteratorT.hyps(2) ClosureIteratorT.hyps(5)
+          to_unique_collection_det
+    by blast
+next
+  case (CollectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+    apply (insert CollectIteratorT.prems)
+    apply (erule CollectIterator_typing)
+    using CollectIteratorT.hyps(2) CollectIteratorT.hyps(4)
+          update_element_type_det
+    by blast
+next
+  case (CollectNestedIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+    apply (insert CollectNestedIteratorT.prems)
+    apply (erule CollectNestedIterator_typing)
+    using CollectNestedIteratorT.hyps(2) CollectNestedIteratorT.hyps(4)
+          update_element_type_det
+    by blast
+next
+  case (ExistsIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+    apply (insert ExistsIteratorT.prems)
+    apply (erule ExistsIterator_typing)
+    by (simp add: ExistsIteratorT.hyps(2))
+next
+  case (ForAllIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+    apply (insert ForAllIteratorT.prems)
+    apply (erule ForAllIterator_typing)
+    by (simp add: ForAllIteratorT.hyps(2))
+next
+  case (OneIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+    apply (insert OneIteratorT.prems)
+    apply (erule OneIterator_typing)
+    by simp
+next
+  case (IsUniqueIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+    apply (insert IsUniqueIteratorT.prems)
+    apply (erule IsUniqueIterator_typing)
+    by simp
+next
+  case (RejectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+    apply (insert RejectIteratorT.prems)
+    apply (erule RejectIterator_typing)
+    by (simp add: RejectIteratorT.hyps(2))
+next
+  case (SelectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+    apply (insert SelectIteratorT.prems)
+    apply (erule SelectIterator_typing)
+    by (simp add: SelectIteratorT.hyps(2))
+next
+  case (SortedByIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+    apply (insert SortedByIteratorT.prems)
+    apply (erule SortedByIterator_typing)
+    using SortedByIteratorT.hyps(2) SortedByIteratorT.hyps(4)
+          to_ordered_collection_det
+    by blast
+next
+  case (AttributeCallT \<M> attrs assocs \<Gamma> src \<tau> cls cls_attrs "prop" \<sigma>) thus ?case
+    apply (insert AttributeCallT.prems)
+    apply (erule AttributeCall_typing)
+    using AttributeCallT.hyps(1) AttributeCallT.hyps(3)
+          AttributeCallT.hyps(4) AttributeCallT.hyps(5)
+          AttributeCallT.hyps(6) class_of_det
+    by fastforce
+next
+  case (AssociationEndCallT \<M> attrs assocs \<Gamma> src \<tau> cls role "end") thus ?case
+    apply (insert AssociationEndCallT.prems)
+    apply (erule AssociationEndCall_typing)
+    using AssociationEndCallT.hyps(1) AssociationEndCallT.hyps(3)
+          AssociationEndCallT.hyps(4) AssociationEndCallT.hyps(5)
+          class_of_det
+    by fastforce
+qed
 
 
 (*** Code Setup *************************************************************)

@@ -120,8 +120,6 @@ and 'a call_expr =
 | AttributeCall (source : "'a expr") attr
 | AssociationEndCall (source : "'a expr") role
 
-print_theorems
-
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]
 

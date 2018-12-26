@@ -346,6 +346,10 @@ lemma type_less_eq_x_Collection_intro [intro]:
   apply (rule preserve_rtranclp[of subtype]; auto)
   done
 
+lemma fun_or_eq_refl [intro]:
+  "reflp (\<lambda>x y. x = y \<or> f x y)"
+  by (simp add: reflpI)
+
 lemma type_less_eq_x_Tuple_intro [intro]:
   assumes "\<tau> = Tuple \<pi>"
       and "subtuple (\<le>) \<pi> \<xi>"
@@ -356,7 +360,7 @@ proof -
   hence "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>+\<^sup>+ \<pi> \<xi>"
     by auto
   hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
-    by (simp add: subtuple_to_trancl)
+    by (simp) (rule subtuple_to_trancl; auto)
   hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
     by simp
   thus ?thesis
@@ -715,8 +719,8 @@ lemma type_less_eq_x_Tuple [elim]:
   "\<tau> \<le> Tuple \<xi> \<Longrightarrow>
    (\<tau> = OclInvalid \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (metis order.not_eq_order_implies_strict order_refl_type
-            subtuple_refl type_less_x_Tuple)
+  apply (drule le_imp_less_or_eq, auto)
+  by (simp add: fmap.rel_refl fmrel_to_subtuple)
 
 (*** Upper Semilattice of Types *********************************************)
 
@@ -896,7 +900,7 @@ end
 section{* Helper Relations *}
 
 abbreviation simeq_type ("(_/ \<simeq> _)"  [51, 51] 50) where
-  "\<tau> \<simeq> \<sigma> \<equiv> \<sigma>[1] \<le> \<tau> \<and> \<tau> \<le> \<sigma>[?]"
+  "\<tau> \<simeq> \<sigma> \<equiv> \<tau> = \<sigma>[1] \<or> \<tau> = \<sigma>[?]"
 
 abbreviation simeq_between_type ("(_/ \<simeq> _\<midarrow>_)"  [51, 51, 51] 50) where
   "\<tau> \<simeq> \<sigma>\<midarrow>\<rho> \<equiv> \<sigma>[1] \<le> \<tau> \<and> \<tau> \<le> \<rho>[?]"

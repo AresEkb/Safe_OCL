@@ -43,8 +43,8 @@ lemma subtuple_fmdom:
 subsection{* Basic Properties *}
 
 lemma subtuple_refl:
-  "(\<And>x. R x x) \<Longrightarrow> subtuple R xm xm"
-  by (simp add: fmrel_on_fset_refl_strong)
+  "reflp R \<Longrightarrow> subtuple R xm xm"
+  by (simp add: fmrel_on_fsetI option.rel_reflp reflpD)
 
 lemma subtuple_mono [mono]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> y \<in> fmran' ym \<Longrightarrow> f x y \<longrightarrow> g x y) \<Longrightarrow>
@@ -183,7 +183,7 @@ lemma rtrancl_to_subtuple:
   done
 
 lemma fmrel_to_subtuple_trancl:
-  "(\<And>x. r x x) \<Longrightarrow>
+  "reflp r \<Longrightarrow>
    (fmrel r)\<^sup>+\<^sup>+ (fmrestrict_fset (fmdom ym) xm) ym \<Longrightarrow>
    (subtuple r)\<^sup>+\<^sup>+ xm ym"
   apply (frule trancl_to_fmrel)
@@ -193,7 +193,7 @@ lemma fmrel_to_subtuple_trancl:
   by (meson fmrel_to_subtuple tranclp.simps)
 
 lemma subtuple_to_trancl:
-  "(\<And>x. r x x) \<Longrightarrow>
+  "reflp r \<Longrightarrow>
    subtuple r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    (subtuple r)\<^sup>+\<^sup>+ xm ym"
   apply (rule fmrel_to_subtuple_trancl)

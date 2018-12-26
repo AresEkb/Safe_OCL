@@ -257,7 +257,7 @@ text{* The proof was derived from the accepted answer on the website
    and provided with the permission of the author of the answer *}
 
 lemma fmrel_to_rtrancl:
-  assumes as_r: "(\<And>x. r x x)" 
+  assumes as_r: "reflp r" 
       and rel_rpp_xm_ym: "fmrel r\<^sup>*\<^sup>* xm ym" 
     shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
 proof -
@@ -269,7 +269,8 @@ proof -
   next
     case (step x xm y ym i) show ?case
     proof -
-      from as_r have lp_xs_xs: "fmrel r xm xm" by (simp add: fmap.rel_refl)
+      from as_r have lp_xs_xs: "fmrel r xm xm"
+        by (simp add: fmap.rel_reflp reflpD)
       from step.hyps(1) have x_xs_y_zs: 
         "(fmrel r)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
       proof(induction rule: rtranclp_induct)
@@ -289,7 +290,7 @@ proof -
         case (step ya za) show ?case
         proof -
           have rt_step_2: "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)" 
-            by (rule r_into_rtranclp, simp add: as_r fmrel_upd step.hyps(2)) 
+            by (rule r_into_rtranclp; simp add: as_r fmrel_upd reflpD step.hyps(2))
           from step.IH rt_step_2 show ?thesis by (rule rtranclp_trans)
         qed
       qed
@@ -302,18 +303,58 @@ text{* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
    https://stackoverflow.com/a/53585232/632199
    and provided with the permission of the author of the answer *}
-
+(*
 lemma fmrel_to_trancl:
-  "(\<And>x. r x x) \<Longrightarrow>
+  assumes "reflp r"
+      and "fmrel r\<^sup>+\<^sup>+ xm ym"
+    shows "(fmrel r)\<^sup>+\<^sup>+ xm ym"
+proof -
+  from assms(2) have "fmrel r\<^sup>*\<^sup>* xm ym"
+(*    by (meson assms(2) fmap.rel_mono_strong tranclp_into_rtranclp)*)
+*)
+lemma fmrel_to_trancl:
+  "reflp r \<Longrightarrow>
    fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   (fmrel r)\<^sup>+\<^sup>+ xm ym" 
-  by (metis fmrel_to_rtrancl fmap.rel_mono_strong fmap.rel_refl
+   (fmrel r)\<^sup>+\<^sup>+ xm ym"
+  apply (drule_tac ?Ra="r\<^sup>*\<^sup>*" in fmap.rel_mono_strong, auto)
+  apply (frule fmrel_to_rtrancl, auto)
+  apply (rule rtranclp_into_tranclp2, auto)
+  by (simp add: fmap.rel_reflp reflpD)
+
+thm fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl
+(*
+proof -
+  have "reflp r \<Longrightarrow> fmrel r\<^sup>*\<^sup>* xm ym \<Longrightarrow> (fmrel r)\<^sup>+\<^sup>+ xm ym"
+    by (metis fmap.rel_reflp fmrel_to_rtrancl reflpD rtranclpD tranclp.r_into_trancl)
+  then show ?thesis
+*)
+(*
+  apply (drule_tac ?Ra="r\<^sup>*\<^sup>*" in fmap.rel_mono_strong, auto)
+*)
+(*  by (metis fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl fmrel_to_rtrancl)*)
+(*  apply (frule fmrel_to_rtrancl, auto)
+  by (metis fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl)*)
+(*
+  by (metis fmap.rel_mono_strong fmap.rel_reflp fmrel_to_rtrancl
+            r_into_rtranclp reflclp_tranclp reflpD rtranclpD
+            rtranclp_idemp rtranclp_reflclp tranclp.r_into_trancl)
+*)
+(*
+  by (smt fmap.rel_mono_strong fmap.rel_reflp fmrel_to_rtrancl
+          r_into_rtranclp reflclp_tranclp reflp_def rtranclpD
+          rtranclp_idemp rtranclp_reflclp tranclp.r_into_trancl) 
+*)
+(*  by (metis fmrel_to_rtrancl fmap.rel_mono_strong fmap.rel_refl
             r_into_rtranclp reflclp_tranclp rtranclpD rtranclp_idemp
-            rtranclp_reflclp tranclp.r_into_trancl)
+            rtranclp_reflclp tranclp.r_into_trancl)*)
+
+thm fmap.rel_mono_strong fmap.rel_reflp fmrel_to_rtrancl
+thm r_into_rtranclp reflclp_tranclp reflpD rtranclpD
+thm rtranclp_idemp rtranclp_reflclp tranclp.r_into_trancl
 
 lemma fmrel_tranclp_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
-   (\<And>x. r x x) \<Longrightarrow>
+   reflp r \<Longrightarrow>
    (\<And>y. fmrel r a y \<Longrightarrow> P y) \<Longrightarrow>
    (\<And>y z. (fmrel r)\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel r y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
   apply (drule fmrel_to_trancl, simp)
@@ -322,7 +363,7 @@ lemma fmrel_tranclp_induct:
 
 lemma fmrel_converse_tranclp_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
-   (\<And>x. r x x) \<Longrightarrow>
+   reflp r \<Longrightarrow>
    (\<And>y. fmrel r y b \<Longrightarrow> P y) \<Longrightarrow>
    (\<And>y z. fmrel r y z \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ z b \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow> P a"
   apply (drule fmrel_to_trancl, simp)
@@ -331,7 +372,7 @@ lemma fmrel_converse_tranclp_induct:
 
 lemma fmrel_tranclp_trans_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
-   (\<And>x. r x x) \<Longrightarrow>
+   reflp r \<Longrightarrow>
    (\<And>x y. fmrel r x y \<Longrightarrow> P x y) \<Longrightarrow>
    (\<And>x y z. fmrel r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z) \<Longrightarrow>
    P a b"
