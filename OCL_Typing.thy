@@ -239,7 +239,8 @@ inductive collection_unop_type where
 | "\<lbrakk>collection_of \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
    collection_unop_type AsSequenceOp \<tau> (Sequence \<sigma>)"
 
-| "\<lbrakk>inner_element_type \<tau> \<sigma>; update_element_type \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+(*| "\<lbrakk>inner_element_type \<tau> \<sigma>; update_element_type \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>*)
+| "\<lbrakk>collection_of \<tau> \<sigma>; update_element_type \<tau> (type_to_single \<sigma>) \<rho>\<rbrakk> \<Longrightarrow>
    collection_unop_type FlattenOp \<tau> \<rho>"
 
 | "collection_unop_type FirstOp (OrderedSet \<tau>) \<tau>"
@@ -625,24 +626,6 @@ lemma collection_of_det:
   by (induct rule: collection_of.induct;
       simp add: collection_of.simps)
 
-(*
-inductive inner_element_type where
-  "\<lbrakk>collection_of \<tau> \<sigma>; \<sigma> \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
-   inner_element_type \<tau> \<sigma>"
-| "\<lbrakk>collection_of \<tau> \<sigma>; inner_element_type \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
-   inner_element_type \<tau> \<rho>"
-*)
-
-inductive_cases inner_element_type_elim[elim]: "inner_element_type \<tau> \<sigma>"
-print_theorems
-
-lemma inner_element_type_det:
-  "inner_element_type \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   inner_element_type \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  apply (induct rule: inner_element_type.induct)
-  sorry
-(*  apply (erule inner_element_type.cases, auto simp add: collection_of_det)*)
-
 lemma update_element_type_det:
   "update_element_type \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    update_element_type \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
@@ -655,8 +638,8 @@ lemma collection_unop_type_det:
   apply (induct rule: collection_unop_type.induct)
   apply (erule collection_unop_type.cases;
          auto simp add: collection_of_det
-           update_element_type_det inner_element_type_det)+
-  using inner_element_type_det update_element_type_det apply blast
+           update_element_type_det)+
+  using collection_of_det update_element_type_det apply blast
   apply (erule collection_unop_type.cases; auto)+
   done 
 

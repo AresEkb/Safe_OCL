@@ -928,12 +928,6 @@ inductive strict_subcollection where
 | "\<sigma> < \<tau> \<Longrightarrow>
    strict_subcollection (Sequence \<tau>) \<sigma> (Sequence \<sigma>)"
 
-inductive inner_element_type where
-  "\<lbrakk>collection_of \<tau> \<sigma>; \<sigma> \<le> OclAny[?]\<rbrakk> \<Longrightarrow>
-   inner_element_type \<tau> \<sigma>"
-| "\<lbrakk>collection_of \<tau> \<sigma>; inner_element_type \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
-   inner_element_type \<tau> \<rho>"
-
 inductive update_element_type where
   "update_element_type (Collection _) \<tau> (Collection \<tau>)"
 | "update_element_type (Set _) \<tau> (Set \<tau>)"
