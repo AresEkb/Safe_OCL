@@ -18,10 +18,6 @@ lemma fmrel_on_fset_fmdom:
    k |\<in>| fmdom xm"
   by (metis fmdom_notD fmdom_notI fmrel_on_fsetD option.rel_sel)
 
-lemma fmap_rel_eq_rev:
-  "(xm = ym) = fmrel (=) xm ym"
-  by (simp add: fmap.rel_eq)
-
 (*** Finite Map Merge *******************************************************)
 
 subsection{* Merge Operation *}
@@ -36,75 +32,70 @@ lemma fmdom_fmmerge [simp]:
   by (auto simp add: fmmerge_def fmdom_of_list)
 
 lemma fmmerge_commut:
-  "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x y = f y x) \<Longrightarrow>
-   fmmerge f xm ym = fmmerge f ym xm"
-  apply (unfold fmap_rel_eq_rev)
-  apply (rule fmrelI)
-  unfolding fmmerge_def fmlookup_of_list
-  apply (auto simp add: Option.rel_option_iff option.case_eq_if fmmerge_def
-             fmlookup_of_list)
-  apply (smt finterD1 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
-             sorted_list_of_fset_simps(1) inf_commute)
-  apply (smt finterD1 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
-             sorted_list_of_fset_simps(1) inf_commute)
-  apply (smt finterD2 fmdom_notI fmran'I map_eq_conv notin_fset option.collapse
-             sorted_list_of_fset_simps(1) inf_commute
-             fmlookup_of_list option.inject prod.inject)
-  done
-
-lemma map_of_map_inter_eq_Some:
-  "map_of
-    (map
-      (\<lambda>k. (k, f k xm ym))
-      (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))
-    k = Some z \<Longrightarrow>
-   \<exists>x y. fmlookup xm k = Some x \<and> fmlookup ym k = Some y"
-  unfolding map_of_map_restrict
-  apply auto
-  using fmdom'_alt_def fmlookup_dom'_iff apply fastforce
-  using fmdom'_alt_def fmlookup_dom'_iff apply fastforce
-  done
-
-lemma map_of_map_inter_eq_None:
-  "map_of
-    (map
-      (\<lambda>k. (k, f k xm ym))
-      (sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)))
-    k = None \<Longrightarrow>
-   fmlookup xm k = None \<or> fmlookup ym k = None"
-  unfolding map_of_map_restrict
-  apply auto
-  by (metis (no_types, lifting) Int_iff comp_apply fmdom'_alt_def
-            fmdom'_notD option.simps(3) restrict_map_def)
+  assumes "\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x y = f y x"
+    shows "fmmerge f xm ym = fmmerge f ym xm"
+proof -
+  obtain zm where zm: "zm = sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)"
+    by auto
+  with assms have
+    "map (\<lambda>k. (k, f (the (fmlookup xm k)) (the (fmlookup ym k)))) zm =
+     map (\<lambda>k. (k, f (the (fmlookup ym k)) (the (fmlookup xm k)))) zm"
+    by (auto) (metis fmdom_notI fmran'I notin_fset option.collapse)
+  thus ?thesis
+    unfolding fmmerge_def zm
+    by (metis (no_types, lifting) inf_commute)
+qed
 
 lemma fmrel_on_fset_fmmerge1 [intro]:
-  "(\<And>x y z. z \<in> fmran' zm \<Longrightarrow> f x z \<Longrightarrow> f y z \<Longrightarrow> f (g x y) z) \<Longrightarrow>
-   fmrel_on_fset (fmdom zm) f xm zm \<Longrightarrow>
-   fmrel_on_fset (fmdom zm) f ym zm \<Longrightarrow>
-   fmrel_on_fset (fmdom zm) f (fmmerge g xm ym) zm"
-  unfolding fmmerge_def
-  apply (rule fmrel_on_fsetI)
-  apply (frule_tac ?xm="xm" in fmrel_on_fset_fmdom, simp)
-  apply (frule_tac ?xm="ym" in fmrel_on_fset_fmdom, simp)
-  unfolding fmlookup_of_list fmlookup_dom_iff
-  apply auto
-  apply (unfold option_rel_Some2)
-  apply (rule_tac ?x="g aa ab" in exI)
-  apply auto
-  apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI)
-  by (metis fmdomI fmran'I fmrel_on_fsetD option.rel_inject(2))
+  assumes "\<And>x y z. z \<in> fmran' zm \<Longrightarrow> f x z \<Longrightarrow> f y z \<Longrightarrow> f (g x y) z"
+      and "fmrel_on_fset (fmdom zm) f xm zm"
+      and "fmrel_on_fset (fmdom zm) f ym zm"
+    shows "fmrel_on_fset (fmdom zm) f (fmmerge g xm ym) zm"
+proof -
+  {
+    fix x a b c
+    assume "x |\<in>| fmdom zm"
+    moreover hence "x |\<in>| fmdom xm |\<inter>| fmdom ym"
+      by (meson assms(2) assms(3) finterI fmrel_on_fset_fmdom)
+    moreover assume "fmlookup xm x = Some a"
+    moreover assume "fmlookup ym x = Some b"
+    moreover assume "fmlookup zm x = Some c"
+    moreover from assms calculation have "f (g a b) c"
+      by (metis fmran'I fmrel_on_fsetD option.rel_inject(2))
+    ultimately have
+      "rel_option f (fmlookup (fmmerge g xm ym) x) (fmlookup zm x)"
+      unfolding fmmerge_def fmlookup_of_list
+      apply auto
+      unfolding option_rel_Some2
+      apply (rule_tac ?x="g a b" in exI)
+      by (auto simp add: map_of_map_restrict fmdom.rep_eq domI)
+  }
+  with assms(2) assms(3) show ?thesis
+    by (meson fmdomE fmrel_on_fsetI fmrel_on_fset_fmdom)
+qed
 
 lemma fmrel_on_fset_fmmerge2 [intro]:
-  "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
-    fmrel_on_fset (fmdom ym) f xm (fmmerge g xm ym)"
-  apply (rule fmrel_on_fsetI)
-  apply (auto simp add: Option.rel_option_iff option.case_eq_if
-          fmmerge_def fmlookup_of_list)
-  apply (drule map_of_map_inter_eq_None; auto)
-  apply (drule map_of_map_inter_eq_Some; auto)
-  apply (frule map_of_map_inter_eq_Some; auto)
-  apply (auto simp add: map_of_map_restrict fmdom.rep_eq domI fmran'I)
-  done
+  assumes "\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)"
+    shows "fmrel_on_fset (fmdom ym) f xm (fmmerge g xm ym)"
+proof -
+  {
+    fix x a b
+    assume "x |\<in>| fmdom xm |\<inter>| fmdom ym"
+    moreover assume "fmlookup xm x = Some a"
+    moreover assume "fmlookup ym x = Some b"
+    ultimately have
+      "rel_option f (fmlookup xm x) (fmlookup (fmmerge g xm ym) x)"
+      unfolding fmmerge_def fmlookup_of_list
+      apply auto
+      unfolding option_rel_Some1
+      apply (rule_tac ?x="g a b" in exI)
+      by (auto simp add: map_of_map_restrict fmember.rep_eq assms fmran'I)
+  }
+  with assms show ?thesis
+    apply auto
+    apply (rule fmrel_on_fsetI)
+    by (metis (full_types) finterD1 fmdomE fmdom_fmmerge fmdom_notD rel_option_None2)
+qed
 
 (*** Acyclicity *************************************************************)
 
@@ -113,34 +104,34 @@ subsection{* Acyclicity *}
 abbreviation "acyclic_on xs R \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
 
 lemma fmrel_acyclic:
-  "acyclic_on (fmran' xm) r \<Longrightarrow>
-   fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   fmrel r ym xm \<Longrightarrow>
+  "acyclic_on (fmran' xm) R \<Longrightarrow>
+   fmrel R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel R ym xm \<Longrightarrow>
    xm = ym"
   by (metis (full_types) fmap_ext fmran'I fmrel_cases option.sel
             tranclp.trancl_into_trancl)
 
 lemma fmrel_acyclic':
-  "acyclic_on (fmran' ym) r \<Longrightarrow>
-   fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   fmrel r ym xm \<Longrightarrow>
+  "acyclic_on (fmran' ym) R \<Longrightarrow>
+   fmrel R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel R ym xm \<Longrightarrow>
    xm = ym"
   by (smt fmran'E fmran'I fmrel_acyclic fmrel_cases option.inject
           tranclp_into_tranclp2)
 
 lemma fmrel_on_fset_acyclic:
-  "acyclic_on (fmran' xm) r \<Longrightarrow>
-   fmrel_on_fset (fmdom ym) r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   fmrel_on_fset (fmdom xm) r ym xm \<Longrightarrow>
+  "acyclic_on (fmran' xm) R \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom xm) R ym xm \<Longrightarrow>
    xm = ym"
   by (smt fmap_ext fmdom_filter fmfilter_alt_defs(5) fmlookup_filter
           fmrel_acyclic fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict
           fmrestrict_fset_dom)
 
 lemma fmrel_on_fset_acyclic':
-  "acyclic_on (fmran' ym) r \<Longrightarrow>
-   fmrel_on_fset (fmdom ym) r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   fmrel_on_fset (fmdom xm) r ym xm \<Longrightarrow>
+  "acyclic_on (fmran' ym) R \<Longrightarrow>
+   fmrel_on_fset (fmdom ym) R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   fmrel_on_fset (fmdom xm) R ym xm \<Longrightarrow>
    xm = ym"
   by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff
           fmrel_on_fset_acyclic fmrel_on_fset_alt_def fmrel_on_fset_fmdom
@@ -303,54 +294,19 @@ text{* The proof was derived from the accepted answer on the website
    Stack Overflow that is available at
    https://stackoverflow.com/a/53585232/632199
    and provided with the permission of the author of the answer *}
-(*
+
 lemma fmrel_to_trancl:
   assumes "reflp r"
       and "fmrel r\<^sup>+\<^sup>+ xm ym"
     shows "(fmrel r)\<^sup>+\<^sup>+ xm ym"
 proof -
   from assms(2) have "fmrel r\<^sup>*\<^sup>* xm ym"
-(*    by (meson assms(2) fmap.rel_mono_strong tranclp_into_rtranclp)*)
-*)
-lemma fmrel_to_trancl:
-  "reflp r \<Longrightarrow>
-   fmrel r\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   (fmrel r)\<^sup>+\<^sup>+ xm ym"
-  apply (drule_tac ?Ra="r\<^sup>*\<^sup>*" in fmap.rel_mono_strong, auto)
-  apply (frule fmrel_to_rtrancl, auto)
-  apply (rule rtranclp_into_tranclp2, auto)
-  by (simp add: fmap.rel_reflp reflpD)
-
-thm fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl
-(*
-proof -
-  have "reflp r \<Longrightarrow> fmrel r\<^sup>*\<^sup>* xm ym \<Longrightarrow> (fmrel r)\<^sup>+\<^sup>+ xm ym"
-    by (metis fmap.rel_reflp fmrel_to_rtrancl reflpD rtranclpD tranclp.r_into_trancl)
-  then show ?thesis
-*)
-(*
-  apply (drule_tac ?Ra="r\<^sup>*\<^sup>*" in fmap.rel_mono_strong, auto)
-*)
-(*  by (metis fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl fmrel_to_rtrancl)*)
-(*  apply (frule fmrel_to_rtrancl, auto)
-  by (metis fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl)*)
-(*
-  by (metis fmap.rel_mono_strong fmap.rel_reflp fmrel_to_rtrancl
-            r_into_rtranclp reflclp_tranclp reflpD rtranclpD
-            rtranclp_idemp rtranclp_reflclp tranclp.r_into_trancl)
-*)
-(*
-  by (smt fmap.rel_mono_strong fmap.rel_reflp fmrel_to_rtrancl
-          r_into_rtranclp reflclp_tranclp reflp_def rtranclpD
-          rtranclp_idemp rtranclp_reflclp tranclp.r_into_trancl) 
-*)
-(*  by (metis fmrel_to_rtrancl fmap.rel_mono_strong fmap.rel_refl
-            r_into_rtranclp reflclp_tranclp rtranclpD rtranclp_idemp
-            rtranclp_reflclp tranclp.r_into_trancl)*)
-
-thm fmap.rel_mono_strong fmap.rel_reflp fmrel_to_rtrancl
-thm r_into_rtranclp reflclp_tranclp reflpD rtranclpD
-thm rtranclp_idemp rtranclp_reflclp tranclp.r_into_trancl
+    by (drule_tac ?Ra="r\<^sup>*\<^sup>*" in fmap.rel_mono_strong; auto)
+  with assms(1) have "(fmrel r)\<^sup>*\<^sup>* xm ym"
+    by (simp add: fmrel_to_rtrancl)
+  with assms(1) show ?thesis
+    by (metis fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl)
+qed
 
 lemma fmrel_tranclp_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>

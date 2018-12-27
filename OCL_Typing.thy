@@ -737,8 +737,8 @@ lemma
      iterator_typing \<Gamma> src its body \<tau>\<^sub>2 \<sigma>\<^sub>2 \<rho>\<^sub>2 \<Longrightarrow>
      \<tau>\<^sub>1 = \<tau>\<^sub>2 \<and> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> \<rho>\<^sub>1 = \<rho>\<^sub>2"
 proof (induct \<Gamma> expr \<tau> and \<Gamma> prts \<tau> and \<Gamma> src its body \<tau>\<^sub>1 \<sigma>\<^sub>1 \<rho>\<^sub>1
-         arbitrary: \<sigma> and \<sigma> and \<tau>\<^sub>2 \<sigma>\<^sub>2 \<rho>\<^sub>2
-         rule: typing_collection_parts_typing_iterator_typing.inducts)
+       arbitrary: \<sigma> and \<sigma> and \<tau>\<^sub>2 \<sigma>\<^sub>2 \<rho>\<^sub>2
+       rule: typing_collection_parts_typing_iterator_typing.inducts)
   case (NullLiteralT \<Gamma>) thus ?case by auto
 next
   case (InvalidLiteralT \<Gamma>) thus ?case by auto
