@@ -201,18 +201,18 @@ lemma subtuple_to_trancl:
   by (simp_all add: fmrel_to_trancl)
 
 lemma trancl_to_strict_subtuple:
-  "(strict_subtuple R)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   acyclic_on (fmran' ym) R \<Longrightarrow>
+  "acyclic_on (fmran' ym) R \<Longrightarrow>
+   (strict_subtuple R)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    strict_subtuple R\<^sup>*\<^sup>* xm ym"
-  apply (induct rule: converse_tranclp_induct)
+  apply (erule converse_tranclp_induct)
   apply (metis r_into_rtranclp strict_subtuple_mono)
   using strict_subtuple_trans'' by blast
 
 lemma trancl_to_strict_subtuple':
-  "(strict_subtuple (\<lambda>x y. x = y \<or> R x y))\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   acyclic_on (fmran' ym) R \<Longrightarrow>
+  "acyclic_on (fmran' ym) R \<Longrightarrow>
+   (strict_subtuple (\<lambda>x y. x = y \<or> R x y))\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> R x y)\<^sup>*\<^sup>* xm ym"
-  apply (induct rule: converse_tranclp_induct)
+  apply (erule converse_tranclp_induct)
   apply (metis (no_types, lifting) r_into_rtranclp strict_subtuple_mono)
   using strict_subtuple_trans''' by blast
 
@@ -244,8 +244,7 @@ proof -
   hence "(strict_subtuple (\<lambda>x y. x = y \<or> R x y))\<^sup>+\<^sup>+ xm ym"
     by (rule tranclp_trans_induct;
         auto simp add: assms(1) tranclp.r_into_trancl)
-  hence "strict_subtuple (\<lambda>x y. x = y \<or> R x y)\<^sup>*\<^sup>* xm ym"
-    using assms(3)
+  with assms(3) have "strict_subtuple (\<lambda>x y. x = y \<or> R x y)\<^sup>*\<^sup>* xm ym"
     by (rule trancl_to_strict_subtuple')
   thus ?thesis by simp
 qed
