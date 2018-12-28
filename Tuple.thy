@@ -80,7 +80,7 @@ lemma strict_subtuple_antisym:
   by (auto simp add: subtuple_antisym)
 
 lemma subtuple_acyclic:
-  "acyclic_on (fmran' xm) P \<Longrightarrow>
+  "acyclicP_on (fmran' xm) P \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y) ym xm \<Longrightarrow>
    xm = ym"
@@ -91,10 +91,10 @@ lemma subtuple_acyclic:
   apply (metis fmrestrict_fset_dom)
   apply (erule_tac ?x="x" in fmrel_cases)
   apply (metis fmrestrict_fset_dom)
-  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp1)
+  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp1 tranclp_unfold)
 
 lemma subtuple_acyclic':
-  "acyclic_on (fmran' ym) P \<Longrightarrow>
+  "acyclicP_on (fmran' ym) P \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    subtuple (\<lambda>x y. x = y \<or> P x y) ym xm \<Longrightarrow>
    xm = ym"
@@ -105,10 +105,10 @@ lemma subtuple_acyclic':
   apply (metis fmrestrict_fset_dom)
   apply (erule_tac ?x="x" in fmrel_cases)
   apply (metis fmrestrict_fset_dom)
-  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp2)
+  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp2 tranclp_unfold)
 
 lemma subtuple_acyclic'':
-  "acyclic_on (fmran' ym) R \<Longrightarrow>
+  "acyclicP_on (fmran' ym) R \<Longrightarrow>
    subtuple R\<^sup>*\<^sup>* xm ym \<Longrightarrow>
    subtuple R ym xm \<Longrightarrow>
    xm = ym"
@@ -119,10 +119,10 @@ lemma subtuple_acyclic'':
   apply (metis fmrestrict_fset_dom)
   apply (erule_tac ?x="x" in fmrel_cases)
   apply (metis fmrestrict_fset_dom)
-  by (metis fmran'I option.inject rtranclp_into_tranclp2)
+  by (metis fmran'I option.inject rtranclp_into_tranclp2 tranclp_unfold)
 
 lemma strict_subtuple_trans:
-  "acyclic_on (fmran' xm) P \<Longrightarrow>
+  "acyclicP_on (fmran' xm) P \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y) ym zm \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm zm"
@@ -131,7 +131,7 @@ lemma strict_subtuple_trans:
   by (drule_tac ?ym="ym" in subtuple_acyclic; auto)
 
 lemma strict_subtuple_trans':
-  "acyclic_on (fmran' zm) P \<Longrightarrow>
+  "acyclicP_on (fmran' zm) P \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y) xm ym \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ ym zm \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm zm"
@@ -140,7 +140,7 @@ lemma strict_subtuple_trans':
   by (drule_tac ?xm="ym" in subtuple_acyclic'; auto)
 
 lemma strict_subtuple_trans'':
-  "acyclic_on (fmran' zm) R \<Longrightarrow>
+  "acyclicP_on (fmran' zm) R \<Longrightarrow>
    strict_subtuple R xm ym \<Longrightarrow>
    strict_subtuple R\<^sup>*\<^sup>* ym zm \<Longrightarrow>
    strict_subtuple R\<^sup>*\<^sup>* xm zm"
@@ -150,7 +150,7 @@ lemma strict_subtuple_trans'':
   done
 
 lemma strict_subtuple_trans''':
-  "acyclic_on (fmran' zm) P \<Longrightarrow>
+  "acyclicP_on (fmran' zm) P \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y) xm ym \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>*\<^sup>* ym zm \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>*\<^sup>* xm zm"
@@ -201,7 +201,7 @@ lemma subtuple_to_trancl:
   by (simp_all add: fmrel_to_trancl)
 
 lemma trancl_to_strict_subtuple:
-  "acyclic_on (fmran' ym) R \<Longrightarrow>
+  "acyclicP_on (fmran' ym) R \<Longrightarrow>
    (strict_subtuple R)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    strict_subtuple R\<^sup>*\<^sup>* xm ym"
   apply (erule converse_tranclp_induct)
@@ -209,7 +209,7 @@ lemma trancl_to_strict_subtuple:
   using strict_subtuple_trans'' by blast
 
 lemma trancl_to_strict_subtuple':
-  "acyclic_on (fmran' ym) R \<Longrightarrow>
+  "acyclicP_on (fmran' ym) R \<Longrightarrow>
    (strict_subtuple (\<lambda>x y. x = y \<or> R x y))\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    strict_subtuple (\<lambda>x y. x = y \<or> R x y)\<^sup>*\<^sup>* xm ym"
   apply (erule converse_tranclp_induct)
@@ -234,7 +234,7 @@ lemma strict_subtuple_rtranclp_intro:
   assumes "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow>
            strict_subtuple (\<lambda>x y. x = y \<or> R x y) xm ym"
       and "bij_on_trancl R f"
-      and "acyclic_on (fmran' ym) R"
+      and "acyclicP_on (fmran' ym) R"
       and "R\<^sup>+\<^sup>+ (f xm) (f ym)"
     shows "strict_subtuple R\<^sup>*\<^sup>* xm ym"
 proof -

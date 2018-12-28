@@ -3,6 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
+chapter{* Preliminaries *}
 section{* Transitive Closures *}
 theory Transitive_Closure_Ext
   imports Main "HOL-Library.FuncSet"

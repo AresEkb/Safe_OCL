@@ -58,16 +58,14 @@ proof -
     moreover hence "x |\<in>| fmdom xm |\<inter>| fmdom ym"
       by (meson assms(2) assms(3) finterI fmrel_on_fset_fmdom)
     moreover assume "fmlookup xm x = Some a"
-    moreover assume "fmlookup ym x = Some b"
-    moreover assume "fmlookup zm x = Some c"
+                and "fmlookup ym x = Some b"
+                and "fmlookup zm x = Some c"
     moreover from assms calculation have "f (g a b) c"
       by (metis fmran'I fmrel_on_fsetD option.rel_inject(2))
     ultimately have
       "rel_option f (fmlookup (fmmerge g xm ym) x) (fmlookup zm x)"
-      unfolding fmmerge_def fmlookup_of_list
-      apply auto
-      unfolding option_rel_Some2
-      apply (rule_tac ?x="g a b" in exI)
+      unfolding fmmerge_def fmlookup_of_list apply auto
+      unfolding option_rel_Some2 apply (rule_tac ?x="g a b" in exI)
       by (auto simp add: map_of_map_restrict fmdom.rep_eq domI)
   }
   with assms(2) assms(3) show ?thesis
@@ -81,14 +79,11 @@ proof -
   {
     fix x a b
     assume "x |\<in>| fmdom xm |\<inter>| fmdom ym"
-    moreover assume "fmlookup xm x = Some a"
-    moreover assume "fmlookup ym x = Some b"
-    ultimately have
-      "rel_option f (fmlookup xm x) (fmlookup (fmmerge g xm ym) x)"
-      unfolding fmmerge_def fmlookup_of_list
-      apply auto
-      unfolding option_rel_Some1
-      apply (rule_tac ?x="g a b" in exI)
+       and "fmlookup xm x = Some a"
+       and "fmlookup ym x = Some b"
+    hence "rel_option f (fmlookup xm x) (fmlookup (fmmerge g xm ym) x)"
+      unfolding fmmerge_def fmlookup_of_list apply auto
+      unfolding option_rel_Some1 apply (rule_tac ?x="g a b" in exI)
       by (auto simp add: map_of_map_restrict fmember.rep_eq assms fmran'I)
   }
   with assms show ?thesis
@@ -101,41 +96,59 @@ qed
 
 subsection{* Acyclicity *}
 
-abbreviation "acyclic_on xs R \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> \<not> R\<^sup>+\<^sup>+ x x)"
+abbreviation "acyclic_on xs r \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> (x, x) \<notin> r\<^sup>+)"
+
+abbreviation "acyclicP_on xs r \<equiv> acyclic_on xs {(x, y). r x y}"
 
 lemma fmrel_acyclic:
-  "acyclic_on (fmran' xm) R \<Longrightarrow>
+  "acyclicP_on (fmran' xm) R \<Longrightarrow>
    fmrel R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel R ym xm \<Longrightarrow>
    xm = ym"
-  by (metis (full_types) fmap_ext fmran'I fmrel_cases option.sel
-            tranclp.trancl_into_trancl)
+  by (metis (full_types) fmap_ext fmran'I fmrel_cases
+            option.sel tranclp.trancl_into_trancl
+            tranclp_unfold)
 
 lemma fmrel_acyclic':
-  "acyclic_on (fmran' ym) R \<Longrightarrow>
-   fmrel R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   fmrel R ym xm \<Longrightarrow>
-   xm = ym"
-  by (smt fmran'E fmran'I fmrel_acyclic fmrel_cases option.inject
-          tranclp_into_tranclp2)
+  assumes "acyclicP_on (fmran' ym) R"
+      and "fmrel R\<^sup>+\<^sup>+ xm ym"
+      and "fmrel R ym xm"
+    shows "xm = ym"
+proof -
+  {
+    fix x
+    from assms(1) have
+      "rel_option R\<^sup>+\<^sup>+ (fmlookup xm x) (fmlookup ym x) \<Longrightarrow>
+       rel_option R (fmlookup ym x) (fmlookup xm x) \<Longrightarrow>
+       rel_option R (fmlookup xm x) (fmlookup ym x)"
+      by (metis (full_types) fmdom'_notD fmlookup_dom'_iff
+            fmran'I option.rel_sel option.sel
+            tranclp_into_tranclp2 tranclp_unfold)
+  }
+  with assms show ?thesis
+    unfolding fmrel_iff
+    by (metis fmap.rel_mono_strong fmrelI fmrel_acyclic tranclp.simps)
+qed
 
 lemma fmrel_on_fset_acyclic:
-  "acyclic_on (fmran' xm) R \<Longrightarrow>
+  "acyclicP_on (fmran' xm) R \<Longrightarrow>
    fmrel_on_fset (fmdom ym) R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel_on_fset (fmdom xm) R ym xm \<Longrightarrow>
    xm = ym"
-  by (smt fmap_ext fmdom_filter fmfilter_alt_defs(5) fmlookup_filter
-          fmrel_acyclic fmrel_fmdom_eq fmrel_on_fset_fmrel_restrict
-          fmrestrict_fset_dom)
+  unfolding fmrel_on_fset_fmrel_restrict
+  by (metis (no_types, lifting) fmdom_filter fmfilter_alt_defs(5)
+        fmfilter_cong fmlookup_filter fmrel_acyclic fmrel_fmdom_eq
+        fmrestrict_fset_dom option.simps(3))
 
 lemma fmrel_on_fset_acyclic':
-  "acyclic_on (fmran' ym) R \<Longrightarrow>
+  "acyclicP_on (fmran' ym) R \<Longrightarrow>
    fmrel_on_fset (fmdom ym) R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel_on_fset (fmdom xm) R ym xm \<Longrightarrow>
    xm = ym"
-  by (smt fBall_alt_def fmlookup_dom_iff fmlookup_ran'_iff
-          fmrel_on_fset_acyclic fmrel_on_fset_alt_def fmrel_on_fset_fmdom
-          option.simps(11) tranclp_into_tranclp2)
+  unfolding fmrel_on_fset_fmrel_restrict
+  by (metis (no_types, lifting) ffmember_filter fmdom_filter
+        fmfilter_alt_defs(5) fmfilter_cong fmrel_acyclic'
+        fmrel_fmdom_eq fmrestrict_fset_dom)
 
 (*** Transitive Closures ****************************************************)
 
@@ -153,8 +166,7 @@ lemma fmrel_on_fset_trans:
    fmrel_on_fset (fmdom zm) Q ym zm \<Longrightarrow>
    fmrel_on_fset (fmdom zm) R xm zm"
   apply (rule fmrel_on_fsetI)
-  unfolding option.rel_sel
-  apply auto
+  unfolding option.rel_sel apply auto
   apply (meson fmdom_notI fmrel_on_fset_fmdom)
   by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom
             option.rel_sel option.sel)
@@ -217,8 +229,7 @@ lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
   shows "P xm ym"
   using R dom_eq
 proof (induct xm arbitrary: ym)
-  case fmempty
-  then show ?case
+  case fmempty thus ?case
     by (metis fempty_iff fmdom_empty fmempty_of_list fmfilter_alt_defs(5)
         fmfilter_false fmrestrict_fset_dom local.nil)
 next
@@ -232,13 +243,13 @@ next
       R_x_z: "R x z" and
       R_xm_zm: "fmrel R xm zm"
       using fmap_eqdom_Cons1 by metis
-    then have dom_xm_eq_dom_zm: "fmdom xm = fmdom zm" 
+    hence dom_xm_eq_dom_zm: "fmdom xm = fmdom zm" 
       using fmrel_fmdom_eq by blast  
     with R_xm_zm fmupd.hyps(1) have P_xm_zm: "P xm zm" by blast
     from R_x_z R_xm_zm dom_xm_eq_dom_zm P_xm_zm have 
       "P (fmupd i x xm) (fmupd i z zm)" 
       by (rule step)
-    then show ?thesis by (simp add: ym_eq_z_zm)
+    thus ?thesis by (simp add: ym_eq_z_zm)
   qed
 qed
 
@@ -248,44 +259,43 @@ text{* The proof was derived from the accepted answer on the website
    and provided with the permission of the author of the answer *}
 
 lemma fmrel_to_rtrancl:
-  assumes as_r: "reflp r" 
-      and rel_rpp_xm_ym: "fmrel r\<^sup>*\<^sup>* xm ym" 
+  assumes as_r: "reflp r"
+      and rel_rpp_xm_ym: "fmrel r\<^sup>*\<^sup>* xm ym"
     shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
 proof -
-  from rel_rpp_xm_ym have dom_xm_eq_dom_ym: "fmdom xm = fmdom ym" 
+  from rel_rpp_xm_ym have "fmdom xm = fmdom ym"
     using fmrel_fmdom_eq by blast
-  from rel_rpp_xm_ym dom_xm_eq_dom_ym show "(fmrel r)\<^sup>*\<^sup>* xm ym"
+  with rel_rpp_xm_ym show "(fmrel r)\<^sup>*\<^sup>* xm ym"
   proof (induct rule: fmap_eqdom_induct)
-    case nil then show ?case by auto
+    case nil show ?case by auto
   next
     case (step x xm y ym i) show ?case
     proof -
-      from as_r have lp_xs_xs: "fmrel r xm xm"
-        by (simp add: fmap.rel_reflp reflpD)
-      from step.hyps(1) have x_xs_y_zs: 
-        "(fmrel r)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
-      proof(induction rule: rtranclp_induct)
-        case base then show ?case by simp
+      from step.hyps(1) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
+      proof (induct rule: rtranclp_induct)
+        case base show ?case by simp
       next
-        case (step y z) then show ?case 
+        case (step y z) show ?case
         proof -
-          have rt_step_2: "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i z xm)" 
-            by (rule r_into_rtranclp, simp add: fmrel_upd lp_xs_xs step.hyps(2))
-          from step.IH rt_step_2 show ?thesis by (rule rtranclp_trans) 
-        qed      
+          from as_r have "fmrel r xm xm"
+            by (simp add: fmap.rel_reflp reflpD)
+          with step.hyps(2) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i z xm)"
+            by (simp add: fmrel_upd r_into_rtranclp)
+          with step.hyps(3) show ?thesis by simp
+        qed
       qed
-      from step.hyps(4) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i y ym)"
-      proof(induction rule: rtranclp_induct)
-        case base then show ?case by simp
+      also from step.hyps(4) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i y ym)"
+      proof (induct rule: rtranclp_induct)
+        case base show ?case by simp
       next
         case (step ya za) show ?case
         proof -
-          have rt_step_2: "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)" 
-            by (rule r_into_rtranclp; simp add: as_r fmrel_upd reflpD step.hyps(2))
-          from step.IH rt_step_2 show ?thesis by (rule rtranclp_trans)
+          from step.hyps(2) as_r have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)"
+            by (simp add: fmrel_upd r_into_rtranclp reflp_def) 
+          with step.hyps(3) show ?thesis by simp
         qed
       qed
-      with x_xs_y_zs show ?thesis by simp
+      finally show ?thesis by simp
     qed
   qed
 qed

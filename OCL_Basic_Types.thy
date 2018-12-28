@@ -8,36 +8,7 @@ theory OCL_Basic_Types
   imports Main "HOL-Library.FSet" OCL_Common
 begin
 
-(*
-  Тут много определений и теорем для систем типов:
-  http://gallium.inria.fr/~remy/mpri/cours1.pdf
-*)
-
-(*
-  https://en.wikipedia.org/wiki/Order_theory
-  https://en.wikipedia.org/wiki/Order_embedding
-
-  https://en.wikipedia.org/wiki/Induced_subgraph
-  Функтор Set создает порожденный граф, но с дополнительным свойством
-
-  https://en.wikipedia.org/wiki/Closure_operator
-  По ссылке примеры аксиом очень похоже на те которые доказывал для замыканий
-
-  https://en.wikipedia.org/wiki/Galois_connection
-  Тут про обратные функции, они тоже использовались для замыканий
-
-  https://en.wikipedia.org/wiki/Limit-preserving_function_(order_theory)
-  Многие функции сохраняют пределы
-*)
-
-
 (*** Basic Types ************************************************************)
-
-(* Во многих языках перечисления упорядочены, но в OCL нет, поэтому
-   используем множество, а не список
-   Возможно стоит заменить fset на натуральные числа
-   Достаточно даже одного чила - количество литералов
-*)
 
 section{* Definition of Basic Types and a Subtype Relation *}
 
@@ -51,23 +22,8 @@ datatype 'a basic_type =
 | ObjectType 'a
 | Enum "vname fset"
 
-(* TODO: Min and max occurs in collections *)
-(* Зачем SupType? По спецификации вроде все типы соответствуют OclAny или нет? 
-   В 11.2.1 написано, что OclAny - это супер-тип для всех остальных типов
-   В A.2.6 Special Types написано, что OclAny не является супер-типом для коллекций
-
-   OclVoid и OclInvalid являются подтипами и для коллекций тоже
-   Хотя в A.2.5.1 для коллекций ничего не сказано про \<epsilon>
-   Но в A.2.6 говорится, что всё таки это подтипы для всех типов и без оговорок
-*)
-
-(* Возможно стоит переименовать ObjectType в Class.
-   Нужно посмотреть спецификацию, там различают классы и типы для классов
-   Посмотреть название в спецификации
-*)
-
-inductive basic_subtype ::
-    "('a :: order) basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
+inductive basic_subtype
+    :: "('a :: order) basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
   "Boolean \<sqsubset>\<^sub>B OclAny"
 | "UnlimitedNatural \<sqsubset>\<^sub>B Integer"
 | "Integer \<sqsubset>\<^sub>B Real"
@@ -77,24 +33,19 @@ inductive basic_subtype ::
 | "c < d \<Longrightarrow> ObjectType c \<sqsubset>\<^sub>B ObjectType d"
 | "Enum literals \<sqsubset>\<^sub>B OclAny"
 
-declare basic_subtype.intros [intro]
+declare basic_subtype.intros [intro!]
 
-inductive_cases basic_subtype_x_Boolean[elim!]: "\<tau> \<sqsubset>\<^sub>B Boolean"
-inductive_cases basic_subtype_Boolean_x[elim!]: "Boolean \<sqsubset>\<^sub>B \<sigma>"
-inductive_cases basic_subtype_x_UnlimitedNatural[elim!]: "\<tau> \<sqsubset>\<^sub>B UnlimitedNatural"
-inductive_cases basic_subtype_UnlimitedNatural_x[elim!]: "UnlimitedNatural \<sqsubset>\<^sub>B \<sigma>"
-inductive_cases basic_subtype_x_Integer[elim!]: "\<tau> \<sqsubset>\<^sub>B Integer"
-inductive_cases basic_subtype_Integer_x[elim!]: "Integer \<sqsubset>\<^sub>B \<sigma>"
-inductive_cases basic_subtype_x_Real[elim!]: "\<tau> \<sqsubset>\<^sub>B Real"
-inductive_cases basic_subtype_Real_x[elim!]: "Real \<sqsubset>\<^sub>B \<sigma>"
-inductive_cases basic_subtype_x_String[elim!]: "\<tau> \<sqsubset>\<^sub>B String"
-inductive_cases basic_subtype_String_x[elim!]: "String \<sqsubset>\<^sub>B \<sigma>"
-inductive_cases basic_subtype_x_ObjectType[elim!]: "\<tau> \<sqsubset>\<^sub>B ObjectType c"
-inductive_cases basic_subtype_ObjectType_x[elim!]: "ObjectType c \<sqsubset>\<^sub>B \<sigma>"
-inductive_cases basic_subtype_x_OclAny[elim!]: "\<tau> \<sqsubset>\<^sub>B OclAny"
-inductive_cases basic_subtype_OclAny_x[elim!]: "OclAny \<sqsubset>\<^sub>B \<sigma>"
-inductive_cases basic_subtype_x_Enum[elim!]: "\<tau> \<sqsubset>\<^sub>B Enum literals"
-inductive_cases basic_subtype_Enum_x[elim!]: "Enum literals \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_x_Boolean [elim!]: "\<tau> \<sqsubset>\<^sub>B Boolean"
+inductive_cases basic_subtype_x_UnlimitedNatural [elim!]: "\<tau> \<sqsubset>\<^sub>B UnlimitedNatural"
+inductive_cases basic_subtype_x_Integer [elim!]: "\<tau> \<sqsubset>\<^sub>B Integer"
+inductive_cases basic_subtype_x_Real [elim!]: "\<tau> \<sqsubset>\<^sub>B Real"
+inductive_cases basic_subtype_x_String [elim!]: "\<tau> \<sqsubset>\<^sub>B String"
+inductive_cases basic_subtype_x_ObjectType [elim!]: "\<tau> \<sqsubset>\<^sub>B ObjectType c"
+inductive_cases basic_subtype_x_OclAny [elim!]: "\<tau> \<sqsubset>\<^sub>B OclAny"
+inductive_cases basic_subtype_x_Enum [elim!]: "\<tau> \<sqsubset>\<^sub>B Enum literals"
+
+inductive_cases basic_subtype_ObjectType_x [elim!]: "ObjectType c \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_OclAny_x [elim!]: "OclAny \<sqsubset>\<^sub>B \<sigma>"
 
 lemma basic_subtype_asym:
   "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow>
@@ -109,9 +60,9 @@ section{* Partial Order of Basic Types *}
 instantiation basic_type :: (order) order
 begin
 
-definition "less_basic_type \<equiv> basic_subtype\<^sup>+\<^sup>+"
+definition "(<) \<equiv> basic_subtype\<^sup>+\<^sup>+"
 
-definition "less_eq_basic_type \<equiv> basic_subtype\<^sup>*\<^sup>*"
+definition "(\<le>) \<equiv> basic_subtype\<^sup>*\<^sup>*"
 
 (*** Introduction Rules *****************************************************)
 
@@ -141,8 +92,8 @@ lemma type_less_eq_x_OclAny_intro [intro]:
 proof -
   have "basic_subtype\<^sup>*\<^sup>* Integer OclAny"
     by (rule_tac ?b="Real" in rtranclp.rtrancl_into_rtrancl; auto)
-  also have "basic_subtype\<^sup>*\<^sup>* UnlimitedNatural OclAny"
-    by (rule_tac ?b="Integer" in converse_rtranclp_into_rtranclp; auto simp add: calculation)
+  moreover hence "basic_subtype\<^sup>*\<^sup>* UnlimitedNatural OclAny"
+    by (rule_tac ?b="Integer" in converse_rtranclp_into_rtranclp; auto)
   ultimately show ?thesis
     unfolding less_eq_basic_type_def
     by (induct \<tau>; auto)
@@ -152,49 +103,49 @@ qed
 
 subsection{* Elimination Rules *}
 
-lemma type_less_eq_x_Boolean [elim!]:
+lemma type_less_x_Boolean [elim!]:
   "\<tau> < Boolean \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
-lemma type_less_eq_x_Boolean' [elim!]:
+lemma type_less_eq_x_Boolean [elim!]:
   "\<tau> \<le> Boolean \<Longrightarrow>
    (\<tau> = Boolean \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
   by (induct rule: converse_rtranclp_induct; auto)
 
-lemma type_less_eq_x_UnlimitedNatural [elim!]:
+lemma type_less_x_UnlimitedNatural [elim!]:
   "\<tau> < UnlimitedNatural \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
-lemma type_less_eq_x_UnlimitedNatural' [elim!]:
+lemma type_less_eq_x_UnlimitedNatural [elim!]:
   "\<tau> \<le> UnlimitedNatural \<Longrightarrow>
    (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
   by (induct rule: converse_rtranclp_induct; auto)
 
-lemma type_less_eq_x_Integer [elim!]:
+lemma type_less_x_Integer [elim!]:
   "\<tau> < Integer \<Longrightarrow>
    (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
-lemma type_less_eq_x_Integer' [elim!]:
+lemma type_less_eq_x_Integer [elim!]:
   "\<tau> \<le> Integer \<Longrightarrow>
    (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
   by (induct rule: converse_rtranclp_induct; auto)
 
-lemma type_less_eq_x_Real [elim!]:
+lemma type_less_x_Real [elim!]:
   "\<tau> < Real \<Longrightarrow>
    (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
-lemma type_less_eq_x_Real' [elim!]:
+lemma type_less_eq_x_Real [elim!]:
   "\<tau> \<le> Real \<Longrightarrow>
    (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow>
@@ -202,18 +153,18 @@ lemma type_less_eq_x_Real' [elim!]:
   unfolding less_eq_basic_type_def
   by (induct rule: converse_rtranclp_induct; auto)
 
-lemma type_less_eq_x_String [elim!]:
+lemma type_less_x_String [elim!]:
   "\<tau> < String \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
-lemma type_less_eq_x_String' [elim!]:
+lemma type_less_eq_x_String [elim!]:
   "\<tau> \<le> String \<Longrightarrow>
    (\<tau> = String \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
   by (induct rule: converse_rtranclp_induct; auto)
 
-lemma type_less_eq_x_ObjectType [elim!]:
+lemma type_less_x_ObjectType [elim!]:
   "\<tau> < ObjectType d \<Longrightarrow>
    (\<And>c. \<tau> = ObjectType c \<Longrightarrow> c < d \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_basic_type_def
@@ -221,7 +172,7 @@ lemma type_less_eq_x_ObjectType [elim!]:
   apply auto[1]
   using less_trans by auto
 
-lemma type_less_eq_x_ObjectType' [elim!]:
+lemma type_less_eq_x_ObjectType [elim!]:
   "\<tau> \<le> ObjectType d \<Longrightarrow>
    (\<And>c. \<tau> = ObjectType c \<Longrightarrow> c \<le> d \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
@@ -229,27 +180,18 @@ lemma type_less_eq_x_ObjectType' [elim!]:
   apply simp
   using dual_order.order_iff_strict by fastforce
 
-lemma type_less_eq_ObjectType_x' [elim!]:
-  "ObjectType c \<le> \<sigma> \<Longrightarrow>
-   (\<And>d. \<sigma> = ObjectType d \<Longrightarrow> c \<le> d \<Longrightarrow> P) \<Longrightarrow>
-   (\<sigma> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_eq_basic_type_def
-  apply (induct rule: rtranclp_induct)
-  apply simp
-  using le_less_trans less_le_not_le by blast
-
-lemma type_less_eq_x_Enum [elim!]:
+lemma type_less_x_Enum [elim!]:
   "\<tau> < Enum literals \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
-lemma type_less_eq_x_Enum' [elim!]:
+lemma type_less_eq_x_Enum [elim!]:
   "\<tau> \<le> Enum literals \<Longrightarrow>
    (\<tau> = Enum literals \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
   by (induct rule: converse_rtranclp_induct; auto)
 
-lemma type_less_eq_x_OclAny [elim!]:
+lemma type_less_x_OclAny [elim!]:
   "\<tau> < OclAny \<Longrightarrow>
    (\<tau> = Boolean \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow>
@@ -261,7 +203,7 @@ lemma type_less_eq_x_OclAny [elim!]:
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
-lemma type_less_eq_x_OclAny' [elim!]:
+lemma type_less_eq_x_OclAny [elim!]:
   "\<tau> \<le> OclAny \<Longrightarrow>
    (\<tau> = OclAny \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Boolean \<Longrightarrow> P) \<Longrightarrow>
@@ -289,7 +231,6 @@ lemma tranclp_less_basic_type:
 lemma basic_subtype_acyclic:
   "acyclicP basic_subtype"
   apply (rule acyclicI)
-  apply (auto)
   using OCL_Basic_Types.basic_subtype_irrefl OCL_Basic_Types.tranclp_less_basic_type by auto
 
 lemma antisym_basic_type:
@@ -480,15 +421,9 @@ instance
 
 end
 
-term "Integer::classes1 basic_type"
-
-value "basic_subtype_fun (Integer::classes1 basic_type) Real"
-value "basic_subtype_fun (Integer::classes1 basic_type) OclAny"
-value "basic_subtype_fun (Boolean::classes1 basic_type) Integer"
-
 value "(UnlimitedNatural::classes1 basic_type) < Real"
-value "(UnlimitedNatural::classes1 basic_type) \<le> Real"
-value "(Real::classes1 basic_type) < Real"
-value "(Real::classes1 basic_type) \<le> Real"
+value "(String::classes1 basic_type) \<le> Boolean"
+value "ObjectType Employee < ObjectType Person"
+value "ObjectType Person \<le> OclAny"
 
 end
