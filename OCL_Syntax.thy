@@ -10,18 +10,8 @@ begin
 
 section{* Standard Library Operations *}
 
-(* Only BasicOCL (EssentialOCL) is defined. So there is no states, messages, etc. *)
-
-(* В A.3.1.1 говорится, что в предыдущих версиях OCL это были обычные операции
-   с аргументом типа OclType. А сейчас это просто синтаксические конструкции -
-   ровно как я их и описал *)
-
-(* oclType() - эту операцию проблематично описать, непонятно какой у неё тип.
-   В спецификации говорится, что метатипа OclType сейчас нет, соответственно тип
-   не может быть значением, не может быть результатом какой-то операции.
-   Учитывая, что эта операция используется в основном для определения
-   oclAsType(), oclIsTypeOf(), oclIsKindOf(), то может она и не нужна?
-   Может её просто забыли убрать или оставили по ошибке *)
+text{* The OCL specification doesn't define OclType. So we implement
+ type operations as a syntactic constructs. *}
 
 datatype typeop = OclAsTypeOp | OclIsTypeOfOp | OclIsKindOfOp
 | SelectByKindOp | SelectByTypeOp
@@ -79,13 +69,13 @@ declare [[coercion "Inl :: string_ternop \<Rightarrow> ternop"]]
 declare [[coercion "Inr :: collection_ternop \<Rightarrow> ternop"]]
 
 datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
-| ExistsIter | ForAllIter | IsUniqueIter | OneIter
-| RejectIter | SelectIter | SortedByIter
+| ExistsIter | ForAllIter | OneIter | IsUniqueIter
+| SelectIter | RejectIter | SortedByIter
 
 section{* Expressions *}
 
 datatype collection_literal_kind =
-  CollectionKind | SetKind | OrderedSetKind | BagKind | SequenceKind
+  SetKind | OrderedSetKind | BagKind | SequenceKind | CollectionKind
 
 datatype 'a expr =
   Literal "'a literal_expr"

@@ -8,25 +8,6 @@ theory Object_Model
   imports OCL_Types "HOL-Library.Extended_Nat" "HOL-Library.Finite_Map"
 begin
 
-type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)
-(*
-definition denorm :: "('a \<rightharpoonup>\<^sub>f 'b) \<Rightarrow> ('a \<times> 'b) fset" where
-  "denorm m \<equiv> (\<lambda> k. (k, the (fmlookup m k))) |`| fmdom m"
-
-definition flatten :: "('a \<times> 'b fset) fset \<Rightarrow> ('a \<times> 'b) fset" where
-  "flatten s \<equiv> ffUnion ((\<lambda>(x,y). (\<lambda>z. (x,z)) |`| y) |`| s)"
-
-definition denorm3 :: "('a \<rightharpoonup>\<^sub>f 'b \<rightharpoonup>\<^sub>f 'c) \<Rightarrow> ('a \<times> 'b \<times> 'c) fset" where
-  "denorm3 m \<equiv> flatten ((\<lambda>k. (k, denorm (the (fmlookup m k)))) |`| fmdom m)"
-*)
-
-(*type_synonym cls = "string"*)
-type_synonym attr = "string"
-type_synonym assoc = "string"
-type_synonym role = "string"
-type_synonym oid = "string"
-
-(*type_synonym 'a class_set = "'a fset"*)
 type_synonym 'a attrs = "'a \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
 type_synonym 'a assoc_end = "'a \<times> nat \<times> enat"
 type_synonym 'a assocs = "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
@@ -34,16 +15,7 @@ type_synonym 'a model = "'a attrs \<times> 'a assocs"
 
 definition assoc_end_class :: "'a assoc_end \<Rightarrow> 'a" where
   "assoc_end_class \<equiv> fst"
-(*
-definition assoc_end_role :: "assoc_end \<Rightarrow> role" where
-  "assoc_end_role \<equiv> fst \<circ> snd"
 
-definition assoc_end_min :: "assoc_end \<Rightarrow> nat" where
-  "assoc_end_min \<equiv> fst \<circ> snd \<circ> snd"
-
-definition assoc_end_max :: "assoc_end \<Rightarrow> enat" where
-  "assoc_end_max \<equiv> snd \<circ> snd \<circ> snd"
-*)
 definition assoc_end_min :: "'a assoc_end \<Rightarrow> nat" where
   "assoc_end_min \<equiv> fst \<circ> snd"
 
@@ -64,16 +36,11 @@ definition assoc_end_min_le_max :: "'a assoc_end \<Rightarrow> bool" where
 
 definition assoc_classes :: "'a assoc_end list \<Rightarrow> 'a fset" where
   "assoc_classes \<equiv> fset_of_list \<circ> (map assoc_end_class)"
-
+(*
 definition associates :: "(role \<rightharpoonup>\<^sub>f 'a assoc_end) \<Rightarrow> 'a fset" where
   "associates ends \<equiv>  assoc_end_class |`| fmran ends"
-(*
-definition find_assocs :: "assocs \<Rightarrow> cls \<Rightarrow> assocs" where
-  "find_assocs assocs cls \<equiv> fmfilter (\<lambda>assoc.
-    case fmlookup assocs assoc of Some ends \<Rightarrow>
-      cls |\<in>| associates ends) assocs"
 *)
-
+(*
 definition assoc_refer_class :: "(role \<rightharpoonup>\<^sub>f 'a assoc_end) \<Rightarrow> 'a \<Rightarrow> bool" where
   "assoc_refer_class ends cls \<equiv>
     fBex (fmdom ends) (\<lambda>role.
@@ -87,6 +54,7 @@ definition find_assocs :: "'a assocs \<Rightarrow> 'a \<Rightarrow> 'a assocs" w
 
 definition participating :: "'a assocs \<Rightarrow> 'a \<Rightarrow> assoc fset" where
   "participating assocs cls \<equiv> fmdom (find_assocs assocs cls)"
+*)
 (*
 term "fmran (find_assocs assocs1 cls1)"
 definition find_assoc_end :: "assocs \<Rightarrow> cls \<Rightarrow> role \<Rightarrow> assoc_end" where
@@ -99,17 +67,19 @@ definition find_assocs2 :: "assocs \<Rightarrow> cls \<Rightarrow> role \<Righta
       case fmlookup ends role of None \<Rightarrow> False | Some end \<Rightarrow>
         assoc_end_class end \<noteq> cls) (find_assocs assocs cls))"
 *)
+(*
 definition find_assocs2 :: "'a assocs \<Rightarrow> 'a \<Rightarrow> role \<Rightarrow> assoc fset" where
   "find_assocs2 assocs cls role \<equiv> fmdom (fmfilter (\<lambda>assoc.
     case fmlookup assocs assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
       (case fmlookup ends role of None \<Rightarrow> False | Some end \<Rightarrow>
         assoc_end_class end \<noteq> cls)) (find_assocs assocs cls))"
+*)
 (*
 definition find_assoc :: "assocs \<Rightarrow> cls \<Rightarrow> role \<Rightarrow> assoc" where
   "find_assoc assocs cls role \<equiv> fthe_elem (find_assocs2 assocs cls role)"
 *)
 
-
+(*
 definition assoc_refer_class2 :: "(role \<rightharpoonup>\<^sub>f 'a assoc_end) \<Rightarrow> 'a \<Rightarrow> nat" where
   "assoc_refer_class2 ends cls \<equiv>
     fcard (fmdom (fmfilter (\<lambda>role.
@@ -127,11 +97,15 @@ definition q :: "'a \<Rightarrow> (role \<rightharpoonup>\<^sub>f 'a assoc_end) 
       of 0 \<Rightarrow> fmempty
        | (Suc 0) \<Rightarrow> assoc_refer_class3 ends cls
        | (Suc (Suc 0)) \<Rightarrow> ends"
-
+*)
 (* Example *)
 
 (*definition classes1 :: "'a fset" where
   "classes1 \<equiv> {|''Person'',''Car'',''Company''|}"*)
+
+(*** Test Cases *************************************************************)
+
+section{* Test Cases *}
 
 definition "attrs1 \<equiv> fmap_of_list [
   (Person, fmap_of_list [
@@ -155,8 +129,9 @@ definition assocs1 :: "classes1 assocs" where
     (''member_of'', (Project, 0, \<infinity>)),
     (''members'', (Employee, 1, 20))]),
   (''ManagerEmployee'', fmap_of_list [
-    (''manager'', (Employee, 0::nat, 1)),
-    (''employees'', (Employee, 0, \<infinity>))]),
+    (''line_manager'', (Employee, 0::nat, 1)),
+    (''project_manager'', (Employee, 0::nat, \<infinity>)),
+    (''employees'', (Employee, 3, 7))]),
   (''ProjectCustomer'', fmap_of_list [
     (''projects'', (Project, 0, \<infinity>)),
     (''customer'', (Customer, 1, 1))]),
@@ -164,43 +139,19 @@ definition assocs1 :: "classes1 assocs" where
     (''project'', (Project, 1, 1)),
     (''tasks'', (Task, 0, \<infinity>))]),
   (''SprintTaskAssignee'', fmap_of_list [
-    (''sprint'', (Sprint, 0, \<infinity>)),
-    (''tasks'', (Task, 0, \<infinity>)),
+    (''sprint'', (Sprint, 0, 10)),
+    (''tasks'', (Task, 0, 5)),
     (''assignee'', (Employee, 0, 1))])]"
 
 (* TODO: Уточнить множественность для N-арных ассоциаций *)
 
 definition "model1 \<equiv> (attrs1, assocs1)"
 
-
-definition find_assocs3 :: "'a assocs \<Rightarrow> 'a \<Rightarrow> 'a assocs" where
-  "find_assocs3 assocs cls \<equiv> fmmap (q cls) assocs"
-
-definition find_assocs4 :: "'a assocs \<Rightarrow> role \<Rightarrow> 'a assocs" where
-  "find_assocs4 assocs role \<equiv>
-    fmfilter (\<lambda>assoc.
-      case fmlookup assocs assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
-        (case fmlookup ends role of None \<Rightarrow> False | Some end \<Rightarrow> True)) assocs"
-
-definition assoc_refer_class5 :: "(role \<rightharpoonup>\<^sub>f 'a assoc_end) \<Rightarrow> 'a \<Rightarrow> role \<Rightarrow> bool" where
-  "assoc_refer_class5 ends cls role \<equiv>
-    case fmlookup ends role of None \<Rightarrow> False | Some end \<Rightarrow>
-      cls = assoc_end_class end"
-(*
-definition assoc_refer_class5 :: "(role \<rightharpoonup>\<^sub>f assoc_end) \<Rightarrow> cls \<Rightarrow> role \<Rightarrow> bool" where
-  "assoc_refer_class5 ends cls role \<equiv>
-    (map_option assoc_end_class \<circ> fmlookup ends) role = Some cls"
-*)
 definition assoc_refer_role5 :: "(role \<rightharpoonup>\<^sub>f 'a assoc_end) \<Rightarrow> role \<Rightarrow> bool" where
   "assoc_refer_role5 ends role \<equiv> fmlookup ends role \<noteq> None"
 
 (* from нужен для N-арных ассоциаций, в которых у исходного класса больше одной роли
    С другой стороны, не очень понятно зачем  *)
-definition find_assocs5 :: "'a assocs \<Rightarrow> 'a \<Rightarrow> role \<Rightarrow> role \<Rightarrow> 'a assocs" where
-  "find_assocs5 assocs cls from to \<equiv>
-    fmfilter (\<lambda>assoc.
-      case fmlookup assocs assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
-        assoc_refer_class5 ends cls from \<and> assoc_refer_role5 ends to) assocs"
 
 definition assoc_refer_class7 :: "(role \<rightharpoonup>\<^sub>f 'a assoc_end) \<Rightarrow> 'a \<Rightarrow> bool" where
   "assoc_refer_class7 ends cls \<equiv>
@@ -214,9 +165,9 @@ definition find_assocs7 :: "'a assocs \<Rightarrow> 'a \<Rightarrow> role \<Righ
         assoc_refer_class7 (fmdrop to ends) cls \<and> assoc_refer_role5 ends to) assocs"
 
 definition find_assoc_end :: "'a assocs \<Rightarrow> 'a \<Rightarrow> role \<Rightarrow> 'a assoc_end option" where
-  "find_assoc_end assocs cls role \<equiv>
-    let found = fmran (find_assocs7 assocs cls '''' role) in
-    if fcard found = 1 then fmlookup (fthe_elem found) role else None"
+  "find_assoc_end assocs cls to \<equiv>
+    let found = fmran (find_assocs7 assocs cls '''' to) in
+    if fcard found = 1 then fmlookup (fthe_elem found) to else None"
 (*
 definition find_assocs4 :: "assocs \<Rightarrow> cls \<Rightarrow> (role \<rightharpoonup>\<^sub>f assoc_end)" where
   "find_assocs4 assocs cls \<equiv> ffold fmadd fmempty (fmran (find_assocs3 assocs cls))"

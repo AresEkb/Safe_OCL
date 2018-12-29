@@ -267,7 +267,7 @@ section{* Upper Semilattice of Basic Types *}
 instantiation basic_type :: (semilattice_sup) semilattice_sup
 begin
 
-(* Для такого определения быстрее доказываются терминальность и т.п. *)
+(* We use "case"-style because it works faster *)
 fun sup_basic_type where
   "ObjectType c \<squnion> \<sigma> = (case \<sigma> of ObjectType d \<Rightarrow> ObjectType (c \<squnion> d) | _ \<Rightarrow> OclAny)"
 | "\<tau> \<squnion> \<sigma> = (if \<tau> \<le> \<sigma> then \<sigma> else (if \<sigma> \<le> \<tau> then \<tau> else OclAny))"
@@ -275,7 +275,8 @@ fun sup_basic_type where
 lemma sup_ge1_ObjectType:
   "ObjectType c \<le> ObjectType c \<squnion> \<sigma>"
   apply (induct \<sigma>; simp add: basic_subtype.simps less_eq_basic_type_def r_into_rtranclp)
-  by (metis Nitpick.rtranclp_unfold basic_subtype.intros(7) le_less r_into_rtranclp sup.cobounded1)
+  by (metis Nitpick.rtranclp_unfold basic_subtype.intros(7)
+            le_less r_into_rtranclp sup.cobounded1)
 
 lemma sup_ge1_basic_type:
   "\<tau> \<le> \<tau> \<squnion> \<sigma>"
@@ -341,8 +342,8 @@ lemma less_basic_type_code [code_abbrev, simp]:
 
 section{* Test Cases *}
 
-datatype classes1 = Object | Person | Employee | Customer
-| Project | Task | Sprint
+datatype classes1 =
+  Object | Person | Employee | Customer | Project | Task | Sprint
 
 instantiation classes1 :: semilattice_sup
 begin
@@ -353,9 +354,9 @@ inductive subclass1 where
 | "subclass1 Employee Person"
 | "subclass1 Customer Person"
 
-code_pred [show_modes] subclass1 .
+code_pred subclass1 .
 
-definition "less_classes1 \<equiv> subclass1"
+definition "(<) \<equiv> subclass1"
 
 definition "(c::classes1) \<le> d \<equiv> c = d \<or> c < d"
 
@@ -421,9 +422,14 @@ instance
 
 end
 
-value "(UnlimitedNatural::classes1 basic_type) < Real"
-value "(String::classes1 basic_type) \<le> Boolean"
+subsection{* Positive Cases *}
+
+value "(UnlimitedNatural :: classes1 basic_type) < Real"
 value "ObjectType Employee < ObjectType Person"
 value "ObjectType Person \<le> OclAny"
+
+subsection{* Negative Cases *}
+
+value "(String :: classes1 basic_type) \<le> Boolean"
 
 end

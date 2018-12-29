@@ -8,6 +8,8 @@ theory Finite_Map_Ext
   imports Main "HOL-Library.Finite_Map"
 begin
 
+type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)
+
 (*** Helper Lemmas **********************************************************)
 
 subsection{* Helper Lemmas *}
@@ -187,30 +189,28 @@ text{* The proof was derived from the accepted answer on the website
  and provided with the permission of the author of the answer *}
 
 lemma fmap_eqdom_Cons1:
-  assumes as_1: "fmlookup xm i = None"
-    and as_2: "fmdom (fmupd i x xm) = fmdom ym"  
-    and as_3: "fmrel R (fmupd i x xm) ym" 
-  shows 
-    "(\<exists>z zm. 
-    fmlookup zm i = None \<and> ym = (fmupd i z zm) \<and> R x z \<and> fmrel R xm zm)"
+  assumes "fmlookup xm i = None"
+      and "fmdom (fmupd i x xm) = fmdom ym"  
+      and "fmrel R (fmupd i x xm) ym" 
+    shows "(\<exists>z zm. fmlookup zm i = None \<and> ym = (fmupd i z zm) \<and>
+                   R x z \<and> fmrel R xm zm)"
 proof - 
-  from as_1 as_2 as_3 obtain y where y: "fmlookup ym i = Some y"
-    by force
-  obtain z zm where z_zm: "ym = (fmupd i z zm) \<and> fmlookup zm i = None"
-    using y by (smt fmap_ext fmlookup_drop fmupd_lookup)
+  from assms(2) obtain y where "fmlookup ym i = Some y" by force
+  then obtain z zm where z_zm: "ym = (fmupd i z zm) \<and> fmlookup zm i = None"
+    by (smt fmap_ext fmlookup_drop fmupd_lookup)
   {
-    assume "\<not>R x z"
-    with as_1 z_zm have "\<not>fmrel R (fmupd i x xm) ym"
+    assume "\<not> R x z"
+    with z_zm have "\<not> fmrel R (fmupd i x xm) ym"
       by (metis fmrel_iff fmupd_lookup option.simps(11))
   }
-  with as_3 have c3: "R x z" by auto
+  with assms(3) moreover have "R x z" by auto
   {
-    assume "\<not>fmrel R xm zm"
-    with as_1 have "\<not>fmrel R (fmupd i x xm) ym" 
+    assume "\<not> fmrel R xm zm"
+    with assms(1) have "\<not> fmrel R (fmupd i x xm) ym" 
       by (metis fmrel_iff fmupd_lookup option.rel_sel z_zm)
   }
-  with as_3 have c4: "fmrel R xm zm" by auto
-  from z_zm c3 c4 show ?thesis by auto
+  with assms(3) moreover have "fmrel R xm zm" by auto
+  ultimately show ?thesis using z_zm by blast
 qed
 
 text{* The proof was derived from the accepted answer on the website
@@ -231,23 +231,23 @@ lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
 proof (induct xm arbitrary: ym)
   case fmempty thus ?case
     by (metis fempty_iff fmdom_empty fmempty_of_list fmfilter_alt_defs(5)
-        fmfilter_false fmrestrict_fset_dom local.nil)
+              fmfilter_false fmrestrict_fset_dom local.nil)
 next
-  case (fmupd i x xm) show ?case 
+  case (fmupd i x xm) show ?case
   proof -
-    from fmupd.prems(1) obtain y where y: "fmlookup ym i = Some y"
+    obtain y where "fmlookup ym i = Some y"
       by (metis fmupd.prems(1) fmrel_cases fmupd_lookup option.discI)
-    from fmupd.hyps(2) fmupd.prems(2) fmupd.prems(1) obtain z zm where 
-      zm_i_none: "fmlookup zm i = None" and
-      ym_eq_z_zm: "ym = (fmupd i z zm)" and 
+    from fmupd.hyps(2) fmupd.prems(1) fmupd.prems(2) obtain z zm where
+      "fmlookup zm i = None" and
+      ym_eq_z_zm: "ym = (fmupd i z zm)" and
       R_x_z: "R x z" and
       R_xm_zm: "fmrel R xm zm"
       using fmap_eqdom_Cons1 by metis
-    hence dom_xm_eq_dom_zm: "fmdom xm = fmdom zm" 
-      using fmrel_fmdom_eq by blast  
-    with R_xm_zm fmupd.hyps(1) have P_xm_zm: "P xm zm" by blast
-    from R_x_z R_xm_zm dom_xm_eq_dom_zm P_xm_zm have 
-      "P (fmupd i x xm) (fmupd i z zm)" 
+    hence dom_xm_eq_dom_zm: "fmdom xm = fmdom zm"
+      using fmrel_fmdom_eq by blast
+    with R_xm_zm fmupd.hyps(1) have "P xm zm" by blast
+    with R_x_z R_xm_zm dom_xm_eq_dom_zm have
+      "P (fmupd i x xm) (fmupd i z zm)"
       by (rule step)
     thus ?thesis by (simp add: ym_eq_z_zm)
   qed
@@ -366,7 +366,7 @@ proof
     have "(tcf y \<circ> tcf x) z = snd y + snd x + z" by auto
     also have "(tcf x \<circ> tcf y) z = snd y + snd x + z" by auto
     ultimately have "(tcf y \<circ> tcf x) z = (tcf x \<circ> tcf y) z" by auto
-    then show "(tcf y \<circ> tcf x) = (tcf x \<circ> tcf y)" by auto
+    thus "(tcf y \<circ> tcf x) = (tcf x \<circ> tcf y)" by auto
   qed
 qed
 

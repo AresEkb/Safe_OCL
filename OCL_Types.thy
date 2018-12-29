@@ -12,6 +12,8 @@ begin
 
 section{* Definition of Types and a Subtype Relation *}
 
+text{* Tuples should have a string key. *}
+
 datatype (plugins del: "size") 'a type =
   OclInvalid
 | OclVoid
@@ -22,10 +24,8 @@ datatype (plugins del: "size") 'a type =
 | Bag "'a type"
 | Sequence "'a type"
 | Collection "'a type"
-| Tuple "(nat, 'a type) fmap"
+| Tuple "nat \<rightharpoonup>\<^sub>f 'a type"
 | SupType
-
-(* TODO: Prove for an arbitrary finite map key types *)
 
 instantiation type :: (type) size
 begin
@@ -97,8 +97,7 @@ lemma subtype_antisym:
    False"
   apply (induct rule: subtype.induct)
   using basic_subtype_asym apply auto
-  apply (rule_tac ?f="subtype" and ?xm="\<pi>" and ?ym="\<pi>'" in strict_subtuple_antisym; simp)
-  done
+  by (rule_tac ?f="subtype" and ?xm="\<pi>" and ?ym="\<pi>'" in strict_subtuple_antisym; simp)
 
 (*** Constructors Bijectivity on Transitive Closures ************************)
 
@@ -166,9 +165,9 @@ section{* Partial Order of Types *}
 instantiation type :: (order) order
 begin
 
-definition "less_type \<equiv> subtype\<^sup>+\<^sup>+"
+definition "(<) \<equiv> subtype\<^sup>+\<^sup>+"
 
-definition "less_eq_type \<equiv> subtype\<^sup>*\<^sup>*"
+definition "(\<le>) \<equiv> subtype\<^sup>*\<^sup>*"
 
 (*** Introduction Rules *****************************************************)
 
@@ -189,24 +188,20 @@ next
           r_into_rtranclp rtranclp.rtrancl_into_rtrancl)
 next
   case (Set \<sigma>) thus ?case
-    apply (rule_tac ?b="Set OclInvalid" in converse_rtranclp_into_rtranclp, auto)
-    apply (rule_tac ?R="subtype" and ?f="Set" in preserve_rtranclp; auto)
-    done
+    by (rule_tac ?b="Set OclInvalid" in converse_rtranclp_into_rtranclp, auto)
+       (rule_tac ?R="subtype" and ?f="Set" in preserve_rtranclp; auto)
 next
   case (OrderedSet \<sigma>) thus ?case
-    apply (rule_tac ?b="OrderedSet OclInvalid" in converse_rtranclp_into_rtranclp, auto)
-    apply (rule_tac ?R="subtype" and ?f="OrderedSet" in preserve_rtranclp; auto)
-    done
+    by (rule_tac ?b="OrderedSet OclInvalid" in converse_rtranclp_into_rtranclp, auto)
+       (rule_tac ?R="subtype" and ?f="OrderedSet" in preserve_rtranclp; auto)
 next
   case (Bag \<sigma>) thus ?case
-    apply (rule_tac ?b="Bag OclInvalid" in converse_rtranclp_into_rtranclp, auto)
-    apply (rule_tac ?R="subtype" and ?f="Bag" in preserve_rtranclp; auto)
-    done
+    by (rule_tac ?b="Bag OclInvalid" in converse_rtranclp_into_rtranclp, auto)
+       (rule_tac ?R="subtype" and ?f="Bag" in preserve_rtranclp; auto)
 next
   case (Sequence \<sigma>) thus ?case
-    apply (rule_tac ?b="Sequence OclInvalid" in converse_rtranclp_into_rtranclp, auto)
-    apply (rule_tac ?R="subtype" and ?f="Sequence" in preserve_rtranclp; auto)
-    done
+    by (rule_tac ?b="Sequence OclInvalid" in converse_rtranclp_into_rtranclp, auto)
+       (rule_tac ?R="subtype" and ?f="Sequence" in preserve_rtranclp; auto)
 next
   case (Collection \<sigma>) show ?case
     apply (rule_tac ?b="Set \<sigma>" in rtranclp.rtrancl_into_rtrancl)
@@ -225,8 +220,7 @@ qed
 lemma type_less_eq_x_Required_intro [intro]:
   "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[1]"
   unfolding less_eq_type_def less_eq_basic_type_def
-  apply auto
-  by (rule preserve_rtranclp; auto)
+  by (simp) (rule preserve_rtranclp; auto)
 
 lemma type_less_eq_x_Optional_intro [intro]:
   "\<tau> = OclVoid \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
@@ -241,26 +235,22 @@ lemma type_less_eq_x_Optional_intro [intro]:
 lemma type_less_eq_x_Set_intro [intro]:
   "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Set \<sigma>"
   unfolding less_eq_type_def
-  apply simp
-  by (rule preserve_rtranclp; auto)
+  by (simp) (rule preserve_rtranclp; auto)
 
 lemma type_less_eq_x_OrderedSet_intro [intro]:
   "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> OrderedSet \<sigma>"
   unfolding less_eq_type_def
-  apply simp
-  by (rule preserve_rtranclp; auto)
+  by (simp) (rule preserve_rtranclp; auto)
 
 lemma type_less_eq_x_Bag_intro [intro]:
   "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Bag \<sigma>"
   unfolding less_eq_type_def
-  apply simp
-  by (rule preserve_rtranclp; auto)
+  by (simp) (rule preserve_rtranclp; auto)
 
 lemma type_less_eq_x_Sequence_intro [intro]:
   "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Sequence \<sigma>"
   unfolding less_eq_type_def
-  apply simp
-  by (rule preserve_rtranclp; auto)
+  by (simp) (rule preserve_rtranclp; auto)
 
 lemma type_less_eq_x_Collection_intro [intro]:
   "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
@@ -287,7 +277,7 @@ lemma type_less_eq_x_Tuple_intro [intro]:
     shows "\<tau> \<le> Tuple \<xi>"
 proof -
   have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>*\<^sup>* \<pi> \<xi>"
-    by (metis assms(2) less_eq_type_def rtranclp_eq_rtranclp)
+    using assms(2) less_eq_type_def by auto
   hence "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>+\<^sup>+ \<pi> \<xi>"
     by auto
   hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
@@ -313,12 +303,15 @@ next
 next
   case (Required x) thus ?case
     apply (rule_tac ?y="OclAny[1]" in rtranclp_trans)
-    apply (metis (mono_tags) less_eq_type_def type_less_eq_x_OclAny_intro type_less_eq_x_Required_intro)
-    by (meson converse_rtranclp_into_rtranclp subtype.intros(20) subtype.intros(6) r_into_rtranclp)
+    apply (metis (mono_tags) less_eq_type_def type_less_eq_x_OclAny_intro
+                             type_less_eq_x_Required_intro)
+    by (meson converse_rtranclp_into_rtranclp subtype.intros(20)
+              subtype.intros(6) r_into_rtranclp)
 next
   case (Optional x) thus ?case
     apply (rule_tac ?y="OclAny[?]" in rtranclp_trans)
-    apply (metis (mono_tags) less_eq_type_def type_less_eq_x_OclAny_intro type_less_eq_x_Optional_intro(3))
+    apply (metis (mono_tags) less_eq_type_def type_less_eq_x_OclAny_intro
+                             type_less_eq_x_Optional_intro(3))
     by (simp add: subtype.intros(20) r_into_rtranclp)
 next
   case (Set \<tau>)
@@ -326,36 +319,32 @@ next
     by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
   moreover have "subtype\<^sup>+\<^sup>+ (Set \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
-    apply (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
-    apply (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
-    done
+    by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
+       (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
 next
   case (OrderedSet \<tau>)
   hence "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
     by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
   moreover have "subtype\<^sup>+\<^sup>+ (OrderedSet \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
-    apply (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
-    apply (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
-    done
+    by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
+       (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
 next
   case (Bag \<tau>)
   hence "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
     by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
   moreover have "subtype\<^sup>+\<^sup>+ (Bag \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
-    apply (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
-    apply (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
-    done
+    by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
+       (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
 next
 case (Sequence \<tau>)
   hence "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
     by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
   moreover have "subtype\<^sup>+\<^sup>+ (Sequence \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
-    apply (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
-    apply (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
-    done
+    by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
+       (rule_tac ?b="Collection SupType" in rtranclp.rtrancl_into_rtrancl; auto)
 next
   case (Collection \<tau>)
   have "subtype\<^sup>+\<^sup>+ (Collection SupType) SupType"
@@ -564,7 +553,7 @@ lemma subtype_acyclic:
   "acyclicP subtype"
   apply (rule acyclicI)
   apply (simp add: trancl_def)
-  by (metis (mono_tags) OCL_Types.subtype_irrefl less_type_def)
+  by (metis (mono_tags) OCL_Types.less_type_def OCL_Types.subtype_irrefl)
 
 lemma less_le_not_le_type:
   "\<tau> < \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma> \<and> \<not> \<sigma> \<le> \<tau>"
@@ -879,18 +868,6 @@ inductive update_element_type where
 | "update_element_type (Sequence _) \<tau> (Sequence \<tau>)"
 | "update_element_type (Collection _) \<tau> (Collection \<tau>)"
 
-inductive strict_subcollection where
-  "\<sigma> < \<tau> \<Longrightarrow>
-   strict_subcollection (Set \<tau>) \<sigma> (Set \<sigma>)"
-| "\<sigma> < \<tau> \<Longrightarrow>
-   strict_subcollection (OrderedSet \<tau>) \<sigma> (OrderedSet \<sigma>)"
-| "\<sigma> < \<tau> \<Longrightarrow>
-   strict_subcollection (Bag \<tau>) \<sigma> (Bag \<sigma>)"
-| "\<sigma> < \<tau> \<Longrightarrow>
-   strict_subcollection (Sequence \<tau>) \<sigma> (Sequence \<sigma>)"
-| "\<sigma> < \<tau> \<Longrightarrow>
-   strict_subcollection (Collection \<tau>) \<sigma> (Collection \<sigma>)"
-
 inductive to_unique_collection where
   "to_unique_collection (Set \<tau>) (Set \<tau>)"
 | "to_unique_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
@@ -905,31 +882,43 @@ inductive to_ordered_collection where
 | "to_ordered_collection (Sequence \<tau>) (Sequence \<tau>)"
 | "to_ordered_collection (Collection \<tau>) (Sequence \<tau>)"
 
-fun type_to_single where
-  "type_to_single OclInvalid = OclInvalid"
-| "type_to_single OclVoid = OclVoid"
-| "type_to_single \<tau>[1] = \<tau>[1]"
-| "type_to_single \<tau>[?] = \<tau>[?]"
-| "type_to_single (Set \<tau>) = type_to_single \<tau>"
-| "type_to_single (OrderedSet \<tau>) = type_to_single \<tau>"
-| "type_to_single (Bag \<tau>) = type_to_single \<tau>"
-| "type_to_single (Sequence \<tau>) = type_to_single \<tau>"
-| "type_to_single (Collection \<tau>) = type_to_single \<tau>"
-| "type_to_single (Tuple \<pi>) = Tuple \<pi>"
-| "type_to_single SupType = SupType"
+fun to_single_type where
+  "to_single_type OclInvalid = OclInvalid"
+| "to_single_type OclVoid = OclVoid"
+| "to_single_type \<tau>[1] = \<tau>[1]"
+| "to_single_type \<tau>[?] = \<tau>[?]"
+| "to_single_type (Set \<tau>) = to_single_type \<tau>"
+| "to_single_type (OrderedSet \<tau>) = to_single_type \<tau>"
+| "to_single_type (Bag \<tau>) = to_single_type \<tau>"
+| "to_single_type (Sequence \<tau>) = to_single_type \<tau>"
+| "to_single_type (Collection \<tau>) = to_single_type \<tau>"
+| "to_single_type (Tuple \<pi>) = Tuple \<pi>"
+| "to_single_type SupType = SupType"
 
-fun type_to_optional where
-  "type_to_optional OclInvalid = OclVoid"
-| "type_to_optional OclVoid = OclVoid"
-| "type_to_optional \<tau>[1] = \<tau>[?]"
-| "type_to_optional \<tau>[?] = \<tau>[?]"
-| "type_to_optional (Set \<tau>) = Set (type_to_optional \<tau>)"
-| "type_to_optional (OrderedSet \<tau>) = OrderedSet (type_to_optional \<tau>)"
-| "type_to_optional (Bag \<tau>) = Bag (type_to_optional \<tau>)"
-| "type_to_optional (Sequence \<tau>) = Sequence (type_to_optional \<tau>)"
-| "type_to_optional (Collection \<tau>) = Collection (type_to_optional \<tau>)"
-| "type_to_optional (Tuple \<pi>) = Tuple (fmmap type_to_optional \<pi>)"
-| "type_to_optional SupType = SupType"
+fun to_optional_type where
+  "to_optional_type OclInvalid = OclVoid"
+| "to_optional_type OclVoid = OclVoid"
+| "to_optional_type \<tau>[1] = \<tau>[?]"
+| "to_optional_type \<tau>[?] = \<tau>[?]"
+| "to_optional_type (Set \<tau>) = Set (to_optional_type \<tau>)"
+| "to_optional_type (OrderedSet \<tau>) = OrderedSet (to_optional_type \<tau>)"
+| "to_optional_type (Bag \<tau>) = Bag (to_optional_type \<tau>)"
+| "to_optional_type (Sequence \<tau>) = Sequence (to_optional_type \<tau>)"
+| "to_optional_type (Collection \<tau>) = Collection (to_optional_type \<tau>)"
+| "to_optional_type (Tuple \<pi>) = Tuple (fmmap to_optional_type \<pi>)"
+| "to_optional_type SupType = SupType"
+
+inductive strict_subcollection where
+  "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Set \<tau>) \<sigma> (Set \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (OrderedSet \<tau>) \<sigma> (OrderedSet \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Bag \<tau>) \<sigma> (Bag \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Sequence \<tau>) \<sigma> (Sequence \<sigma>)"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   strict_subcollection (Collection \<tau>) \<sigma> (Collection \<sigma>)"
 
 (*** Code Setup *************************************************************)
 
@@ -1089,21 +1078,22 @@ lemma less_type_code [code_abbrev, simp]:
 
 section{* Test Cases *}
 
-value "OclAny[?] < (SupType::classes1 type)"
-value "Collection (Optional OclAny) < (SupType::classes1 type)"
-value "Collection (Collection (Optional OclAny)) < (SupType::classes1 type)"
-value "Collection SupType \<sqsubset> (SupType::classes1 type)"
-value "Set (OclInvalid::classes1 type) \<sqsubset> Set (OrderedSet OclInvalid)"
-value "Collection (Collection SupType) \<sqsubset> Collection (SupType::classes1 type)"
-value "Collection (Collection (Collection SupType)) \<sqsubset> Collection (Collection (SupType::classes1 type))"
-value "Collection (Collection (Collection (Collection SupType))) \<sqsubset> Collection (Collection (Collection (SupType::classes1 type)))"
-value "Collection (Collection (Collection SupType)) \<sqsubset> Collection (SupType::classes1 type)"
-value "Set (Required Integer) \<sqsubset> Collection (Optional (Real::classes1 basic_type))"
-value "Set (Required Integer) < Collection (Optional (Real::classes1 basic_type))"
-value "Set (Required Integer) \<sqsubset> Set (Required (Real::classes1 basic_type))"
-value "Required Integer \<squnion> Optional (Real::classes1 basic_type)"
-value "(Set (Required Integer)) \<squnion> (Set (Required (Real::classes1 basic_type)))"
-value "(Set (Required Integer)) \<squnion> (Bag (Optional (Boolean::classes1 basic_type)))"
-value "(Set (Required Integer)) \<squnion> Optional (Real::classes1 basic_type)"
+subsection{* Positive Cases *}
+
+value "Integer[?] < (SupType :: classes1 type)"
+value "Collection Real[?] < (SupType :: classes1 type)"
+value "Set (Collection Boolean[1]) < (SupType :: classes1 type)"
+value "Set (Bag Boolean[1]) < Set (Collection Boolean[?] :: classes1 type)"
+value "Tuple (fmap_of_list [(1,Boolean[1] :: classes1 type), (2,Integer[1])]) <
+       Tuple (fmap_of_list [(1,Boolean[?] :: classes1 type)])"
+
+value "Integer[1] \<squnion> Real[?] :: classes1 type" \<comment> \<open>Real[?]\<close>
+value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<open>Set Real[1]\<close>
+value "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type)" \<comment> \<open>Collection OclAny[?]\<close>
+value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>SupType\<close>
+
+subsection{* Negative Cases *}
+
+value "OrderedSet Boolean[1] < Set (Boolean[1] :: classes1 type)"
 
 end

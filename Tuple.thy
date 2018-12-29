@@ -270,16 +270,18 @@ lemma strict_subtuple_fun_simp [code_abbrev, simp]:
 (*** Test Cases *************************************************************)
 
 subsection{* Test Cases *}
-(*
-definition "t1 \<equiv> fmupd (1::nat) (1::nat) (fmupd (2::nat) (2::nat) fmempty)"
-definition "t2 \<equiv> fmupd (3::nat) (3::nat) (fmupd (1::nat) (1::nat) (fmupd (2::nat) (1::nat) fmempty))"
-definition "t3 \<equiv> fmupd (3::nat) (4::nat) (fmupd (1::nat) (1::nat) (fmupd (2::nat) (1::nat) fmempty))"
 
-value "subtuple (\<le>) t1 t1"
-value "subtuple (\<le>) t1 t2"
-value "subtuple (\<le>) t2 t1"
-value "subtuple (\<le>) t2 t3"
-value "subtuple (\<le>) t3 t2"
-value "strict_subtuple (\<le>) t3 t2"
-*)
+value "subtuple (\<le>)
+  (fmap_of_list [(1::nat,1::nat),(2,2),(3,3)])
+  (fmap_of_list [(1,1),(2,3)])"
+value "subtuple (\<le>)
+  (fmap_of_list [(1::nat,1::nat),(2,2)])
+  (fmap_of_list [(1,1),(2,2),(3,3)])"
+value "subtuple (\<le>)
+  (fmap_of_list [(1::nat,1::nat),(2,2)])
+  (fmap_of_list [(1,1),(3,2)])"
+value "strict_subtuple (\<le>)
+  (fmap_of_list [(1::nat,1::nat),(2,2)])
+  (fmap_of_list [(1,1),(2,2)])"
+
 end
