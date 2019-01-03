@@ -3,14 +3,14 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter{* Basic OCL Types *}
+chapter \<open>Basic OCL Types\<close>
 theory OCL_Basic_Types
   imports Main "HOL-Library.FSet" OCL_Common
 begin
 
 (*** Basic Types ************************************************************)
 
-section{* Definition of Basic Types and a Subtype Relation *}
+section \<open>Definition of Basic Types and a Subtype Relation\<close>
 
 datatype 'a basic_type =
   OclAny
@@ -55,7 +55,7 @@ lemma basic_subtype_asym:
 
 (*** Partial Order of Basic Types *******************************************)
 
-section{* Partial Order of Basic Types *}
+section \<open>Partial Order of Basic Types\<close>
 
 instantiation basic_type :: (order) order
 begin
@@ -66,7 +66,7 @@ definition "(\<le>) \<equiv> basic_subtype\<^sup>*\<^sup>*"
 
 (*** Introduction Rules *****************************************************)
 
-subsection{* Introduction Rules *}
+subsection \<open>Introduction Rules\<close>
 
 lemma type_less_eq_x_Real_intro [intro]:
   "\<tau> = UnlimitedNatural \<Longrightarrow> \<tau> \<le> Real"
@@ -101,7 +101,7 @@ qed
 
 (*** Elimination Rules ******************************************************)
 
-subsection{* Elimination Rules *}
+subsection \<open>Elimination Rules\<close>
 
 lemma type_less_x_Boolean [elim!]:
   "\<tau> < Boolean \<Longrightarrow> P"
@@ -217,7 +217,7 @@ lemma type_less_eq_x_OclAny [elim!]:
 
 (*** Properties *************************************************************)
 
-subsection{* Properties *}
+subsection \<open>Properties\<close>
 
 lemma basic_subtype_irrefl:
   "\<tau> < \<tau> \<Longrightarrow> False"
@@ -262,7 +262,7 @@ end
 
 (*** Upper Semilattice of Basic Types ***************************************)
 
-section{* Upper Semilattice of Basic Types *}
+section \<open>Upper Semilattice of Basic Types\<close>
 
 instantiation basic_type :: (semilattice_sup) semilattice_sup
 begin
@@ -305,7 +305,7 @@ end
 
 (*** Code Setup *************************************************************)
 
-section{* Code Setup *}
+section \<open>Code Setup\<close>
 
 code_pred basic_subtype .
 
@@ -340,7 +340,7 @@ lemma less_basic_type_code [code_abbrev, simp]:
 
 (*** Test Cases *************************************************************)
 
-section{* Test Cases *}
+section \<open>Test Cases\<close>
 
 datatype classes1 =
   Object | Person | Employee | Customer | Project | Task | Sprint
@@ -353,8 +353,6 @@ inductive subclass1 where
    subclass1 c Object"
 | "subclass1 Employee Person"
 | "subclass1 Customer Person"
-
-code_pred subclass1 .
 
 definition "(<) \<equiv> subclass1"
 
@@ -422,13 +420,20 @@ instance
 
 end
 
-subsection{* Positive Cases *}
+lemma q [code_pred_intro]:
+  "subclass1 c d \<Longrightarrow> c < d"
+  by (simp add: less_classes1_def)
+thm q
+
+code_pred [show_modes] subclass1 .
+
+subsection \<open>Positive Cases\<close>
 
 value "(UnlimitedNatural :: classes1 basic_type) < Real"
 value "ObjectType Employee < ObjectType Person"
 value "ObjectType Person \<le> OclAny"
 
-subsection{* Negative Cases *}
+subsection \<open>Negative Cases\<close>
 
 value "(String :: classes1 basic_type) \<le> Boolean"
 

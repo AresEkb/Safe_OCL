@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-section{* Finite Maps *}
+section \<open>Finite Maps\<close>
 theory Finite_Map_Ext
   imports Main "HOL-Library.Finite_Map"
 begin
@@ -12,7 +12,7 @@ type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)
 
 (*** Helper Lemmas **********************************************************)
 
-subsection{* Helper Lemmas *}
+subsection \<open>Helper Lemmas\<close>
 
 lemma fmrel_on_fset_fmdom:
   "fmrel_on_fset (fmdom ym) f xm ym \<Longrightarrow>
@@ -22,7 +22,7 @@ lemma fmrel_on_fset_fmdom:
 
 (*** Finite Map Merge *******************************************************)
 
-subsection{* Merge Operation *}
+subsection \<open>Merge Operation\<close>
 
 definition "fmmerge f xm ym \<equiv>
   fmap_of_list (map
@@ -35,7 +35,7 @@ lemma fmdom_fmmerge [simp]:
 
 lemma fmmerge_commut:
   assumes "\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x y = f y x"
-    shows "fmmerge f xm ym = fmmerge f ym xm"
+  shows "fmmerge f xm ym = fmmerge f ym xm"
 proof -
   obtain zm where zm: "zm = sorted_list_of_fset (fmdom xm |\<inter>| fmdom ym)"
     by auto
@@ -50,9 +50,9 @@ qed
 
 lemma fmrel_on_fset_fmmerge1 [intro]:
   assumes "\<And>x y z. z \<in> fmran' zm \<Longrightarrow> f x z \<Longrightarrow> f y z \<Longrightarrow> f (g x y) z"
-      and "fmrel_on_fset (fmdom zm) f xm zm"
-      and "fmrel_on_fset (fmdom zm) f ym zm"
-    shows "fmrel_on_fset (fmdom zm) f (fmmerge g xm ym) zm"
+  assumes "fmrel_on_fset (fmdom zm) f xm zm"
+  assumes "fmrel_on_fset (fmdom zm) f ym zm"
+  shows "fmrel_on_fset (fmdom zm) f (fmmerge g xm ym) zm"
 proof -
   {
     fix x a b c
@@ -76,7 +76,7 @@ qed
 
 lemma fmrel_on_fset_fmmerge2 [intro]:
   assumes "\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)"
-    shows "fmrel_on_fset (fmdom ym) f xm (fmmerge g xm ym)"
+  shows "fmrel_on_fset (fmdom ym) f xm (fmmerge g xm ym)"
 proof -
   {
     fix x a b
@@ -96,7 +96,7 @@ qed
 
 (*** Acyclicity *************************************************************)
 
-subsection{* Acyclicity *}
+subsection \<open>Acyclicity\<close>
 
 abbreviation "acyclic_on xs r \<equiv> (\<forall>x. x \<in> xs \<longrightarrow> (x, x) \<notin> r\<^sup>+)"
 
@@ -107,15 +107,14 @@ lemma fmrel_acyclic:
    fmrel R\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    fmrel R ym xm \<Longrightarrow>
    xm = ym"
-  by (metis (full_types) fmap_ext fmran'I fmrel_cases
-            option.sel tranclp.trancl_into_trancl
-            tranclp_unfold)
+  by (metis (full_types) fmap_ext fmran'I fmrel_cases option.sel
+        tranclp.trancl_into_trancl tranclp_unfold)
 
 lemma fmrel_acyclic':
   assumes "acyclicP_on (fmran' ym) R"
-      and "fmrel R\<^sup>+\<^sup>+ xm ym"
-      and "fmrel R ym xm"
-    shows "xm = ym"
+  assumes "fmrel R\<^sup>+\<^sup>+ xm ym"
+  assumes "fmrel R ym xm"
+  shows "xm = ym"
 proof -
   {
     fix x
@@ -154,7 +153,7 @@ lemma fmrel_on_fset_acyclic':
 
 (*** Transitive Closures ****************************************************)
 
-subsection{* Transitive Closures *}
+subsection \<open>Transitive Closures\<close>
 
 lemma fmrel_trans:
   "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
@@ -183,10 +182,11 @@ lemma fmrel_trancl_fmdom_eq:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"
   by (induct rule: tranclp_induct; simp add: fmrel_fmdom_eq)
 
-text{* The proof was derived from the accepted answer on the website
- Stack Overflow that is available at
- https://stackoverflow.com/a/53585232/632199
- and provided with the permission of the author of the answer *}
+text \<open>
+  The proof was derived from the accepted answer on the website
+  Stack Overflow that is available at
+  @{url "https://stackoverflow.com/a/53585232/632199"}
+  and provided with the permission of the author of the answer.\<close>
 
 lemma fmap_eqdom_Cons1:
   assumes "fmlookup xm i = None"
@@ -213,10 +213,11 @@ proof -
   ultimately show ?thesis using z_zm by blast
 qed
 
-text{* The proof was derived from the accepted answer on the website
- Stack Overflow that is available at
- https://stackoverflow.com/a/53585232/632199
- and provided with the permission of the author of the answer *}
+text \<open>
+  The proof was derived from the accepted answer on the website
+  Stack Overflow that is available at
+  @{url "https://stackoverflow.com/a/53585232/632199"}
+  and provided with the permission of the author of the answer.\<close>
 
 lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
   assumes R: "fmrel R xm ym"
@@ -253,10 +254,11 @@ next
   qed
 qed
 
-text{* The proof was derived from the accepted answer on the website
-   Stack Overflow that is available at
-   https://stackoverflow.com/a/53585232/632199
-   and provided with the permission of the author of the answer *}
+text \<open>
+  The proof was derived from the accepted answer on the website
+  Stack Overflow that is available at
+  @{url "https://stackoverflow.com/a/53585232/632199"}
+  and provided with the permission of the author of the answer.\<close>
 
 lemma fmrel_to_rtrancl:
   assumes as_r: "reflp r"
@@ -300,10 +302,11 @@ proof -
   qed
 qed
 
-text{* The proof was derived from the accepted answer on the website
-   Stack Overflow that is available at
-   https://stackoverflow.com/a/53585232/632199
-   and provided with the permission of the author of the answer *}
+text \<open>
+  The proof was derived from the accepted answer on the website
+  Stack Overflow that is available at
+  @{url "https://stackoverflow.com/a/53585232/632199"}
+  and provided with the permission of the author of the answer.\<close>
 
 lemma fmrel_to_trancl:
   assumes "reflp r"
@@ -348,12 +351,13 @@ lemma fmrel_tranclp_trans_induct:
 
 (*** Finite Map Size Calculation ********************************************)
 
-subsection{* Size Calculation *}
+subsection \<open>Size Calculation\<close>
 
-text{* The contents of the subsection was derived from the accepted answer
- on the website Stack Overflow that is available at
- https://stackoverflow.com/a/53244203/632199
- and provided with the permission of the author of the answer *}
+text \<open>
+  The contents of the subsection was derived from the accepted answer
+  on the website Stack Overflow that is available at
+  @{url "https://stackoverflow.com/a/53244203/632199"}
+  and provided with the permission of the author of the answer.\<close>
 
 abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
 
@@ -391,7 +395,7 @@ lemma elem_le_ffold' [intro]:
 
 (*** Code Setup *************************************************************)
 
-subsection{* Code Setup *}
+subsection \<open>Code Setup\<close>
 
 abbreviation "fmmerge_fun f xm ym \<equiv>
   fmap_of_list (map

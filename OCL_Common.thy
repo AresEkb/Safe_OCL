@@ -3,21 +3,21 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter{* OCL Common *}
+chapter \<open>OCL Common\<close>
 theory OCL_Common
-  imports
-    Main "HOL-Library.Extended_Nat"
+  imports Main "HOL-Library.Extended_Nat"
 begin
 
-type_synonym vname = "string"
+type_synonym vname = "String.literal"
 type_synonym 'a env = "vname \<rightharpoonup> 'a"
 
-type_synonym attr = "string"
-type_synonym assoc = "string"
-type_synonym role = "string"
+type_synonym attr = "String.literal"
+type_synonym assoc = "String.literal"
+type_synonym role = "String.literal"
 
-text{* In OCL @{text "1 + \<infinity> = \<bottom>"}. So we don't use @{text enat} and
- define the new data type. *}
+text \<open>
+  In OCL @{text "1 + \<infinity> = \<bottom>"}. So we don't use @{typ enat} and
+  define the new data type.\<close>
 
 typedef unat = "UNIV :: nat option set" ..
 

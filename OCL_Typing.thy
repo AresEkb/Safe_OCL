@@ -3,27 +3,30 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter{* OCL Typing Rules *}
+chapter \<open>OCL Typing Rules\<close>
 theory OCL_Typing
   imports OCL_Syntax Object_Model
 begin
 
 (*** Standard Library Operations Typing *************************************)
 
-section{* Standard Library Operations Typing *}
+section \<open>Standard Library Operations Typing\<close>
 
-text{* The following rules are more restrictive than rules given in
- the OCL specification. This allows one to identify more errors
- in expressions. However, these restrictions may be revised if necessary.
- Perhaps some of them could be separated and should cause warnings
- instead of errors. *}
+text \<open>
+  The following rules are more restrictive than rules given in
+  the OCL specification. This allows one to identify more errors
+  in expressions. However, these restrictions may be revised if necessary.
+  Perhaps some of them could be separated and should cause warnings
+  instead of errors.\<close>
 
-text{* Only casting to a subtype makes sense. *}
+text \<open>
+  Only casting to a subtype makes sense.\<close>
 
-text{* According to the section 7.4.7 of the OCL specification
- oclAsType() can be applied to collections as well as to single
- values. I guess we can allow oclIsTypeOf() and oclIsKindOf()
- for collections too. *}
+text \<open>
+  According to the section 7.4.7 of the OCL specification
+  @{text "oclAsType()"} can be applied to collections as well as
+  to single values. I guess we can allow @{text "oclIsTypeOf()"}
+  and @{text "oclIsKindOf()"} for collections too.\<close>
 
 inductive typeop_type where
   "\<sigma> < \<tau> \<Longrightarrow>
@@ -37,7 +40,8 @@ inductive typeop_type where
 | "strict_subcollection \<tau> \<sigma> \<rho> \<Longrightarrow>
    typeop_type SelectByTypeOp \<tau> \<sigma> \<rho>"
 
-text{* It makes sense to compare values only with compatible types. *}
+text \<open>
+  It makes sense to compare values only with compatible types.\<close>
 
 (* We have to specify predicate type explicitly to let
    a generated code work *)
@@ -52,9 +56,10 @@ inductive suptype_binop_type
 | "\<sigma> < \<tau> \<Longrightarrow>
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
-text{* The OCL specification defines toString() operation only for
- boolean and numeric types. However, I guess it's a good idea to
- define it once for all basic types. *}
+text \<open>
+  The OCL specification defines @{text "toString()"} operation
+  only for boolean and numeric types. However, I guess it's a good
+  idea to define it once for all basic types.\<close>
 
 inductive any_unop_type where
   "\<tau> \<le> OclAny[?] \<Longrightarrow>
@@ -84,15 +89,18 @@ inductive boolean_binop_type where
 | "\<lbrakk>\<tau> \<squnion> \<sigma> = \<rho>; \<rho> \<le> Boolean[?]\<rbrakk> \<Longrightarrow>
    boolean_binop_type ImpliesOp \<tau> \<sigma> \<rho>"
 
-text{* Formally null conforms to numeric types. However expressions
- like 'null + null' makes no sense. So we use UnlimitedNatural[1]
- as a lower bound. *}
+text \<open>
+  Formally null conforms to numeric types. However expressions
+  like @{text "null + null"} makes no sense. So we use
+  @{text "UnlimitedNatural[1]"} as a lower bound.\<close>
 
-text{* Please take a note that many operations automatically casts
- unlimited naturals to integers. *}
+text \<open>
+  Please take a note that many operations automatically casts
+  unlimited naturals to integers.\<close>
 
-text{* The difference between oclAsType(Integer) and toInteger()
- for unlimited naturals is unclear. *}
+text \<open>
+  The difference between @{text "oclAsType(Integer)"} and
+  @{text "toInteger()"} for unlimited naturals is unclear.\<close>
 
 inductive numeric_unop_type where
   "\<tau> \<simeq> Real \<Longrightarrow>
@@ -207,7 +215,8 @@ inductive string_ternop_type where
   "\<lbrakk>\<tau> \<simeq> String; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<simeq> UnlimitedNatural\<midarrow>Integer\<rbrakk> \<Longrightarrow>
    string_ternop_type SubstringOp \<tau> \<sigma> \<rho> String[1]"
 
-text{* Please take a note, that flatten() preserves collection kind. *}
+text \<open>
+  Please take a note, that @{text "flatten()"} preserves collection kind.\<close>
 
 inductive collection_unop_type where
   "\<lbrakk>element_type \<tau> _\<rbrakk> \<Longrightarrow>
@@ -243,18 +252,21 @@ inductive collection_unop_type where
 | "collection_unop_type ReverseOp (OrderedSet \<tau>) (OrderedSet \<tau>)"
 | "collection_unop_type ReverseOp (Sequence \<tau>) (Sequence \<tau>)"
 
-text{* Tuples must support string keys and the rule for the product()
- operation must be updated. *}
+text \<open>
+  Tuples must support string keys and the rule for the
+  @{text "product()"} operation must be updated.\<close>
 
-text{* Please take a note that if both arguments are collections,
- then an element type of the resulting collection is a super type
- of element types of orginal collections. However for single-valued
- operations (including(), insertAt(), ...) this behavior looks
- undesirable. So we restrict such arguments to have a subtype of
- the collection element type. *}
+text \<open>
+  Please take a note that if both arguments are collections,
+  then an element type of the resulting collection is a super type
+  of element types of orginal collections. However for single-valued
+  operations (@{text "including()"}, @{text "insertAt()"}, ...)
+  this behavior looks undesirable. So we restrict such arguments
+  to have a subtype of the collection element type.\<close>
 
-text{* It's unclear what is the result of the indexOf() operation
- if the item not found: null or invalid? *}
+text \<open>
+  It's unclear what is the result of the @{text "indexOf()"}
+  operation if the item not found: @{text "null"} or @{text "invalid"}?\<close>
 
 inductive collection_binop_type where
   "\<lbrakk>element_type \<tau> \<rho>; \<sigma> \<le> to_optional_type \<rho>\<rbrakk> \<Longrightarrow>
@@ -346,7 +358,7 @@ inductive ternop_type where
 
 (*** Expressions Typing *****************************************************)
 
-section{* Expressions Typing *}
+section \<open>Expressions Typing\<close>
 
 inductive typing
     :: "('a :: semilattice_sup) type env \<times> 'a model \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
@@ -544,7 +556,7 @@ inductive_cases AssociationEndCall_typing [elim]: "\<Gamma> \<turnstile> Associa
 
 (*** Properties *************************************************************)
 
-section{* Properties *}
+section \<open>Properties\<close>
 
 lemma class_of_det:
   "class_of \<tau> c \<Longrightarrow>
@@ -853,7 +865,7 @@ qed
 
 (*** Code Setup *************************************************************)
 
-section{* Code Setup *}
+section \<open>Code Setup\<close>
 
 code_pred (modes:
     i * i * i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool as check_type,
@@ -861,80 +873,92 @@ code_pred (modes:
 
 (*** Test Cases *************************************************************)
 
-section{* Test Cases *}
+section \<open>Test Cases\<close>
 
-subsection{* Positive Cases *}
+subsection \<open>Positive Cases\<close>
 
-text{* @{text "\<Gamma> \<turnstile> true or false : Boolean[1]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> true or false : Boolean[1]"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
   BinaryOperationCall OrOp (BooleanLiteral True) (BooleanLiteral False) : x}"
 
-text{* @{text "\<Gamma> \<turnstile> true and null : Boolean[?]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> true and null : Boolean[?]"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
   BinaryOperationCall AndOp (BooleanLiteral True) NullLiteral: x}"
 
-text{* @{text "\<Gamma> \<turnstile> let x : Real[?] = 5 in x + 7 : Real[1]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> let x : Real[?] = 5 in x + 7 : Real[1]"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
-  Let ''x'' Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall PlusOp (Var ''x'') (IntegerLiteral 7)): x}"
+  Let (STR ''x'') Real[?] (IntegerLiteral 5)
+    (BinaryOperationCall PlusOp (Var (STR ''x'')) (IntegerLiteral 7)): x}"
 
-text{* @{text "\<Gamma> \<turnstile> Sequence{1..5}->iterate(
-      x, acc : Real[?] = 5 | acc + x) : Real[1]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> Sequence{1..5}->iterate(
+      x, acc : Real[?] = 5 | acc + x) : Real[1]"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
   Iterate (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)]) [''x'']
-      ''acc'' Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall PlusOp (Var ''acc'') (Var ''x'')): x}"
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)]) [STR ''x'']
+      (STR ''acc'') Real[?] (IntegerLiteral 5)
+    (BinaryOperationCall PlusOp (Var (STR ''acc'')) (Var (STR ''x''))): x}"
 
-text{* @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-    x->any(it | it = 'test') : String[?]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
+    x->any(it | it = 'test') : String[?]"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
-  Let ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
+  Let (STR ''x'') (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator AnyIter (Var ''x'') [''it'']
-    (BinaryOperationCall EqualOp (Var ''it'') (StringLiteral ''test''))): x}"
+  (Iterator AnyIter (Var STR ''x'') [STR ''it'']
+    (BinaryOperationCall EqualOp (Var STR ''it'') (StringLiteral ''test''))): x}"
 
-text{* @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-    x->closure(it | it) : OrderedSet String[?]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
+    x->closure(it | it) : OrderedSet String[?]"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
-  Let ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
+  Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator ClosureIter (Var ''x'') [''it'']
-    (Var ''it'')): x}"
+  (Iterator ClosureIter (Var STR ''x'') [STR ''it'']
+    (Var STR ''it'')): x}"
 
-text{* @{text "\<Gamma> \<turnstile> self.position : String[1]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
 values "{x. ([''self'' \<mapsto> (ObjectType Employee)[1]] :: classes1 type env, model1) \<turnstile>
   AttributeCall (Var ''self'') ''position'' : x}"
 
 (* TODO: Inherited properties *)
-text{* @{text "\<Gamma> \<turnstile> self.position : String[1]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
 values "{x. ([''self'' \<mapsto> (ObjectType Employee)[1]] :: classes1 type env, model1) \<turnstile>
   AttributeCall (Var ''self'') ''name'' : x}"
 
-text{* @{text "self.manages : Set (ObjectType Project)[1]"} *}
+text \<open>
+  @{text "self.manages : Set (ObjectType Project)[1]"}\<close>
 values "{x. ([''self'' \<mapsto> (ObjectType Employee)[?]] :: classes1 type env, model1) \<turnstile>
   AssociationEndCall (Var ''self'') ''manages'' : x}"
 
-text{* @{text "\<Gamma> \<turnstile> self.manager : (ObjectType Employee)[1]"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> self.manager : (ObjectType Employee)[1]"}\<close>
 values "{x. ([''self'' \<mapsto> (ObjectType Project)[?]] :: classes1 type env, model1) \<turnstile>
   AssociationEndCall (Var ''self'') ''manager'' : x}"
 
-subsection{* Negative Cases *}
+subsection \<open>Negative Cases\<close>
 
-text{* @{text "\<Gamma> \<turnstile> let x : Boolean[1] = 5 in x and true : \<epsilon>"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> let x : Boolean[1] = 5 in x and true : \<epsilon>"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
-  Let ''x'' Boolean[1] (IntegerLiteral 5)
-    (BinaryOperationCall AndOp (Var ''x'') (BooleanLiteral True)): x}"
+  Let STR ''x'' Boolean[1] (IntegerLiteral 5)
+    (BinaryOperationCall AndOp (Var STR ''x'') (BooleanLiteral True)): x}"
 
-text{* @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-    x->closure(it | 1) : \<epsilon>"} *}
+text \<open>
+  @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
+    x->closure(it | 1) : \<epsilon>"}\<close>
 values "{x. (Map.empty :: classes1 type env, model1) \<turnstile>
-  Let ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
+  Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator ClosureIter (Var ''x'') [''it'']
+  (Iterator ClosureIter (Var STR ''x'') [STR ''it'']
     (IntegerLiteral 1)): x}"
 
 end

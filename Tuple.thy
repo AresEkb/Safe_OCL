@@ -5,12 +5,12 @@
 *)
 (* TODO: There are a lot of similar lemmas in the theory.
          They should be generalized *)
-section{* Tuples *}
+section \<open>Tuples\<close>
 theory Tuple
   imports Main Finite_Map_Ext Transitive_Closure_Ext
 begin
 
-subsection{* Definitions *}
+subsection \<open>Definitions\<close>
 
 abbreviation
   "subtuple f xm ym \<equiv> fmrel_on_fset (fmdom ym) f xm ym"
@@ -20,13 +20,11 @@ abbreviation
 
 (*** Helper Lemmas **********************************************************)
 
-subsection{* Helper Lemmas *}
+subsection \<open>Helper Lemmas\<close>
 
 lemma fmrel_to_subtuple:
-  "fmrel r xm ym \<Longrightarrow>
-   subtuple r xm ym"
-  apply (unfold fmrel_on_fset_fmrel_restrict)
-  by blast
+  "fmrel r xm ym \<Longrightarrow> subtuple r xm ym"
+  unfolding fmrel_on_fset_fmrel_restrict by blast
 
 lemma subtuple_eq_fmrel_fmrestrict_fset:
   "subtuple r xm ym = fmrel r (fmrestrict_fset (fmdom ym) xm) ym"
@@ -40,7 +38,7 @@ lemma subtuple_fmdom:
 
 (*** Basic Properties *******************************************************)
 
-subsection{* Basic Properties *}
+subsection \<open>Basic Properties\<close>
 
 lemma subtuple_refl:
   "reflp R \<Longrightarrow> subtuple R xm xm"
@@ -87,10 +85,7 @@ lemma subtuple_acyclic:
   apply (frule subtuple_fmdom, simp)
   apply (unfold fmrel_on_fset_fmrel_restrict, simp)
   apply (rule fmap_ext)
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply (metis fmrestrict_fset_dom)
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply (metis fmrestrict_fset_dom)
+  apply (erule_tac ?x="x" in fmrel_cases, metis fmrestrict_fset_dom)+
   by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp1 tranclp_unfold)
 
 lemma subtuple_acyclic':
@@ -101,10 +96,7 @@ lemma subtuple_acyclic':
   apply (frule subtuple_fmdom, simp)
   apply (unfold fmrel_on_fset_fmrel_restrict, simp)
   apply (rule fmap_ext)
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply (metis fmrestrict_fset_dom)
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply (metis fmrestrict_fset_dom)
+  apply (erule_tac ?x="x" in fmrel_cases, metis fmrestrict_fset_dom)+
   by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp2 tranclp_unfold)
 
 lemma subtuple_acyclic'':
@@ -115,10 +107,7 @@ lemma subtuple_acyclic'':
   apply (frule subtuple_fmdom, simp)
   apply (unfold fmrel_on_fset_fmrel_restrict, simp)
   apply (rule fmap_ext)
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply (metis fmrestrict_fset_dom)
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply (metis fmrestrict_fset_dom)
+  apply (erule_tac ?x="x" in fmrel_cases, metis fmrestrict_fset_dom)+
   by (metis fmran'I option.inject rtranclp_into_tranclp2 tranclp_unfold)
 
 lemma strict_subtuple_trans:
@@ -165,7 +154,7 @@ lemma subtuple_fmmerge2 [intro]:
 
 (*** Transitive Closures ****************************************************)
 
-subsection{* Transitive Closures *}
+subsection \<open>Transitive Closures\<close>
 
 lemma trancl_to_subtuple:
   "(subtuple r)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
@@ -251,7 +240,7 @@ qed
 
 (*** Code Setup *************************************************************)
 
-subsection{* Code Setup *}
+subsection \<open>Code Setup\<close>
 
 abbreviation "subtuple_fun f xm ym \<equiv>
   fBall (fmdom ym) (\<lambda>x. rel_option f (fmlookup xm x) (fmlookup ym x))"
@@ -269,7 +258,7 @@ lemma strict_subtuple_fun_simp [code_abbrev, simp]:
 
 (*** Test Cases *************************************************************)
 
-subsection{* Test Cases *}
+subsection \<open>Test Cases\<close>
 
 value "subtuple (\<le>)
   (fmap_of_list [(1::nat,1::nat),(2,2),(3,3)])

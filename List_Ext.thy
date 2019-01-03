@@ -21,10 +21,11 @@ lemma trancl_to_list_all2:
   apply (simp add: list.rel_mono_strong)
   by (rule list_all2_trans; auto)
 
-text{* The following proofs were derived from the accepted answer
- on the website Stack Overflow that is available at
- https://stackoverflow.com/a/52970733/632199
- and provided with the permission of the author of the answer *}
+text \<open>
+  The following proofs were derived from the accepted answer
+  on the website Stack Overflow that is available at
+  @{url "https://stackoverflow.com/a/52970733/632199"}
+  and provided with the permission of the author of the answer.\<close>
 
 lemma set_listrel_eq_list_all2: 
   "listrel {(x, y). r x y} = {(xs, ys). list_all2 r xs ys}"

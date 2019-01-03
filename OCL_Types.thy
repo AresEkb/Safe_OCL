@@ -3,16 +3,17 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter{* OCL Types *}
+chapter \<open>OCL Types\<close>
 theory OCL_Types
   imports Main OCL_Basic_Types Tuple
 begin
 
 (*** Types ******************************************************************)
 
-section{* Definition of Types and a Subtype Relation *}
+section \<open>Definition of Types and a Subtype Relation\<close>
 
-text{* Tuples should have a string key. *}
+text \<open>
+  Tuples should have a string key.\<close>
 
 datatype (plugins del: "size") 'a type =
   OclInvalid
@@ -101,7 +102,7 @@ lemma subtype_antisym:
 
 (*** Constructors Bijectivity on Transitive Closures ************************)
 
-section{* Constructors Bijectivity on Transitive Closures *}
+section \<open>Constructors Bijectivity on Transitive Closures\<close>
 
 lemma Required_bij_on_trancl [simp]:
   "bij_on_trancl subtype Required"
@@ -160,7 +161,7 @@ lemma Tuple_bij_on_trancl [simp]:
 
 (*** Partial Order of Types *************************************************)
 
-section{* Partial Order of Types *}
+section \<open>Partial Order of Types\<close>
 
 instantiation type :: (order) order
 begin
@@ -171,7 +172,7 @@ definition "(\<le>) \<equiv> subtype\<^sup>*\<^sup>*"
 
 (*** Introduction Rules *****************************************************)
 
-subsection{* Introduction Rules *}
+subsection \<open>Introduction Rules\<close>
 
 lemma type_less_eq_OclInvalid_x_intro [intro]:
   "OclInvalid \<le> \<sigma>"
@@ -363,7 +364,7 @@ qed
 
 (*** Strict Elimination Rules ***********************************************)
 
-subsection{* Strict Elimination Rules *}
+subsection \<open>Strict Elimination Rules\<close>
 
 lemma type_less_x_OclInvalid [elim!]:
   "\<tau> < OclInvalid \<Longrightarrow> P"
@@ -511,8 +512,9 @@ lemma type_less_x_Collection [elim!]:
       auto simp add: converse_rtranclp_into_rtranclp less_eq_type_def
                      tranclp_into_tranclp2 tranclp_into_rtranclp)
 
-text{* We'll be able to remove the acyclicity assumption only after
-  we prove that the subtype relation is acyclic. *}
+text \<open>
+  We'll be able to remove the acyclicity assumption only after
+  we prove that the subtype relation is acyclic.\<close>
 
 lemma type_less_x_Tuple':
   assumes "\<tau> < Tuple \<xi>"
@@ -539,7 +541,7 @@ lemma type_less_x_SupType [elim!]:
 
 (*** Properties *************************************************************)
 
-subsection{* Properties *}
+subsection \<open>Properties\<close>
 
 lemma subtype_irrefl:
   "\<tau> < \<tau> \<Longrightarrow> False"
@@ -590,7 +592,7 @@ end
 
 (*** Non-strict Elimination Rules *******************************************)
 
-subsection{* Non-strict Elimination Rules *}
+subsection \<open>Non-strict Elimination Rules\<close>
 
 lemma type_less_eq_x_OclInvalid [elim!]:
   "\<tau> \<le> OclInvalid \<Longrightarrow>
@@ -667,7 +669,7 @@ lemma type_less_eq_x_Tuple [elim!]:
 
 (*** Upper Semilattice of Types *********************************************)
 
-section{* Upper Semilattice of Types *}
+section \<open>Upper Semilattice of Types\<close>
 
 instantiation type :: (semilattice_sup) semilattice_sup
 begin
@@ -842,7 +844,7 @@ end
 
 (*** Helper Relations *******************************************************)
 
-section{* Helper Relations *}
+section \<open>Helper Relations\<close>
 
 abbreviation simeq_type ("(_/ \<simeq> _)"  [51, 51] 50) where
   "\<tau> \<simeq> \<sigma> \<equiv> \<tau> = \<sigma>[1] \<or> \<tau> = \<sigma>[?]"
@@ -922,7 +924,7 @@ inductive strict_subcollection where
 
 (*** Code Setup *************************************************************)
 
-section{* Code Setup *}
+section \<open>Code Setup\<close>
 
 code_pred subtype .
 
@@ -1076,9 +1078,9 @@ lemma less_type_code [code_abbrev, simp]:
 
 (*** Test Cases *************************************************************)
 
-section{* Test Cases *}
+section \<open>Test Cases\<close>
 
-subsection{* Positive Cases *}
+subsection \<open>Positive Cases\<close>
 
 value "Integer[?] < (SupType :: classes1 type)"
 value "Collection Real[?] < (SupType :: classes1 type)"
@@ -1092,7 +1094,7 @@ value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<op
 value "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type)" \<comment> \<open>Collection OclAny[?]\<close>
 value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>SupType\<close>
 
-subsection{* Negative Cases *}
+subsection \<open>Negative Cases\<close>
 
 value "OrderedSet Boolean[1] < Set (Boolean[1] :: classes1 type)"
 

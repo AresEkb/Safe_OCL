@@ -3,15 +3,16 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter{* OCL Syntax *}
+chapter \<open>OCL Syntax\<close>
 theory OCL_Syntax
   imports Complex_Main OCL_Common OCL_Types
 begin
 
-section{* Standard Library Operations *}
+section \<open>Standard Library Operations\<close>
 
-text{* The OCL specification doesn't define OclType. So we implement
- type operations as a syntactic constructs. *}
+text \<open>
+  The OCL specification doesn't define OclType. So we implement
+  type operations as a syntactic constructs.\<close>
 
 datatype typeop = OclAsTypeOp | OclIsTypeOfOp | OclIsKindOfOp
 | SelectByKindOp | SelectByTypeOp
@@ -72,7 +73,7 @@ datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
 | ExistsIter | ForAllIter | OneIter | IsUniqueIter
 | SelectIter | RejectIter | SortedByIter
 
-section{* Expressions *}
+section \<open>Expressions\<close>
 
 datatype collection_literal_kind =
   SetKind | OrderedSetKind | BagKind | SequenceKind | CollectionKind
