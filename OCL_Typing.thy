@@ -507,8 +507,9 @@ inductive typing
   "\<M> = (attrs, assocs) \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> src : \<tau> \<Longrightarrow>
    class_of \<tau> cls \<Longrightarrow>
-   fmlookup attrs cls = Some cls_attrs \<Longrightarrow>
-   fmlookup cls_attrs prop = Some \<sigma> \<Longrightarrow>
+   (*fmlookup attrs cls = Some cls_attrs \<Longrightarrow>
+   fmlookup cls_attrs prop = Some \<sigma> \<Longrightarrow>*)
+   find_attribute attrs cls prop cls2 \<sigma> \<Longrightarrow>
    (\<Gamma>, \<M>) \<turnstile> AttributeCall src prop : \<sigma>"
 |AssociationEndCallT:
   "\<M> = (attrs, assocs) \<Longrightarrow>
@@ -869,7 +870,7 @@ section \<open>Code Setup\<close>
 
 code_pred (modes:
     i * i * i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool as check_type,
-    i * i * i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool as synthesize_type) typing .
+    i * i * i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool as synthesize_type) [show_modes] typing .
 
 (*** Test Cases *************************************************************)
 

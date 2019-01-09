@@ -345,7 +345,12 @@ section \<open>Test Cases\<close>
 datatype classes1 =
   Object | Person | Employee | Customer | Project | Task | Sprint
 
-instantiation classes1 :: semilattice_sup
+class classes = semilattice_sup +
+  fixes conforms_to :: "'a \<Rightarrow> 'a set"
+  and conforms_to' :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
+  assumes conforms_to_super_or_self [simp]: "d \<in> conforms_to c \<longleftrightarrow> c \<le> d"
+
+instantiation classes1 :: classes
 begin
 
 inductive subclass1 where
@@ -354,9 +359,21 @@ inductive subclass1 where
 | "subclass1 Employee Person"
 | "subclass1 Customer Person"
 
+code_pred [show_modes] subclass1 .
+
 definition "(<) \<equiv> subclass1"
 
 definition "(c::classes1) \<le> d \<equiv> c = d \<or> c < d"
+(*
+definition "conforms_to c \<equiv> insert c (set_of_pred (subclass1_i_o c))"
+definition "conforms_to c \<equiv> {x. x = c \<or> x \<in> set_of_pred (subclass1_i_o c)}"
+*)
+definition "conforms_to c \<equiv> {x :: classes1. c \<le> x}"
+definition "conforms_to' \<equiv> subclass1_i_o"
+
+lemma conforms_to_code [code_abbrev]:
+  "insert c (set_of_pred (subclass1_i_o c)) = conforms_to c"
+  by (auto simp add: conforms_to_classes1_def less_classes1_def less_eq_classes1_def subclass1_i_o_def)
 
 fun sup_classes1 where
   "Object \<squnion> _ = Object"
@@ -406,7 +423,14 @@ lemma sup_least_classes1:
   for c d e :: classes1
   by (induct c; induct d;
       auto simp add: less_eq_classes1_def less_classes1_def subclass1.simps)
-
+(*
+lemma conforms_to_super_or_self:
+  "d \<in> conforms_to c \<longleftrightarrow> c \<le> d"
+  for c d :: classes1
+  unfolding conforms_to_classes1_def
+  apply auto
+  done
+*)
 instance
   apply intro_classes
   apply (simp add: less_le_not_le_classes1)
@@ -416,14 +440,10 @@ instance
   apply (simp add: sup_ge1_classes1)
   apply (simp add: sup_ge2_classes1)
   apply (simp add: sup_least_classes1)
+  apply (simp add: conforms_to_classes1_def)
   done
 
 end
-
-lemma q [code_pred_intro]:
-  "subclass1 c d \<Longrightarrow> c < d"
-  by (simp add: less_classes1_def)
-thm q
 
 code_pred [show_modes] subclass1 .
 
@@ -432,6 +452,15 @@ subsection \<open>Positive Cases\<close>
 value "(UnlimitedNatural :: classes1 basic_type) < Real"
 value "ObjectType Employee < ObjectType Person"
 value "ObjectType Person \<le> OclAny"
+
+value "conforms_to Employee"
+
+inductive q where
+  "d \<in> conforms_to c \<Longrightarrow> q c d"
+
+code_pred [show_modes] q .
+
+values "{x. q Employee x}"
 
 subsection \<open>Negative Cases\<close>
 
