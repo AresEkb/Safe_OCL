@@ -34,12 +34,6 @@ definition assoc_end_type :: "'a assoc_end \<Rightarrow> 'a type" where
 definition assoc_end_min_le_max :: "'a assoc_end \<Rightarrow> bool" where
   "assoc_end_min_le_max end \<equiv> assoc_end_min end \<le> assoc_end_max end"
 
-inductive find_attribute where
-  "cls \<le> cls2 \<Longrightarrow>
-   fmlookup attrs cls2 = Some cls_attrs \<Longrightarrow>
-   fmlookup cls_attrs name = Some \<tau> \<Longrightarrow>
-   find_attribute attrs cls name cls2 \<tau>"
-
 definition assoc_refer_role :: "(role \<rightharpoonup>\<^sub>f 'a assoc_end) \<Rightarrow> role \<Rightarrow> bool" where
   "assoc_refer_role ends role \<equiv> fmlookup ends role \<noteq> None"
 
@@ -71,17 +65,6 @@ inductive find_association where
    fmlookup ends name = Some end \<Longrightarrow>
    find_association (fmupd assoc ends assocs) cls name end"
 *)
-
-inductive q where
-  "q (fmupd a b xs) a"
-
-code_pred [show_modes] q .
-
-
-term "fset_of_fmap (a :: 'a assocs)"
-
-term fset_of_fmap
-
 
 (*
 lemma find_association_code [code_pred_intro]:
@@ -119,6 +102,7 @@ lemma subclass1_code [code_pred_intro]:
    cls \<le> cls2"
   by (simp_all add: less_classes1_def less_eq_classes1_def)
 *)
+(*
 lemma find_attribute_code [code_pred_intro]:
   "fmlookup attrs cls = Some cls_attrs \<Longrightarrow>
    fmlookup cls_attrs name = Some \<tau> \<Longrightarrow>
@@ -128,7 +112,7 @@ lemma find_attribute_code [code_pred_intro]:
    fmlookup cls_attrs name = Some \<tau> \<Longrightarrow>
    find_attribute attrs cls name cls2 \<tau>"
   by (simp_all add: find_attribute.intros less_classes1_def less_eq_classes1_def)
-
+*)
 (*
 datatype ty = A | B | C
 
@@ -249,8 +233,18 @@ lemma pred1_ty_code [code_pred_intro]:
 code_pred [show_modes] pred1
   apply (erule pred1.cases)
 *)
+(*
 code_pred [show_modes] find_attribute
   by (metis find_attribute.cases less_classes1_def less_eq_classes1_def)
+*)
+
+inductive find_attribute where
+  "cls \<le> cls2 \<Longrightarrow>
+   fmlookup attrs cls2 = Some cls_attrs \<Longrightarrow>
+   fmlookup cls_attrs name = Some \<tau> \<Longrightarrow>
+   find_attribute attrs cls name cls2 \<tau>"
+
+code_pred [show_modes] find_attribute .
 
 values "{(c, t). find_attribute attrs1 Employee (STR ''name'') c t}"
 values "{(c, t). find_attribute attrs1 Employee (STR ''position'') c t}"
@@ -274,18 +268,13 @@ lemma find_assoc1_code [code_pred_intro]:
   "find_assoc1 assocs (fmdom assocs)"
 *)
 
-inductive find_assoc where
-  "a |\<in>| fmdom assocs \<Longrightarrow>
-   fmlookup assocs a = Some assoc \<Longrightarrow>
-   fmlookup assoc name = Some end \<Longrightarrow>
-   find_assoc assocs cls name end"
-
-code_pred [show_modes] find_assoc .
-
 definition assocs1 :: "classes1 assocs" where
   "assocs1 \<equiv> fmap_of_list [
+  (STR ''ProjectPerson'', fmap_of_list [
+    (STR ''projects'', (Project, 0::nat, 5)),
+    (STR ''person'', (Person, 0, 1))]),
   (STR ''ProjectManager'', fmap_of_list [
-    (STR ''manages'', (Project, 0::nat, \<infinity>)),
+    (STR ''projects'', (Project, 0::nat, \<infinity>)),
     (STR ''manager'', (Employee, 1, 1))]),
   (STR ''ProjectMember'', fmap_of_list [
     (STR ''member_of'', (Project, 0, \<infinity>)),
@@ -305,12 +294,29 @@ definition assocs1 :: "classes1 assocs" where
     (STR ''tasks'', (Task, 0, 5)),
     (STR ''assignee'', (Employee, 0, 1))])]"
 
-term ffold
-term finsert
+lemma fmember_code_predI [code_pred_intro]:
+  "Predicate_Compile.contains (fset xs) x \<Longrightarrow> x |\<in>| xs"
+  by (meson Predicate_Compile.containsE notin_fset)
 
+code_pred [show_modes] fmember
+  by (simp add: Predicate_Compile.containsI fmember.rep_eq)
+
+value "{x. x \<in> fmdom' assocs1}"
+values "{x. x |\<in>| fmdom assocs1}"
+(*
+inductive find_assoc where
+  "a |\<in>| fmdom assocs \<Longrightarrow>
+   fmlookup assocs a = Some assoc \<Longrightarrow>
+   fmlookup assoc name = Some end \<Longrightarrow>
+   find_assoc assocs cls name end"
+
+code_pred [show_modes] find_assoc .
+*)
+(*
 definition "fset_of_assocs assocs \<equiv>
   ffold (\<lambda>(a, r, e) y. ffold (\<lambda>x z. finsert (a, r, x) z) fempty e) fempty
     (fset_of_fmap (fmmap_keys (\<lambda>k v. (k, fset_of_fmap v)) assocs))"
+*)
 (*
 definition "sorted_list_of_assocs assocs \<equiv>
   concat (fold (\<lambda>(a, r) y. (fold (\<lambda>x z. (a, x) # z) r []) # y)
@@ -321,7 +327,7 @@ primrec product_lists :: "'a list list \<Rightarrow> 'a list list" where
 "product_lists [] = [[]]" |
 "product_lists (xs # xss) = concat (map (\<lambda>x. map (Cons x) (product_lists xss)) xs)"
 *)
-
+(*
 value "sorted_list_of_fmap (fmmap (\<lambda>xm. map (\<lambda>x. fmdrop x xm) (sorted_list_of_fset (fmdom xm))) assocs)"
 term map
 
@@ -347,6 +353,7 @@ definition "roles xs \<equiv> map (\<lambda>assoc. (assoc_end_class (from_assoc_
 
 value "roles (sorted_list_of_assocs assocs1)"
 value "sorted_list_of_assocs assocs1"
+*)
 (*
 definition "sorted_list_of_assocs assocs \<equiv>
    (fold (\<lambda>(a, r) y. y @ [fold (\<lambda>(x, y) z. z @ [(a, y)]) r []])
@@ -362,7 +369,7 @@ definition "sorted_list_of_assocs assocs \<equiv>
           (sorted_list_of_fset (fmdom xm)))
       assocs)) [])"
 *)
-
+(*
 value "let x = fmap_of_list [
     (STR ''manages'', (Project, 0::nat, 2::nat)),
     (STR ''manager'', (Employee, 1, 1))] in
@@ -371,11 +378,11 @@ value "let x = fmap_of_list [
 term "fmdrop"
 
 value "fmmap sorted_list_of_fmap assocs1"
-(*
+
 definition "sorted_list_of_assocs assocs \<equiv>
    (fold (\<lambda>(a, r) y. y @ [fold (\<lambda>x z. z @ [(a, x)]) r []])
     (sorted_list_of_fmap (fmmap sorted_list_of_fmap assocs)) [])"
-*)
+
 value "assocs1"
 
 term fmmap
@@ -429,7 +436,15 @@ term "ffold (\<lambda>(a, r, e) y. ffold (\<lambda>x z. finsert (a, r, x) z) fem
   (fset_of_fmap (fmmap_keys (\<lambda>k v. (k, fset_of_fmap v)) assocs1))"
 
 term "fset_of_fmap (fmmap_keys (\<lambda>k v. (k, fset_of_fmap v)) assocs1)"
-
+*)
+(*
+inductive find_assoc where
+  "a |\<in>| fmdom assocs \<Longrightarrow>
+   fmlookup assocs a = Some assoc \<Longrightarrow>
+   fmlookup assoc name = Some end \<Longrightarrow>
+   find_assoc assocs cls name end"
+*)
+(*
 inductive find_association where
   "cls \<le> cls2 \<Longrightarrow>
    find_assoc_end assocs cls2 name = Some end \<Longrightarrow>
@@ -445,8 +460,33 @@ lemma find_association_code [code_pred_intro]:
 
 code_pred [show_modes] find_association
   by (metis find_association.cases less_classes1_def less_eq_classes1_def)
+*)
 
-values "{(c, e). find_association assocs1 Project STR ''manager'' c e}"
+(*
+definition find_assocs :: "'a assocs \<Rightarrow> 'a \<Rightarrow> role \<Rightarrow> 'a assocs" where
+  "find_assocs assocs cls role \<equiv>
+    fmfilter (\<lambda>assoc.
+      case fmlookup assocs assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
+        assoc_refer_class (fmdrop role ends) cls \<and> assoc_refer_role ends role) assocs"
+
+definition find_assoc_end :: "'a assocs \<Rightarrow> 'a \<Rightarrow> role \<Rightarrow> 'a assoc_end option" where
+  "find_assoc_end assocs cls role \<equiv>
+    let found = fmran (find_assocs assocs cls role) in
+    if fcard found = 1 then fmlookup (fthe_elem found) role else None"
+*)
+
+inductive find_association where
+  "cls \<le> cls2 \<Longrightarrow>
+   assoc_name |\<in>| fmdom assocs \<Longrightarrow>
+   fmlookup assocs assoc_name = Some assoc \<Longrightarrow>
+   fmlookup assoc name = Some end \<Longrightarrow>
+(*   find_assoc_end assocs cls2 name = Some end \<Longrightarrow>*)
+   find_association assocs cls name cls2 end"
+
+code_pred [show_modes] find_association .
+
+values "{(c, e). find_association assocs1 Employee STR ''projects'' c e}"
+values "{(c, e). find_association assocs1 Customer STR ''projects'' c e}"
 values "{(c, e). find_association assocs1 Project STR ''manager1'' c e}"
 
 value "find_assocs assocs1 Project STR ''manager''"

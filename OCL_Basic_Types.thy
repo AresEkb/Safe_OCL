@@ -368,12 +368,15 @@ definition "(c::classes1) \<le> d \<equiv> c = d \<or> c < d"
 definition "conforms_to c \<equiv> insert c (set_of_pred (subclass1_i_o c))"
 definition "conforms_to c \<equiv> {x. x = c \<or> x \<in> set_of_pred (subclass1_i_o c)}"
 *)
+
 definition "conforms_to c \<equiv> {x :: classes1. c \<le> x}"
-definition "conforms_to' \<equiv> subclass1_i_o"
+(*definition "conforms_to' \<equiv> subclass1_i_o"*)
 
 lemma conforms_to_code [code_abbrev]:
   "insert c (set_of_pred (subclass1_i_o c)) = conforms_to c"
   by (auto simp add: conforms_to_classes1_def less_classes1_def less_eq_classes1_def subclass1_i_o_def)
+
+(*definition "conforms_to c \<equiv> Abs_fset {x :: classes1. c \<le> x}"*)
 
 fun sup_classes1 where
   "Object \<squnion> _ = Object"
@@ -444,8 +447,94 @@ instance
   done
 
 end
+(*
+datatype ty = A | B | C
 
-code_pred [show_modes] subclass1 .
+instantiation ty :: order
+begin
+
+fun less_ty where
+  "A < x = (x = C)"
+| "B < x = (x = C)"
+| "C < x = False"
+
+definition "(x :: ty) \<le> y \<equiv> x = y \<or> x < y"
+
+instance
+  apply intro_classes
+  apply (metis less_eq_ty_def less_ty.elims(2) ty.distinct(3) ty.distinct(5))
+  apply (simp add: less_eq_ty_def)
+  apply (metis less_eq_ty_def less_ty.elims(2))
+  using less_eq_ty_def less_ty.elims(2) by fastforce
+  
+end
+
+instantiation ty :: enum
+begin
+
+definition [simp]: "enum_ty \<equiv> [A, B, C]"
+definition [simp]: "enum_all_ty P \<equiv> P A \<and> P B \<and> P C"
+definition [simp]: "enum_ex_ty P \<equiv> P A \<or> P B \<or> P C" 
+
+instance
+  apply intro_classes
+  apply auto
+  by (case_tac x, auto)+
+
+end
+(*
+lemma less_eq_code_predI [code_pred_intro]:
+  "Predicate_Compile.contains {z. x \<le> z} y \<Longrightarrow> x \<le> y"
+  "Predicate_Compile.contains {z. z \<le> y} x \<Longrightarrow> x \<le> y"
+  by (simp_all add: Predicate_Compile.contains_def)
+
+code_pred [show_modes] less_eq
+  by (simp add: Predicate_Compile.containsI)
+*)
+value "{x. A \<le> x}"
+value "{x. x \<le> C}"
+
+fun ge_values where
+  "ge_values A = {A, C}"
+| "ge_values B = {B, C}"
+| "ge_values C = {C}"
+(*
+lemma ge_values_eq_less_eq_ty [code_abbrev, simp]:
+  "ge_values x = {y. x \<le> y}"
+  by (cases x; auto simp add: dual_order.order_iff_strict)
+*)
+value "{x. A \<le> x}"
+
+inductive pred1 where
+  "x \<le> y \<Longrightarrow> pred1 x y"
+
+code_pred [show_modes] pred1 .
+*)
+instantiation classes1 :: enum
+begin
+
+definition [simp]: "enum_classes1 \<equiv>
+  [Object, Person, Employee, Customer, Project, Task, Sprint]"
+
+definition [simp]: "enum_all_classes1 P \<equiv>
+  P Object \<and> P Person \<and> P Employee \<and> P Customer \<and> P Project \<and> P Task \<and> P Sprint"
+
+definition [simp]: "enum_ex_classes1 P \<equiv>
+  P Object \<or> P Person \<or> P Employee \<or> P Customer \<or> P Project \<or> P Task \<or> P Sprint" 
+
+instance
+  apply intro_classes
+  apply auto
+  by (case_tac x, auto)+
+
+end
+
+lemma less_eq_code_predI [code_pred_intro]:
+  "Predicate_Compile.contains {z. x \<le> z} y \<Longrightarrow> x \<le> y"
+  by (simp_all add: Predicate_Compile.contains_def)
+
+code_pred [show_modes] less_eq
+  by (simp add: Predicate_Compile.containsI)
 
 subsection \<open>Positive Cases\<close>
 
@@ -453,14 +542,8 @@ value "(UnlimitedNatural :: classes1 basic_type) < Real"
 value "ObjectType Employee < ObjectType Person"
 value "ObjectType Person \<le> OclAny"
 
-value "conforms_to Employee"
-
-inductive q where
-  "d \<in> conforms_to c \<Longrightarrow> q c d"
-
-code_pred [show_modes] q .
-
-values "{x. q Employee x}"
+values "{x. Employee \<le> x}"
+(*values "{x. x \<le> Object}"*)
 
 subsection \<open>Negative Cases\<close>
 
