@@ -510,6 +510,7 @@ inductive pred1 where
 
 code_pred [show_modes] pred1 .
 *)
+
 instantiation classes1 :: enum
 begin
 
@@ -528,7 +529,7 @@ instance
   by (case_tac x, auto)+
 
 end
-
+(*
 lemma less_code_predI [code_pred_intro]:
   "Predicate_Compile.contains {z. x < z} y \<Longrightarrow> x < y"
   by (simp_all add: Predicate_Compile.contains_def)
@@ -542,14 +543,14 @@ lemma less_eq_code_predI [code_pred_intro]:
 
 code_pred [show_modes] less_eq
   by (simp add: Predicate_Compile.containsI)
-
+*)
 subsection \<open>Positive Cases\<close>
 
 value "(UnlimitedNatural :: classes1 basic_type) < Real"
 value "ObjectType Employee < ObjectType Person"
 value "ObjectType Person \<le> OclAny"
 
-values "{x. Employee \<le> x}"
+(*values "{x. Employee \<le> x}"*)
 (*values "{x. x \<le> Object}"*)
 
 subsection \<open>Negative Cases\<close>

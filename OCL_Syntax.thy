@@ -101,15 +101,16 @@ and 'a collection_literal_part_expr =
 | CollectionRange (first : "'a expr") (last : "'a expr")
 and 'a call_expr =
   OclType (source : "'a expr")
-| TypeOperationCall typeop (source : "'a expr") (type : "'a type")
-| UnaryOperationCall unop (source : "'a expr")
-| BinaryOperationCall binop (source : "'a expr") (arg1 : "'a expr")
-| TernaryOperationCall ternop (source : "'a expr") (arg1 : "'a expr") (arg2 : "'a expr")
+| TypeOperationCall (source : "'a expr") typeop (type : "'a type")
+| UnaryOperationCall (source : "'a expr") unop
+| BinaryOperationCall (source : "'a expr") binop (arg1 : "'a expr")
+| TernaryOperationCall (source : "'a expr") ternop (arg1 : "'a expr") (arg2 : "'a expr")
 | Iterate (source : "'a expr") (iterators : "vname list")
     (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
-| Iterator iterator (source : "'a expr") (iterators : "vname list") (body_expr : "'a expr")
+| Iterator (source : "'a expr") iterator (iterators : "vname list") (body_expr : "'a expr")
 | AttributeCall (source : "'a expr") attr
 | AssociationEndCall (source : "'a expr") role
+| OperationCall (source : "'a expr") oper (args : "'a expr list")
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]

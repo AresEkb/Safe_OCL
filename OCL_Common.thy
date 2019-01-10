@@ -14,6 +14,7 @@ type_synonym 'a env = "vname \<rightharpoonup> 'a"
 type_synonym attr = "String.literal"
 type_synonym assoc = "String.literal"
 type_synonym role = "String.literal"
+type_synonym oper = "String.literal"
 
 text \<open>
   In OCL @{text "1 + \<infinity> = \<bottom>"}. So we don't use @{typ enat} and
