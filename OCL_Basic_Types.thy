@@ -529,6 +529,13 @@ instance
 
 end
 
+lemma less_code_predI [code_pred_intro]:
+  "Predicate_Compile.contains {z. x < z} y \<Longrightarrow> x < y"
+  by (simp_all add: Predicate_Compile.contains_def)
+
+code_pred [show_modes] less
+  by (simp add: Predicate_Compile.containsI)
+
 lemma less_eq_code_predI [code_pred_intro]:
   "Predicate_Compile.contains {z. x \<le> z} y \<Longrightarrow> x \<le> y"
   by (simp_all add: Predicate_Compile.contains_def)

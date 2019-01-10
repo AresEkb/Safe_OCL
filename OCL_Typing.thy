@@ -361,7 +361,7 @@ inductive ternop_type where
 section \<open>Expressions Typing\<close>
 
 inductive typing
-    :: "('a :: semilattice_sup) type env \<times> 'a model \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
+    :: "('a :: semilattice_sup) type env \<times> 'a good_model \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
        ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
     and collection_parts_typing
     and iterator_typing where
