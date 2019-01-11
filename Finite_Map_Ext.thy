@@ -5,7 +5,7 @@
 *)
 section \<open>Finite Maps\<close>
 theory Finite_Map_Ext
-  imports Main "HOL-Library.Finite_Map"
+  imports "HOL-Library.Finite_Map"
 begin
 
 type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)

@@ -5,7 +5,7 @@
 *)
 chapter \<open>OCL Types\<close>
 theory OCL_Types
-  imports Main OCL_Basic_Types Tuple
+  imports OCL_Basic_Types Tuple
 begin
 
 (*** Types ******************************************************************)
@@ -876,6 +876,13 @@ inductive to_unique_collection where
 | "to_unique_collection (Bag \<tau>) (Set \<tau>)"
 | "to_unique_collection (Sequence \<tau>) (OrderedSet \<tau>)"
 | "to_unique_collection (Collection \<tau>) (Set \<tau>)"
+
+inductive to_nonunique_collection where
+  "to_nonunique_collection (Set \<tau>) (Bag \<tau>)"
+| "to_nonunique_collection (OrderedSet \<tau>) (Sequence \<tau>)"
+| "to_nonunique_collection (Bag \<tau>) (Bag \<tau>)"
+| "to_nonunique_collection (Sequence \<tau>) (Sequence \<tau>)"
+| "to_nonunique_collection (Collection \<tau>) (Bag \<tau>)"
 
 inductive to_ordered_collection where
   "to_ordered_collection (Set \<tau>) (OrderedSet \<tau>)"

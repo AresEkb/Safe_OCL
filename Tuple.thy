@@ -7,7 +7,7 @@
          They should be generalized *)
 section \<open>Tuples\<close>
 theory Tuple
-  imports Main Finite_Map_Ext Transitive_Closure_Ext
+  imports Finite_Map_Ext Transitive_Closure_Ext
 begin
 
 subsection \<open>Definitions\<close>

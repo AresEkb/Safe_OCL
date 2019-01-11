@@ -5,7 +5,7 @@
 *)
 chapter \<open>OCL Typing Rules\<close>
 theory OCL_Typing
-  imports OCL_Syntax OCL_Object_Model
+  imports OCL_Object_Model
 begin
 
 (*** Standard Library Operations Typing *************************************)
@@ -431,13 +431,13 @@ inductive typing
    \<Gamma> \<turnstile> TypeOperationCall a op \<sigma> : \<rho>"
 |UnaryOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; unop_type op \<tau> \<sigma> \<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> UnaryOperationCall a op : \<sigma>"
+   \<Gamma> \<turnstile> UnaryOperationCall s a op : \<sigma>"
 |BinaryOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; binop_type op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> BinaryOperationCall a op b : \<rho>"
+   \<Gamma> \<turnstile> BinaryOperationCall s a op b : \<rho>"
 |TernaryOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>; ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> TernaryOperationCall a op b c : \<upsilon>"
+   \<Gamma> \<turnstile> TernaryOperationCall s a op b c : \<upsilon>"
 
 |IteratorT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
@@ -447,72 +447,74 @@ inductive typing
 
 |IterateT:
   "\<lbrakk>iterator_typing \<Gamma> src its (Let res res_t res_init body) \<tau> \<sigma> \<rho>; \<rho> \<le> res_t\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterate src its res res_t res_init body : \<rho>"
+   \<Gamma> \<turnstile> Iterate s src its res res_t res_init body : \<rho>"
 
 |AnyIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src AnyIter its body : \<sigma>"
+   \<Gamma> \<turnstile> Iterator s src AnyIter its body : \<sigma>"
 |ClosureIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_single_type \<rho> \<le> \<sigma> \<Longrightarrow>
    to_unique_collection \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src ClosureIter its body : \<upsilon>"
+   \<Gamma> \<turnstile> Iterator s src ClosureIter its body : \<upsilon>"
 |CollectIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   update_element_type \<tau> (to_single_type \<rho>) \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src CollectIter its body : \<upsilon>"
+   to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
+   update_element_type \<upsilon> (to_single_type \<rho>) \<phi> \<Longrightarrow>
+   \<Gamma> \<turnstile> Iterator s src CollectIter its body : \<phi>"
 |CollectNestedIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   update_element_type \<tau> \<rho> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src CollectNestedIter its body : \<upsilon>"
+   to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
+   update_element_type \<upsilon> \<rho> \<phi> \<Longrightarrow>
+   \<Gamma> \<turnstile> Iterator s src CollectNestedIter its body : \<phi>"
 |ExistsIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src ExistsIter its body : \<rho>"
+   \<Gamma> \<turnstile> Iterator s src ExistsIter its body : \<rho>"
 |ForAllIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src ForAllIter its body : \<rho>"
+   \<Gamma> \<turnstile> Iterator s src ForAllIter its body : \<rho>"
 |OneIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src OneIter its body : Boolean[1]"
+   \<Gamma> \<turnstile> Iterator s src OneIter its body : Boolean[1]"
 |IsUniqueIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src IsUniqueIter its body : Boolean[1]"
+   \<Gamma> \<turnstile> Iterator s src IsUniqueIter its body : Boolean[1]"
 |SelectIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src SelectIter its body : \<tau>"
+   \<Gamma> \<turnstile> Iterator s src SelectIter its body : \<tau>"
 |RejectIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src RejectIter its body : \<tau>"
+   \<Gamma> \<turnstile> Iterator s src RejectIter its body : \<tau>"
 |SortedByIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_ordered_collection \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator src SortedByIter its body : \<upsilon>"
+   \<Gamma> \<turnstile> Iterator s src SortedByIter its body : \<upsilon>"
 
 |AttributeCallT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    class_of \<tau> cls \<Longrightarrow>
    find_attribute cls prop = Some (cls2, \<sigma>) \<Longrightarrow>
-   \<Gamma> \<turnstile> AttributeCall src prop : \<sigma>"
+   \<Gamma> \<turnstile> AttributeCall s src prop : \<sigma>"
 |AssociationEndCallT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    class_of \<tau> cls \<Longrightarrow>
    find_association_end cls role = Some end \<Longrightarrow>
-   \<Gamma> \<turnstile> AssociationEndCall src role : assoc_end_type end"
+   \<Gamma> \<turnstile> AssociationEndCall s src role : assoc_end_type end"
 
 inductive_cases NullLiteral_typing [elim]: "\<Gamma> \<turnstile> NullLiteral : \<tau>"
 inductive_cases InvalidLiteral_typing [elim]: "\<Gamma> \<turnstile> InvalidLiteral : \<tau>"
@@ -533,25 +535,25 @@ inductive_cases If_typing [elim]: "\<Gamma> \<turnstile> If a b c : \<tau>"
 inductive_cases Call_typing [elim]: "\<Gamma> \<turnstile> Call a : \<tau>"
 inductive_cases OclType_typing [elim]: "\<Gamma> \<turnstile> OclType a : \<tau>"
 inductive_cases TypeOperationCall_typing [elim]: "\<Gamma> \<turnstile> TypeOperationCall a op \<sigma> : \<tau>"
-inductive_cases UnaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> UnaryOperationCall a op : \<tau>"
-inductive_cases BinaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> BinaryOperationCall a op b : \<tau>"
-inductive_cases TernaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> TernaryOperationCall a op b c : \<tau>"
+inductive_cases UnaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> UnaryOperationCall s a op : \<tau>"
+inductive_cases BinaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> BinaryOperationCall s a op b : \<tau>"
+inductive_cases TernaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> TernaryOperationCall s a op b c : \<tau>"
 inductive_cases iterator_typing [elim]: "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho>"
-inductive_cases Iterate_typing [elim]: "\<Gamma> \<turnstile> Iterate src its res res_t res_init body : \<tau>"
-inductive_cases AnyIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src AnyIter its body : \<tau>"
-inductive_cases ClosureIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src ClosureIter its body : \<tau>"
-inductive_cases CollectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src CollectIter its body : \<tau>"
-inductive_cases CollectNestedIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src CollectNestedIter its body : \<tau>"
-inductive_cases ExistsIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src ExistsIter its body : \<tau>"
-inductive_cases ForAllIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src ForAllIter its body : \<tau>"
-inductive_cases OneIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src OneIter its body : \<tau>"
-inductive_cases IsUniqueIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src IsUniqueIter its body : \<tau>"
-inductive_cases SelectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src SelectIter its body : \<tau>"
-inductive_cases RejectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src RejectIter its body : \<tau>"
-inductive_cases SortedByIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator src SortedByIter its body : \<tau>"
-inductive_cases AttributeCall_typing [elim]: "\<Gamma> \<turnstile> AttributeCall src prop : \<tau>"
-inductive_cases AssociationEndCall_typing [elim]: "\<Gamma> \<turnstile> AssociationEndCall src role : \<tau>"
-inductive_cases OperationCall_typing [elim]: "\<Gamma> \<turnstile> OperationCall src oper params : \<tau>"
+inductive_cases Iterate_typing [elim]: "\<Gamma> \<turnstile> Iterate s src its res res_t res_init body : \<tau>"
+inductive_cases AnyIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src AnyIter its body : \<tau>"
+inductive_cases ClosureIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src ClosureIter its body : \<tau>"
+inductive_cases CollectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src CollectIter its body : \<tau>"
+inductive_cases CollectNestedIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src CollectNestedIter its body : \<tau>"
+inductive_cases ExistsIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src ExistsIter its body : \<tau>"
+inductive_cases ForAllIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src ForAllIter its body : \<tau>"
+inductive_cases OneIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src OneIter its body : \<tau>"
+inductive_cases IsUniqueIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src IsUniqueIter its body : \<tau>"
+inductive_cases SelectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src SelectIter its body : \<tau>"
+inductive_cases RejectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src RejectIter its body : \<tau>"
+inductive_cases SortedByIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src SortedByIter its body : \<tau>"
+inductive_cases AttributeCall_typing [elim]: "\<Gamma> \<turnstile> AttributeCall s src prop : \<tau>"
+inductive_cases AssociationEndCall_typing [elim]: "\<Gamma> \<turnstile> AssociationEndCall s src role : \<tau>"
+inductive_cases OperationCall_typing [elim]: "\<Gamma> \<turnstile> OperationCall s src oper params : \<tau>"
 
 (*** Properties *************************************************************)
 
@@ -576,6 +578,11 @@ lemma to_unique_collection_det:
   "to_unique_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    to_unique_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   by (induct rule: to_unique_collection.induct; simp add: to_unique_collection.simps)
+
+lemma to_nonunique_collection_det:
+  "to_nonunique_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   to_nonunique_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: to_nonunique_collection.induct; simp add: to_nonunique_collection.simps)
 
 lemma to_ordered_collection_det:
   "to_ordered_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -774,12 +781,14 @@ next
     apply (insert CollectIteratorT.prems)
     apply (erule CollectIterator_typing)
     using CollectIteratorT.hyps(2) CollectIteratorT.hyps(4)
+          CollectIteratorT.hyps(5) to_nonunique_collection_det
           update_element_type_det by blast
 next
   case (CollectNestedIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert CollectNestedIteratorT.prems)
     apply (erule CollectNestedIterator_typing)
     using CollectNestedIteratorT.hyps(2) CollectNestedIteratorT.hyps(4)
+          CollectNestedIteratorT.hyps(5) to_nonunique_collection_det
           update_element_type_det by blast
 next
   case (ExistsIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
@@ -836,8 +845,8 @@ qed
 section \<open>Code Setup\<close>
 
 code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool as check_type,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool as synthesize_type) [show_modes] typing .
+  i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool as check_type,
+  i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool as synthesize_type) [show_modes] typing .
 
 (*** Test Cases *************************************************************)
 
@@ -851,27 +860,27 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
 text \<open>
   @{text "\<Gamma> \<turnstile> true or false : Boolean[1]"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  BinaryOperationCall (BooleanLiteral True) OrOp (BooleanLiteral False) : x}"
+  BinaryOperationCall False (BooleanLiteral True) OrOp (BooleanLiteral False) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> true and null : Boolean[?]"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  BinaryOperationCall (BooleanLiteral True) AndOp NullLiteral: x}"
+  BinaryOperationCall False (BooleanLiteral True) AndOp NullLiteral: x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Real[?] = 5 in x + 7 : Real[1]"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Let (STR ''x'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''x'') PlusOp (IntegerLiteral 7)): x}"
+    (BinaryOperationCall False (Var STR ''x'') PlusOp (IntegerLiteral 7)): x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> Sequence{1..5}->iterate(
       x, acc : Real[?] = 5 | acc + x) : Real[1]"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  Iterate (CollectionLiteral SequenceKind
+  Iterate False (CollectionLiteral SequenceKind
               [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)]) [STR ''x'']
       (STR ''acc'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''acc'') PlusOp (Var STR ''x'')): x}"
+    (BinaryOperationCall False (Var STR ''acc'') PlusOp (Var STR ''x'')): x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -880,8 +889,8 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Let (STR ''x'') (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator (Var STR ''x'') AnyIter [STR ''it'']
-    (BinaryOperationCall (Var STR ''it'') EqualOp (StringLiteral ''test''))): x}"
+  (Iterator False (Var STR ''x'') AnyIter [STR ''it'']
+    (BinaryOperationCall False (Var STR ''it'') EqualOp (StringLiteral ''test''))): x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -890,29 +899,36 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator (Var STR ''x'') ClosureIter [STR ''it'']
+  (Iterator False (Var STR ''x'') ClosureIter [STR ''it'']
     (Var STR ''it'')): x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
 values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[1]] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') STR ''position'' : x}"
+  AttributeCall False (Var STR ''self'') STR ''position'' : x}"
 
 (* TODO: Inherited properties *)
 text \<open>
   @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
 values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[1]] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') STR ''name'' : x}"
+  AttributeCall False (Var STR ''self'') STR ''name'' : x}"
 
 text \<open>
-  @{text "self.manages : Set (ObjectType Project)[1]"}\<close>
+  @{text "self.projects : Set (ObjectType Project)[1]"}\<close>
 values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[?]] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') STR ''manages'' : x}"
+  AssociationEndCall False (Var STR ''self'') STR ''projects'' : x}"
+
+text \<open>
+  @{text "self.projects.members : Bag (ObjectType Employee)[1]"}\<close>
+values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[?]] :: classes1 type env) \<turnstile>
+  Iterator False (AssociationEndCall False (Var STR ''self'') STR ''projects'')
+    CollectIter [STR ''it'']
+    (AssociationEndCall False (Var STR ''it'') STR ''members'') : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> self.manager : (ObjectType Employee)[1]"}\<close>
 values "{x. ([STR ''self'' \<mapsto> (ObjectType Project)[?]] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') STR ''manager'' : x}"
+  AssociationEndCall False (Var STR ''self'') STR ''manager'' : x}"
 
 subsection \<open>Negative Cases\<close>
 
@@ -920,7 +936,7 @@ text \<open>
   @{text "\<Gamma> \<turnstile> let x : Boolean[1] = 5 in x and true : \<epsilon>"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Let STR ''x'' Boolean[1] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''x'') AndOp (BooleanLiteral True)): x}"
+    (BinaryOperationCall False (Var STR ''x'') AndOp (BooleanLiteral True)): x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -929,7 +945,7 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator (Var STR ''x'') ClosureIter [STR ''it'']
+  (Iterator False (Var STR ''x'') ClosureIter [STR ''it'']
     (IntegerLiteral 1)): x}"
 
 end

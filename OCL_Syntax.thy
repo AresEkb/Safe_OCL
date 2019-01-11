@@ -5,8 +5,34 @@
 *)
 chapter \<open>OCL Syntax\<close>
 theory OCL_Syntax
-  imports Complex_Main OCL_Common OCL_Types
+  imports Complex_Main Object_Model OCL_Types
 begin
+
+section \<open>Preliminaries\<close>
+
+type_synonym vname = "String.literal"
+type_synonym 'a env = "vname \<rightharpoonup> 'a"
+
+text \<open>
+  In OCL @{text "1 + \<infinity> = \<bottom>"}. So we don't use @{typ enat} and
+  define the new data type.\<close>
+
+typedef unat = "UNIV :: nat option set" ..
+
+definition "unat x \<equiv> Abs_unat (Some x)"
+
+instantiation unat :: infinity
+begin
+definition "\<infinity> \<equiv> Abs_unat None"
+instance ..
+end
+
+free_constructors cases_unat for
+  unat
+| "\<infinity> :: unat"
+  apply (metis Abs_unat_cases infinity_unat_def option.exhaust unat_def)
+  apply (metis Abs_unat_inverse iso_tuple_UNIV_I option.inject unat_def)
+  by (simp add: Abs_unat_inject infinity_unat_def unat_def)
 
 section \<open>Standard Library Operations\<close>
 
@@ -102,15 +128,18 @@ and 'a collection_literal_part_expr =
 and 'a call_expr =
   OclType (source : "'a expr")
 | TypeOperationCall (source : "'a expr") typeop (type : "'a type")
-| UnaryOperationCall (source : "'a expr") unop
-| BinaryOperationCall (source : "'a expr") binop (arg1 : "'a expr")
-| TernaryOperationCall (source : "'a expr") ternop (arg1 : "'a expr") (arg2 : "'a expr")
-| Iterate (source : "'a expr") (iterators : "vname list")
+| UnaryOperationCall (safe : bool) (source : "'a expr") unop
+| BinaryOperationCall (safe : bool) (source : "'a expr") binop
+    (arg1 : "'a expr")
+| TernaryOperationCall (safe : bool) (source : "'a expr") ternop
+    (arg1 : "'a expr") (arg2 : "'a expr")
+| Iterate (safe : bool) (source : "'a expr") (iterators : "vname list")
     (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
-| Iterator (source : "'a expr") iterator (iterators : "vname list") (body_expr : "'a expr")
-| AttributeCall (source : "'a expr") attr
-| AssociationEndCall (source : "'a expr") role
-| OperationCall (source : "'a expr") oper (args : "'a expr list")
+| Iterator (safe : bool) (source : "'a expr") iterator
+    (iterators : "vname list") (body_expr : "'a expr")
+| AttributeCall (safe : bool) (source : "'a expr") attr
+| AssociationEndCall (safe : bool) (source : "'a expr") role
+| OperationCall (safe : bool) (source : "'a expr") oper (args : "'a expr list")
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]

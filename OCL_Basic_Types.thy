@@ -5,12 +5,14 @@
 *)
 chapter \<open>Basic OCL Types\<close>
 theory OCL_Basic_Types
-  imports Main "HOL-Library.FSet" OCL_Common
+  imports Main "HOL-Library.FSet"
 begin
 
 (*** Basic Types ************************************************************)
 
 section \<open>Definition of Basic Types and a Subtype Relation\<close>
+
+type_synonym literal = String.literal
 
 datatype 'a basic_type =
   OclAny
@@ -20,7 +22,7 @@ datatype 'a basic_type =
 | UnlimitedNatural
 | String
 | ObjectType 'a
-| Enum "vname fset"
+| Enum "literal fset"
 
 inductive basic_subtype
     :: "('a :: order) basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
@@ -263,6 +265,8 @@ end
 (*** Upper Semilattice of Basic Types ***************************************)
 
 section \<open>Upper Semilattice of Basic Types\<close>
+
+notation sup (infixl "\<squnion>" 65)
 
 instantiation basic_type :: (semilattice_sup) semilattice_sup
 begin

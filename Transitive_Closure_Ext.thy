@@ -6,7 +6,7 @@
 chapter \<open>Preliminaries\<close>
 section \<open>Transitive Closures\<close>
 theory Transitive_Closure_Ext
-  imports Main "HOL-Library.FuncSet"
+  imports "HOL-Library.FuncSet"
 begin
 
 (*** Basic Properties *******************************************************)
