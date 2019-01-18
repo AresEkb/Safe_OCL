@@ -25,7 +25,7 @@ datatype (plugins del: "size") 'a type =
 | Bag "'a type"
 | Sequence "'a type"
 | Collection "'a type"
-| Tuple "nat \<rightharpoonup>\<^sub>f 'a type"
+| Tuple "literal \<rightharpoonup>\<^sub>f 'a type"
 | SupType
 
 instantiation type :: (type) size
@@ -1093,8 +1093,8 @@ value "Integer[?] < (SupType :: classes1 type)"
 value "Collection Real[?] < (SupType :: classes1 type)"
 value "Set (Collection Boolean[1]) < (SupType :: classes1 type)"
 value "Set (Bag Boolean[1]) < Set (Collection Boolean[?] :: classes1 type)"
-value "Tuple (fmap_of_list [(1,Boolean[1] :: classes1 type), (2,Integer[1])]) <
-       Tuple (fmap_of_list [(1,Boolean[?] :: classes1 type)])"
+value "Tuple (fmap_of_list [(STR ''1'', Boolean[1] :: classes1 type), (STR ''2'', Integer[1])]) <
+       Tuple (fmap_of_list [(STR ''1'', Boolean[?] :: classes1 type)])"
 
 value "Integer[1] \<squnion> Real[?] :: classes1 type" \<comment> \<open>Real[?]\<close>
 value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<open>Set Real[1]\<close>

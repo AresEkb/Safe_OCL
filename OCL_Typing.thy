@@ -253,10 +253,6 @@ inductive collection_unop_type where
 | "collection_unop_type ReverseOp (Sequence \<tau>) (Sequence \<tau>)"
 
 text \<open>
-  Tuples must support string keys and the rule for the
-  @{text "product()"} operation must be updated.\<close>
-
-text \<open>
   Please take a note that if both arguments are collections,
   then an element type of the resulting collection is a super type
   of element types of orginal collections. However for single-valued
@@ -280,7 +276,7 @@ inductive collection_binop_type where
 | "\<lbrakk>element_type \<tau> \<rho>; element_type \<sigma> \<upsilon>; \<upsilon> \<le> to_optional_type \<rho>\<rbrakk> \<Longrightarrow>
    collection_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
 | "\<lbrakk>element_type \<tau> \<rho>; element_type \<sigma> \<upsilon>\<rbrakk> \<Longrightarrow>
-   collection_binop_type ProductOp \<tau> \<sigma> (Tuple (fmap_of_list [(0, \<rho>), (1, \<upsilon>)]))"
+   collection_binop_type ProductOp \<tau> \<sigma> (Tuple (fmap_of_list [(STR ''first'', \<rho>), (STR ''second'', \<upsilon>)]))"
 | "collection_binop_type UnionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Set \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Bag \<tau>) (Set \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
@@ -409,8 +405,11 @@ inductive typing
     collection_parts_typing \<Gamma> xs \<rho>\<rbrakk> \<Longrightarrow>
    collection_parts_typing \<Gamma> (CollectionRange a b # xs) (Integer[1] \<squnion> \<rho>)"
 
+|EmptyTupleLiteralT:
+  "\<Gamma> \<turnstile> TupleLiteral [] : Tuple fmempty"
 |TupleLiteralT:
-  "\<Gamma> \<turnstile> TupleLiteral elems : Tuple (fmap_of_list (map (\<lambda>x. (fst x, fst (snd x))) elems))"
+  "\<lbrakk>\<Gamma> \<turnstile> TupleLiteral elems : Tuple \<xi>; \<Gamma> \<turnstile> tuple_literal_expr el : \<tau>; \<tau> \<le> tuple_literal_type el\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> TupleLiteral (el # elems) : Tuple (fmupd (tuple_literal_name el) (tuple_literal_type el) \<xi>)"
 
 |LetT:
   "\<lbrakk>\<Gamma> \<turnstile> init : \<sigma>; \<sigma> \<le> \<tau>; \<Gamma>(v\<mapsto>\<tau>) \<turnstile> body : \<rho>\<rbrakk> \<Longrightarrow>
@@ -734,7 +733,9 @@ next
     apply (erule collection_parts_range_typing)
     by (simp add: CollectionPartsRangeT.hyps(8))
 next
-  case (TupleLiteralT \<Gamma> elems) thus ?case by auto
+  case (EmptyTupleLiteralT \<Gamma>) thus ?case by auto
+next
+  case (TupleLiteralT \<Gamma> elems \<xi> el \<tau>) thus ?case by blast
 next
   case (LetT \<Gamma> \<M> init \<sigma> \<tau> v body \<rho>) thus ?case by blast
 next
@@ -865,13 +866,23 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
 text \<open>
   @{text "\<Gamma> \<turnstile> true and null : Boolean[?]"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  BinaryOperationCall False (BooleanLiteral True) AndOp NullLiteral: x}"
+  BinaryOperationCall False (BooleanLiteral True) AndOp NullLiteral : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Real[?] = 5 in x + 7 : Real[1]"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Let (STR ''x'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall False (Var STR ''x'') PlusOp (IntegerLiteral 7)): x}"
+    (BinaryOperationCall False (Var STR ''x'') PlusOp (IntegerLiteral 7)) : x}"
+
+text \<open>
+  @{text "\<Gamma> \<turnstile> Sequence{1..5}->product(Set{'a', 'b'}) : Tuple (first: Integer[1], second: String[1])"}\<close>
+values "{x. (Map.empty :: classes1 type env) \<turnstile>
+  BinaryOperationCall False
+    (CollectionLiteral SequenceKind
+      [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
+    ProductOp
+    (CollectionLiteral SetKind
+      [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> Sequence{1..5}->iterate(
@@ -880,7 +891,7 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Iterate False (CollectionLiteral SequenceKind
               [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)]) [STR ''x'']
       (STR ''acc'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall False (Var STR ''acc'') PlusOp (Var STR ''x'')): x}"
+    (BinaryOperationCall False (Var STR ''acc'') PlusOp (Var STR ''x'')) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -890,7 +901,7 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
   (Iterator False (Var STR ''x'') AnyIter [STR ''it'']
-    (BinaryOperationCall False (Var STR ''it'') EqualOp (StringLiteral ''test''))): x}"
+    (BinaryOperationCall False (Var STR ''it'') EqualOp (StringLiteral ''test''))) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -900,7 +911,7 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
   (Iterator False (Var STR ''x'') ClosureIter [STR ''it'']
-    (Var STR ''it'')): x}"
+    (Var STR ''it'')) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
@@ -936,7 +947,7 @@ text \<open>
   @{text "\<Gamma> \<turnstile> let x : Boolean[1] = 5 in x and true : \<epsilon>"}\<close>
 values "{x. (Map.empty :: classes1 type env) \<turnstile>
   Let STR ''x'' Boolean[1] (IntegerLiteral 5)
-    (BinaryOperationCall False (Var STR ''x'') AndOp (BooleanLiteral True)): x}"
+    (BinaryOperationCall False (Var STR ''x'') AndOp (BooleanLiteral True)) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -946,6 +957,6 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
   (Iterator False (Var STR ''x'') ClosureIter [STR ''it'']
-    (IntegerLiteral 1)): x}"
+    (IntegerLiteral 1)) : x}"
 
 end

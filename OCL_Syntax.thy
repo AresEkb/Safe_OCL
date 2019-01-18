@@ -121,7 +121,7 @@ and 'a literal_expr =
 | EnumLiteral (type : "'a type") (literal : vname)
 | CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
-| TupleLiteral (elements : "(nat \<times> 'a type \<times> 'a expr) list")
+| TupleLiteral (elements : "(literal \<times> 'a type \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
@@ -140,6 +140,10 @@ and 'a call_expr =
 | AttributeCall (safe : bool) (source : "'a expr") attr
 | AssociationEndCall (safe : bool) (source : "'a expr") role
 | OperationCall (safe : bool) (source : "'a expr") oper (args : "'a expr list")
+
+definition "tuple_literal_name \<equiv> fst"
+definition "tuple_literal_type \<equiv> fst \<circ> snd"
+definition "tuple_literal_expr \<equiv> snd \<circ> snd"
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]

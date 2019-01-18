@@ -261,6 +261,10 @@ lemma strict_subtuple_fun_simp [code_abbrev, simp]:
 subsection \<open>Test Cases\<close>
 
 value "subtuple (\<le>)
+  (fmap_of_list [(STR ''1'',1::nat),(STR ''2'',2),(STR ''3'',3)])
+  (fmap_of_list [(STR ''1'',1),(STR ''2'',3)])"
+
+value "subtuple (\<le>)
   (fmap_of_list [(1::nat,1::nat),(2,2),(3,3)])
   (fmap_of_list [(1,1),(2,3)])"
 value "subtuple (\<le>)

@@ -359,17 +359,17 @@ text \<open>
   @{url "https://stackoverflow.com/a/53244203/632199"}
   and provided with the permission of the author of the answer.\<close>
 
-abbreviation "tcf \<equiv> (\<lambda> v::(nat \<times> nat). (\<lambda> r::nat. snd v + r))"
+abbreviation "tcf \<equiv> (\<lambda> v::('a \<times> nat). (\<lambda> r::nat. snd v + r))"
 
 interpretation tcf: comp_fun_commute tcf
 proof 
-  fix x y
+  fix x y :: "'a \<times> nat"
   show "tcf y \<circ> tcf x = tcf x \<circ> tcf y"
   proof -
     fix z
     have "(tcf y \<circ> tcf x) z = snd y + snd x + z" by auto
     also have "(tcf x \<circ> tcf y) z = snd y + snd x + z" by auto
-    ultimately have "(tcf y \<circ> tcf x) z = (tcf x \<circ> tcf y) z" by auto
+    finally have "(tcf y \<circ> tcf x) z = (tcf x \<circ> tcf y) z" by auto
     thus "(tcf y \<circ> tcf x) = (tcf x \<circ> tcf y)" by auto
   qed
 qed
@@ -379,7 +379,12 @@ lemma ffold_rec_exp:
     and "ky = (k, the (fmlookup (fmmap f x) k))"
   shows "ffold tcf 0 (fset_of_fmap (fmmap f x)) = 
         tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap f x)) |-| {|ky|}))"
-  using assms tcf.ffold_rec by auto
+proof -
+  have "ky |\<in>| (fset_of_fmap (fmmap f x))"
+    using assms by auto
+  thus ?thesis
+    by (simp add: tcf.ffold_rec)
+qed
 
 lemma elem_le_ffold [intro]:
   "k |\<in>| fmdom x \<Longrightarrow>
