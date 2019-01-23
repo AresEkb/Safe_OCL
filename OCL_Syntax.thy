@@ -11,7 +11,7 @@ begin
 section \<open>Preliminaries\<close>
 
 type_synonym vname = "String.literal"
-type_synonym 'a env = "vname \<rightharpoonup> 'a"
+type_synonym 'a env = "vname \<rightharpoonup>\<^sub>f 'a"
 
 text \<open>
   In OCL @{text "1 + \<infinity> = \<bottom>"}. So we don't use @{typ enat} and
@@ -104,12 +104,18 @@ section \<open>Expressions\<close>
 datatype collection_literal_kind =
   SetKind | OrderedSetKind | BagKind | SequenceKind | CollectionKind
 
+text \<open>
+  It could be defined as 2 boolean values (is_arrow_call, is_safe_call).
+  Also we could derive is_arrow_call value automatically based on an operation kind.
+  But it's much easier and more natural to define such an enumeration.\<close>
+datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
+
 datatype 'a expr =
   Literal "'a literal_expr"
 | Let (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
 | Var (var : vname)
 | If (if_expr : "'a expr") (then_expr : "'a expr") (else_expr : "'a expr")
-| Call "'a call_expr"
+| Call (source : "'a expr") (kind : call_kind) "'a call_expr"
 and 'a literal_expr =
   NullLiteral
 | InvalidLiteral
@@ -126,26 +132,37 @@ and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
 and 'a call_expr =
-  OclType (source : "'a expr")
-| TypeOperationCall (source : "'a expr") typeop (type : "'a type")
-| UnaryOperationCall (safe : bool) (source : "'a expr") unop
-| BinaryOperationCall (safe : bool) (source : "'a expr") binop
+  OclType
+| TypeOperation typeop (type : "'a type")
+| UnaryOperation unop
+| BinaryOperation binop
     (arg1 : "'a expr")
-| TernaryOperationCall (safe : bool) (source : "'a expr") ternop
+| TernaryOperation ternop
     (arg1 : "'a expr") (arg2 : "'a expr")
-| Iterate (safe : bool) (source : "'a expr") (iterators : "vname list")
+| Iterate (iterators : "vname list")
     (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
-| Iterator (safe : bool) (source : "'a expr") iterator
+| Iterator iterator
     (iterators : "vname list") (body_expr : "'a expr")
-| AttributeCall (safe : bool) (source : "'a expr") attr
-| AssociationEndCall (safe : bool) (source : "'a expr") role
-| OperationCall (safe : bool) (source : "'a expr") oper (args : "'a expr list")
+| Attribute attr
+| AssociationEnd role
+| Operation oper (args : "'a expr list")
 
 definition "tuple_literal_name \<equiv> fst"
 definition "tuple_literal_type \<equiv> fst \<circ> snd"
 definition "tuple_literal_expr \<equiv> snd \<circ> snd"
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
-declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]
+(*declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]*)
+
+abbreviation "OclTypeCall src s \<equiv> Call src s OclType"
+abbreviation "TypeOperationCall src s op ty \<equiv> Call src s (TypeOperation op ty)"
+abbreviation "UnaryOperationCall src s op \<equiv> Call src s (UnaryOperation op)"
+abbreviation "BinaryOperationCall src s op a \<equiv> Call src s (BinaryOperation op a)"
+abbreviation "TernaryOperationCall src s op a b \<equiv> Call src s (TernaryOperation op a b)"
+abbreviation "IterateCall src s its v ty init body \<equiv> Call src s (Iterate its v ty init body)"
+abbreviation "IteratorCall src s op its body \<equiv> Call src s (Iterator op its body)"
+abbreviation "AttributeCall src s attr \<equiv> Call src s (Attribute attr)"
+abbreviation "AssociationEndCall src s role \<equiv> Call src s (AssociationEnd role)"
+abbreviation "OperationCall src s op as \<equiv> Call src s (Operation op as)"
 
 end

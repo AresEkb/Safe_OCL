@@ -51,7 +51,21 @@ section \<open>Test Cases\<close>
 
 instantiation classes1 :: ocl_object_model
 begin
-
+(*
+definition "attributes_classes1 \<equiv> Abs_fmap [
+  Person \<mapsto> Abs_fmap [
+    STR ''name1'' \<mapsto> String[1] :: classes1 type],
+  Employee \<mapsto> Abs_fmap [
+    STR ''name'' \<mapsto> Integer[1],
+    STR ''position'' \<mapsto> String[1]],
+  Customer \<mapsto> Abs_fmap [
+    STR ''vip'' \<mapsto> Boolean[1]],
+  Project \<mapsto> Abs_fmap [
+    STR ''name'' \<mapsto> String[1],
+    STR ''cost'' \<mapsto> Real[?]],
+  Task \<mapsto> Abs_fmap [
+    STR ''description'' \<mapsto> String[1]]]"
+*)
 definition "attributes_classes1 \<equiv> fmap_of_list [
   (Person, fmap_of_list [
     (STR ''name1'', String[1] :: classes1 type)]),
@@ -99,8 +113,9 @@ definition "operations_classes1 \<equiv> [
    \<comment> \<open>Return Type\<close>
    Integer[1],
    \<comment> \<open>Body: self.members->size()\<close>
-   Some (Call (UnaryOperationCall False
-      (AssociationEndCall False (Var STR ''self'') STR ''members'')
+   Some ( (UnaryOperationCall
+      (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+         ArrowCall
       CollectionSizeOp)))
   ] :: (classes1 type, classes1 expr) oper_spec list"
 

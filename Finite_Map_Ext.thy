@@ -10,6 +10,8 @@ begin
 
 type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)
 
+(* declare [[coercion "Abs_fmap"]] *)
+
 (*** Helper Lemmas **********************************************************)
 
 subsection \<open>Helper Lemmas\<close>

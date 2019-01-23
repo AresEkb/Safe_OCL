@@ -904,6 +904,19 @@ fun to_single_type where
 | "to_single_type (Tuple \<pi>) = Tuple \<pi>"
 | "to_single_type SupType = SupType"
 
+fun to_required_type where
+  "to_required_type OclInvalid = OclInvalid"
+| "to_required_type OclVoid = OclInvalid"
+| "to_required_type \<tau>[1] = \<tau>[1]"
+| "to_required_type \<tau>[?] = \<tau>[1]"
+| "to_required_type (Set \<tau>) = Set (to_required_type \<tau>)"
+| "to_required_type (OrderedSet \<tau>) = OrderedSet (to_required_type \<tau>)"
+| "to_required_type (Bag \<tau>) = Bag (to_required_type \<tau>)"
+| "to_required_type (Sequence \<tau>) = Sequence (to_required_type \<tau>)"
+| "to_required_type (Collection \<tau>) = Collection (to_required_type \<tau>)"
+| "to_required_type (Tuple \<pi>) = Tuple (fmmap to_required_type \<pi>)"
+| "to_required_type SupType = SupType"
+
 fun to_optional_type where
   "to_optional_type OclInvalid = OclVoid"
 | "to_optional_type OclVoid = OclVoid"

@@ -28,17 +28,22 @@ text \<open>
   to single values. I guess we can allow @{text "oclIsTypeOf()"}
   and @{text "oclIsKindOf()"} for collections too.\<close>
 
+(* В спецификации SelectByKindOp возвращает не пустые элементы,
+ соответственно тип элементов должен становиться [1]?
+ А если указан опциональный тип? Я думаю, пользователь должен сам выбирать.
+ Нужно это отметить *)
+
 inductive typeop_type where
   "\<sigma> < \<tau> \<Longrightarrow>
-   typeop_type OclAsTypeOp \<tau> \<sigma> \<sigma>"
+   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   typeop_type OclIsTypeOfOp \<tau> \<sigma> Boolean[1]"
+   typeop_type DotCall OclIsTypeOfOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   typeop_type OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
+   typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
 | "strict_subcollection \<tau> \<sigma> \<rho> \<Longrightarrow>
-   typeop_type SelectByKindOp \<tau> \<sigma> \<rho>"
+   typeop_type ArrowCall SelectByKindOp \<tau> \<sigma> \<rho>"
 | "strict_subcollection \<tau> \<sigma> \<rho> \<Longrightarrow>
-   typeop_type SelectByTypeOp \<tau> \<sigma> \<rho>"
+   typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<rho>"
 
 text \<open>
   It makes sense to compare values only with compatible types.\<close>
@@ -60,7 +65,23 @@ text \<open>
   The OCL specification defines @{text "toString()"} operation
   only for boolean and numeric types. However, I guess it's a good
   idea to define it once for all basic types.\<close>
-
+(*
+inductive any_unop_type where
+  "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type s OclAsSetOp \<tau> (Set \<tau>)"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type s OclIsNewOp \<tau> Boolean[1]"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type s OclIsUndefinedOp \<tau> Boolean[1]"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type s OclIsInvalidOp \<tau> Boolean[1]"
+| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type s OclLocaleOp \<tau> String[1]"
+| "\<tau> \<le> OclAny[1] \<Longrightarrow>
+   any_unop_type False ToStringOp \<tau> String[1]"
+| "OclVoid \<le> \<tau> \<Longrightarrow> \<tau> \<le> OclAny[?] \<Longrightarrow>
+   any_unop_type True ToStringOp \<tau> String[?]"
+*)
 inductive any_unop_type where
   "\<tau> \<le> OclAny[?] \<Longrightarrow>
    any_unop_type OclAsSetOp \<tau> (Set \<tau>)"
@@ -227,11 +248,11 @@ inductive collection_unop_type where
    collection_unop_type NotEmptyOp \<tau> Boolean[1]"
 
 | "\<lbrakk>element_type \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
-   collection_unop_type CollectionMaxOp \<tau> \<sigma>"
+   collection_unop_type CollectionMaxOp \<tau> (to_required_type \<sigma>)"
 | "\<lbrakk>element_type \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
-   collection_unop_type CollectionMinOp \<tau> \<sigma>"
+   collection_unop_type CollectionMinOp \<tau> (to_required_type \<sigma>)"
 | "\<lbrakk>element_type \<tau> \<sigma>; \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real\<rbrakk> \<Longrightarrow>
-   collection_unop_type SumOp \<tau> \<sigma>"
+   collection_unop_type SumOp \<tau> (to_required_type \<sigma>)"
 
 | "\<lbrakk>element_type \<tau> \<sigma>\<rbrakk> \<Longrightarrow>
    collection_unop_type AsSetOp \<tau> (Set \<sigma>)"
@@ -264,6 +285,36 @@ text \<open>
   It's unclear what is the result of the @{text "indexOf()"}
   operation if the item not found: @{text "null"} or @{text "invalid"}?\<close>
 
+(* including и excluding почему-то не определены для OrderedSet, хотя
+ определены для остальных коллекций включая Sequence. А у меня для Sequence
+ не определено! Нужно внимательно проверить все операции!
+ excluding используется в определении selectByKind, который определен для
+ Collection. По идее excluding должно быть определено и для Collection?
+*)
+
+(*
+ Правило для excluding(null) нужно подробно описать.
+ Это выглядит как хак, но реально это очень простой способ определить
+ правила для безопасной навигации
+
+ Подумать про excludingNested
+*)
+
+code_pred [show_modes] to_nonunique_collection .
+code_pred [show_modes] to_ordered_collection .
+code_pred [show_modes] to_unique_collection .
+code_pred [show_modes] update_element_type.
+code_pred [show_modes] element_type .
+code_pred [show_modes] strict_subcollection .
+
+fun to_required_type' where
+  "to_required_type' OclInvalid = OclInvalid"
+| "to_required_type' OclVoid = OclInvalid"
+| "to_required_type' \<tau>[1] = \<tau>[1]"
+| "to_required_type' \<tau>[?] = \<tau>[1]"
+| "to_required_type' \<tau> = \<tau>"
+
+
 inductive collection_binop_type where
   "\<lbrakk>element_type \<tau> \<rho>; \<sigma> \<le> to_optional_type \<rho>\<rbrakk> \<Longrightarrow>
    collection_binop_type IncludesOp \<tau> \<sigma> Boolean[1]"
@@ -290,7 +341,9 @@ inductive collection_binop_type where
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type IncludingOp (Bag \<tau>) \<sigma> (Bag \<tau>)"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
+   \<sigma> \<noteq> OclVoid \<Longrightarrow>
    collection_binop_type ExcludingOp (Set \<tau>) \<sigma> (Set \<tau>)"
+| "collection_binop_type ExcludingOp (Set \<tau>) OclVoid (Set (to_required_type' \<tau>))"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type ExcludingOp (Bag \<tau>) \<sigma> (Bag \<tau>)"
 | "collection_binop_type SetMinusOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
@@ -312,6 +365,9 @@ inductive collection_binop_type where
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (Sequence \<tau>) \<sigma> Integer[1]"
 
+code_pred [show_modes] collection_binop_type .
+
+
 inductive collection_ternop_type where
   "\<lbrakk>\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer; \<rho> \<le> \<tau>\<rbrakk> \<Longrightarrow>
    collection_ternop_type InsertAtOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
@@ -324,33 +380,39 @@ inductive collection_ternop_type where
 
 inductive unop_type where
   "any_unop_type op \<tau> \<sigma> \<Longrightarrow>
-   unop_type (Inl op) \<tau> \<sigma>"
+   unop_type (Inl op) DotCall \<tau> \<sigma>"
 | "boolean_unop_type op \<tau> \<sigma> \<Longrightarrow>
-   unop_type (Inr (Inl op)) \<tau> \<sigma>"
+   unop_type (Inr (Inl op)) DotCall \<tau> \<sigma>"
 | "numeric_unop_type op \<tau> \<sigma> \<Longrightarrow>
-   unop_type (Inr (Inr (Inl op))) \<tau> \<sigma>"
+   unop_type (Inr (Inr (Inl op))) DotCall \<tau> \<sigma>"
 | "string_unop_type op \<tau> \<sigma> \<Longrightarrow>
-   unop_type (Inr (Inr (Inr (Inl op)))) \<tau> \<sigma>"
+   unop_type (Inr (Inr (Inr (Inl op)))) DotCall \<tau> \<sigma>"
 | "collection_unop_type op \<tau> \<sigma> \<Longrightarrow>
-   unop_type (Inr (Inr (Inr (Inr op)))) \<tau> \<sigma>"
+   unop_type (Inr (Inr (Inr (Inr op)))) ArrowCall \<tau> \<sigma>"
 
 inductive binop_type where
   "suptype_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
-   binop_type (Inl op) \<tau> \<sigma> \<rho>"
+   binop_type (Inl op) DotCall \<tau> \<sigma> \<rho>"
 | "boolean_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
-   binop_type (Inr (Inl op)) \<tau> \<sigma> \<rho>"
+   binop_type (Inr (Inl op)) DotCall \<tau> \<sigma> \<rho>"
 | "numeric_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
-   binop_type (Inr (Inr (Inl op))) \<tau> \<sigma> \<rho>"
+   binop_type (Inr (Inr (Inl op))) DotCall \<tau> \<sigma> \<rho>"
 | "string_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
-   binop_type (Inr (Inr (Inr (Inl op)))) \<tau> \<sigma> \<rho>"
+   binop_type (Inr (Inr (Inr (Inl op)))) DotCall \<tau> \<sigma> \<rho>"
 | "collection_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
-   binop_type (Inr (Inr (Inr (Inr op)))) \<tau> \<sigma> \<rho>"
+   binop_type (Inr (Inr (Inr (Inr op)))) ArrowCall \<tau> \<sigma> \<rho>"
 
 inductive ternop_type where
   "string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
-   ternop_type (Inl op) \<tau> \<sigma> \<rho> \<upsilon>"
+   ternop_type (Inl op) DotCall \<tau> \<sigma> \<rho> \<upsilon>"
 | "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
-   ternop_type (Inr op) \<tau> \<sigma> \<rho> \<upsilon>"
+   ternop_type (Inr op) ArrowCall \<tau> \<sigma> \<rho> \<upsilon>"
+
+code_pred [show_modes] typeop_type .
+code_pred [show_modes] unop_type .
+code_pred [show_modes] binop_type .
+code_pred [show_modes] ternop_type .
+code_pred [show_modes] class_of .
 
 (*** Expressions Typing *****************************************************)
 
@@ -412,10 +474,10 @@ inductive typing
    \<Gamma> \<turnstile> TupleLiteral (el # elems) : Tuple (fmupd (tuple_literal_name el) (tuple_literal_type el) \<xi>)"
 
 |LetT:
-  "\<lbrakk>\<Gamma> \<turnstile> init : \<sigma>; \<sigma> \<le> \<tau>; \<Gamma>(v\<mapsto>\<tau>) \<turnstile> body : \<rho>\<rbrakk> \<Longrightarrow>
+  "\<lbrakk>\<Gamma> \<turnstile> init : \<sigma>; \<sigma> \<le> \<tau>; fmupd v \<tau> \<Gamma> \<turnstile> body : \<rho>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> Let v \<tau> init body : \<rho>"
 |VarT:
-  "\<Gamma> v = Some \<tau> \<Longrightarrow>
+  "fmlookup \<Gamma> v = Some \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> Var v : \<tau>"
 
 |IfT:
@@ -424,96 +486,98 @@ inductive typing
 
 |OclTypeT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> OclType a : \<tau>"
+   \<Gamma> \<turnstile> OclTypeCall a DotCall : \<tau>"
 |TypeOperationCallT:
-  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; typeop_type op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> TypeOperationCall a op \<sigma> : \<rho>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; typeop_type k op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<rho>"
 |UnaryOperationCallT:
-  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; unop_type op \<tau> \<sigma> \<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> UnaryOperationCall s a op : \<sigma>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; unop_type op k \<tau> \<sigma> \<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> UnaryOperationCall a k op : \<sigma>"
 |BinaryOperationCallT:
-  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; binop_type op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> BinaryOperationCall s a op b : \<rho>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; binop_type op k \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> BinaryOperationCall a k op b : \<rho>"
 |TernaryOperationCallT:
-  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>; ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> TernaryOperationCall s a op b c : \<upsilon>"
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>; ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> TernaryOperationCall a k op b c : \<upsilon>"
 
 |IteratorT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
-   \<Gamma> ++ (map_of (map (\<lambda>it. (it, \<sigma>)) its)) \<turnstile> body : \<rho> \<Longrightarrow>
+   fmadd \<Gamma> (fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its)) \<turnstile> body : \<rho> \<Longrightarrow>
    iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho>"
 
 |IterateT:
   "\<lbrakk>iterator_typing \<Gamma> src its (Let res res_t res_init body) \<tau> \<sigma> \<rho>; \<rho> \<le> res_t\<rbrakk> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterate s src its res res_t res_init body : \<rho>"
+   \<Gamma> \<turnstile> IterateCall src ArrowCall its res res_t res_init body : \<rho>"
 
 |AnyIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src AnyIter its body : \<sigma>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall AnyIter its body : \<sigma>"
 |ClosureIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_single_type \<rho> \<le> \<sigma> \<Longrightarrow>
    to_unique_collection \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src ClosureIter its body : \<upsilon>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall ClosureIter its body : \<upsilon>"
 |CollectIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> (to_single_type \<rho>) \<phi> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src CollectIter its body : \<phi>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall CollectIter its body : \<phi>"
 |CollectNestedIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> \<rho> \<phi> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src CollectNestedIter its body : \<phi>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall CollectNestedIter its body : \<phi>"
 |ExistsIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src ExistsIter its body : \<rho>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall ExistsIter its body : \<rho>"
 |ForAllIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src ForAllIter its body : \<rho>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall ForAllIter its body : \<rho>"
 |OneIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src OneIter its body : Boolean[1]"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall OneIter its body : Boolean[1]"
 |IsUniqueIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src IsUniqueIter its body : Boolean[1]"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall IsUniqueIter its body : Boolean[1]"
 |SelectIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src SelectIter its body : \<tau>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall SelectIter its body : \<tau>"
 |RejectIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src RejectIter its body : \<tau>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall RejectIter its body : \<tau>"
 |SortedByIteratorT:
   "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho> \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_ordered_collection \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> Iterator s src SortedByIter its body : \<upsilon>"
+   \<Gamma> \<turnstile> IteratorCall src ArrowCall SortedByIter its body : \<upsilon>"
 
 |AttributeCallT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    class_of \<tau> cls \<Longrightarrow>
    find_attribute cls prop = Some (cls2, \<sigma>) \<Longrightarrow>
-   \<Gamma> \<turnstile> AttributeCall s src prop : \<sigma>"
+   \<Gamma> \<turnstile> AttributeCall src DotCall prop : \<sigma>"
 |AssociationEndCallT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    class_of \<tau> cls \<Longrightarrow>
    find_association_end cls role = Some end \<Longrightarrow>
-   \<Gamma> \<turnstile> AssociationEndCall s src role : assoc_end_type end"
+   \<Gamma> \<turnstile> AssociationEndCall src DotCall role : assoc_end_type end"
+
+code_pred [show_modes] typing .
 
 inductive_cases NullLiteral_typing [elim]: "\<Gamma> \<turnstile> NullLiteral : \<tau>"
 inductive_cases InvalidLiteral_typing [elim]: "\<Gamma> \<turnstile> InvalidLiteral : \<tau>"
@@ -531,28 +595,28 @@ inductive_cases TupleLiteral_typing [elim]: "\<Gamma> \<turnstile> TupleLiteral 
 inductive_cases Let_typing [elim]: "\<Gamma> \<turnstile> Let v \<tau> init body : \<sigma>"
 inductive_cases Var_typing [elim]: "\<Gamma> \<turnstile> Var v : \<tau>"
 inductive_cases If_typing [elim]: "\<Gamma> \<turnstile> If a b c : \<tau>"
-inductive_cases Call_typing [elim]: "\<Gamma> \<turnstile> Call a : \<tau>"
-inductive_cases OclType_typing [elim]: "\<Gamma> \<turnstile> OclType a : \<tau>"
-inductive_cases TypeOperationCall_typing [elim]: "\<Gamma> \<turnstile> TypeOperationCall a op \<sigma> : \<tau>"
-inductive_cases UnaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> UnaryOperationCall s a op : \<tau>"
-inductive_cases BinaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> BinaryOperationCall s a op b : \<tau>"
-inductive_cases TernaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> TernaryOperationCall s a op b c : \<tau>"
+inductive_cases Call_typing [elim]: "\<Gamma> \<turnstile> Call a k c : \<tau>"
+inductive_cases OclType_typing [elim]: "\<Gamma> \<turnstile> OclTypeCall a s : \<tau>"
+inductive_cases TypeOperationCall_typing [elim]: "\<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<tau>"
+inductive_cases UnaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> UnaryOperationCall a k op : \<tau>"
+inductive_cases BinaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> BinaryOperationCall a k op b : \<tau>"
+inductive_cases TernaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> TernaryOperationCall a k op b c : \<tau>"
 inductive_cases iterator_typing [elim]: "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho>"
-inductive_cases Iterate_typing [elim]: "\<Gamma> \<turnstile> Iterate s src its res res_t res_init body : \<tau>"
-inductive_cases AnyIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src AnyIter its body : \<tau>"
-inductive_cases ClosureIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src ClosureIter its body : \<tau>"
-inductive_cases CollectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src CollectIter its body : \<tau>"
-inductive_cases CollectNestedIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src CollectNestedIter its body : \<tau>"
-inductive_cases ExistsIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src ExistsIter its body : \<tau>"
-inductive_cases ForAllIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src ForAllIter its body : \<tau>"
-inductive_cases OneIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src OneIter its body : \<tau>"
-inductive_cases IsUniqueIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src IsUniqueIter its body : \<tau>"
-inductive_cases SelectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src SelectIter its body : \<tau>"
-inductive_cases RejectIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src RejectIter its body : \<tau>"
-inductive_cases SortedByIterator_typing [elim]: "\<Gamma> \<turnstile> Iterator s src SortedByIter its body : \<tau>"
-inductive_cases AttributeCall_typing [elim]: "\<Gamma> \<turnstile> AttributeCall s src prop : \<tau>"
-inductive_cases AssociationEndCall_typing [elim]: "\<Gamma> \<turnstile> AssociationEndCall s src role : \<tau>"
-inductive_cases OperationCall_typing [elim]: "\<Gamma> \<turnstile> OperationCall s src oper params : \<tau>"
+inductive_cases Iterate_typing [elim]: "\<Gamma> \<turnstile> IterateCall src k its res res_t res_init body : \<tau>"
+inductive_cases AnyIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k AnyIter its body : \<tau>"
+inductive_cases ClosureIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k ClosureIter its body : \<tau>"
+inductive_cases CollectIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k CollectIter its body : \<tau>"
+inductive_cases CollectNestedIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k CollectNestedIter its body : \<tau>"
+inductive_cases ExistsIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k ExistsIter its body : \<tau>"
+inductive_cases ForAllIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k ForAllIter its body : \<tau>"
+inductive_cases OneIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k OneIter its body : \<tau>"
+inductive_cases IsUniqueIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k IsUniqueIter its body : \<tau>"
+inductive_cases SelectIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k SelectIter its body : \<tau>"
+inductive_cases RejectIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k RejectIter its body : \<tau>"
+inductive_cases SortedByIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k SortedByIter its body : \<tau>"
+inductive_cases AttributeCall_typing [elim]: "\<Gamma> \<turnstile> AttributeCall src k prop : \<tau>"
+inductive_cases AssociationEndCall_typing [elim]: "\<Gamma> \<turnstile> AssociationEndCall src k role : \<tau>"
+inductive_cases OperationCall_typing [elim]: "\<Gamma> \<turnstile> OperationCall src k op params : \<tau>"
 
 (*** Properties *************************************************************)
 
@@ -594,8 +658,8 @@ lemma strict_subcollection_det:
   by (induct rule: strict_subcollection.induct; simp add: strict_subcollection.simps)
 
 lemma typeop_type_det:
-  "typeop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   typeop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  "typeop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   typeop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   by (induct rule: typeop_type.induct; simp add: typeop_type.simps strict_subcollection_det)
 
 lemma any_unop_type_det:
@@ -624,12 +688,19 @@ lemma collection_unop_type_det:
   apply (induct rule: collection_unop_type.induct)
   apply (erule collection_unop_type.cases;
          auto simp add: element_type_det update_element_type_det)+
+  using element_type_det update_element_type_det apply blast+
+  apply (erule collection_unop_type.cases; auto)
+  using element_type_det update_element_type_det apply blast+
+  apply (erule collection_unop_type.cases; auto)
+  using element_type_det update_element_type_det apply blast+
+  apply (erule collection_unop_type.cases; auto simp add: element_type_det)+
   using element_type_det update_element_type_det apply blast
-  by (erule collection_unop_type.cases; auto)+
+  apply (erule collection_unop_type.cases; auto)+
+  done
 
 lemma unop_type_det:
-  "unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   unop_type op k \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   by (induct rule: unop_type.induct;
       simp add: unop_type.simps any_unop_type_det
                 boolean_unop_type_det numeric_unop_type_det
@@ -663,8 +734,8 @@ lemma collection_binop_type_det:
   using element_type_det by blast
 
 lemma binop_type_det:
-  "binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   binop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   by (induct rule: binop_type.induct;
       simp add: binop_type.simps suptype_binop_type_det
                 boolean_binop_type_det numeric_binop_type_det
@@ -681,8 +752,8 @@ lemma collection_ternop_type_det:
   by (induct rule: collection_ternop_type.induct; simp add: collection_ternop_type.simps)
 
 lemma ternop_type_det:
-  "ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
-   ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
+  "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
+   ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
   by (induct rule: ternop_type.induct;
       simp add: ternop_type.simps string_ternop_type_det collection_ternop_type_det)
 
@@ -839,6 +910,300 @@ next
     apply (erule AssociationEndCall_typing)
     using AssociationEndCallT.hyps(2) AssociationEndCallT.hyps(3)
           AssociationEndCallT.hyps(4) class_of_det by fastforce
+qed
+
+
+
+(*
+non_strict_op both for null and error
+=, <>, oclAsType, oclIsInState, oclIsKindOf, oclIsTypeOf,
+oclIsInvalid, oclIsUndefined, oclType, oclIsNew, oclAsSet
+and, implies, not, or, xor
+
+и ещё особый случай:
+null.oclAsSet() = Set{}
+invalid.oclAsSet() = invalid
+
+Видимо в спецификации ошибка:
+
+для null результат этих операций тоже будет invalid:
+oclIsKindOf, oclIsTypeOf
+Не понимаю зачем это сделано.
+На самом деле там определено так для OclVoid, а не null
+
+для invalid результат этих операций тоже будет invalid:
+=, <>, oclAsType, oclIsInState, oclIsKindOf, oclIsTypeOf,
+oclIsNew, oclAsSet
+
+По идее должно быть так:
+null.oclIsTypeOf(OclVoid) = true
+null.oclIsTypeOf(OclInvalid) = false
+invalid.oclIsTypeOf(OclVoid) = true
+invalid.oclIsTypeOf(OclInvalid) = true
+
+Сравнение invalid не имеет смысла, иначе можно получить:
+1/0 = 2/0
+Т.е. это обычная strict операция
+
+*)
+
+
+
+
+fun string_of_nat :: "nat \<Rightarrow> string" where
+  "string_of_nat n = (if n < 10 then [char_of (48 + n)] else 
+     string_of_nat (n div 10) @ [char_of (48 + (n mod 10))])"
+
+definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
+
+
+definition "is_required \<tau> \<equiv> \<tau> \<le> OclAny[1]"
+definition "is_optional \<tau> \<equiv> OclVoid \<le> \<tau> \<and> \<tau> \<le> OclAny[?]"
+definition "is_collection_of_non_optional \<tau> \<equiv>
+  \<exists>\<sigma>. element_type \<tau> \<sigma> \<and> \<not> OclVoid \<le> \<sigma>"
+definition "is_collection_of_optional \<tau> \<equiv>
+  \<exists>\<sigma>. element_type \<tau> \<sigma> \<and> OclVoid \<le> \<sigma> \<and> \<sigma> \<le> OclAny[?]"
+(*
+inductive is_collection_of_required where
+  "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> OclAny[1] \<Longrightarrow>
+   is_collection_of_required \<tau> \<sigma>"
+*)
+
+
+
+
+
+
+inductive normalize
+    :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
+    ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50) and
+    normalize_call ("_ \<turnstile> _ \<Rrightarrow>\<^sub>C/ _" [51,51,51] 50)
+    where
+ LiteralN:
+  "\<Gamma> \<turnstile> Literal a \<Rrightarrow> Literal a"
+|LetN:
+  "\<Gamma> \<turnstile> init1 \<Rrightarrow> init2 \<Longrightarrow>
+   fmupd v \<tau> \<Gamma> \<turnstile> body1 \<Rrightarrow> body2 \<Longrightarrow>
+   \<Gamma> \<turnstile> Let v \<tau> init1 body1 \<Rrightarrow> Let v \<tau> init2 body2"
+|VarN:
+  "\<Gamma> \<turnstile> Var v \<Rrightarrow> Var v"
+|IfN:
+  "\<Gamma> \<turnstile> a1 \<Rrightarrow> a2 \<Longrightarrow>
+   \<Gamma> \<turnstile> b1 \<Rrightarrow> b2 \<Longrightarrow>
+   \<Gamma> \<turnstile> c1 \<Rrightarrow> c2 \<Longrightarrow>
+   \<Gamma> \<turnstile> If a1 b1 c1 \<Rrightarrow> If a1 b1 c1"
+
+|OclAnyDotCallN:
+  "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
+   \<tau> \<le> OclAny[1] \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   \<Gamma> \<turnstile> Call src1 DotCall call1 \<Rrightarrow> Call src2 DotCall call2"
+|OclAnySafeDotCallN:
+  "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
+   OclVoid \<le> \<tau> \<Longrightarrow>
+   \<tau> \<le> OclAny[?] \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   \<Gamma> \<turnstile> Call src1 SafeDotCall call1 \<Rrightarrow>
+       If (BinaryOperationCall src2 DotCall NotEqualOp NullLiteral)
+          (Call src2 DotCall call2)
+          NullLiteral"
+|OclAnyArrowDotCallN:
+  "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
+   \<tau> \<le> OclAny[?] \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   \<Gamma> \<turnstile> Call src1 ArrowCall call1 \<Rrightarrow>
+       Call (UnaryOperationCall src2 DotCall OclAsSetOp) ArrowCall call2"
+
+|CollectionArrowCallN:
+  "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
+   element_type \<tau> _ \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   \<Gamma> \<turnstile> Call src1 ArrowCall call1 \<Rrightarrow> Call src2 ArrowCall call2"
+|CollectionSafeArrowCallN:
+  "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
+   element_type \<tau> \<sigma> \<Longrightarrow>
+   OclVoid \<le> \<sigma> \<Longrightarrow>
+   \<sigma> \<le> OclAny[?] \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   \<Gamma> \<turnstile> Call src1 SafeArrowCall call1 \<Rrightarrow>
+       Call (BinaryOperationCall src2 ArrowCall ExcludingOp NullLiteral) ArrowCall call2"
+|CollectionDotCallN:
+  "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
+   element_type \<tau> \<sigma> \<Longrightarrow>
+   \<not> OclVoid \<le> \<sigma> \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   it = new_vname \<Gamma> \<Longrightarrow>
+   \<Gamma> \<turnstile> Call src1 DotCall call1 \<Rrightarrow> IteratorCall src2 ArrowCall CollectIter [it]
+          (Call (Var it) DotCall call2)"
+|CollectionSafeDotCallN:
+  "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
+   element_type \<tau> \<sigma> \<Longrightarrow>
+   OclVoid \<le> \<sigma> \<Longrightarrow>
+   \<sigma> \<le> OclAny[?] \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   it = new_vname \<Gamma> \<Longrightarrow>
+   \<Gamma> \<turnstile> Call src1 SafeDotCall call1 \<Rrightarrow>
+      IteratorCall (BinaryOperationCall src2 ArrowCall ExcludingOp NullLiteral)
+        ArrowCall CollectIter [it]
+          (Call (Var it) DotCall call2)"
+
+|OclTypeCallN:
+  "(\<Gamma>, \<tau>) \<turnstile> OclType \<Rrightarrow>\<^sub>C OclType"
+|TypeOperationCallN:
+  "(\<Gamma>, \<tau>) \<turnstile> TypeOperation op ty \<Rrightarrow>\<^sub>C TypeOperation op ty"
+|UnaryOperationCallN:
+  "(\<Gamma>, \<tau>) \<turnstile> UnaryOperation op \<Rrightarrow>\<^sub>C UnaryOperation op"
+|BinaryOperationCallN:
+  "\<Gamma> \<turnstile> a1 \<Rrightarrow> a2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> BinaryOperation op a1 \<Rrightarrow>\<^sub>C BinaryOperation op a2"
+|TernaryOperationCallN:
+  "\<Gamma> \<turnstile> a1 \<Rrightarrow> a2 \<Longrightarrow>
+   \<Gamma> \<turnstile> b1 \<Rrightarrow> b2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> TernaryOperation op a1 b1 \<Rrightarrow>\<^sub>C TernaryOperation op a2 b2"
+|IterateCallN:
+  "element_type \<tau> \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile> res_init1 \<Rrightarrow> res_init2 \<Longrightarrow>
+   fmadd \<Gamma> (fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its)) \<turnstile>
+      Let res res_t res_init1 body1 \<Rrightarrow> Let res res_t res_init2 body2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> Iterate its res res_t res_init1 body1 \<Rrightarrow>\<^sub>C Iterate its res res_t res_init2 body2"
+|IteratorCallN:
+  "element_type \<tau> \<sigma> \<Longrightarrow>
+   fmadd \<Gamma> (fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its)) \<turnstile> body1 \<Rrightarrow> body2  \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile> Iterator iter its body1 \<Rrightarrow>\<^sub>C Iterator iter its body2"
+|AttributeCallN:
+  "(\<Gamma>, \<tau>) \<turnstile> Attribute attr \<Rrightarrow>\<^sub>C Attribute attr"
+|AssociationEndCallN:
+  "(\<Gamma>, \<tau>) \<turnstile> AssociationEnd role \<Rrightarrow>\<^sub>C AssociationEnd role"
+|OperationCallN:
+  "(\<Gamma>, \<tau>) \<turnstile> Operation op as \<Rrightarrow>\<^sub>C Operation op as"
+
+code_pred [show_modes] normalize .
+
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  (UnaryOperationCall
+    (CollectionLiteral SequenceKind [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
+    DotCall ToStringOp) \<Rrightarrow> x}"
+
+inductive_cases Literal_normalize [elim]: "\<Gamma> \<turnstile> Literal a \<Rrightarrow> b"
+inductive_cases Let_normalize [elim]: "\<Gamma> \<turnstile> Let v t init body \<Rrightarrow> b"
+inductive_cases Var_normalize [elim]: "\<Gamma> \<turnstile> Var v \<Rrightarrow> b"
+inductive_cases If_normalize [elim]: "\<Gamma> \<turnstile> If a b c \<Rrightarrow> d"
+inductive_cases DotCall_normalize [elim]: "\<Gamma> \<turnstile> Call src DotCall call \<Rrightarrow> b"
+inductive_cases SafeDotCall_normalize [elim]: "\<Gamma> \<turnstile> Call src SafeDotCall call \<Rrightarrow> b"
+inductive_cases ArrowCall_normalize [elim]: "\<Gamma> \<turnstile> Call src ArrowCall call \<Rrightarrow> b"
+inductive_cases SafeArrowCall_normalize [elim]: "\<Gamma> \<turnstile> Call src SafeArrowCall call \<Rrightarrow> b"
+
+inductive_cases normalize_call_elim [elim]: "(\<Gamma>, \<tau>) \<turnstile> call \<Rrightarrow>\<^sub>C b"
+inductive_cases BinaryOperation_normalize_call [elim]:
+  "(\<Gamma>, \<tau>) \<turnstile> BinaryOperation op a1 \<Rrightarrow>\<^sub>C call2"
+inductive_cases TernaryOperation_normalize_call [elim]:
+  "(\<Gamma>, \<tau>) \<turnstile> TernaryOperation op a1 b1 \<Rrightarrow>\<^sub>C call2"
+inductive_cases Iterate_normalize_call [elim]:
+  "(\<Gamma>, \<tau>) \<turnstile> Iterate its res res_t res_init1 body1 \<Rrightarrow>\<^sub>C call2"
+inductive_cases Iterator_normalize_call [elim]:
+  "(\<Gamma>, \<tau>) \<turnstile> Iterator iter its body1 \<Rrightarrow>\<^sub>C call2"
+
+lemma any_has_not_element_type:
+  "\<tau> \<le> OclAny[?] \<Longrightarrow> element_type \<tau> \<sigma> \<Longrightarrow> False"
+  by (erule element_type.cases; auto)
+
+lemma
+  normalize_det: "\<Gamma> \<turnstile> expr \<Rrightarrow> expr1 \<Longrightarrow> \<Gamma> \<turnstile> expr \<Rrightarrow> expr2 \<Longrightarrow> expr1 = expr2" and
+  normalize_call_det: "\<Gamma>1 \<turnstile> call \<Rrightarrow>\<^sub>C call1 \<Longrightarrow> \<Gamma>1 \<turnstile> call \<Rrightarrow>\<^sub>C call2 \<Longrightarrow> call1 = call2"
+  for \<Gamma> :: "('a :: ocl_object_model) type env"
+  and \<Gamma>1 :: "('a :: ocl_object_model) type env \<times> 'a type"
+proof (induct \<Gamma> expr expr1 and \<Gamma>1 call call1
+       arbitrary: expr2 and call2
+       rule: normalize_normalize_call.inducts)
+  case (LiteralN \<Gamma> a) thus ?case by auto
+next
+  case (LetN \<Gamma> init1 init2 v \<tau> body1 body2) thus ?case by blast
+next
+  case (VarN \<Gamma> v) thus ?case by auto
+next
+  case (IfN \<Gamma> a1 a2 b1 b2 c1 c2) thus ?case by auto
+next
+  case (OclAnyDotCallN \<Gamma> src1 src2 \<tau> call1 call2) show ?case
+    apply (insert OclAnyDotCallN.prems)
+    apply (erule DotCall_normalize)
+    apply (metis OclAnyDotCallN.hyps(2) OclAnyDotCallN.hyps(3) OclAnyDotCallN.hyps(6) typing_det)
+    by (metis OclAnyDotCallN.hyps(2) OclAnyDotCallN.hyps(3) OclAnyDotCallN.hyps(4) any_has_not_element_type type_less_eq_x_Optional_intro(2) typing_det)
+next
+  case (OclAnySafeDotCallN \<Gamma> src1 src2 \<tau> call1 call2) show ?case
+    apply (insert OclAnySafeDotCallN.prems)
+    apply (erule SafeDotCall_normalize)
+    apply (metis OclAnySafeDotCallN.hyps(2) OclAnySafeDotCallN.hyps(3) OclAnySafeDotCallN.hyps(7) typing_det)
+    by (metis OclAnySafeDotCallN.hyps(2) OclAnySafeDotCallN.hyps(3) OclAnySafeDotCallN.hyps(5) any_has_not_element_type typing_det)
+next
+  case (OclAnyArrowDotCallN \<Gamma> src1 src2 \<tau> call1 call2) show ?case
+    apply (insert OclAnyArrowDotCallN.prems)
+    apply (erule ArrowCall_normalize)
+    apply (metis OclAnyArrowDotCallN.hyps(2) OclAnyArrowDotCallN.hyps(3) OclAnyArrowDotCallN.hyps(6) typing_det)
+    by (metis OclAnyArrowDotCallN.hyps(2) OclAnyArrowDotCallN.hyps(3) OclAnyArrowDotCallN.hyps(4) any_has_not_element_type typing_det)
+next
+  case (CollectionArrowCallN \<Gamma> src1 src2 \<tau> call1 call2 uu) show ?case
+    apply (insert CollectionArrowCallN.prems)
+    apply (erule ArrowCall_normalize)
+    apply (metis CollectionArrowCallN.hyps(2) CollectionArrowCallN.hyps(3) CollectionArrowCallN.hyps(4) any_has_not_element_type typing_det)
+    using CollectionArrowCallN.hyps(2) CollectionArrowCallN.hyps(3) CollectionArrowCallN.hyps(6) typing_det by fastforce
+next
+  case (CollectionSafeArrowCallN \<Gamma> src1 src2 \<tau> call1 call2 \<sigma>) show ?case
+    apply (insert CollectionSafeArrowCallN.prems)
+    apply (erule SafeArrowCall_normalize)
+    by (metis CollectionSafeArrowCallN.hyps(2) CollectionSafeArrowCallN.hyps(3) CollectionSafeArrowCallN.hyps(8) comp_eq_dest_lhs typing_det)
+next
+  case (CollectionDotCallN \<Gamma> src1 src2 \<tau> call1 call2 \<sigma> it) show ?case
+    apply (insert CollectionDotCallN.prems)
+    apply (erule DotCall_normalize)
+    apply (metis CollectionDotCallN.hyps(2) CollectionDotCallN.hyps(3) CollectionDotCallN.hyps(4) any_has_not_element_type type_less_eq_x_Optional_intro(2) typing_det)
+    using CollectionDotCallN.hyps(2) CollectionDotCallN.hyps(3) CollectionDotCallN.hyps(7) CollectionDotCallN.hyps(8) typing_det by fastforce
+next
+  case (CollectionSafeDotCallN \<Gamma> src1 src2 \<tau> call1 call2 \<sigma> it) show ?case
+    apply (insert CollectionSafeDotCallN.prems)
+    apply (erule SafeDotCall_normalize)
+    apply (metis CollectionSafeDotCallN.hyps(2) CollectionSafeDotCallN.hyps(3) CollectionSafeDotCallN.hyps(4) any_has_not_element_type typing_det)
+    by (metis CollectionSafeDotCallN.hyps(2) CollectionSafeDotCallN.hyps(3) CollectionSafeDotCallN.hyps(8) CollectionSafeDotCallN.hyps(9) comp_eq_dest_lhs typing_det)
+next
+  case (OclTypeCallN \<Gamma> \<tau>) thus ?case by auto
+next
+  case (TypeOperationCallN \<Gamma> \<tau> op ty) thus ?case by auto
+next
+  case (UnaryOperationCallN \<Gamma> \<tau> op) thus ?case by auto
+next
+  case (BinaryOperationCallN \<Gamma> a1 a2 \<tau> op) show ?case
+    apply (insert BinaryOperationCallN.prems)
+    apply (erule BinaryOperation_normalize_call)
+    by (simp add: BinaryOperationCallN.hyps(2))
+next
+  case (TernaryOperationCallN \<Gamma> a1 a2 b1 b2 \<tau> op) show ?case
+    apply (insert TernaryOperationCallN.prems)
+    apply (erule TernaryOperation_normalize_call)
+    by (simp add: TernaryOperationCallN.hyps(2) TernaryOperationCallN.hyps(4))
+next
+  case (IterateCallN \<tau> \<sigma> \<Gamma> res_init1 res_init2 its res res_t body1 body2)
+  show ?case
+    apply (insert IterateCallN.prems)
+    apply (erule Iterate_normalize_call)
+    using IterateCallN.hyps(1) IterateCallN.hyps(5) element_type_det by blast
+next
+  case (IteratorCallN \<tau> \<sigma> \<Gamma> its body1 body2 iter)
+  show ?case
+    apply (insert IteratorCallN.prems)
+    apply (erule Iterator_normalize_call)
+    using IteratorCallN.hyps(1) IteratorCallN.hyps(3) element_type_det by auto
+next
+  case (AttributeCallN \<Gamma> \<tau> attr) thus ?case by auto
+next
+  case (AssociationEndCallN \<Gamma> \<tau> role) thus ?case by auto
+next
+  case (OperationCallN \<Gamma> \<tau> op as) thus ?case by auto
 qed
 
 (*** Code Setup *************************************************************)
