@@ -576,6 +576,11 @@ inductive typing
    class_of \<tau> cls \<Longrightarrow>
    find_association_end cls role = Some end \<Longrightarrow>
    \<Gamma> \<turnstile> AssociationEndCall src DotCall role : assoc_end_type end"
+|OperationCallT:
+  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+   class_of \<tau> cls \<Longrightarrow>
+   find_association_end cls role = Some end \<Longrightarrow>
+   \<Gamma> \<turnstile> OperationCall src DotCall role : assoc_end_type end"
 
 code_pred [show_modes] typing .
 
@@ -1220,31 +1225,32 @@ section \<open>Test Cases\<close>
 
 subsection \<open>Positive Cases\<close>
 
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
   BooleanLiteral True : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> true or false : Boolean[1]"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  BinaryOperationCall False (BooleanLiteral True) OrOp (BooleanLiteral False) : x}"
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  BinaryOperationCall (BooleanLiteral True) DotCall OrOp (BooleanLiteral False) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> true and null : Boolean[?]"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  BinaryOperationCall False (BooleanLiteral True) AndOp NullLiteral : x}"
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  BinaryOperationCall (BooleanLiteral True) DotCall AndOp NullLiteral : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Real[?] = 5 in x + 7 : Real[1]"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let (STR ''x'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall False (Var STR ''x'') PlusOp (IntegerLiteral 7)) : x}"
+    (BinaryOperationCall (Var STR ''x'') DotCall PlusOp (IntegerLiteral 7)) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> Sequence{1..5}->product(Set{'a', 'b'}) : Tuple (first: Integer[1], second: String[1])"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  BinaryOperationCall False
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  BinaryOperationCall
     (CollectionLiteral SequenceKind
       [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
+    ArrowCall
     ProductOp
     (CollectionLiteral SetKind
       [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]) : x}"
@@ -1252,76 +1258,78 @@ values "{x. (Map.empty :: classes1 type env) \<turnstile>
 text \<open>
   @{text "\<Gamma> \<turnstile> Sequence{1..5}->iterate(
       x, acc : Real[?] = 5 | acc + x) : Real[1]"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
-  Iterate False (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)]) [STR ''x'']
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  IterateCall (CollectionLiteral SequenceKind
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
+      ArrowCall [STR ''x'']
       (STR ''acc'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall False (Var STR ''acc'') PlusOp (Var STR ''x'')) : x}"
+    (BinaryOperationCall (Var STR ''acc'') DotCall PlusOp (Var STR ''x'')) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
     x->any(it | it = 'test') : String[?]"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let (STR ''x'') (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator False (Var STR ''x'') AnyIter [STR ''it'']
-    (BinaryOperationCall False (Var STR ''it'') EqualOp (StringLiteral ''test''))) : x}"
+  (IteratorCall (Var STR ''x'') ArrowCall AnyIter [STR ''it'']
+    (BinaryOperationCall (Var STR ''it'') DotCall EqualOp (StringLiteral ''test''))) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
     x->closure(it | it) : OrderedSet String[?]"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator False (Var STR ''x'') ClosureIter [STR ''it'']
+  (IteratorCall (Var STR ''x'') ArrowCall ClosureIter [STR ''it'']
     (Var STR ''it'')) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
-values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[1]] :: classes1 type env) \<turnstile>
-  AttributeCall False (Var STR ''self'') STR ''position'' : x}"
+values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[1])] :: classes1 type env) \<turnstile>
+  AttributeCall (Var STR ''self'') DotCall STR ''position'' : x}"
 
 (* TODO: Inherited properties *)
 text \<open>
   @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
-values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[1]] :: classes1 type env) \<turnstile>
-  AttributeCall False (Var STR ''self'') STR ''name'' : x}"
+values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[1])] :: classes1 type env) \<turnstile>
+  AttributeCall (Var STR ''self'') DotCall STR ''name'' : x}"
 
 text \<open>
   @{text "self.projects : Set (ObjectType Project)[1]"}\<close>
-values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[?]] :: classes1 type env) \<turnstile>
-  AssociationEndCall False (Var STR ''self'') STR ''projects'' : x}"
+values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[?])] :: classes1 type env) \<turnstile>
+  AssociationEndCall (Var STR ''self'') DotCall STR ''projects'' : x}"
 
 text \<open>
   @{text "self.projects.members : Bag (ObjectType Employee)[1]"}\<close>
-values "{x. ([STR ''self'' \<mapsto> (ObjectType Employee)[?]] :: classes1 type env) \<turnstile>
-  Iterator False (AssociationEndCall False (Var STR ''self'') STR ''projects'')
+values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[?])] :: classes1 type env) \<turnstile>
+  IteratorCall (AssociationEndCall (Var STR ''self'') DotCall STR ''projects'')
+    ArrowCall
     CollectIter [STR ''it'']
-    (AssociationEndCall False (Var STR ''it'') STR ''members'') : x}"
+    (AssociationEndCall (Var STR ''it'') DotCall STR ''members'') : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> self.manager : (ObjectType Employee)[1]"}\<close>
-values "{x. ([STR ''self'' \<mapsto> (ObjectType Project)[?]] :: classes1 type env) \<turnstile>
-  AssociationEndCall False (Var STR ''self'') STR ''manager'' : x}"
+values "{x. (fmap_of_list [(STR ''self'', (ObjectType Project)[?])] :: classes1 type env) \<turnstile>
+  AssociationEndCall (Var STR ''self'') DotCall STR ''manager'' : x}"
 
 subsection \<open>Negative Cases\<close>
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Boolean[1] = 5 in x and true : \<epsilon>"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' Boolean[1] (IntegerLiteral 5)
-    (BinaryOperationCall False (Var STR ''x'') AndOp (BooleanLiteral True)) : x}"
+    (BinaryOperationCall (Var STR ''x'') DotCall AndOp (BooleanLiteral True)) : x}"
 
 text \<open>
   @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
     x->closure(it | 1) : \<epsilon>"}\<close>
-values "{x. (Map.empty :: classes1 type env) \<turnstile>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (Iterator False (Var STR ''x'') ClosureIter [STR ''it'']
+  (IteratorCall (Var STR ''x'') ArrowCall ClosureIter [STR ''it'']
     (IntegerLiteral 1)) : x}"
 
 end

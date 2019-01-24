@@ -23,9 +23,37 @@ definition
          | (False, True)  \<Rightarrow> Sequence (ObjectType cls)[1]
          | (True,  False) \<Rightarrow> Set (ObjectType cls)[1]
          | (True,  True)  \<Rightarrow> OrderedSet (ObjectType cls)[1])"
+(*
+datatype 'a ty = A | B
 
-class ocl_object_model = semilattice_sup +
-  fixes attributes :: "'a \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
+instantiation ty :: (order) order
+begin
+definition "x < y \<equiv> x = A \<and> y = B"
+definition "x \<le> y \<equiv> (x :: 'a ty) = y \<or> x < y"
+instance
+  apply intro_classes
+  using less_eq_ty_def less_ty_def by auto
+end
+
+locale loc = semilattice_sup +
+  fixes f :: "'a \<Rightarrow> 't :: order"
+begin
+definition "g \<equiv> inv f"
+end
+
+class cls = semilattice_sup +
+  fixes f :: "'a \<Rightarrow> 'a ty"
+begin
+interpretation base: loc
+  sorry
+abbreviation "g \<equiv> base.g"
+end
+
+interpretation base: loc sup less_eq less
+*)
+
+class ocl_object_model =
+  fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
   and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
   and operations :: "('a type, 'a expr) oper_spec list"
   assumes attributes_distinct:
@@ -42,6 +70,7 @@ interpretation base: object_model
 
 abbreviation "find_attribute \<equiv> base.find_attribute"
 abbreviation "find_association_end \<equiv> base.find_association_end"
+abbreviation "find_operation \<equiv> base.find_operation"
 
 end
 
@@ -113,10 +142,9 @@ definition "operations_classes1 \<equiv> [
    \<comment> \<open>Return Type\<close>
    Integer[1],
    \<comment> \<open>Body: self.members->size()\<close>
-   Some ( (UnaryOperationCall
+   Some (UnaryOperationCall
       (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-         ArrowCall
-      CollectionSizeOp)))
+      ArrowCall CollectionSizeOp))
   ] :: (classes1 type, classes1 expr) oper_spec list"
 
 lemma classes1_attrs_ok:

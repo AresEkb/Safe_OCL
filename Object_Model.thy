@@ -18,9 +18,9 @@ type_synonym param = String.literal
 
 datatype param_dir = In | Out | InOut
 
-type_synonym 'a assoc_end = "'a \<times> nat \<times> enat \<times> bool \<times> bool"
-type_synonym 'b param_spec = "param \<times> 'b \<times> param_dir"
-type_synonym ('b, 'c) oper_spec = "oper \<times> 'b param_spec list \<times> 'b \<times> 'c option"
+type_synonym 'c assoc_end = "'c \<times> nat \<times> enat \<times> bool \<times> bool"
+type_synonym 't param_spec = "param \<times> 't \<times> param_dir"
+type_synonym ('t, 'e) oper_spec = "oper \<times> 't param_spec list \<times> 't \<times> 'e option"
 
 definition "assoc_end_class \<equiv> fst"
 definition "assoc_end_min \<equiv> fst \<circ> snd"
@@ -28,6 +28,15 @@ definition "assoc_end_max \<equiv> fst \<circ> snd \<circ> snd"
 definition "assoc_end_ordered \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
 definition "assoc_end_unique \<equiv> snd \<circ> snd \<circ> snd \<circ> snd"
 definition "assoc_end_min_le_max end \<equiv> assoc_end_min end \<le> assoc_end_max end"
+
+definition "oper_name \<equiv> fst"
+definition "oper_params \<equiv> fst \<circ> snd"
+definition "oper_result \<equiv> fst \<circ> snd \<circ> snd"
+definition "oper_body \<equiv> snd \<circ> snd \<circ> snd"
+
+definition "param_name \<equiv> fst"
+definition "param_type \<equiv> fst \<circ> snd"
+definition "param_dir \<equiv> snd \<circ> snd"
 
 definition "assoc_refer_class ends \<C> \<equiv>
   fBex (fmdom ends) (\<lambda>role. assoc_end_class (the (fmlookup ends role)) = \<C>)"
@@ -38,17 +47,40 @@ text \<open>
   The OCL specification allows attribute redefinition with the same type.
   But we prohibit it.\<close>
 
-locale object_model = semilattice_sup +
-  fixes attributes :: "'a \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'b"
+locale object_model = 
+  fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"
   and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
-  and operations :: "('b, 'c) oper_spec list"
+  and operations :: "('t, 'e) oper_spec list"
   assumes attributes_distinct:
-    "less \<C> \<D> \<Longrightarrow>
+    "\<C> < \<D> \<Longrightarrow>
      fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
      fmlookup attributes \<D> = Some attrs\<^sub>\<D> \<Longrightarrow>
      fmlookup attrs\<^sub>\<C> attr \<noteq> None \<Longrightarrow>
      fmlookup attrs\<^sub>\<D> attr = None"
 begin
+
+term "oper_result"
+term "filter (\<lambda>p. param_dir p = In \<or> param_dir p = InOut) (oper_params x)"
+
+abbreviation "oper_in_params op \<equiv>
+  filter (\<lambda>p. param_dir p = In \<or> param_dir p = InOut) (oper_params op)"
+
+abbreviation "oper_out_params op \<equiv>
+  filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op)"
+(*
+abbreviation "oper_out_params op \<equiv>
+  filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op) @
+  [(STR ''result'', oper_result op, Out)]"
+
+abbreviation "oper_type op \<equiv>
+  let params = oper_out_params op in
+  if length params = 0
+    then oper_result op
+    else Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p)) params))"
+*)
+abbreviation "find_operation op param_types \<equiv>
+  find (\<lambda>x. oper_name x = op \<and>
+    list_all2 (\<le>) param_types (map param_type (oper_in_params x))) operations"
 
 abbreviation "find_owned_attribute \<C> attr \<equiv>
   map_option (Pair \<C>) (Option.bind (fmlookup attributes \<C>) (\<lambda>attrs\<^sub>\<C>. fmlookup attrs\<^sub>\<C> attr))"

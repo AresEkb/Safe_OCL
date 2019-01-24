@@ -7,6 +7,31 @@ chapter \<open>OCL Syntax\<close>
 theory OCL_Syntax
   imports Complex_Main Object_Model OCL_Types
 begin
+(*
+datatype expr = Seq "item_expr list" | SetE "item_expr list"
+  | NConst nat | SConst string
+and item_expr = Item expr | Range expr expr
+
+syntax
+  "_seq_literal" :: "args => expr"    ("Sequence {(_)}")
+  "_set_literal" :: "args => expr"    ("Set {(_)}")
+  "_range" :: "[expr, expr] => item_expr"    ("_ .. _")
+
+translations
+  "Sequence {x, xs}" == "CONST Seq (CONST Item x # [CONST Item xs])"
+  "Sequence {x}" == "CONST Seq (CONST Item x # [])"
+  "Set {x, xs}" == "CONST SetE (CONST Item x # [CONST Item xs])"
+  "Set {x}" == "CONST SetE (CONST Item x # [])"
+  "a .. b" == "CONST Range a b"
+
+term "Sequence {NConst 1}"
+term "Sequence {NConst 1, SConst ''a''}"
+term "Sequence {NConst 1, NConst 2, NConst 3}"
+term "NConst 1 .. NConst 5"
+term "Sequence {NConst 1 .. NConst 5}"
+term "Sequence {NConst 1 .. NConst 5, SConst ''a''}"
+term "Sequence {Set {NConst 1, SConst ''a''}}"
+*)
 
 section \<open>Preliminaries\<close>
 
@@ -154,15 +179,15 @@ definition "tuple_literal_expr \<equiv> snd \<circ> snd"
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 (*declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]*)
 
-abbreviation "OclTypeCall src s \<equiv> Call src s OclType"
-abbreviation "TypeOperationCall src s op ty \<equiv> Call src s (TypeOperation op ty)"
-abbreviation "UnaryOperationCall src s op \<equiv> Call src s (UnaryOperation op)"
-abbreviation "BinaryOperationCall src s op a \<equiv> Call src s (BinaryOperation op a)"
-abbreviation "TernaryOperationCall src s op a b \<equiv> Call src s (TernaryOperation op a b)"
-abbreviation "IterateCall src s its v ty init body \<equiv> Call src s (Iterate its v ty init body)"
-abbreviation "IteratorCall src s op its body \<equiv> Call src s (Iterator op its body)"
-abbreviation "AttributeCall src s attr \<equiv> Call src s (Attribute attr)"
-abbreviation "AssociationEndCall src s role \<equiv> Call src s (AssociationEnd role)"
-abbreviation "OperationCall src s op as \<equiv> Call src s (Operation op as)"
+abbreviation "OclTypeCall src k \<equiv> Call src k OclType"
+abbreviation "TypeOperationCall src k op ty \<equiv> Call src k (TypeOperation op ty)"
+abbreviation "UnaryOperationCall src k op \<equiv> Call src k (UnaryOperation op)"
+abbreviation "BinaryOperationCall src k op a \<equiv> Call src k (BinaryOperation op a)"
+abbreviation "TernaryOperationCall src k op a b \<equiv> Call src k (TernaryOperation op a b)"
+abbreviation "IterateCall src k its v ty init body \<equiv> Call src k (Iterate its v ty init body)"
+abbreviation "IteratorCall src k op its body \<equiv> Call src k (Iterator op its body)"
+abbreviation "AttributeCall src k attr \<equiv> Call src k (Attribute attr)"
+abbreviation "AssociationEndCall src k role \<equiv> Call src k (AssociationEnd role)"
+abbreviation "OperationCall src k op as \<equiv> Call src k (Operation op as)"
 
 end
