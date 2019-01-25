@@ -7,31 +7,6 @@ chapter \<open>Abstract Syntax\<close>
 theory OCL_Syntax
   imports Complex_Main Object_Model OCL_Types
 begin
-(*
-datatype expr = Seq "item_expr list" | SetE "item_expr list"
-  | NConst nat | SConst string
-and item_expr = Item expr | Range expr expr
-
-syntax
-  "_seq_literal" :: "args => expr"    ("Sequence {(_)}")
-  "_set_literal" :: "args => expr"    ("Set {(_)}")
-  "_range" :: "[expr, expr] => item_expr"    ("_ .. _")
-
-translations
-  "Sequence {x, xs}" == "CONST Seq (CONST Item x # [CONST Item xs])"
-  "Sequence {x}" == "CONST Seq (CONST Item x # [])"
-  "Set {x, xs}" == "CONST SetE (CONST Item x # [CONST Item xs])"
-  "Set {x}" == "CONST SetE (CONST Item x # [])"
-  "a .. b" == "CONST Range a b"
-
-term "Sequence {NConst 1}"
-term "Sequence {NConst 1, SConst ''a''}"
-term "Sequence {NConst 1, NConst 2, NConst 3}"
-term "NConst 1 .. NConst 5"
-term "Sequence {NConst 1 .. NConst 5}"
-term "Sequence {NConst 1 .. NConst 5, SConst ''a''}"
-term "Sequence {Set {NConst 1, SConst ''a''}}"
-*)
 
 section \<open>Preliminaries\<close>
 
@@ -62,7 +37,7 @@ free_constructors cases_unat for
 section \<open>Standard Library Operations\<close>
 
 text \<open>
-  The OCL specification doesn't define OclType. So we implement
+  The OCL specification doesn't define @{text OclType}. So we implement
   type operations as a syntactic constructs.\<close>
 
 datatype typeop = OclAsTypeOp | OclIsTypeOfOp | OclIsKindOfOp
@@ -169,13 +144,13 @@ and 'a call_expr =
 | Attribute attr
 | AssociationEnd role
 | Operation oper (args : "'a expr list")
+| TupleElement telem
 
 definition "tuple_literal_name \<equiv> fst"
 definition "tuple_literal_type \<equiv> fst \<circ> snd"
 definition "tuple_literal_expr \<equiv> snd \<circ> snd"
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
-(*declare [[coercion "Call :: 'a call_expr \<Rightarrow> 'a expr"]]*)
 
 abbreviation "OclTypeCall src k \<equiv> Call src k OclType"
 abbreviation "TypeOperationCall src k op ty \<equiv> Call src k (TypeOperation op ty)"
@@ -187,5 +162,6 @@ abbreviation "IteratorCall src k op its body \<equiv> Call src k (Iterator op it
 abbreviation "AttributeCall src k attr \<equiv> Call src k (Attribute attr)"
 abbreviation "AssociationEndCall src k role \<equiv> Call src k (AssociationEnd role)"
 abbreviation "OperationCall src k op as \<equiv> Call src k (Operation op as)"
+abbreviation "TupleElementCall src k elem \<equiv> Call src k (TupleElement elem)"
 
 end

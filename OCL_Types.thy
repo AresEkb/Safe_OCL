@@ -169,7 +169,6 @@ instantiation type :: (order) order
 begin
 
 definition "(<) \<equiv> subtype\<^sup>+\<^sup>+"
-
 definition "(\<le>) \<equiv> subtype\<^sup>*\<^sup>*"
 
 (*** Introduction Rules *****************************************************)
@@ -745,8 +744,8 @@ lemma sup_ge1_type:
 proof (induct \<tau> arbitrary: \<sigma>)
   case OclInvalid show ?case by auto 
   case OclVoid show ?case by (induct \<sigma>; auto)
-  case (Required x) show ?case by (induct \<sigma>; auto simp add:
-        type_less_eq_x_Optional_intro(2) type_less_eq_x_Required_intro)
+  case (Required x) show ?case by (induct \<sigma>;
+    auto simp add: type_less_eq_x_Optional_intro(2) type_less_eq_x_Required_intro)
   case (Optional x) show ?case by (induct \<sigma>; auto)
   case (Set \<tau>) thus ?case by (induct \<sigma>; auto)
   case (OrderedSet \<tau>) thus ?case by (induct \<sigma>; auto)
@@ -755,7 +754,7 @@ proof (induct \<tau> arbitrary: \<sigma>)
   case (Collection \<tau>) thus ?case by (induct \<sigma>; auto)
 next
   case (Tuple \<pi>)
-  also have Tuple_less_eq_sup:
+  moreover have Tuple_less_eq_sup:
     "(\<And>\<tau> \<sigma>. \<tau> \<in> fmran' \<pi> \<Longrightarrow> \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
      Tuple \<pi> \<le> Tuple \<pi> \<squnion> \<sigma>"
     by (cases \<sigma>, auto)
@@ -941,6 +940,45 @@ inductive strict_subcollection where
 | "\<sigma> < \<tau> \<Longrightarrow>
    strict_subcollection (Collection \<tau>) \<sigma> (Collection \<sigma>)"
 
+(*** Properties of Helper Relations *****************************************)
+
+section \<open>Properties of Helper Relations\<close>
+
+lemma class_of_det:
+  "class_of \<tau> \<C> \<Longrightarrow>
+   class_of \<tau> \<D> \<Longrightarrow> \<C> = \<D>"
+  by (induct rule: class_of.induct; simp add: class_of.simps)
+
+lemma element_type_det:
+  "element_type \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   element_type \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: element_type.induct; simp add: element_type.simps)
+
+lemma update_element_type_det:
+  "update_element_type \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   update_element_type \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: update_element_type.induct; simp add: update_element_type.simps)
+
+lemma to_unique_collection_det:
+  "to_unique_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   to_unique_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: to_unique_collection.induct; simp add: to_unique_collection.simps)
+
+lemma to_nonunique_collection_det:
+  "to_nonunique_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   to_nonunique_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: to_nonunique_collection.induct; simp add: to_nonunique_collection.simps)
+
+lemma to_ordered_collection_det:
+  "to_ordered_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   to_ordered_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: to_ordered_collection.induct; simp add: to_ordered_collection.simps)
+
+lemma strict_subcollection_det:
+  "strict_subcollection \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   strict_subcollection \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: strict_subcollection.induct; simp add: strict_subcollection.simps)
+
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
@@ -1094,5 +1132,13 @@ lemma less_type_code [code_abbrev, simp]:
   using less_eq_type_code apply blast
   apply (erule subtype_fun.elims; auto simp add: subtype_fun_irrefl)
   using less_eq_type_code by blast
+
+code_pred class_of .
+code_pred element_type .
+code_pred update_element_type .
+code_pred to_unique_collection .
+code_pred to_nonunique_collection .
+code_pred to_ordered_collection .
+code_pred strict_subcollection .
 
 end

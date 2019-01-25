@@ -10,7 +10,9 @@ begin
 
 (*** Standard Library Operations Typing *************************************)
 
-section \<open>Standard Library Operations Typing\<close>
+section \<open>Standard Library Operations\<close>
+
+section \<open>Typing\<close>
 
 text \<open>
   The following rules are more restrictive than rules given in
@@ -300,13 +302,6 @@ text \<open>
  Подумать про excludingNested
 *)
 
-code_pred [show_modes] to_nonunique_collection .
-code_pred [show_modes] to_ordered_collection .
-code_pred [show_modes] to_unique_collection .
-code_pred [show_modes] update_element_type.
-code_pred [show_modes] element_type .
-code_pred [show_modes] strict_subcollection .
-
 fun to_required_type' where
   "to_required_type' OclInvalid = OclInvalid"
 | "to_required_type' OclVoid = OclInvalid"
@@ -408,6 +403,111 @@ inductive ternop_type where
 | "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    ternop_type (Inr op) ArrowCall \<tau> \<sigma> \<rho> \<upsilon>"
 
+(*** Properties *************************************************************)
+
+subsection \<open>Properties\<close>
+
+lemma typeop_type_det:
+  "typeop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   typeop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: typeop_type.induct; simp add: typeop_type.simps strict_subcollection_det)
+
+lemma any_unop_type_det:
+  "any_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   any_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: any_unop_type.induct; simp add: any_unop_type.simps)
+
+lemma boolean_unop_type_det:
+  "boolean_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   boolean_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: boolean_unop_type.induct; simp add: boolean_unop_type.simps)
+
+lemma numeric_unop_type_det:
+  "numeric_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   numeric_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: numeric_unop_type.induct; auto simp add: numeric_unop_type.simps)
+
+lemma string_unop_type_det:
+  "string_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   string_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: string_unop_type.induct; simp add: string_unop_type.simps)
+
+lemma collection_unop_type_det:
+  "collection_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   collection_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  apply (induct rule: collection_unop_type.induct)
+  apply (erule collection_unop_type.cases;
+         auto simp add: element_type_det update_element_type_det)+
+  using element_type_det update_element_type_det apply blast+
+  apply (erule collection_unop_type.cases; auto)
+  using element_type_det update_element_type_det apply blast+
+  apply (erule collection_unop_type.cases; auto)
+  using element_type_det update_element_type_det apply blast+
+  apply (erule collection_unop_type.cases; auto simp add: element_type_det)+
+  using element_type_det update_element_type_det apply blast
+  apply (erule collection_unop_type.cases; auto)+
+  done
+
+lemma unop_type_det:
+  "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
+   unop_type op k \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
+  by (induct rule: unop_type.induct;
+      simp add: unop_type.simps any_unop_type_det
+                boolean_unop_type_det numeric_unop_type_det
+                string_unop_type_det collection_unop_type_det)
+
+lemma suptype_binop_type_det:
+  "suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: suptype_binop_type.induct; auto simp add: suptype_binop_type.simps)
+
+lemma boolean_binop_type_det:
+  "boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: boolean_binop_type.induct; simp add: boolean_binop_type.simps)
+
+lemma numeric_binop_type_det:
+  "numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  apply (induct rule: numeric_binop_type.induct; auto simp add: numeric_binop_type.simps)
+  by (metis basic_type.distinct(3) basic_type.distinct(27) basic_type.distinct(29))+
+
+lemma string_binop_type_det:
+  "string_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   string_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: string_binop_type.induct; simp add: string_binop_type.simps)
+
+lemma collection_binop_type_det:
+  "collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  apply (induct rule: collection_binop_type.induct; simp add: collection_binop_type.simps)
+  using element_type_det by blast
+
+lemma binop_type_det:
+  "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   binop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: binop_type.induct;
+      simp add: binop_type.simps suptype_binop_type_det
+                boolean_binop_type_det numeric_binop_type_det
+                string_binop_type_det collection_binop_type_det)
+
+lemma string_ternop_type_det:
+  "string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
+   string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
+  by (induct rule: string_ternop_type.induct; simp add: string_ternop_type.simps)
+
+lemma collection_ternop_type_det:
+  "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
+   collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
+  by (induct rule: collection_ternop_type.induct; simp add: collection_ternop_type.simps)
+
+lemma ternop_type_det:
+  "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
+   ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
+  by (induct rule: ternop_type.induct;
+      simp add: ternop_type.simps string_ternop_type_det collection_ternop_type_det)
+
+
 code_pred [show_modes] typeop_type .
 code_pred [show_modes] unop_type .
 code_pred [show_modes] binop_type .
@@ -427,7 +527,7 @@ inductive typing
  NullLiteralT:
   "\<Gamma> \<turnstile> NullLiteral : OclVoid"
 |InvalidLiteralT:
-  "\<Gamma> \<turnstile> InvalidLiteral : OclInvalid"
+  "\<Gamma> \<turnstile> InvalidLiteral : OclInvalid" (* Посмотреть спецификацию, вроде такого нет *)
 |BooleanLiteralT:
   "\<Gamma> \<turnstile> BooleanLiteral c : Boolean[1]"
 |RealLiteralT:
@@ -440,7 +540,7 @@ inductive typing
   "\<Gamma> \<turnstile> StringLiteral c : String[1]"
 |EnumLiteralT:
   "has_literal enum lit \<Longrightarrow>
-   \<Gamma> \<turnstile> EnumLiteral enum lit : \<langle>enum\<rangle>\<^sub>\<E>[1]"
+   \<Gamma> \<turnstile> EnumLiteral enum lit : (Enum enum)[1]"
 
 |SetLiteralT:
   "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
@@ -590,6 +690,13 @@ inductive typing
    expr_list_typing \<Gamma> exprs \<pi> \<Longrightarrow>
    expr_list_typing \<Gamma> (expr # exprs) (\<tau> # \<pi>)"
 
+|TupleElementCallT:
+  "\<Gamma> \<turnstile> src : Tuple \<pi> \<Longrightarrow>
+   fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile> TupleElementCall src DotCall elem : \<tau>"
+
+
+
 code_pred [show_modes] typing .
 
 inductive_cases NullLiteral_typing [elim]: "\<Gamma> \<turnstile> NullLiteral : \<tau>"
@@ -631,145 +738,11 @@ inductive_cases AttributeCall_typing [elim]: "\<Gamma> \<turnstile> AttributeCal
 inductive_cases AssociationEndCall_typing [elim]: "\<Gamma> \<turnstile> AssociationEndCall src k role : \<tau>"
 inductive_cases OperationCall_typing [elim]: "\<Gamma> \<turnstile> OperationCall src k op params : \<tau>"
 inductive_cases expr_list_typing [elim]: "expr_list_typing \<Gamma> exprs \<pi>"
+inductive_cases TupleElementCall_typing [elim]: "\<Gamma> \<turnstile> TupleElementCall src k elem : \<tau>"
 
 (*** Properties *************************************************************)
 
 section \<open>Properties\<close>
-
-lemma class_of_det:
-  "class_of \<tau> c \<Longrightarrow>
-   class_of \<tau> d \<Longrightarrow> c = d"
-  by (induct rule: class_of.induct; simp add: class_of.simps)
-
-lemma element_type_det:
-  "element_type \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   element_type \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: element_type.induct; simp add: element_type.simps)
-
-lemma update_element_type_det:
-  "update_element_type \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   update_element_type \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: update_element_type.induct; simp add: update_element_type.simps)
-
-lemma to_unique_collection_det:
-  "to_unique_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   to_unique_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: to_unique_collection.induct; simp add: to_unique_collection.simps)
-
-lemma to_nonunique_collection_det:
-  "to_nonunique_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   to_nonunique_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: to_nonunique_collection.induct; simp add: to_nonunique_collection.simps)
-
-lemma to_ordered_collection_det:
-  "to_ordered_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   to_ordered_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: to_ordered_collection.induct; simp add: to_ordered_collection.simps)
-
-lemma strict_subcollection_det:
-  "strict_subcollection \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   strict_subcollection \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: strict_subcollection.induct; simp add: strict_subcollection.simps)
-
-lemma typeop_type_det:
-  "typeop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   typeop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: typeop_type.induct; simp add: typeop_type.simps strict_subcollection_det)
-
-lemma any_unop_type_det:
-  "any_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   any_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: any_unop_type.induct; simp add: any_unop_type.simps)
-
-lemma boolean_unop_type_det:
-  "boolean_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   boolean_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: boolean_unop_type.induct; simp add: boolean_unop_type.simps)
-
-lemma numeric_unop_type_det:
-  "numeric_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   numeric_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: numeric_unop_type.induct; auto simp add: numeric_unop_type.simps)
-
-lemma string_unop_type_det:
-  "string_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   string_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: string_unop_type.induct; simp add: string_unop_type.simps)
-
-lemma collection_unop_type_det:
-  "collection_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   collection_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  apply (induct rule: collection_unop_type.induct)
-  apply (erule collection_unop_type.cases;
-         auto simp add: element_type_det update_element_type_det)+
-  using element_type_det update_element_type_det apply blast+
-  apply (erule collection_unop_type.cases; auto)
-  using element_type_det update_element_type_det apply blast+
-  apply (erule collection_unop_type.cases; auto)
-  using element_type_det update_element_type_det apply blast+
-  apply (erule collection_unop_type.cases; auto simp add: element_type_det)+
-  using element_type_det update_element_type_det apply blast
-  apply (erule collection_unop_type.cases; auto)+
-  done
-
-lemma unop_type_det:
-  "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
-   unop_type op k \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (induct rule: unop_type.induct;
-      simp add: unop_type.simps any_unop_type_det
-                boolean_unop_type_det numeric_unop_type_det
-                string_unop_type_det collection_unop_type_det)
-
-lemma suptype_binop_type_det:
-  "suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: suptype_binop_type.induct; auto simp add: suptype_binop_type.simps)
-
-lemma boolean_binop_type_det:
-  "boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: boolean_binop_type.induct; simp add: boolean_binop_type.simps)
-
-lemma numeric_binop_type_det:
-  "numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  apply (induct rule: numeric_binop_type.induct; auto simp add: numeric_binop_type.simps)
-  by (metis basic_type.distinct(3) basic_type.distinct(27) basic_type.distinct(29))+
-
-lemma string_binop_type_det:
-  "string_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   string_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: string_binop_type.induct; simp add: string_binop_type.simps)
-
-lemma collection_binop_type_det:
-  "collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  apply (induct rule: collection_binop_type.induct; simp add: collection_binop_type.simps)
-  using element_type_det by blast
-
-lemma binop_type_det:
-  "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   binop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: binop_type.induct;
-      simp add: binop_type.simps suptype_binop_type_det
-                boolean_binop_type_det numeric_binop_type_det
-                string_binop_type_det collection_binop_type_det)
-
-lemma string_ternop_type_det:
-  "string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
-   string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
-  by (induct rule: string_ternop_type.induct; simp add: string_ternop_type.simps)
-
-lemma collection_ternop_type_det:
-  "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
-   collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
-  by (induct rule: collection_ternop_type.induct; simp add: collection_ternop_type.simps)
-
-lemma ternop_type_det:
-  "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
-   ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
-  by (induct rule: ternop_type.induct;
-      simp add: ternop_type.simps string_ternop_type_det collection_ternop_type_det)
 
 lemma
   typing_det: "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
@@ -936,11 +909,16 @@ next
   case (ExprListNilT \<Gamma>) thus ?case
     using expr_list_typing.cases by auto
 next
-  case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>)
-  then show ?case
+  case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>) show ?case
     apply (insert ExprListConsT.prems)
     apply (erule expr_list_typing)
     by (simp_all add: ExprListConsT.hyps(2) ExprListConsT.hyps(4))
+next
+  case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>)
+  then show ?case 
+    apply (insert TupleElementCallT.prems)
+    apply (erule TupleElementCall_typing)
+    using TupleElementCallT.hyps(2) TupleElementCallT.hyps(3) by fastforce
 qed
 
 

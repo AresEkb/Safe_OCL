@@ -117,6 +117,8 @@ inductive normalize
   "(\<Gamma>, \<tau>) \<turnstile> AssociationEnd role \<Rrightarrow>\<^sub>C AssociationEnd role"
 |OperationN:
   "(\<Gamma>, \<tau>) \<turnstile> Operation op as \<Rrightarrow>\<^sub>C Operation op as"
+|TupleElementN:
+  "(\<Gamma>, \<tau>) \<turnstile> TupleElement elem \<Rrightarrow>\<^sub>C TupleElement elem"
 
 code_pred [show_modes] normalize .
 
@@ -233,6 +235,8 @@ next
   case (AssociationEndN \<Gamma> \<tau> role) thus ?case by auto
 next
   case (OperationN \<Gamma> \<tau> op as) thus ?case by auto
+next
+  case (TupleElementN \<Gamma> \<tau> elem) thus ?case by auto
 qed
 
 end

@@ -25,10 +25,6 @@ datatype ('a :: order) basic_type =
 | ObjectType 'a ("\<langle> _ \<rangle>\<^sub>\<T>" [0] 1000)
 | Enum "'a enum"
 
-notation sup (infixl "\<squnion>" 65)
-
-term "\<langle> \<C> \<squnion> \<D> \<rangle>\<^sub>\<T>"
-
 inductive basic_subtype ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
   "Boolean \<sqsubset>\<^sub>B OclAny"
 | "UnlimitedNatural \<sqsubset>\<^sub>B Integer"
@@ -275,12 +271,13 @@ instantiation basic_type :: (semilattice_sup) semilattice_sup
 begin
 
 (* We use "case"-style because it works faster *)
+
 fun sup_basic_type where
   "\<langle>\<C>\<rangle>\<^sub>\<T> \<squnion> \<sigma> = (case \<sigma> of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>\<C> \<squnion> \<D>\<rangle>\<^sub>\<T> | _ \<Rightarrow> OclAny)"
 | "\<tau> \<squnion> \<sigma> = (if \<tau> \<le> \<sigma> then \<sigma> else (if \<sigma> \<le> \<tau> then \<tau> else OclAny))"
 
 lemma sup_ge1_ObjectType:
-  "ObjectType c \<le> ObjectType c \<squnion> \<sigma>"
+  "\<langle>\<C>\<rangle>\<^sub>\<T> \<le> \<langle>\<C>\<rangle>\<^sub>\<T> \<squnion> \<sigma>"
   apply (induct \<sigma>; simp add: basic_subtype.simps less_eq_basic_type_def r_into_rtranclp)
   by (metis Nitpick.rtranclp_unfold basic_subtype.intros(7)
             le_less r_into_rtranclp sup.cobounded1)
@@ -290,7 +287,6 @@ lemma sup_ge1_basic_type:
   for \<tau> \<sigma> :: "'a basic_type"
   apply (induct \<tau>, auto)
   using sup_ge1_ObjectType by auto
-(*  by (induct \<tau>, auto simp add: sup_ge1_ObjectType)*)
 
 lemma sup_commut_basic_type:
   "\<tau> \<squnion> \<sigma> = \<sigma> \<squnion> \<tau>"
@@ -323,26 +319,29 @@ fun basic_subtype_fun :: "'a::order basic_type \<Rightarrow> 'a basic_type \<Rig
 | "basic_subtype_fun Integer \<sigma> = (\<sigma> = Real \<or> \<sigma> = OclAny)"
 | "basic_subtype_fun Real \<sigma> = (\<sigma> = OclAny)"
 | "basic_subtype_fun String \<sigma> = (\<sigma> = OclAny)"
-| "basic_subtype_fun (ObjectType c) \<sigma> = (case \<sigma>
-    of ObjectType d \<Rightarrow> c < d
+| "basic_subtype_fun \<langle>\<C>\<rangle>\<^sub>\<T> \<sigma> = (case \<sigma>
+    of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<C> < \<D>
      | OclAny \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "basic_subtype_fun (Enum _) \<sigma> = (\<sigma> = OclAny)"
 
 lemma less_eq_basic_type_code [code_abbrev, simp]:
   "\<tau> = \<sigma> \<or> basic_subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma>"
-  apply (rule iffI)
-  apply (cases \<sigma>; auto; erule basic_subtype_fun.elims; auto)
-  apply (cases \<sigma>; auto)
-  using le_neq_trans by fastforce
+proof
+  show "\<tau> = \<sigma> \<or> basic_subtype_fun \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>"
+    by (cases \<sigma>; auto; erule basic_subtype_fun.elims; auto)
+  show "\<tau> \<le> \<sigma> \<Longrightarrow> \<tau> = \<sigma> \<or> basic_subtype_fun \<tau> \<sigma>"
+    apply (cases \<sigma>; auto)
+    using le_neq_trans by fastforce
+qed
 
 lemma less_basic_type_code [code_abbrev, simp]:
   "basic_subtype_fun = (<)"
-  apply (intro ext)
-  unfolding less_le
-  apply auto
-  using less_eq_basic_type_code apply blast
-  apply (erule basic_subtype_fun.elims; auto)
-  using less_eq_basic_type_code by blast
+proof (intro ext)
+  have "\<And>\<tau>. basic_subtype_fun \<tau> \<tau> \<Longrightarrow> False"
+    by (erule basic_subtype_fun.elims; auto)
+  thus "\<And>\<tau> \<sigma>. basic_subtype_fun \<tau> \<sigma> = (\<tau> < \<sigma>)"
+    by (metis less_eq_basic_type_code order.strict_iff_order)
+qed
 
 end
