@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>OCL Expressions Normal Form\<close>
+chapter \<open>Expressions Normal Form\<close>
 theory OCL_Normal_Form
   imports OCL_Typing
 begin
@@ -120,11 +120,6 @@ inductive normalize
 
 code_pred [show_modes] normalize .
 
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  (UnaryOperationCall
-    (CollectionLiteral SequenceKind [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-    DotCall ToStringOp) \<Rrightarrow> x}"
-
 inductive_cases Literal_normalize [elim]: "\<Gamma> \<turnstile> Literal a \<Rrightarrow> b"
 inductive_cases Let_normalize [elim]: "\<Gamma> \<turnstile> Let v t init body \<Rrightarrow> b"
 inductive_cases Var_normalize [elim]: "\<Gamma> \<turnstile> Var v \<Rrightarrow> b"
@@ -239,6 +234,5 @@ next
 next
   case (OperationN \<Gamma> \<tau> op as) thus ?case by auto
 qed
-
 
 end

@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>OCL Types\<close>
+chapter \<open>Types\<close>
 theory OCL_Types
   imports OCL_Basic_Types Tuple
 begin
@@ -15,6 +15,8 @@ section \<open>Definition of Types and a Subtype Relation\<close>
 text \<open>
   Tuples should have a string key.\<close>
 
+type_synonym telem = String.literal
+
 datatype (plugins del: "size") 'a type =
   OclInvalid
 | OclVoid
@@ -25,7 +27,7 @@ datatype (plugins del: "size") 'a type =
 | Bag "'a type"
 | Sequence "'a type"
 | Collection "'a type"
-| Tuple "literal \<rightharpoonup>\<^sub>f 'a type"
+| Tuple "telem \<rightharpoonup>\<^sub>f 'a type"
 | SupType
 
 instantiation type :: (type) size
@@ -55,6 +57,7 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[1] \<sqsubset> \<sigma>[1]"
 | "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[?] \<sqsubset> \<sigma>[?]"
 | "\<tau>[1] \<sqsubset> \<tau>[?]"
+| "OclAny[?] \<sqsubset> SupType"
 | "OclInvalid \<sqsubset> Set OclInvalid"
 | "OclInvalid \<sqsubset> OrderedSet OclInvalid"
 | "OclInvalid \<sqsubset> Bag OclInvalid"
@@ -68,7 +71,6 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "OrderedSet \<tau> \<sqsubset> Collection \<tau>"
 | "Bag \<tau> \<sqsubset> Collection \<tau>"
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
-| "Optional OclAny \<sqsubset> SupType"
 | "Collection SupType \<sqsubset> SupType"
 | "OclInvalid \<sqsubset> Tuple \<xi>"
 | "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
@@ -214,8 +216,7 @@ next
   case (Tuple x) show ?case by (rule r_into_rtranclp; auto)
 next
   case SupType thus ?case
-    by (metis (mono_tags) subtype.intros(1) subtype.intros(20)
-          subtype.intros(3) rtranclp.simps) 
+    by (metis rtranclp.simps subtype.intros(1) subtype.intros(3) subtype.intros(7))
 qed
 
 lemma type_less_eq_x_Required_intro [intro]:
@@ -299,25 +300,23 @@ proof (induct \<tau>)
     by (metis (mono_tags) OCL_Types.type_less_eq_OclInvalid_x_intro less_eq_type_def)
 next
   case OclVoid thus ?case
-    by (meson subtype.intros(20) subtype.intros(3)
-          rtranclp.rtrancl_into_rtrancl rtranclp.rtrancl_refl)
+    by (metis subtype.intros(3) subtype.intros(7) tranclp.simps tranclp_into_rtranclp)
 next
   case (Required x) thus ?case
     apply (rule_tac ?y="OclAny[1]" in rtranclp_trans)
     apply (metis (mono_tags) less_eq_type_def type_less_eq_x_OclAny_intro
-                             type_less_eq_x_Required_intro)
-    by (meson converse_rtranclp_into_rtranclp subtype.intros(20)
-              subtype.intros(6) r_into_rtranclp)
+            type_less_eq_x_Required_intro)
+    by (metis subtype.intros(6) subtype.intros(7) tranclp.simps tranclp_into_rtranclp)
 next
   case (Optional x) thus ?case
     apply (rule_tac ?y="OclAny[?]" in rtranclp_trans)
     apply (metis (mono_tags) less_eq_type_def type_less_eq_x_OclAny_intro
-                             type_less_eq_x_Optional_intro(3))
-    by (simp add: subtype.intros(20) r_into_rtranclp)
+            type_less_eq_x_Optional_intro(3))
+    by (simp add: subtype.intros(7) r_into_rtranclp)
 next
   case (Set \<tau>)
   hence "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
-    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
+    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(16))
   moreover have "subtype\<^sup>+\<^sup>+ (Set \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
     by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
@@ -325,7 +324,7 @@ next
 next
   case (OrderedSet \<tau>)
   hence "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
-    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
+    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(16))
   moreover have "subtype\<^sup>+\<^sup>+ (OrderedSet \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
     by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
@@ -333,7 +332,7 @@ next
 next
   case (Bag \<tau>)
   hence "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
-    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
+    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(16))
   moreover have "subtype\<^sup>+\<^sup>+ (Bag \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
     by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
@@ -341,7 +340,7 @@ next
 next
 case (Sequence \<tau>)
   hence "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
-    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(15))
+    by (metis Nitpick.rtranclp_unfold preserve_rtranclp subtype.intros(16))
   moreover have "subtype\<^sup>+\<^sup>+ (Sequence \<tau>) (Collection \<tau>)" by auto
   ultimately show ?case
     by (rule_tac ?y="Collection \<tau>" in rtranclp_trans, simp)
@@ -1095,27 +1094,5 @@ lemma less_type_code [code_abbrev, simp]:
   using less_eq_type_code apply blast
   apply (erule subtype_fun.elims; auto simp add: subtype_fun_irrefl)
   using less_eq_type_code by blast
-
-(*** Test Cases *************************************************************)
-
-section \<open>Test Cases\<close>
-
-subsection \<open>Positive Cases\<close>
-
-value "Integer[?] < (SupType :: classes1 type)"
-value "Collection Real[?] < (SupType :: classes1 type)"
-value "Set (Collection Boolean[1]) < (SupType :: classes1 type)"
-value "Set (Bag Boolean[1]) < Set (Collection Boolean[?] :: classes1 type)"
-value "Tuple (fmap_of_list [(STR ''1'', Boolean[1] :: classes1 type), (STR ''2'', Integer[1])]) <
-       Tuple (fmap_of_list [(STR ''1'', Boolean[?] :: classes1 type)])"
-
-value "Integer[1] \<squnion> Real[?] :: classes1 type" \<comment> \<open>Real[?]\<close>
-value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<open>Set Real[1]\<close>
-value "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type)" \<comment> \<open>Collection OclAny[?]\<close>
-value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>SupType\<close>
-
-subsection \<open>Negative Cases\<close>
-
-value "OrderedSet Boolean[1] < Set (Boolean[1] :: classes1 type)"
 
 end

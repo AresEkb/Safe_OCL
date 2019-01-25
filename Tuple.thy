@@ -257,7 +257,7 @@ lemma strict_subtuple_fun_simp [code_abbrev, simp]:
   by simp
 
 (*** Test Cases *************************************************************)
-
+(*
 subsection \<open>Test Cases\<close>
 
 value "subtuple (\<le>)
@@ -276,5 +276,5 @@ value "subtuple (\<le>)
 value "strict_subtuple (\<le>)
   (fmap_of_list [(1::nat,1::nat),(2,2)])
   (fmap_of_list [(1,1),(2,2)])"
-
+*)
 end

@@ -26,8 +26,8 @@ abbreviation "surj_on_trancl R f \<equiv>
   (\<forall>x y z. R\<^sup>+\<^sup>+ (f x) y \<longrightarrow> R y (f z) \<longrightarrow> y \<in> range f)"
 
 text \<open>
-  A function @{text f} is bijective on a transitive closure of a
-  relation @{text R} iff it's injective and surjective on @{text "R\<^sup>+\<^sup>+"}.\<close>
+  A function @{text f} is bijective on @{text "R\<^sup>+\<^sup>+"} iff
+  it's injective and surjective on @{text "R\<^sup>+\<^sup>+"}.\<close>
 
 abbreviation "bij_on_trancl R f \<equiv> inj f \<and> surj_on_trancl R f"
 
@@ -37,11 +37,14 @@ subsection \<open>Helper Lemmas\<close>
 
 lemma tranclp_eq_rtranclp [simp]:
   "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ = P\<^sup>*\<^sup>*"
-  apply (intro ext; auto)
-  apply (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp
-             rtranclp_idemp tranclp_into_rtranclp)
-  apply (metis (mono_tags, lifting) mono_rtranclp rtranclpD tranclp.r_into_trancl)
-  done
+proof (intro ext iffI)
+  show "\<And>x y. (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y \<Longrightarrow> P\<^sup>*\<^sup>* x y"
+    by (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp
+            rtranclp_idemp tranclp_into_rtranclp)
+  show "\<And>x y. P\<^sup>*\<^sup>* x y \<Longrightarrow> (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y"
+    by (metis (mono_tags, lifting) mono_rtranclp rtranclpD
+              tranclp.r_into_trancl)
+qed
 
 lemma rtranclp_eq_rtranclp [simp]:
   "(\<lambda>x y. x = y \<or> P x y)\<^sup>*\<^sup>* = P\<^sup>*\<^sup>*"

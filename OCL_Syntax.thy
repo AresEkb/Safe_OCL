@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>OCL Syntax\<close>
+chapter \<open>Abstract Syntax\<close>
 theory OCL_Syntax
   imports Complex_Main Object_Model OCL_Types
 begin
@@ -130,8 +130,9 @@ datatype collection_literal_kind =
   SetKind | OrderedSetKind | BagKind | SequenceKind | CollectionKind
 
 text \<open>
-  It could be defined as 2 boolean values (is_arrow_call, is_safe_call).
-  Also we could derive is_arrow_call value automatically based on an operation kind.
+  It could be defined as 2 boolean values (@{text "is_arrow_call"},
+  @{text "is_safe_call"}). Also we could derive @{text "is_arrow_call"}
+  value automatically based on an operation kind.
   But it's much easier and more natural to define such an enumeration.\<close>
 datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
 
@@ -149,10 +150,10 @@ and 'a literal_expr =
 | IntegerLiteral (integer_symbol : int)
 | UnlimitedNaturalLiteral (unlimited_natural_symbol : unat)
 | StringLiteral (string_symbol : string)
-| EnumLiteral (type : "'a type") (literal : vname)
+| EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
 | CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
-| TupleLiteral (elements : "(literal \<times> 'a type \<times> 'a expr) list")
+| TupleLiteral (elements : "(telem \<times> 'a type \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
@@ -160,14 +161,11 @@ and 'a call_expr =
   OclType
 | TypeOperation typeop (type : "'a type")
 | UnaryOperation unop
-| BinaryOperation binop
-    (arg1 : "'a expr")
-| TernaryOperation ternop
-    (arg1 : "'a expr") (arg2 : "'a expr")
-| Iterate (iterators : "vname list")
-    (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
-| Iterator iterator
-    (iterators : "vname list") (body_expr : "'a expr")
+| BinaryOperation binop (arg1 : "'a expr")
+| TernaryOperation ternop (arg1 : "'a expr") (arg2 : "'a expr")
+| Iterate (iterators : "vname list") (var : vname) (type : "'a type")
+    (init_expr : "'a expr") (body_expr : "'a expr")
+| Iterator iterator (iterators : "vname list") (body_expr : "'a expr")
 | Attribute attr
 | AssociationEnd role
 | Operation oper (args : "'a expr list")

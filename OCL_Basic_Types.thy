@@ -3,29 +3,33 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>Basic OCL Types\<close>
+chapter \<open>Basic Types\<close>
 theory OCL_Basic_Types
-  imports Main "HOL-Library.FSet"
+  imports Main "HOL-Library.FSet" "HOL-Library.Phantom_Type"
 begin
 
 (*** Basic Types ************************************************************)
 
 section \<open>Definition of Basic Types and a Subtype Relation\<close>
 
-type_synonym literal = String.literal
+type_synonym 'a enum = "('a, String.literal) phantom"
+type_synonym elit = String.literal
 
-datatype 'a basic_type =
+datatype ('a :: order) basic_type =
   OclAny
 | Boolean
 | Real
 | Integer
 | UnlimitedNatural
 | String
-| ObjectType 'a ("\<langle>_\<rangle>\<^sub>\<T>" [1000] 1000)
-| Enum "literal fset"
+| ObjectType 'a ("\<langle> _ \<rangle>\<^sub>\<T>" [0] 1000)
+| Enum "'a enum"
 
-inductive basic_subtype
-    :: "('a :: order) basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
+notation sup (infixl "\<squnion>" 65)
+
+term "\<langle> \<C> \<squnion> \<D> \<rangle>\<^sub>\<T>"
+
+inductive basic_subtype ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
   "Boolean \<sqsubset>\<^sub>B OclAny"
 | "UnlimitedNatural \<sqsubset>\<^sub>B Integer"
 | "Integer \<sqsubset>\<^sub>B Real"
@@ -33,7 +37,7 @@ inductive basic_subtype
 | "String \<sqsubset>\<^sub>B OclAny"
 | "\<langle>\<C>\<rangle>\<^sub>\<T> \<sqsubset>\<^sub>B OclAny"
 | "\<C> < \<D> \<Longrightarrow> \<langle>\<C>\<rangle>\<^sub>\<T> \<sqsubset>\<^sub>B \<langle>\<D>\<rangle>\<^sub>\<T>"
-| "Enum literals \<sqsubset>\<^sub>B OclAny"
+| "Enum \<E> \<sqsubset>\<^sub>B OclAny"
 
 declare basic_subtype.intros [intro!]
 
@@ -42,11 +46,11 @@ inductive_cases basic_subtype_x_UnlimitedNatural [elim!]: "\<tau> \<sqsubset>\<^
 inductive_cases basic_subtype_x_Integer [elim!]: "\<tau> \<sqsubset>\<^sub>B Integer"
 inductive_cases basic_subtype_x_Real [elim!]: "\<tau> \<sqsubset>\<^sub>B Real"
 inductive_cases basic_subtype_x_String [elim!]: "\<tau> \<sqsubset>\<^sub>B String"
-inductive_cases basic_subtype_x_ObjectType [elim!]: "\<tau> \<sqsubset>\<^sub>B ObjectType c"
+inductive_cases basic_subtype_x_ObjectType [elim!]: "\<tau> \<sqsubset>\<^sub>B \<langle>\<C>\<rangle>\<^sub>\<T>"
 inductive_cases basic_subtype_x_OclAny [elim!]: "\<tau> \<sqsubset>\<^sub>B OclAny"
-inductive_cases basic_subtype_x_Enum [elim!]: "\<tau> \<sqsubset>\<^sub>B Enum literals"
+inductive_cases basic_subtype_x_Enum [elim!]: "\<tau> \<sqsubset>\<^sub>B Enum \<E>"
 
-inductive_cases basic_subtype_ObjectType_x [elim!]: "ObjectType c \<sqsubset>\<^sub>B \<sigma>"
+inductive_cases basic_subtype_ObjectType_x [elim!]: "\<langle>\<C>\<rangle>\<^sub>\<T> \<sqsubset>\<^sub>B \<sigma>"
 inductive_cases basic_subtype_OclAny_x [elim!]: "OclAny \<sqsubset>\<^sub>B \<sigma>"
 
 lemma basic_subtype_asym:
@@ -63,7 +67,6 @@ instantiation basic_type :: (order) order
 begin
 
 definition "(<) \<equiv> basic_subtype\<^sup>+\<^sup>+"
-
 definition "(\<le>) \<equiv> basic_subtype\<^sup>*\<^sup>*"
 
 (*** Introduction Rules *****************************************************)
@@ -84,7 +87,7 @@ lemma type_less_eq_x_Integer_intro [intro]:
   by (rule rtranclp.rtrancl_into_rtrancl; auto)
 
 lemma type_less_eq_x_ObjectType_intro [intro]:
-  "\<tau> = ObjectType c \<Longrightarrow> c \<le> d \<Longrightarrow> \<tau> \<le> ObjectType d"
+  "\<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> \<tau> \<le> \<langle>\<D>\<rangle>\<^sub>\<T>"
   unfolding less_eq_basic_type_def
   by (metis Nitpick.rtranclp_unfold basic_subtype.intros(7)
             dual_order.order_iff_strict r_into_rtranclp)
@@ -167,29 +170,29 @@ lemma type_less_eq_x_String [elim!]:
   by (induct rule: converse_rtranclp_induct; auto)
 
 lemma type_less_x_ObjectType [elim!]:
-  "\<tau> < ObjectType d \<Longrightarrow>
-   (\<And>c. \<tau> = ObjectType c \<Longrightarrow> c < d \<Longrightarrow> P) \<Longrightarrow> P"
+  "\<tau> < \<langle>\<D>\<rangle>\<^sub>\<T> \<Longrightarrow>
+   (\<And>\<C>. \<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> < \<D> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_basic_type_def
   apply (induct rule: converse_tranclp_induct)
   apply auto[1]
   using less_trans by auto
 
 lemma type_less_eq_x_ObjectType [elim!]:
-  "\<tau> \<le> ObjectType d \<Longrightarrow>
-   (\<And>c. \<tau> = ObjectType c \<Longrightarrow> c \<le> d \<Longrightarrow> P) \<Longrightarrow> P"
+  "\<tau> \<le> \<langle>\<D>\<rangle>\<^sub>\<T> \<Longrightarrow>
+   (\<And>\<C>. \<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
   apply (induct rule: converse_rtranclp_induct)
   apply simp
   using dual_order.order_iff_strict by fastforce
 
 lemma type_less_x_Enum [elim!]:
-  "\<tau> < Enum literals \<Longrightarrow> P"
+  "\<tau> < Enum \<E> \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
 lemma type_less_eq_x_Enum [elim!]:
-  "\<tau> \<le> Enum literals \<Longrightarrow>
-   (\<tau> = Enum literals \<Longrightarrow> P) \<Longrightarrow> P"
+  "\<tau> \<le> Enum \<E> \<Longrightarrow>
+   (\<tau> = Enum \<E> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_eq_basic_type_def
   by (induct rule: converse_rtranclp_induct; auto)
 
@@ -200,8 +203,8 @@ lemma type_less_x_OclAny [elim!]:
    (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Real \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = String \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>literals. \<tau> = Enum literals \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>c. \<tau> = ObjectType c \<Longrightarrow> P) \<Longrightarrow> P"
+   (\<And>\<E>. \<tau> = Enum \<E> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<C>. \<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_basic_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
@@ -213,8 +216,8 @@ lemma type_less_eq_x_OclAny [elim!]:
    (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Real \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = String \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>literals. \<tau> = Enum literals \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>c. \<tau> = ObjectType c \<Longrightarrow> P) \<Longrightarrow> P"
+   (\<And>\<E>. \<tau> = Enum \<E> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<C>. \<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> P) \<Longrightarrow> P"
   by (erule basic_type.exhaust; auto)
 
 (*** Properties *************************************************************)
@@ -273,7 +276,7 @@ begin
 
 (* We use "case"-style because it works faster *)
 fun sup_basic_type where
-  "ObjectType c \<squnion> \<sigma> = (case \<sigma> of ObjectType d \<Rightarrow> ObjectType (c \<squnion> d) | _ \<Rightarrow> OclAny)"
+  "\<langle>\<C>\<rangle>\<^sub>\<T> \<squnion> \<sigma> = (case \<sigma> of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>\<C> \<squnion> \<D>\<rangle>\<^sub>\<T> | _ \<Rightarrow> OclAny)"
 | "\<tau> \<squnion> \<sigma> = (if \<tau> \<le> \<sigma> then \<sigma> else (if \<sigma> \<le> \<tau> then \<tau> else OclAny))"
 
 lemma sup_ge1_ObjectType:
@@ -341,224 +344,5 @@ lemma less_basic_type_code [code_abbrev, simp]:
   using less_eq_basic_type_code apply blast
   apply (erule basic_subtype_fun.elims; auto)
   using less_eq_basic_type_code by blast
-
-(*** Test Cases *************************************************************)
-
-section \<open>Test Cases\<close>
-
-datatype classes1 =
-  Object | Person | Employee | Customer | Project | Task | Sprint
-
-class classes = semilattice_sup +
-  fixes conforms_to :: "'a \<Rightarrow> 'a set"
-  and conforms_to' :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
-  assumes conforms_to_super_or_self [simp]: "d \<in> conforms_to c \<longleftrightarrow> c \<le> d"
-
-instantiation classes1 :: classes
-begin
-
-inductive subclass1 where
-  "c \<noteq> Object \<Longrightarrow>
-   subclass1 c Object"
-| "subclass1 Employee Person"
-| "subclass1 Customer Person"
-
-code_pred [show_modes] subclass1 .
-
-definition "(<) \<equiv> subclass1"
-
-definition "(c::classes1) \<le> d \<equiv> c = d \<or> c < d"
-(*
-definition "conforms_to c \<equiv> insert c (set_of_pred (subclass1_i_o c))"
-definition "conforms_to c \<equiv> {x. x = c \<or> x \<in> set_of_pred (subclass1_i_o c)}"
-*)
-
-definition "conforms_to c \<equiv> {x :: classes1. c \<le> x}"
-(*definition "conforms_to' \<equiv> subclass1_i_o"*)
-
-lemma conforms_to_code [code_abbrev]:
-  "insert c (set_of_pred (subclass1_i_o c)) = conforms_to c"
-  by (auto simp add: conforms_to_classes1_def less_classes1_def less_eq_classes1_def subclass1_i_o_def)
-
-(*definition "conforms_to c \<equiv> Abs_fset {x :: classes1. c \<le> x}"*)
-
-fun sup_classes1 where
-  "Object \<squnion> _ = Object"
-| "Person \<squnion> c = (if c = Person \<or> c = Employee \<or> c = Customer
-    then Person else Object)"
-| "Employee \<squnion> c = (if c = Employee then Employee else
-    if c = Person \<or> c = Customer then Person else Object)"
-| "Customer \<squnion> c = (if c = Customer then Customer else
-    if c = Person \<or> c = Employee then Person else Object)"
-| "Project \<squnion> c = (if c = Project then Project else Object)"
-| "Task \<squnion> c = (if c = Task then Task else Object)"
-| "Sprint \<squnion> c = (if c = Sprint then Sprint else Object)"
-
-lemma less_le_not_le_classes1:
-  "c < d \<longleftrightarrow> c \<le> d \<and> \<not> d \<le> c"
-  for c d :: classes1
-  unfolding less_classes1_def less_eq_classes1_def
-  using subclass1.simps by auto
-
-lemma order_refl_classes1:
-  "c \<le> c"
-  for c :: classes1
-  unfolding less_eq_classes1_def by simp
-
-lemma order_trans_classes1:
-  "c \<le> d \<Longrightarrow> d \<le> e \<Longrightarrow> c \<le> e"
-  for c d e :: classes1
-  using less_eq_classes1_def less_classes1_def subclass1.simps by auto
-
-lemma antisym_classes1:
-  "c \<le> d \<Longrightarrow> d \<le> c \<Longrightarrow> c = d"
-  for c d :: classes1
-  using less_eq_classes1_def less_classes1_def subclass1.simps by auto
-
-lemma sup_ge1_classes1:
-  "c \<le> c \<squnion> d"
-  for c d :: classes1
-  by (induct c; auto simp add: less_eq_classes1_def less_classes1_def subclass1.simps)
-
-lemma sup_ge2_classes1:
-  "d \<le> c \<squnion> d"
-  for c d :: classes1
-  by (induct c; auto simp add: less_eq_classes1_def less_classes1_def subclass1.simps)
-
-lemma sup_least_classes1:
-  "c \<le> e \<Longrightarrow> d \<le> e \<Longrightarrow> c \<squnion> d \<le> e"
-  for c d e :: classes1
-  by (induct c; induct d;
-      auto simp add: less_eq_classes1_def less_classes1_def subclass1.simps)
-(*
-lemma conforms_to_super_or_self:
-  "d \<in> conforms_to c \<longleftrightarrow> c \<le> d"
-  for c d :: classes1
-  unfolding conforms_to_classes1_def
-  apply auto
-  done
-*)
-instance
-  apply intro_classes
-  apply (simp add: less_le_not_le_classes1)
-  apply (simp add: order_refl_classes1)
-  apply (rule order_trans_classes1; auto)
-  apply (simp add: antisym_classes1)
-  apply (simp add: sup_ge1_classes1)
-  apply (simp add: sup_ge2_classes1)
-  apply (simp add: sup_least_classes1)
-  apply (simp add: conforms_to_classes1_def)
-  done
-
-end
-(*
-datatype ty = A | B | C
-
-instantiation ty :: order
-begin
-
-fun less_ty where
-  "A < x = (x = C)"
-| "B < x = (x = C)"
-| "C < x = False"
-
-definition "(x :: ty) \<le> y \<equiv> x = y \<or> x < y"
-
-instance
-  apply intro_classes
-  apply (metis less_eq_ty_def less_ty.elims(2) ty.distinct(3) ty.distinct(5))
-  apply (simp add: less_eq_ty_def)
-  apply (metis less_eq_ty_def less_ty.elims(2))
-  using less_eq_ty_def less_ty.elims(2) by fastforce
-  
-end
-
-instantiation ty :: enum
-begin
-
-definition [simp]: "enum_ty \<equiv> [A, B, C]"
-definition [simp]: "enum_all_ty P \<equiv> P A \<and> P B \<and> P C"
-definition [simp]: "enum_ex_ty P \<equiv> P A \<or> P B \<or> P C" 
-
-instance
-  apply intro_classes
-  apply auto
-  by (case_tac x, auto)+
-
-end
-(*
-lemma less_eq_code_predI [code_pred_intro]:
-  "Predicate_Compile.contains {z. x \<le> z} y \<Longrightarrow> x \<le> y"
-  "Predicate_Compile.contains {z. z \<le> y} x \<Longrightarrow> x \<le> y"
-  by (simp_all add: Predicate_Compile.contains_def)
-
-code_pred [show_modes] less_eq
-  by (simp add: Predicate_Compile.containsI)
-*)
-value "{x. A \<le> x}"
-value "{x. x \<le> C}"
-
-fun ge_values where
-  "ge_values A = {A, C}"
-| "ge_values B = {B, C}"
-| "ge_values C = {C}"
-(*
-lemma ge_values_eq_less_eq_ty [code_abbrev, simp]:
-  "ge_values x = {y. x \<le> y}"
-  by (cases x; auto simp add: dual_order.order_iff_strict)
-*)
-value "{x. A \<le> x}"
-
-inductive pred1 where
-  "x \<le> y \<Longrightarrow> pred1 x y"
-
-code_pred [show_modes] pred1 .
-*)
-
-instantiation classes1 :: enum
-begin
-
-definition [simp]: "enum_classes1 \<equiv>
-  [Object, Person, Employee, Customer, Project, Task, Sprint]"
-
-definition [simp]: "enum_all_classes1 P \<equiv>
-  P Object \<and> P Person \<and> P Employee \<and> P Customer \<and> P Project \<and> P Task \<and> P Sprint"
-
-definition [simp]: "enum_ex_classes1 P \<equiv>
-  P Object \<or> P Person \<or> P Employee \<or> P Customer \<or> P Project \<or> P Task \<or> P Sprint" 
-
-instance
-  apply intro_classes
-  apply auto
-  by (case_tac x, auto)+
-
-end
-(*
-lemma less_code_predI [code_pred_intro]:
-  "Predicate_Compile.contains {z. x < z} y \<Longrightarrow> x < y"
-  by (simp_all add: Predicate_Compile.contains_def)
-
-code_pred [show_modes] less
-  by (simp add: Predicate_Compile.containsI)
-
-lemma less_eq_code_predI [code_pred_intro]:
-  "Predicate_Compile.contains {z. x \<le> z} y \<Longrightarrow> x \<le> y"
-  by (simp_all add: Predicate_Compile.contains_def)
-
-code_pred [show_modes] less_eq
-  by (simp add: Predicate_Compile.containsI)
-*)
-subsection \<open>Positive Cases\<close>
-
-value "(UnlimitedNatural :: classes1 basic_type) < Real"
-value "ObjectType Employee < ObjectType Person"
-value "ObjectType Person \<le> OclAny"
-
-(*values "{x. Employee \<le> x}"*)
-(*values "{x. x \<le> Object}"*)
-
-subsection \<open>Negative Cases\<close>
-
-value "(String :: classes1 basic_type) \<le> Boolean"
 
 end

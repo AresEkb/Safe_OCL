@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>OCL Typing Rules\<close>
+chapter \<open>Typing Rules\<close>
 theory OCL_Typing
   imports OCL_Object_Model
 begin
@@ -237,7 +237,7 @@ inductive string_ternop_type where
    string_ternop_type SubstringOp \<tau> \<sigma> \<rho> String[1]"
 
 text \<open>
-  Please take a note, that @{text "flatten()"} preserves collection kind.\<close>
+  Please take a note, that @{text "flatten()"} preserves a collection kind.\<close>
 
 inductive collection_unop_type where
   "\<lbrakk>element_type \<tau> _\<rbrakk> \<Longrightarrow>
@@ -439,7 +439,8 @@ inductive typing
 |StringLiteralT:
   "\<Gamma> \<turnstile> StringLiteral c : String[1]"
 |EnumLiteralT:
-  "\<Gamma> \<turnstile> EnumLiteral \<tau> lit : \<tau>"
+  "has_literal enum lit \<Longrightarrow>
+   \<Gamma> \<turnstile> EnumLiteral enum lit : \<langle>enum\<rangle>\<^sub>\<E>[1]"
 
 |SetLiteralT:
   "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
@@ -999,11 +1000,6 @@ inductive is_collection_of_required where
    is_collection_of_required \<tau> \<sigma>"
 *)
 
-
-
-
-
-
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
@@ -1011,118 +1007,5 @@ section \<open>Code Setup\<close>
 code_pred (modes:
   i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool as check_type,
   i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool as synthesize_type) [show_modes] typing .
-
-(*** Test Cases *************************************************************)
-
-section \<open>Test Cases\<close>
-
-subsection \<open>Positive Cases\<close>
-
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BooleanLiteral True : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> true or false : Boolean[1]"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BinaryOperationCall (BooleanLiteral True) DotCall OrOp (BooleanLiteral False) : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> true and null : Boolean[?]"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BinaryOperationCall (BooleanLiteral True) DotCall AndOp NullLiteral : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> let x : Real[?] = 5 in x + 7 : Real[1]"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  Let (STR ''x'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''x'') DotCall PlusOp (IntegerLiteral 7)) : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> Sequence{1..5}->product(Set{'a', 'b'}) : Tuple (first: Integer[1], second: String[1])"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BinaryOperationCall
-    (CollectionLiteral SequenceKind
-      [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-    ArrowCall
-    ProductOp
-    (CollectionLiteral SetKind
-      [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]) : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> Sequence{1..5}->iterate(
-      x, acc : Real[?] = 5 | acc + x) : Real[1]"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  IterateCall (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-      ArrowCall [STR ''x'']
-      (STR ''acc'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''acc'') DotCall PlusOp (Var STR ''x'')) : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-    x->any(it | it = 'test') : String[?]"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  Let (STR ''x'') (Sequence String[?]) (CollectionLiteral SequenceKind
-    [CollectionItem (StringLiteral ''abc''),
-     CollectionItem (StringLiteral ''zxc'')])
-  (IteratorCall (Var STR ''x'') ArrowCall AnyIter [STR ''it'']
-    (BinaryOperationCall (Var STR ''it'') DotCall EqualOp (StringLiteral ''test''))) : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-    x->closure(it | it) : OrderedSet String[?]"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
-    [CollectionItem (StringLiteral ''abc''),
-     CollectionItem (StringLiteral ''zxc'')])
-  (IteratorCall (Var STR ''x'') ArrowCall ClosureIter [STR ''it'']
-    (Var STR ''it'')) : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[1])] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') DotCall STR ''position'' : x}"
-
-(* TODO: Inherited properties *)
-text \<open>
-  @{text "\<Gamma> \<turnstile> self.position : String[1]"}\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[1])] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') DotCall STR ''name'' : x}"
-
-text \<open>
-  @{text "self.projects : Set (ObjectType Project)[1]"}\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[?])] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') DotCall STR ''projects'' : x}"
-
-text \<open>
-  @{text "self.projects.members : Bag (ObjectType Employee)[1]"}\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[?])] :: classes1 type env) \<turnstile>
-  IteratorCall (AssociationEndCall (Var STR ''self'') DotCall STR ''projects'')
-    ArrowCall
-    CollectIter [STR ''it'']
-    (AssociationEndCall (Var STR ''it'') DotCall STR ''members'') : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> self.manager : (ObjectType Employee)[1]"}\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Project)[?])] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') DotCall STR ''manager'' : x}"
-
-subsection \<open>Negative Cases\<close>
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> let x : Boolean[1] = 5 in x and true : \<epsilon>"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  Let STR ''x'' Boolean[1] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''x'') DotCall AndOp (BooleanLiteral True)) : x}"
-
-text \<open>
-  @{text "\<Gamma> \<turnstile> let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-    x->closure(it | 1) : \<epsilon>"}\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
-    [CollectionItem (StringLiteral ''abc''),
-     CollectionItem (StringLiteral ''zxc'')])
-  (IteratorCall (Var STR ''x'') ArrowCall ClosureIter [STR ''it'']
-    (IntegerLiteral 1)) : x}"
 
 end
