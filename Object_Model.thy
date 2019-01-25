@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>Object Model\<close>
+section \<open>Object Model\<close>
 theory Object_Model
   imports "HOL-Library.Extended_Nat" "HOL-Library.Finite_Map"
 begin
@@ -43,6 +43,12 @@ definition "assoc_refer_class ends \<C> \<equiv>
 
 definition "assoc_refer_role ends role \<equiv> fmlookup ends role \<noteq> None"
 
+definition "oper_in_params op \<equiv>
+  filter (\<lambda>p. param_dir p = In \<or> param_dir p = InOut) (oper_params op)"
+
+definition "oper_out_params op \<equiv>
+  filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op)"
+
 text \<open>
   The OCL specification allows attribute redefinition with the same type.
   But we prohibit it.\<close>
@@ -59,14 +65,6 @@ locale object_model =
      fmlookup attrs\<^sub>\<D> attr = None"
 begin
 
-term "oper_result"
-term "filter (\<lambda>p. param_dir p = In \<or> param_dir p = InOut) (oper_params x)"
-
-abbreviation "oper_in_params op \<equiv>
-  filter (\<lambda>p. param_dir p = In \<or> param_dir p = InOut) (oper_params op)"
-
-abbreviation "oper_out_params op \<equiv>
-  filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op)"
 (*
 abbreviation "oper_out_params op \<equiv>
   filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op) @
@@ -80,7 +78,7 @@ abbreviation "oper_type op \<equiv>
 *)
 abbreviation "find_operation op param_types \<equiv>
   find (\<lambda>x. oper_name x = op \<and>
-    list_all2 (\<le>) param_types (map param_type (oper_in_params x))) operations"
+    list_all2 (\<lambda>x y. x \<le> y) param_types (map param_type (oper_in_params x))) operations"
 
 abbreviation "find_owned_attribute \<C> attr \<equiv>
   map_option (Pair \<C>) (Option.bind (fmlookup attributes \<C>) (\<lambda>attrs\<^sub>\<C>. fmlookup attrs\<^sub>\<C> attr))"

@@ -853,8 +853,8 @@ abbreviation simeq_between_type ("(_/ \<simeq> _\<midarrow>_)"  [51, 51, 51] 50)
   "\<tau> \<simeq> \<sigma>\<midarrow>\<rho> \<equiv> \<sigma>[1] \<le> \<tau> \<and> \<tau> \<le> \<rho>[?]"
 
 inductive class_of where
-  "class_of (ObjectType cls)[1] cls"
-| "class_of (ObjectType cls)[?] cls"
+  "class_of \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<C>"
+| "class_of \<langle>\<C>\<rangle>\<^sub>\<T>[?] \<C>"
 
 inductive element_type where
   "element_type (Set \<tau>) \<tau>"

@@ -5,7 +5,7 @@
 *)
 chapter \<open>OCL Object Model\<close>
 theory OCL_Object_Model
-  imports OCL_Syntax
+  imports OCL_Syntax "HOL-Library.Transitive_Closure_Table"
 begin
 
 section \<open>Definition\<close>
@@ -23,6 +23,14 @@ definition
          | (False, True)  \<Rightarrow> Sequence (ObjectType cls)[1]
          | (True,  False) \<Rightarrow> Set (ObjectType cls)[1]
          | (True,  True)  \<Rightarrow> OrderedSet (ObjectType cls)[1])"
+
+definition "oper_type op \<equiv>
+  let params = oper_out_params op in
+  if length params = 0
+    then oper_result op
+    else Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
+      (params @ [(STR ''result'', oper_result op, Out)])))"
+
 (*
 datatype 'a ty = A | B
 
@@ -35,8 +43,8 @@ instance
   using less_eq_ty_def less_ty_def by auto
 end
 
-locale loc = semilattice_sup +
-  fixes f :: "'a \<Rightarrow> 't :: order"
+locale loc =
+  fixes f :: "'a :: semilattice_sup \<Rightarrow> 't :: order"
 begin
 definition "g \<equiv> inv f"
 end
@@ -44,20 +52,18 @@ end
 class cls = semilattice_sup +
   fixes f :: "'a \<Rightarrow> 'a ty"
 begin
-interpretation base: loc
-  sorry
+interpretation base: loc .
 abbreviation "g \<equiv> base.g"
 end
-
-interpretation base: loc sup less_eq less
 *)
+
 
 class ocl_object_model =
   fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
   and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
   and operations :: "('a type, 'a expr) oper_spec list"
   assumes attributes_distinct:
-    "less \<C> \<D> \<Longrightarrow>
+    "\<C> < \<D> \<Longrightarrow>
      fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
      fmlookup attributes \<D> = Some attrs\<^sub>\<D> \<Longrightarrow>
      fmlookup attrs\<^sub>\<C> attr \<noteq> None \<Longrightarrow>
@@ -71,7 +77,14 @@ interpretation base: object_model
 abbreviation "find_attribute \<equiv> base.find_attribute"
 abbreviation "find_association_end \<equiv> base.find_association_end"
 abbreviation "find_operation \<equiv> base.find_operation"
+(*
+abbreviation "oper_in_params op \<equiv>
+  filter (\<lambda>p. param_dir p = In \<or> param_dir p = InOut) (oper_params op)"
 
+abbreviation "find_operation op param_types \<equiv>
+  find (\<lambda>x. oper_name x = op \<and>
+    list_all2 (<) param_types (map param_type (oper_in_params x))) operations"
+*)
 end
 
 (*** Test Cases *************************************************************)
@@ -144,7 +157,21 @@ definition "operations_classes1 \<equiv> [
    \<comment> \<open>Body: self.members->size()\<close>
    Some (UnaryOperationCall
       (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-      ArrowCall CollectionSizeOp))
+      ArrowCall CollectionSizeOp)),
+  (\<comment> \<open>Name\<close>
+   STR ''membersByName'',
+   \<comment> \<open>Parameters\<close>
+   [(STR ''self'', (ObjectType Project)[?], In),
+    (STR ''member_name'', String[1], In)],
+   \<comment> \<open>Return Type\<close>
+   Set \<langle>Employee\<rangle>\<^sub>\<T>[1],
+   \<comment> \<open>Body: self.members->select(member | member.name = member_name)\<close>
+   Some (IteratorCall
+      (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+      ArrowCall SelectIter [STR ''member'']
+        (BinaryOperationCall
+          (AttributeCall (Var STR ''member'') DotCall STR ''name'')
+          DotCall EqualOp (Var STR ''member_name''))))
   ] :: (classes1 type, classes1 expr) oper_spec list"
 
 lemma classes1_attrs_ok:
@@ -166,14 +193,15 @@ end
 subsection \<open>Positive Cases\<close>
 
 (* TODO: Check *)
-
 value "find_attribute Employee STR ''name''"
 value "find_attribute Employee STR ''position''"
 value "find_association_end Employee STR ''projects''"
 value "find_association_end Person STR ''projects''"
+value "find_operation STR ''membersCount'' [(ObjectType Project)[1]]"
+value "find_operation STR ''membersByName'' [(ObjectType Project)[1], String[1]]"
 
 subsection \<open>Negative Cases\<close>
 
-value "find_association_end Project STR ''manager1''"
+(*value "find_association_end Project STR ''manager1''"*)
 
 end

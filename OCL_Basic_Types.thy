@@ -21,7 +21,7 @@ datatype 'a basic_type =
 | Integer
 | UnlimitedNatural
 | String
-| ObjectType 'a
+| ObjectType 'a ("\<langle>_\<rangle>\<^sub>\<T>" [1000] 1000)
 | Enum "literal fset"
 
 inductive basic_subtype
@@ -31,8 +31,8 @@ inductive basic_subtype
 | "Integer \<sqsubset>\<^sub>B Real"
 | "Real \<sqsubset>\<^sub>B OclAny"
 | "String \<sqsubset>\<^sub>B OclAny"
-| "ObjectType c \<sqsubset>\<^sub>B OclAny"
-| "c < d \<Longrightarrow> ObjectType c \<sqsubset>\<^sub>B ObjectType d"
+| "\<langle>\<C>\<rangle>\<^sub>\<T> \<sqsubset>\<^sub>B OclAny"
+| "\<C> < \<D> \<Longrightarrow> \<langle>\<C>\<rangle>\<^sub>\<T> \<sqsubset>\<^sub>B \<langle>\<D>\<rangle>\<^sub>\<T>"
 | "Enum literals \<sqsubset>\<^sub>B OclAny"
 
 declare basic_subtype.intros [intro!]
