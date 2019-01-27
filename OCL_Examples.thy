@@ -10,6 +10,11 @@ begin
 
 (*** Classes ****************************************************************)
 
+(* В 8.3.8 операции для метаклассов включая allInstances()
+   Ещё статические операции
+   И зачем-то обращение к переопределенным свойствам базового класса через oclAsType() *)
+
+
 section \<open>Classes\<close>
 
 datatype classes1 =
@@ -91,6 +96,8 @@ instance
 
 end
 
+declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 basic_type"]]
+
 instantiation classes1 :: enum
 begin
 
@@ -117,8 +124,8 @@ section \<open>Basic OCL Types\<close>
 subsection \<open>Positive Cases\<close>
 
 value "(UnlimitedNatural :: classes1 basic_type) < Real"
-value "ObjectType Employee < ObjectType Person"
-value "ObjectType Person \<le> OclAny"
+value "\<langle>Employee\<rangle>\<^sub>\<T> < \<langle>Person\<rangle>\<^sub>\<T>"
+value "\<langle>Person\<rangle>\<^sub>\<T> \<le> OclAny"
 
 (*values "{x. Employee \<le> x}"*)
 (*values "{x. x \<le> Object}"*)
@@ -197,24 +204,30 @@ definition "associations_classes1 \<equiv> fmap_of_list [
 
 text \<open>
 \begin{verbatim}
-context Project::membersCount() : Integer[1]
-  body: members->size()
-
-context Project::membersByName(mn : String[1]) : Set(Employee[1])
-  body: members->select(member | member.name = mn)
+context Project
+def: membersCount() : Integer[1] = members->size()
+def: membersByName(mn : String[1]) : Set(Employee[1]) =
+       members->select(member | member.name = mn)
+static def: allProjects() : Set(Project[1]) = Project.allInstances()
 \end{verbatim}\<close>
 
 definition "operations_classes1 \<equiv> [
   (STR ''membersCount'',
-   [(STR ''self'', (ObjectType Project)[?], In)],
+   [(STR ''self'', Project[?], In)],
    Integer[1],
    Some (UnaryOperationCall
       (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
       ArrowCall CollectionSizeOp)),
+  (STR ''membersCount'',
+   [],
+   Set Project[1],
+   Some (UnaryOperationCall
+      (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+      ArrowCall CollectionSizeOp)),
   (STR ''membersByName'',
-   [(STR ''self'', (ObjectType Project)[?], In),
+   [(STR ''self'', Project[?], In),
     (STR ''mn'', String[1], In)],
-   Set \<langle>Employee\<rangle>\<^sub>\<T>[1],
+   Set Employee[1],
    Some (IteratorCall
       (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
       ArrowCall SelectIter [STR ''member'']
@@ -252,8 +265,8 @@ value "find_attribute Employee STR ''name''"
 value "find_attribute Employee STR ''position''"
 value "find_association_end Employee STR ''projects''"
 value "find_association_end Person STR ''projects''"
-value "find_operation STR ''membersCount'' [(ObjectType Project)[1]]"
-value "find_operation STR ''membersByName'' [(ObjectType Project)[1], String[1]]"
+value "find_operation STR ''membersCount'' [Project[1]]"
+value "find_operation STR ''membersByName'' [Project[1], String[1]]"
 value "has_literal STR ''E1'' STR ''A''"
 
 subsection \<open>Negative Cases\<close>
@@ -335,26 +348,26 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
 text \<open>
   \<^verbatim>\<open>context Employee:
 position : String[1]\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[1])] :: classes1 type env) \<turnstile>
+values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
   AttributeCall (Var STR ''self'') DotCall STR ''position'' : x}"
 
 (* TODO: Inherited properties *)
 text \<open>
   \<^verbatim>\<open>context Employee:
 position : String[1]\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[1])] :: classes1 type env) \<turnstile>
+values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
   AttributeCall (Var STR ''self'') DotCall STR ''name'' : x}"
 
 text \<open>
   \<^verbatim>\<open>context Employee:
 projects : Set (Project[1])\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[?])] :: classes1 type env) \<turnstile>
+values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
   AssociationEndCall (Var STR ''self'') DotCall STR ''projects'' : x}"
 
 text \<open>
   \<^verbatim>\<open>context Employee:
 projects.members : Bag(Employee[1])\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[?])] :: classes1 type env) \<turnstile>
+values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
   IteratorCall (AssociationEndCall (Var STR ''self'') DotCall STR ''projects'')
     ArrowCall
     CollectIter [STR ''it'']
@@ -363,7 +376,7 @@ values "{x. (fmap_of_list [(STR ''self'', (ObjectType Employee)[?])] :: classes1
 text \<open>
   \<^verbatim>\<open>context Project:
 manager : Employee[1]\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', (ObjectType Project)[?])] :: classes1 type env) \<turnstile>
+values "{x. (fmap_of_list [(STR ''self'', Project[?])] :: classes1 type env) \<turnstile>
   AssociationEndCall (Var STR ''self'') DotCall STR ''manager'' : x}"
 
 subsection \<open>Negative Cases\<close>
