@@ -403,6 +403,17 @@ inductive ternop_type where
 | "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    ternop_type (Inr op) ArrowCall \<tau> \<sigma> \<rho> \<upsilon>"
 
+inductive op_type where
+  "unop_type op k \<tau> \<upsilon> \<Longrightarrow>
+   op_type (Inl op) k [\<tau>] \<upsilon>"
+| "binop_type op k \<tau> \<sigma> \<upsilon> \<Longrightarrow>
+   op_type (Inr (Inl op)) k [\<tau>, \<sigma>] \<upsilon>"
+| "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
+   op_type (Inr (Inr (Inl op))) k [\<tau>, \<sigma>, \<rho>] \<upsilon>"
+| "find_operation op \<pi> = Some oper \<Longrightarrow>
+   op_type (Inr (Inr (Inr op))) DotCall \<pi> (oper_type oper)"
+
+
 (*** Properties *************************************************************)
 
 subsection \<open>Properties\<close>
@@ -592,6 +603,7 @@ inductive typing
 |TypeOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; typeop_type k op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<rho>"
+(*
 |UnaryOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; unop_type op k \<tau> \<sigma> \<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> UnaryOperationCall a k op : \<sigma>"
@@ -601,7 +613,7 @@ inductive typing
 |TernaryOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>; ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> TernaryOperationCall a k op b c : \<upsilon>"
-
+*)
 |IteratorT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
@@ -680,8 +692,12 @@ inductive typing
    \<Gamma> \<turnstile> AssociationEndCall src DotCall role : assoc_end_type end"
 |OperationCallT:
   "expr_list_typing \<Gamma> (src # params) \<pi> \<Longrightarrow>
+   op_type op k \<pi> \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile> OperationCall src k op params : \<tau>"
+(*|OperationCallT:
+  "expr_list_typing \<Gamma> (src # params) \<pi> \<Longrightarrow>
    find_operation op \<pi> = Some oper \<Longrightarrow>
-   \<Gamma> \<turnstile> OperationCall src DotCall op params : oper_type oper"
+   \<Gamma> \<turnstile> OperationCall src DotCall op params : oper_type oper"*)
 
 |ExprListNilT:
   "expr_list_typing \<Gamma> [] []"
@@ -718,9 +734,9 @@ inductive_cases If_typing [elim]: "\<Gamma> \<turnstile> If a b c : \<tau>"
 inductive_cases Call_typing [elim]: "\<Gamma> \<turnstile> Call a k c : \<tau>"
 inductive_cases OclType_typing [elim]: "\<Gamma> \<turnstile> OclTypeCall a s : \<tau>"
 inductive_cases TypeOperationCall_typing [elim]: "\<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<tau>"
-inductive_cases UnaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> UnaryOperationCall a k op : \<tau>"
+(*inductive_cases UnaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> UnaryOperationCall a k op : \<tau>"
 inductive_cases BinaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> BinaryOperationCall a k op b : \<tau>"
-inductive_cases TernaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> TernaryOperationCall a k op b c : \<tau>"
+inductive_cases TernaryOperationCall_typing [elim]: "\<Gamma> \<turnstile> TernaryOperationCall a k op b c : \<tau>"*)
 inductive_cases iterator_typing [elim]: "iterator_typing \<Gamma> src its body \<tau> \<sigma> \<rho>"
 inductive_cases Iterate_typing [elim]: "\<Gamma> \<turnstile> IterateCall src k its res res_t res_init body : \<tau>"
 inductive_cases AnyIterator_typing [elim]: "\<Gamma> \<turnstile> IteratorCall src k AnyIter its body : \<tau>"
@@ -743,6 +759,15 @@ inductive_cases TupleElementCall_typing [elim]: "\<Gamma> \<turnstile> TupleElem
 (*** Properties *************************************************************)
 
 section \<open>Properties\<close>
+
+lemma op_type_det:
+  "op_type op k \<pi> \<tau> \<Longrightarrow> op_type op k \<pi> \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  apply (induct rule: op_type.induct)
+  apply (erule op_type.cases; simp add: unop_type_det)
+  apply (erule op_type.cases; simp add: binop_type_det)
+  apply (erule op_type.cases; simp add: ternop_type_det)
+  apply (erule op_type.cases; simp)
+  done
 
 lemma
   typing_det: "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
@@ -811,7 +836,7 @@ next
 next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCall_typing typeop_type_det)
-next
+(*next
   case (UnaryOperationCallT \<Gamma> a \<tau> op \<sigma>) thus ?case
     by (metis UnaryOperationCall_typing unop_type_det)
 next
@@ -819,7 +844,7 @@ next
     by (metis BinaryOperationCall_typing binop_type_det)
 next
   case (TernaryOperationCallT \<Gamma> a \<tau> b \<sigma> c \<rho> op \<upsilon>) thus ?case
-    by (metis TernaryOperationCall_typing ternop_type_det)
+    by (metis TernaryOperationCall_typing ternop_type_det)*)
 next
   case (IteratorT \<Gamma> \<M> src \<tau> \<sigma> its body \<rho>) thus ?case
     apply (insert IteratorT.prems)
@@ -901,10 +926,14 @@ next
     using AssociationEndCallT.hyps(2) AssociationEndCallT.hyps(3)
           AssociationEndCallT.hyps(4) class_of_det by fastforce
 next
-  case (OperationCallT \<Gamma> src params \<pi> op oper) show ?case
+(*  case (OperationCallT \<Gamma> src params \<pi> op oper) show ?case
     apply (insert OperationCallT.prems)
     apply (erule OperationCall_typing)
-    using OperationCallT.hyps(2) OperationCallT.hyps(3) by auto
+    using OperationCallT.hyps(2) OperationCallT.hyps(3) by auto*)
+  case (OperationCallT \<Gamma> src params \<pi> op k \<tau>) show ?case
+    apply (insert OperationCallT.prems)
+    apply (erule OperationCall_typing)
+    using OperationCallT.hyps(2) OperationCallT.hyps(3) op_type_det by auto
 next
   case (ExprListNilT \<Gamma>) thus ?case
     using expr_list_typing.cases by auto

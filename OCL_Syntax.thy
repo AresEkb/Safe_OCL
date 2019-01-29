@@ -80,6 +80,9 @@ type_synonym binop =
 type_synonym ternop =
   "string_ternop + collection_ternop"
 
+type_synonym op =
+  "unop + binop + ternop + oper"
+
 declare [[coercion "Inl :: any_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> unop"]]
@@ -95,9 +98,30 @@ declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_binop 
 declare [[coercion "Inl :: string_ternop \<Rightarrow> ternop"]]
 declare [[coercion "Inr :: collection_ternop \<Rightarrow> ternop"]]
 
+
+declare [[coercion "Inl \<circ> Inl :: any_unop \<Rightarrow> op"]]
+declare [[coercion "Inl \<circ> Inr \<circ> Inl :: boolean_unop \<Rightarrow> op"]]
+declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> op"]]
+declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> op"]]
+declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> op"]]
+
+declare [[coercion "Inr \<circ> Inl \<circ> Inl :: suptype_binop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inl :: boolean_binop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_binop \<Rightarrow> op"]]
+
+declare [[coercion "Inr \<circ> Inr \<circ> Inl \<circ> Inl :: string_ternop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inr \<circ> Inl \<circ> Inr :: collection_ternop \<Rightarrow> op"]]
+
+declare [[coercion "Inr \<circ> Inr \<circ> Inr :: oper \<Rightarrow> op"]]
+
+
 datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
 | ExistsIter | ForAllIter | OneIter | IsUniqueIter
 | SelectIter | RejectIter | SortedByIter
+
+datatype metaop = AllInstancesOp
 
 section \<open>Expressions\<close>
 
@@ -111,12 +135,20 @@ text \<open>
   But it's much easier and more natural to define such an enumeration.\<close>
 datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
 
+text \<open>
+  We guess that it's better not to define @{text Type} expressions,
+  because it complicates the type system. According with this decision
+  we have to define type operations as a special kind of syntactic
+  constructs.\<close>
+
 datatype 'a expr =
   Literal "'a literal_expr"
 | Let (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
 | Var (var : vname)
 | If (if_expr : "'a expr") (then_expr : "'a expr") (else_expr : "'a expr")
 | Call (source : "'a expr") (kind : call_kind) "'a call_expr"
+| MetaOperationCall (type : "'a type") metaop
+| StaticOperationCall (type : "'a type") oper (args : "'a expr list")
 and 'a literal_expr =
   NullLiteral
 | InvalidLiteral
@@ -135,15 +167,16 @@ and 'a collection_literal_part_expr =
 and 'a call_expr =
   OclType
 | TypeOperation typeop (type : "'a type")
+(*| StandardOperation oper (args : "'a expr list")
 | UnaryOperation unop
 | BinaryOperation binop (arg1 : "'a expr")
-| TernaryOperation ternop (arg1 : "'a expr") (arg2 : "'a expr")
+| TernaryOperation ternop (arg1 : "'a expr") (arg2 : "'a expr")*)
 | Iterate (iterators : "vname list") (var : vname) (type : "'a type")
     (init_expr : "'a expr") (body_expr : "'a expr")
 | Iterator iterator (iterators : "vname list") (body_expr : "'a expr")
 | Attribute attr
 | AssociationEnd role
-| Operation oper (args : "'a expr list")
+| Operation op (args : "'a expr list")
 | TupleElement telem
 
 definition "tuple_literal_name \<equiv> fst"
@@ -154,9 +187,10 @@ declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 
 abbreviation "OclTypeCall src k \<equiv> Call src k OclType"
 abbreviation "TypeOperationCall src k op ty \<equiv> Call src k (TypeOperation op ty)"
-abbreviation "UnaryOperationCall src k op \<equiv> Call src k (UnaryOperation op)"
+(*abbreviation "UnaryOperationCall src k op \<equiv> Call src k (UnaryOperation op)"
 abbreviation "BinaryOperationCall src k op a \<equiv> Call src k (BinaryOperation op a)"
 abbreviation "TernaryOperationCall src k op a b \<equiv> Call src k (TernaryOperation op a b)"
+abbreviation "StandardOperationCall src k op as \<equiv> Call src k (StandardOperation op as)"*)
 abbreviation "IterateCall src k its v ty init body \<equiv> Call src k (Iterate its v ty init body)"
 abbreviation "IteratorCall src k op its body \<equiv> Call src k (Iterator op its body)"
 abbreviation "AttributeCall src k attr \<equiv> Call src k (Attribute attr)"

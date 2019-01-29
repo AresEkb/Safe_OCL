@@ -12,7 +12,39 @@ begin
 
 (* В 8.3.8 операции для метаклассов включая allInstances()
    Ещё статические операции
-   И зачем-то обращение к переопределенным свойствам базового класса через oclAsType() *)
+   И зачем-то обращение к переопределенным свойствам базового класса через oclAsType()
+   Добавить пакеты: имена классов должны быть списком имен
+
+   В разделе 10.4 есть сопоставление:
+   ObjectValue - Class
+   StaticValue - DataType
+   Value - Classifier
+
+   Но нет ничего про TypeExp
+   На рисунке 8.2 - referredType - Classifier
+   На рисунке 13.3 - referredType - Type
+
+   В A.3.1.1 пишут для операций с типами:
+   This maps into some special instances of OclOperationWithTypeArgument.
+   И потом:
+   Note that in previous OCL versions these type
+   casts and tests were defined as operations with parameters
+   of type OclType. Here, we technically define them as first class
+   expressions, which has the benefit that we do not need the metatype
+   OclType. Thus the type system is kept simple while
+   preserving compatibility with standard OCL syntax.
+
+   Но то, что написано в основной части противоречит этому. Там передается Classifier
+   И ещё там есть TypeExp, которого у меня нет. У меня нет в абстрактном синтаксисе,
+   а в конкретном может и быть
+
+   Это смешение уровней. Вопрос нужно оно или нет. По-моему в этой нет
+   особой необходимости. По сути вопрос в том нужна рефлексия в OCL или нет.
+   Я думаю, нет. Она должна быть максимально локализована в нескольких операциях
+
+   Но что тогда такое allInstances()? Это же рефлексия и она нужна.
+   Да, но таких операций не много и их можно реализовать явно
+*)
 
 
 section \<open>Classes\<close>
@@ -215,15 +247,15 @@ definition "operations_classes1 \<equiv> [
   (STR ''membersCount'',
    [(STR ''self'', Project[?], In)],
    Integer[1],
-   Some (UnaryOperationCall
+   Some (OperationCall
       (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-      ArrowCall CollectionSizeOp)),
+      ArrowCall CollectionSizeOp [])),
   (STR ''membersCount'',
    [],
    Set Project[1],
-   Some (UnaryOperationCall
+   Some (OperationCall
       (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-      ArrowCall CollectionSizeOp)),
+      ArrowCall CollectionSizeOp [])),
   (STR ''membersByName'',
    [(STR ''self'', Project[?], In),
     (STR ''mn'', String[1], In)],
@@ -231,9 +263,9 @@ definition "operations_classes1 \<equiv> [
    Some (IteratorCall
       (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
       ArrowCall SelectIter [STR ''member'']
-        (BinaryOperationCall
+        (OperationCall
           (AttributeCall (Var STR ''member'') DotCall STR ''name'')
-          DotCall EqualOp (Var STR ''mn''))))
+          DotCall EqualOp [Var STR ''mn''])))
   ] :: (classes1 type, classes1 expr) oper_spec list"
 
 declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum"]]
@@ -291,30 +323,30 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
 text \<open>
   \<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BinaryOperationCall (BooleanLiteral True) DotCall OrOp (BooleanLiteral False) : x}"
+  OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False] : x}"
 
 text \<open>
   \<^verbatim>\<open>true and null : Boolean[?]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BinaryOperationCall (BooleanLiteral True) DotCall AndOp NullLiteral : x}"
+  OperationCall (BooleanLiteral True) DotCall AndOp [NullLiteral] : x}"
 
 text \<open>
   \<^verbatim>\<open>let x : Real[?] = 5 in x + 7 : Real[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let (STR ''x'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''x'') DotCall PlusOp (IntegerLiteral 7)) : x}"
+    (OperationCall (Var STR ''x'') DotCall PlusOp [IntegerLiteral 7]) : x}"
 
 text \<open>
   \<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
   : Tuple (first: Integer[1], second: String[1])\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BinaryOperationCall
+  OperationCall
     (CollectionLiteral SequenceKind
       [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
     ArrowCall
     ProductOp
-    (CollectionLiteral SetKind
-      [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]) : x}"
+    [CollectionLiteral SetKind
+      [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]] : x}"
 
 text \<open>
   \<^verbatim>\<open>Sequence{1..5}->iterate(x, acc : Real[?] = 5 | acc + x) : Real[1]\<close>\<close>
@@ -323,7 +355,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
               [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
       ArrowCall [STR ''x'']
       (STR ''acc'') Real[?] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''acc'') DotCall PlusOp (Var STR ''x'')) : x}"
+    (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : x}"
 
 text \<open>
   \<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
@@ -333,7 +365,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
   (IteratorCall (Var STR ''x'') ArrowCall AnyIter [STR ''it'']
-    (BinaryOperationCall (Var STR ''it'') DotCall EqualOp (StringLiteral ''test''))) : x}"
+    (OperationCall (Var STR ''it'') DotCall EqualOp [StringLiteral ''test''])) : x}"
 
 text \<open>
   \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -385,7 +417,7 @@ text \<open>
   \<^verbatim>\<open>let x : Boolean[1] = 5 in x and true : \<epsilon>\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' Boolean[1] (IntegerLiteral 5)
-    (BinaryOperationCall (Var STR ''x'') DotCall AndOp (BooleanLiteral True)) : x}"
+    (OperationCall (Var STR ''x'') DotCall AndOp [BooleanLiteral True]) : x}"
 
 text \<open>
   \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -398,8 +430,8 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
     (IntegerLiteral 1)) : x}"
 
 values "{x. (fmempty :: classes1 type env) \<turnstile>
-  (UnaryOperationCall
+  (OperationCall
     (CollectionLiteral SequenceKind [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-    DotCall ToStringOp) \<Rrightarrow> x}"
+    DotCall ToStringOp []) \<Rrightarrow> x}"
 
 end
