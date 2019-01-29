@@ -167,7 +167,7 @@ lemma
   for \<Gamma> :: "('a :: ocl_object_model) type env"
   and \<Gamma>1 :: "('a :: ocl_object_model) type env \<times> 'a type"
 proof (induct \<Gamma> expr expr1 and \<Gamma>1 call call1
-       arbitrary: expr2 and call2
+       arbitrary: expr2 and call2 and zs
        rule: normalize_normalize_call_normalize_expr_list.inducts)
   case (LiteralN \<Gamma> a) thus ?case by auto
 next
@@ -255,22 +255,17 @@ next
   case (AssociationEndN \<Gamma> \<tau> role) thus ?case by auto
 next
   (*case (OperationN \<Gamma> \<tau> op as) thus ?case by auto*)
-  case (OperationN \<Gamma> as bs \<tau> op)
-    then show ?case
+  case (OperationN \<Gamma> as bs \<tau> op) show ?case
     apply (insert OperationN.prems)
     apply (erule Operation_normalize_call)
-    sorry
+    by (simp add: OperationN.hyps(2))
 next
   case (TupleElementN \<Gamma> \<tau> elem) thus ?case by auto
 next
   case (ExprListNilN \<Gamma>) thus ?case
     using normalize_expr_list.cases by auto
 next
-  case (ExprListConsN \<Gamma> x y xs ys)
-  then show ?case
-    apply (insert ExprListConsN.prems)
-    apply (erule normalize_expr_list_elim)
-    sorry
+  case (ExprListConsN \<Gamma> x y xs ys) thus ?case by blast
 qed
 
 end

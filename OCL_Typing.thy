@@ -8,9 +8,9 @@ theory OCL_Typing
   imports OCL_Object_Model
 begin
 
-(*** Standard Library Operations Typing *************************************)
+(*** Operations Typing ******************************************************)
 
-section \<open>Standard Library Operations\<close>
+section \<open>Operations\<close>
 
 section \<open>Typing\<close>
 
@@ -598,7 +598,7 @@ inductive typing
    \<Gamma> \<turnstile> If a b c : \<sigma> \<squnion> \<rho>"
 
 |OclTypeT:
-  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>\<rbrakk> \<Longrightarrow>
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>\<rbrakk> \<Longrightarrow> (* Тут ошибка. Тип должен быть Classifier, но сейчас это невозможно *)
    \<Gamma> \<turnstile> OclTypeCall a DotCall : \<tau>"
 |TypeOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; typeop_type k op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
