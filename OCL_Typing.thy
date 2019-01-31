@@ -17,7 +17,7 @@ text \<open>
 
 (*** Operations Typing ******************************************************)
 
-section \<open>Operations\<close>
+section \<open>Operations Typing\<close>
 
 subsection \<open>Metaclass Operations\<close>
 
