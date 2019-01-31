@@ -12,9 +12,6 @@ begin
 
 section \<open>Definition of Types and a Subtype Relation\<close>
 
-text \<open>
-  Tuples should have a string key.\<close>
-
 type_synonym telem = String.literal
 
 datatype (plugins del: "size") 'a type =

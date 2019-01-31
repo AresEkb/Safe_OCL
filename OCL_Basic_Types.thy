@@ -22,7 +22,7 @@ datatype ('a :: order) basic_type =
 | Integer
 | UnlimitedNatural
 | String
-| ObjectType 'a ("\<langle> _ \<rangle>\<^sub>\<T>" [0] 1000)
+| ObjectType 'a ("\<langle>_\<rangle>\<^sub>\<T>" [0] 1000)
 | Enum "'a enum"
 
 inductive basic_subtype ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where

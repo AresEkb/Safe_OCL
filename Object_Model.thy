@@ -53,36 +53,21 @@ definition "oper_in_params op \<equiv>
 definition "oper_out_params op \<equiv>
   filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op)"
 
-definition "find_operation_impl \<tau> op \<pi> opers \<equiv>
-  find (\<lambda>x. op = oper_name x \<and> \<tau> \<le> oper_context x \<and>
-    list_all2 (\<lambda>x y. x \<le> y) \<pi> (map param_type (oper_in_params x))) opers"
-
-definition "has_matching_signature \<tau> op \<pi> x \<equiv>
+(* We define all functions with (<) or (\<le>) as abbreviations.
+   In other case we will get errors related to code generator *)
+abbreviation "has_matching_signature \<tau> op \<pi> x \<equiv>
   op = oper_name x \<and> \<tau> \<le> oper_context x \<and>
   list_all2 (\<lambda>x y. x \<le> y) \<pi> (map param_type (oper_in_params x))"
 
 text \<open>
-  The OCL specification allows attribute redefinition with the same type.
-  But we prohibit it.\<close>
+  An object model constraints will be defined in future versions.\<close>
 
 locale object_model = 
   fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"
   and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
   and operations :: "('t, 'e) oper_spec list"
   and literals :: "'n \<rightharpoonup>\<^sub>f elit fset"
-  assumes attributes_distinct:
-    "\<C> < \<D> \<Longrightarrow>
-     fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
-     fmlookup attributes \<D> = Some attrs\<^sub>\<D> \<Longrightarrow>
-     fmlookup attrs\<^sub>\<C> attr \<noteq> None \<Longrightarrow>
-     fmlookup attrs\<^sub>\<D> attr = None"
 begin
-
-abbreviation "find_operation \<tau> op \<pi> \<equiv>
-  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> \<not> oper_static x) operations"
-
-abbreviation "find_static_operation \<tau> op \<pi> \<equiv>
-  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> oper_static x) operations"
 
 abbreviation "find_owned_attribute \<C> attr \<equiv>
   map_option (Pair \<C>) (Option.bind (fmlookup attributes \<C>) (\<lambda>attrs\<^sub>\<C>. fmlookup attrs\<^sub>\<C> attr))"
@@ -91,7 +76,7 @@ abbreviation "find_owned_attribute \<C> attr \<equiv>
    Для нескольких результатов должен возвращаться самый близкий к текущему классу
    А если множественное наследование? Тогда нужно уточнять с помощью oclAsType *)
 abbreviation "find_attribute \<C> attr \<equiv>
-  let found = Option.these {find_owned_attribute \<D> attr | \<D>. less_eq \<C> \<D>} in
+  let found = Option.these {find_owned_attribute \<D> attr | \<D>. \<C> \<le> \<D>} in
   if card found = 1 then Some (the_elem found) else None"
 
 abbreviation "find_associations \<C> role \<equiv>
@@ -104,8 +89,14 @@ abbreviation "find_owned_association_end \<C> role \<equiv>
   if fcard found = 1 then fmlookup (fthe_elem found) role else None"
 
 abbreviation "find_association_end \<C> role \<equiv>
-  let found = Option.these {find_owned_association_end \<D> role | \<D>. less_eq \<C> \<D>} in
+  let found = Option.these {find_owned_association_end \<D> role | \<D>. \<C> \<le> \<D>} in
   if card found = 1 then Some (the_elem found) else None"
+
+abbreviation "find_operation \<tau> op \<pi> \<equiv>
+  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> \<not> oper_static x) operations"
+
+abbreviation "find_static_operation \<tau> op \<pi> \<equiv>
+  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> oper_static x) operations"
 
 abbreviation "has_literal e lit \<equiv>
   (case fmlookup literals e

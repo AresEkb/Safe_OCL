@@ -8,6 +8,25 @@ theory OCL_Normal_Form
   imports OCL_Typing
 begin
 
+fun string_of_nat :: "nat \<Rightarrow> string" where
+  "string_of_nat n = (if n < 10 then [char_of (48 + n)] else 
+     string_of_nat (n div 10) @ [char_of (48 + (n mod 10))])"
+
+definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
+
+
+definition "is_required \<tau> \<equiv> \<tau> \<le> OclAny[1]"
+definition "is_optional \<tau> \<equiv> OclVoid \<le> \<tau> \<and> \<tau> \<le> OclAny[?]"
+definition "is_collection_of_non_optional \<tau> \<equiv>
+  \<exists>\<sigma>. element_type \<tau> \<sigma> \<and> \<not> OclVoid \<le> \<sigma>"
+definition "is_collection_of_optional \<tau> \<equiv>
+  \<exists>\<sigma>. element_type \<tau> \<sigma> \<and> OclVoid \<le> \<sigma> \<and> \<sigma> \<le> OclAny[?]"
+(*
+inductive is_collection_of_required where
+  "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> OclAny[1] \<Longrightarrow>
+   is_collection_of_required \<tau> \<sigma>"
+*)
+
 inductive normalize
     :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
     ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50) and
@@ -81,7 +100,7 @@ inductive normalize
    \<not> OclVoid \<le> \<sigma> \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
-   \<Gamma> \<turnstile> Call src1 DotCall call1 \<Rrightarrow> IteratorCall src2 ArrowCall CollectIter [it]
+   \<Gamma> \<turnstile> Call src1 DotCall call1 \<Rrightarrow> CollectIteratorCall src2 [it]
           (Call (Var it) DotCall call2)"
 |CollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
@@ -92,23 +111,11 @@ inductive normalize
    (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 SafeDotCall call1 \<Rrightarrow>
-      IteratorCall (OperationCall src2 ArrowCall ExcludingOp [NullLiteral])
-        ArrowCall CollectIter [it]
-          (Call (Var it) DotCall call2)"
+      CollectIteratorCall (OperationCall src2 ArrowCall ExcludingOp [NullLiteral])
+        [it] (Call (Var it) DotCall call2)"
 
-(*|OclTypeN:
-  "(\<Gamma>, \<tau>) \<turnstile> OclType \<Rrightarrow>\<^sub>C OclType"*)
 |TypeOperationN:
   "(\<Gamma>, \<tau>) \<turnstile> TypeOperation op ty \<Rrightarrow>\<^sub>C TypeOperation op ty"
-(*|UnaryOperationN:
-  "(\<Gamma>, \<tau>) \<turnstile> UnaryOperation op \<Rrightarrow>\<^sub>C UnaryOperation op"
-|BinaryOperationN:
-  "\<Gamma> \<turnstile> a1 \<Rrightarrow> a2 \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> BinaryOperation op a1 \<Rrightarrow>\<^sub>C BinaryOperation op a2"
-|TernaryOperationN:
-  "\<Gamma> \<turnstile> a1 \<Rrightarrow> a2 \<Longrightarrow>
-   \<Gamma> \<turnstile> b1 \<Rrightarrow> b2 \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> TernaryOperation op a1 b1 \<Rrightarrow>\<^sub>C TernaryOperation op a2 b2"*)
 |IterateN:
   "element_type \<tau> \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile> res_init1 \<Rrightarrow> res_init2 \<Longrightarrow>

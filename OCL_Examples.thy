@@ -246,18 +246,18 @@ static def: allProjects() : Set(Project[1]) = Project.allInstances()
 definition "operations_classes1 \<equiv> [
   (STR ''membersCount'', Project[?], [], Integer[1], False,
    Some (OperationCall
-    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+    (AssociationEndCall (Var STR ''self'') STR ''members'')
     ArrowCall CollectionSizeOp [])),
   (STR ''membersCount'', Project[?], [], Set Employee[1], False,
    Some (OperationCall
-    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+    (AssociationEndCall (Var STR ''self'') STR ''members'')
     ArrowCall CollectionSizeOp [])),
   (STR ''membersByName'', Project[?], [(STR ''mn'', String[1], In)], Set Employee[1], False,
-   Some (IteratorCall
-    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-    ArrowCall SelectIter [STR ''member'']
+   Some (SelectIteratorCall
+    (AssociationEndCall (Var STR ''self'') STR ''members'')
+    [STR ''member'']
     (OperationCall
-      (AttributeCall (Var STR ''member'') DotCall STR ''name'')
+      (AttributeCall (Var STR ''member'') STR ''name'')
       DotCall EqualOp [Var STR ''mn'']))),
   (STR ''allProjects'', Project[1], [], Set Project[1], True,
    Some (MetaOperationCall Project[1] AllInstancesOp))
@@ -269,19 +269,7 @@ definition "literals_classes1 \<equiv> fmap_of_list [
   (STR ''E1'' :: classes1 enum, {|STR ''A'', STR ''B''|}),
   (STR ''E2'', {|STR ''C'', STR ''D'', STR ''E''|})]"
 
-lemma classes1_attrs_ok:
-  "\<C> < \<D> \<Longrightarrow>
-   fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
-   fmlookup attributes \<D> = Some attrs\<^sub>\<D> \<Longrightarrow>
-   fmlookup attrs\<^sub>\<C> attr \<noteq> None \<Longrightarrow>
-   fmlookup attrs\<^sub>\<D> attr = None"
-  for \<C> \<D> :: classes1
-  unfolding less_classes1_def
-  by (induct rule: subclass1.induct; auto simp add: attributes_classes1_def)
-
-instance
-  apply intro_classes
-  by (simp add: classes1_attrs_ok)
+instance ..
 
 end
 
@@ -333,7 +321,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
 
 text \<open>
   \<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
-  : Tuple (first: Integer[1], second: String[1])\<close>\<close>
+  : Tuple(first: Integer[1], second: String[1])\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall
     (CollectionLiteral SequenceKind
@@ -348,7 +336,7 @@ text \<open>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   IterateCall (CollectionLiteral SequenceKind
               [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-      ArrowCall [STR ''x'']
+      [STR ''x'']
       (STR ''acc'') Real[?] (IntegerLiteral 5)
     (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : x}"
 
@@ -359,7 +347,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let (STR ''x'') (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (IteratorCall (Var STR ''x'') ArrowCall AnyIter [STR ''it'']
+  (AnyIteratorCall (Var STR ''x'') [STR ''it'']
     (OperationCall (Var STR ''it'') DotCall EqualOp [StringLiteral ''test''])) : x}"
 
 text \<open>
@@ -369,42 +357,41 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (IteratorCall (Var STR ''x'') ArrowCall ClosureIter [STR ''it'']
+  (ClosureIteratorCall (Var STR ''x'') [STR ''it'']
     (Var STR ''it'')) : x}"
 
 text \<open>
   \<^verbatim>\<open>context Employee:
 position : String[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') DotCall STR ''position'' : x}"
+  AttributeCall (Var STR ''self'') STR ''position'' : x}"
 
 (* TODO: Inherited properties *)
 text \<open>
   \<^verbatim>\<open>context Employee:
 position : String[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') DotCall STR ''name'' : x}"
+  AttributeCall (Var STR ''self'') STR ''name'' : x}"
 
 text \<open>
   \<^verbatim>\<open>context Employee:
 projects : Set (Project[1])\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') DotCall STR ''projects'' : x}"
+  AssociationEndCall (Var STR ''self'') STR ''projects'' : x}"
 
 text \<open>
   \<^verbatim>\<open>context Employee:
 projects.members : Bag(Employee[1])\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
-  IteratorCall (AssociationEndCall (Var STR ''self'') DotCall STR ''projects'')
-    ArrowCall
-    CollectIter [STR ''it'']
-    (AssociationEndCall (Var STR ''it'') DotCall STR ''members'') : x}"
+  CollectIteratorCall (AssociationEndCall (Var STR ''self'') STR ''projects'')
+    [STR ''it'']
+    (AssociationEndCall (Var STR ''it'') STR ''members'') : x}"
 
 text \<open>
   \<^verbatim>\<open>context Project:
 manager : Employee[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Project[?])] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') DotCall STR ''manager'' : x}"
+  AssociationEndCall (Var STR ''self'') STR ''manager'' : x}"
 
 text \<open>
   \<^verbatim>\<open>Project[?].allInstances() : Project[?]\<close>\<close>
@@ -419,19 +406,19 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
 subsection \<open>Negative Cases\<close>
 
 text \<open>
-  \<^verbatim>\<open>let x : Boolean[1] = 5 in x and true : \<epsilon>\<close>\<close>
+  \<^verbatim>\<open>let x : Boolean[1] = 5 in x and true\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' Boolean[1] (IntegerLiteral 5)
     (OperationCall (Var STR ''x'') DotCall AndOp [BooleanLiteral True]) : x}"
 
 text \<open>
   \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-x->closure(it | 1) : \<epsilon>\<close>\<close>
+x->closure(it | 1)\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (IteratorCall (Var STR ''x'') ArrowCall ClosureIter [STR ''it'']
+  (ClosureIteratorCall (Var STR ''x'') [STR ''it'']
     (IntegerLiteral 1)) : x}"
 
 values "{x. (fmempty :: classes1 type env) \<turnstile>

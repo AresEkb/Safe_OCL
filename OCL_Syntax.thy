@@ -36,9 +36,7 @@ free_constructors cases_unat for
 
 section \<open>Standard Library Operations\<close>
 
-text \<open>
-  The OCL specification doesn't define @{text OclType}. So we implement
-  type operations as a syntactic constructs.\<close>
+datatype metaop = AllInstancesOp
 
 datatype typeop = OclAsTypeOp | OclIsTypeOfOp | OclIsKindOfOp
 | SelectByKindOp | SelectByTypeOp
@@ -73,15 +71,7 @@ datatype collection_binop = IncludesOp | ExcludesOp
 | AppendOp | PrependOp | CollectionAtOp | CollectionIndexOfOp
 datatype collection_ternop = InsertAtOp | SubOrderedSetOp | SubSequenceOp
 
-type_synonym unop =
-  "any_unop + boolean_unop + numeric_unop + string_unop + collection_unop"
-type_synonym binop =
-  "suptype_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
-type_synonym ternop =
-  "string_ternop + collection_ternop"
-
-type_synonym op =
-  "unop + binop + ternop + oper"
+type_synonym unop = "any_unop + boolean_unop + numeric_unop + string_unop + collection_unop"
 
 declare [[coercion "Inl :: any_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_unop \<Rightarrow> unop"]]
@@ -89,15 +79,20 @@ declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> un
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> unop"]]
 
+type_synonym binop = "suptype_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
+
 declare [[coercion "Inl :: suptype_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_binop \<Rightarrow> binop"]]
 
+type_synonym ternop = "string_ternop + collection_ternop"
+
 declare [[coercion "Inl :: string_ternop \<Rightarrow> ternop"]]
 declare [[coercion "Inr :: collection_ternop \<Rightarrow> ternop"]]
 
+type_synonym op = "unop + binop + ternop + oper"
 
 declare [[coercion "Inl \<circ> Inl :: any_unop \<Rightarrow> op"]]
 declare [[coercion "Inl \<circ> Inr \<circ> Inl :: boolean_unop \<Rightarrow> op"]]
@@ -116,12 +111,9 @@ declare [[coercion "Inr \<circ> Inr \<circ> Inl \<circ> Inr :: collection_ternop
 
 declare [[coercion "Inr \<circ> Inr \<circ> Inr :: oper \<Rightarrow> op"]]
 
-
 datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
 | ExistsIter | ForAllIter | OneIter | IsUniqueIter
 | SelectIter | RejectIter | SortedByIter
-
-datatype metaop = AllInstancesOp
 
 section \<open>Expressions\<close>
 
@@ -136,19 +128,19 @@ text \<open>
 datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
 
 text \<open>
-  We guess that it's better not to define @{text Type} expressions,
-  because it complicates the type system. According with this decision
-  we have to define type operations as a special kind of syntactic
-  constructs.\<close>
+  We don't define a @{text Classifier} type (a type of all types),
+  because it will add unnecessary complications to the theory.
+  So we have to define type operations as a pure syntactic constructs.
+  And also we don't define @{text Type} expressions.\<close>
 
 datatype 'a expr =
   Literal "'a literal_expr"
 | Let (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
 | Var (var : vname)
 | If (if_expr : "'a expr") (then_expr : "'a expr") (else_expr : "'a expr")
-| Call (source : "'a expr") (kind : call_kind) "'a call_expr"
 | MetaOperationCall (type : "'a type") metaop
 | StaticOperationCall (type : "'a type") oper (args : "'a expr list")
+| Call (source : "'a expr") (kind : call_kind) "'a call_expr"
 and 'a literal_expr =
   NullLiteral
 | InvalidLiteral
@@ -160,42 +152,42 @@ and 'a literal_expr =
 | EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
 | CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
-| TupleLiteral (elements : "(telem \<times> 'a type \<times> 'a expr) list")
+| TupleLiteral (tuple_elements : "(telem \<times> 'a type \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
 and 'a call_expr =
-(*  OclType
-|*) TypeOperation typeop (type : "'a type")
-(*| StandardOperation oper (args : "'a expr list")
-| UnaryOperation unop
-| BinaryOperation binop (arg1 : "'a expr")
-| TernaryOperation ternop (arg1 : "'a expr") (arg2 : "'a expr")*)
-| Iterate (iterators : "vname list") (var : vname) (type : "'a type")
-    (init_expr : "'a expr") (body_expr : "'a expr")
-| Iterator iterator (iterators : "vname list") (body_expr : "'a expr")
+  TypeOperation typeop (type : "'a type")
 | Attribute attr
 | AssociationEnd role
 | Operation op (args : "'a expr list")
 | TupleElement telem
+| Iterate (iterators : "vname list") (var : vname) (type : "'a type")
+    (init_expr : "'a expr") (body_expr : "'a expr")
+| Iterator iterator (iterators : "vname list") (body_expr : "'a expr")
 
-definition "tuple_literal_name \<equiv> fst"
-definition "tuple_literal_type \<equiv> fst \<circ> snd"
-definition "tuple_literal_expr \<equiv> snd \<circ> snd"
+definition "tuple_element_name \<equiv> fst"
+definition "tuple_element_type \<equiv> fst \<circ> snd"
+definition "tuple_element_expr \<equiv> snd \<circ> snd"
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 
-(*abbreviation "OclTypeCall src k \<equiv> Call src k OclType"*)
 abbreviation "TypeOperationCall src k op ty \<equiv> Call src k (TypeOperation op ty)"
-(*abbreviation "UnaryOperationCall src k op \<equiv> Call src k (UnaryOperation op)"
-abbreviation "BinaryOperationCall src k op a \<equiv> Call src k (BinaryOperation op a)"
-abbreviation "TernaryOperationCall src k op a b \<equiv> Call src k (TernaryOperation op a b)"
-abbreviation "StandardOperationCall src k op as \<equiv> Call src k (StandardOperation op as)"*)
-abbreviation "IterateCall src k its v ty init body \<equiv> Call src k (Iterate its v ty init body)"
-abbreviation "IteratorCall src k op its body \<equiv> Call src k (Iterator op its body)"
-abbreviation "AttributeCall src k attr \<equiv> Call src k (Attribute attr)"
-abbreviation "AssociationEndCall src k role \<equiv> Call src k (AssociationEnd role)"
+abbreviation "AttributeCall src attr \<equiv> Call src DotCall (Attribute attr)"
+abbreviation "AssociationEndCall src role \<equiv> Call src DotCall (AssociationEnd role)"
 abbreviation "OperationCall src k op as \<equiv> Call src k (Operation op as)"
-abbreviation "TupleElementCall src k elem \<equiv> Call src k (TupleElement elem)"
+abbreviation "TupleElementCall src elem \<equiv> Call src DotCall (TupleElement elem)"
+abbreviation "IterateCall src its v ty init body \<equiv> Call src ArrowCall (Iterate its v ty init body)"
+abbreviation "AnyIteratorCall src its body \<equiv> Call src ArrowCall (Iterator AnyIter its body)"
+abbreviation "ClosureIteratorCall src its body \<equiv> Call src ArrowCall (Iterator ClosureIter its body)"
+abbreviation "CollectIteratorCall src its body \<equiv> Call src ArrowCall (Iterator CollectIter its body)"
+abbreviation "CollectNestedIteratorCall src its body \<equiv> Call src ArrowCall (Iterator CollectNestedIter its body)"
+abbreviation "ExistsIteratorCall src its body \<equiv> Call src ArrowCall (Iterator ExistsIter its body)"
+abbreviation "ForAllIteratorCall src its body \<equiv> Call src ArrowCall (Iterator ForAllIter its body)"
+abbreviation "OneIteratorCall src its body \<equiv> Call src ArrowCall (Iterator OneIter its body)"
+abbreviation "IsUniqueIteratorCall src its body \<equiv> Call src ArrowCall (Iterator IsUniqueIter its body)"
+abbreviation "SelectIteratorCall src its body \<equiv> Call src ArrowCall (Iterator SelectIter its body)"
+abbreviation "RejectIteratorCall src its body \<equiv> Call src ArrowCall (Iterator RejectIter its body)"
+abbreviation "SortedByIteratorCall src its body \<equiv> Call src ArrowCall (Iterator SortedByIter its body)"
 
 end
