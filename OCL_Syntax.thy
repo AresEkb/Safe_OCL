@@ -165,8 +165,8 @@ and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
 and 'a call_expr =
-  OclType
-| TypeOperation typeop (type : "'a type")
+(*  OclType
+|*) TypeOperation typeop (type : "'a type")
 (*| StandardOperation oper (args : "'a expr list")
 | UnaryOperation unop
 | BinaryOperation binop (arg1 : "'a expr")
@@ -185,7 +185,7 @@ definition "tuple_literal_expr \<equiv> snd \<circ> snd"
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 
-abbreviation "OclTypeCall src k \<equiv> Call src k OclType"
+(*abbreviation "OclTypeCall src k \<equiv> Call src k OclType"*)
 abbreviation "TypeOperationCall src k op ty \<equiv> Call src k (TypeOperation op ty)"
 (*abbreviation "UnaryOperationCall src k op \<equiv> Call src k (UnaryOperation op)"
 abbreviation "BinaryOperationCall src k op a \<equiv> Call src k (BinaryOperation op a)"

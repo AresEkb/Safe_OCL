@@ -28,6 +28,13 @@ inductive normalize
    \<Gamma> \<turnstile> c1 \<Rrightarrow> c2 \<Longrightarrow>
    \<Gamma> \<turnstile> If a1 b1 c1 \<Rrightarrow> If a1 b1 c1"
 
+|MetaOperationCallN:
+  "\<Gamma> \<turnstile> MetaOperationCall \<tau> op \<Rrightarrow> MetaOperationCall \<tau> op"
+|StaticOperationCallN:
+  "normalize_expr_list \<Gamma> as bs \<Longrightarrow>
+   \<Gamma> \<turnstile> StaticOperationCall \<tau> op as \<Rrightarrow>
+       StaticOperationCall \<tau> op bs"
+
 |OclAnyDotCallN:
   "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
    \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
@@ -89,8 +96,8 @@ inductive normalize
         ArrowCall CollectIter [it]
           (Call (Var it) DotCall call2)"
 
-|OclTypeN:
-  "(\<Gamma>, \<tau>) \<turnstile> OclType \<Rrightarrow>\<^sub>C OclType"
+(*|OclTypeN:
+  "(\<Gamma>, \<tau>) \<turnstile> OclType \<Rrightarrow>\<^sub>C OclType"*)
 |TypeOperationN:
   "(\<Gamma>, \<tau>) \<turnstile> TypeOperation op ty \<Rrightarrow>\<^sub>C TypeOperation op ty"
 (*|UnaryOperationN:
@@ -135,6 +142,8 @@ inductive_cases Literal_normalize [elim]: "\<Gamma> \<turnstile> Literal a \<Rri
 inductive_cases Let_normalize [elim]: "\<Gamma> \<turnstile> Let v t init body \<Rrightarrow> b"
 inductive_cases Var_normalize [elim]: "\<Gamma> \<turnstile> Var v \<Rrightarrow> b"
 inductive_cases If_normalize [elim]: "\<Gamma> \<turnstile> If a b c \<Rrightarrow> d"
+inductive_cases MetaOperationCall_normalize [elim]: "\<Gamma> \<turnstile> MetaOperationCall \<tau> op \<Rrightarrow> b"
+inductive_cases StaticOperationCall_normalize [elim]: "\<Gamma> \<turnstile> StaticOperationCall \<tau> op as \<Rrightarrow> b"
 inductive_cases DotCall_normalize [elim]: "\<Gamma> \<turnstile> Call src DotCall call \<Rrightarrow> b"
 inductive_cases SafeDotCall_normalize [elim]: "\<Gamma> \<turnstile> Call src SafeDotCall call \<Rrightarrow> b"
 inductive_cases ArrowCall_normalize [elim]: "\<Gamma> \<turnstile> Call src ArrowCall call \<Rrightarrow> b"
@@ -176,6 +185,10 @@ next
   case (VarN \<Gamma> v) thus ?case by auto
 next
   case (IfN \<Gamma> a1 a2 b1 b2 c1 c2) thus ?case by auto
+next
+  case (MetaOperationCallN \<Gamma> \<tau> op) thus ?case by auto
+next
+  case (StaticOperationCallN \<Gamma> as bs \<tau> op) thus ?case by blast
 next
   case (OclAnyDotCallN \<Gamma> src1 src2 \<tau> call1 call2) show ?case
     apply (insert OclAnyDotCallN.prems)
@@ -221,8 +234,8 @@ next
     apply (metis CollectionSafeDotCallN.hyps(2) CollectionSafeDotCallN.hyps(3) CollectionSafeDotCallN.hyps(4) any_has_not_element_type typing_det)
     by (metis (no_types, lifting) CollectionSafeDotCallN.hyps(2) CollectionSafeDotCallN.hyps(3) CollectionSafeDotCallN.hyps(8) CollectionSafeDotCallN.hyps(9) comp_apply list.simps(8) list.simps(9) typing_det)
 (*    by (metis CollectionSafeDotCallN.hyps(2) CollectionSafeDotCallN.hyps(3) CollectionSafeDotCallN.hyps(8) CollectionSafeDotCallN.hyps(9) comp_eq_dest_lhs typing_det)*)
-next
-  case (OclTypeN \<Gamma> \<tau>) thus ?case by auto
+(*next
+  case (OclTypeN \<Gamma> \<tau>) thus ?case by auto*)
 next
   case (TypeOperationN \<Gamma> \<tau> op ty) thus ?case by auto
 (*next

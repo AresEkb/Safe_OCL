@@ -52,6 +52,7 @@ interpretation base: object_model
 abbreviation "find_attribute \<equiv> base.find_attribute"
 abbreviation "find_association_end \<equiv> base.find_association_end"
 abbreviation "find_operation \<equiv> base.find_operation"
+abbreviation "find_static_operation \<equiv> base.find_static_operation"
 abbreviation "has_literal \<equiv> base.has_literal"
 
 end

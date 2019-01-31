@@ -405,13 +405,13 @@ inductive ternop_type where
 
 inductive op_type where
   "unop_type op k \<tau> \<upsilon> \<Longrightarrow>
-   op_type (Inl op) k [\<tau>] \<upsilon>"
+   op_type (Inl op) k \<tau> [] \<upsilon>"
 | "binop_type op k \<tau> \<sigma> \<upsilon> \<Longrightarrow>
-   op_type (Inr (Inl op)) k [\<tau>, \<sigma>] \<upsilon>"
+   op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>"
 | "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
-   op_type (Inr (Inr (Inl op))) k [\<tau>, \<sigma>, \<rho>] \<upsilon>"
-| "find_operation op \<pi> = Some oper \<Longrightarrow>
-   op_type (Inr (Inr (Inr op))) DotCall \<pi> (oper_type oper)"
+   op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>"
+| "find_operation \<tau> op \<pi> = Some oper \<Longrightarrow>
+   op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
 
 (*** Properties *************************************************************)
@@ -529,6 +529,15 @@ code_pred [show_modes] class_of .
 
 section \<open>Expressions Typing\<close>
 
+(*
+Bool[1].allInstances() = {true, false}
+Bool[?].allInstances() = {true, false, null}
+*)
+
+inductive mataop_type where
+  "mataop_type \<tau> AllInstancesOp (Set \<tau>)"
+
+
 inductive typing
     :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
        ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
@@ -597,9 +606,9 @@ inductive typing
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; \<tau> \<le> Boolean[?]; \<Gamma> \<turnstile> b : \<sigma>; \<Gamma> \<turnstile> c : \<rho>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> If a b c : \<sigma> \<squnion> \<rho>"
 
-|OclTypeT:
-  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>\<rbrakk> \<Longrightarrow> (* Тут ошибка. Тип должен быть Classifier, но сейчас это невозможно *)
-   \<Gamma> \<turnstile> OclTypeCall a DotCall : \<tau>"
+(*|OclTypeT:
+  "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>\<rbrakk> \<Longrightarrow>
+   \<Gamma> \<turnstile> OclTypeCall a DotCall : \<tau>"*)
 |TypeOperationCallT:
   "\<lbrakk>\<Gamma> \<turnstile> a : \<tau>; typeop_type k op \<tau> \<sigma> \<rho>\<rbrakk> \<Longrightarrow>
    \<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<rho>"
@@ -691,9 +700,10 @@ inductive typing
    find_association_end cls role = Some end \<Longrightarrow>
    \<Gamma> \<turnstile> AssociationEndCall src DotCall role : assoc_end_type end"
 |OperationCallT:
-  "expr_list_typing \<Gamma> (src # params) \<pi> \<Longrightarrow>
-   op_type op k \<pi> \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> OperationCall src k op params : \<tau>"
+  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+   expr_list_typing \<Gamma> params \<pi> \<Longrightarrow>
+   op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile> OperationCall src k op params : \<sigma>"
 (*|OperationCallT:
   "expr_list_typing \<Gamma> (src # params) \<pi> \<Longrightarrow>
    find_operation op \<pi> = Some oper \<Longrightarrow>
@@ -711,7 +721,13 @@ inductive typing
    fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> TupleElementCall src DotCall elem : \<tau>"
 
-
+|MetaOperationCallT:
+  "mataop_type \<tau> op \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile> MetaOperationCall \<tau> op : \<sigma>"
+|StaticOperationCallT:
+  "expr_list_typing \<Gamma> params \<pi> \<Longrightarrow>
+   find_static_operation \<tau> op \<pi> = Some oper \<Longrightarrow>
+   \<Gamma> \<turnstile> StaticOperationCall \<tau> op params : oper_type oper"
 
 code_pred [show_modes] typing .
 
@@ -755,13 +771,15 @@ inductive_cases AssociationEndCall_typing [elim]: "\<Gamma> \<turnstile> Associa
 inductive_cases OperationCall_typing [elim]: "\<Gamma> \<turnstile> OperationCall src k op params : \<tau>"
 inductive_cases expr_list_typing [elim]: "expr_list_typing \<Gamma> exprs \<pi>"
 inductive_cases TupleElementCall_typing [elim]: "\<Gamma> \<turnstile> TupleElementCall src k elem : \<tau>"
+inductive_cases MetaOperationCall_typing [elim]: "\<Gamma> \<turnstile> MetaOperationCall \<tau> op : \<sigma>"
+inductive_cases StaticOperationCall_typing [elim]: "\<Gamma> \<turnstile> StaticOperationCall \<tau> op as : \<sigma>"
 
 (*** Properties *************************************************************)
 
 section \<open>Properties\<close>
 
 lemma op_type_det:
-  "op_type op k \<pi> \<tau> \<Longrightarrow> op_type op k \<pi> \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  "op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow> op_type op k \<tau> \<pi> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
   apply (induct rule: op_type.induct)
   apply (erule op_type.cases; simp add: unop_type_det)
   apply (erule op_type.cases; simp add: binop_type_det)
@@ -831,8 +849,6 @@ next
     apply (insert IfT.prems)
     apply (erule If_typing)
     using IfT.hyps(5) IfT.hyps(7) by auto
-next
-  case (OclTypeT \<Gamma> a \<tau>) thus ?case by blast
 next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCall_typing typeop_type_det)
@@ -930,10 +946,11 @@ next
     apply (insert OperationCallT.prems)
     apply (erule OperationCall_typing)
     using OperationCallT.hyps(2) OperationCallT.hyps(3) by auto*)
-  case (OperationCallT \<Gamma> src params \<pi> op k \<tau>) show ?case
+  case (OperationCallT \<Gamma> src \<tau> params \<pi> op k) show ?case
     apply (insert OperationCallT.prems)
     apply (erule OperationCall_typing)
-    using OperationCallT.hyps(2) OperationCallT.hyps(3) op_type_det by auto
+    using OperationCallT.hyps(2) OperationCallT.hyps(4)
+          OperationCallT.hyps(5) op_type_det by blast
 next
   case (ExprListNilT \<Gamma>) thus ?case
     using expr_list_typing.cases by auto
@@ -948,6 +965,15 @@ next
     apply (insert TupleElementCallT.prems)
     apply (erule TupleElementCall_typing)
     using TupleElementCallT.hyps(2) TupleElementCallT.hyps(3) by fastforce
+next
+  case (MetaOperationCallT \<tau> op \<sigma> \<Gamma>) thus ?case
+    by (metis MetaOperationCall_typing mataop_type.cases)
+next
+  case (StaticOperationCallT \<tau> op \<pi> oper \<Gamma> as)
+  then show ?case
+    apply (insert StaticOperationCallT.prems)
+    apply (erule StaticOperationCall_typing)
+    using StaticOperationCallT.hyps(2) StaticOperationCallT.hyps(3) by auto
 qed
 
 

@@ -22,7 +22,7 @@ datatype param_dir = In | Out | InOut
 
 type_synonym 'c assoc_end = "'c \<times> nat \<times> enat \<times> bool \<times> bool"
 type_synonym 't param_spec = "param \<times> 't \<times> param_dir"
-type_synonym ('t, 'e) oper_spec = "oper \<times> 't param_spec list \<times> 't \<times> 'e option"
+type_synonym ('t, 'e) oper_spec = "oper \<times> 't \<times> 't param_spec list \<times> 't \<times> bool \<times> 'e option"
 
 definition "assoc_end_class \<equiv> fst"
 definition "assoc_end_min \<equiv> fst \<circ> snd"
@@ -37,9 +37,11 @@ definition "assoc_refer_class ends \<C> \<equiv>
 definition "assoc_refer_role ends role \<equiv> fmlookup ends role \<noteq> None"
 
 definition "oper_name \<equiv> fst"
-definition "oper_params \<equiv> fst \<circ> snd"
-definition "oper_result \<equiv> fst \<circ> snd \<circ> snd"
-definition "oper_body \<equiv> snd \<circ> snd \<circ> snd"
+definition "oper_context \<equiv> fst \<circ> snd"
+definition "oper_params \<equiv> fst \<circ> snd \<circ> snd"
+definition "oper_result \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
+definition "oper_static \<equiv> fst \<circ> snd \<circ> snd \<circ> snd \<circ> snd"
+definition "oper_body \<equiv> snd \<circ> snd \<circ> snd \<circ> snd \<circ> snd"
 
 definition "param_name \<equiv> fst"
 definition "param_type \<equiv> fst \<circ> snd"
@@ -50,6 +52,14 @@ definition "oper_in_params op \<equiv>
 
 definition "oper_out_params op \<equiv>
   filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op)"
+
+definition "find_operation_impl \<tau> op \<pi> opers \<equiv>
+  find (\<lambda>x. op = oper_name x \<and> \<tau> \<le> oper_context x \<and>
+    list_all2 (\<lambda>x y. x \<le> y) \<pi> (map param_type (oper_in_params x))) opers"
+
+definition "has_matching_signature \<tau> op \<pi> x \<equiv>
+  op = oper_name x \<and> \<tau> \<le> oper_context x \<and>
+  list_all2 (\<lambda>x y. x \<le> y) \<pi> (map param_type (oper_in_params x))"
 
 text \<open>
   The OCL specification allows attribute redefinition with the same type.
@@ -68,13 +78,18 @@ locale object_model =
      fmlookup attrs\<^sub>\<D> attr = None"
 begin
 
-abbreviation "find_operation op param_types \<equiv>
-  find (\<lambda>x. oper_name x = op \<and>
-    list_all2 (\<lambda>x y. x \<le> y) param_types (map param_type (oper_in_params x))) operations"
+abbreviation "find_operation \<tau> op \<pi> \<equiv>
+  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> \<not> oper_static x) operations"
+
+abbreviation "find_static_operation \<tau> op \<pi> \<equiv>
+  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> oper_static x) operations"
 
 abbreviation "find_owned_attribute \<C> attr \<equiv>
   map_option (Pair \<C>) (Option.bind (fmlookup attributes \<C>) (\<lambda>attrs\<^sub>\<C>. fmlookup attrs\<^sub>\<C> attr))"
 
+(* Спецификация разрешает переопределение атрибутов.
+   Для нескольких результатов должен возвращаться самый близкий к текущему классу
+   А если множественное наследование? Тогда нужно уточнять с помощью oclAsType *)
 abbreviation "find_attribute \<C> attr \<equiv>
   let found = Option.these {find_owned_attribute \<D> attr | \<D>. less_eq \<C> \<D>} in
   if card found = 1 then Some (the_elem found) else None"

@@ -244,28 +244,23 @@ static def: allProjects() : Set(Project[1]) = Project.allInstances()
 \end{verbatim}\<close>
 
 definition "operations_classes1 \<equiv> [
-  (STR ''membersCount'',
-   [(STR ''self'', Project[?], In)],
-   Integer[1],
+  (STR ''membersCount'', Project[?], [], Integer[1], False,
    Some (OperationCall
-      (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-      ArrowCall CollectionSizeOp [])),
-  (STR ''membersCount'',
-   [],
-   Set Project[1],
+    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+    ArrowCall CollectionSizeOp [])),
+  (STR ''membersCount'', Project[?], [], Set Employee[1], False,
    Some (OperationCall
-      (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-      ArrowCall CollectionSizeOp [])),
-  (STR ''membersByName'',
-   [(STR ''self'', Project[?], In),
-    (STR ''mn'', String[1], In)],
-   Set Employee[1],
+    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+    ArrowCall CollectionSizeOp [])),
+  (STR ''membersByName'', Project[?], [(STR ''mn'', String[1], In)], Set Employee[1], False,
    Some (IteratorCall
-      (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
-      ArrowCall SelectIter [STR ''member'']
-        (OperationCall
-          (AttributeCall (Var STR ''member'') DotCall STR ''name'')
-          DotCall EqualOp [Var STR ''mn''])))
+    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'')
+    ArrowCall SelectIter [STR ''member'']
+    (OperationCall
+      (AttributeCall (Var STR ''member'') DotCall STR ''name'')
+      DotCall EqualOp [Var STR ''mn'']))),
+  (STR ''allProjects'', Project[1], [], Set Project[1], True,
+   Some (MetaOperationCall Project[1] AllInstancesOp))
   ] :: (classes1 type, classes1 expr) oper_spec list"
 
 declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum"]]
@@ -297,8 +292,8 @@ value "find_attribute Employee STR ''name''"
 value "find_attribute Employee STR ''position''"
 value "find_association_end Employee STR ''projects''"
 value "find_association_end Person STR ''projects''"
-value "find_operation STR ''membersCount'' [Project[1]]"
-value "find_operation STR ''membersByName'' [Project[1], String[1]]"
+value "find_operation Project[1] STR ''membersCount'' []"
+value "find_operation Project[1] STR ''membersByName'' [String[1]]"
 value "has_literal STR ''E1'' STR ''A''"
 
 subsection \<open>Negative Cases\<close>
@@ -410,6 +405,16 @@ text \<open>
 manager : Employee[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Project[?])] :: classes1 type env) \<turnstile>
   AssociationEndCall (Var STR ''self'') DotCall STR ''manager'' : x}"
+
+text \<open>
+  \<^verbatim>\<open>Project[?].allInstances() : Project[?]\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  MetaOperationCall Project[?] AllInstancesOp : x}"
+
+text \<open>
+  \<^verbatim>\<open>Project[1]::allProjects() : Project[1]\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  StaticOperationCall Project[1] STR ''allProjects'' [] : x}"
 
 subsection \<open>Negative Cases\<close>
 
