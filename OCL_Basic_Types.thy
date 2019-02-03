@@ -271,7 +271,6 @@ instantiation basic_type :: (semilattice_sup) semilattice_sup
 begin
 
 (* We use "case"-style because it works faster *)
-
 fun sup_basic_type where
   "\<langle>\<C>\<rangle>\<^sub>\<T> \<squnion> \<sigma> = (case \<sigma> of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>\<C> \<squnion> \<D>\<rangle>\<^sub>\<T> | _ \<Rightarrow> OclAny)"
 | "\<tau> \<squnion> \<sigma> = (if \<tau> \<le> \<sigma> then \<sigma> else (if \<sigma> \<le> \<tau> then \<tau> else OclAny))"

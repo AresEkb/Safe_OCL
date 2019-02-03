@@ -924,7 +924,7 @@ fun to_optional_type where
 | "to_optional_type (Collection \<tau>) = Collection (to_optional_type \<tau>)"
 | "to_optional_type (Tuple \<pi>) = Tuple (fmmap to_optional_type \<pi>)"
 | "to_optional_type SupType = SupType"
-
+(*
 inductive strict_subcollection where
   "\<sigma> < \<tau> \<Longrightarrow>
    strict_subcollection (Set \<tau>) \<sigma> (Set \<sigma>)"
@@ -936,7 +936,7 @@ inductive strict_subcollection where
    strict_subcollection (Sequence \<tau>) \<sigma> (Sequence \<sigma>)"
 | "\<sigma> < \<tau> \<Longrightarrow>
    strict_subcollection (Collection \<tau>) \<sigma> (Collection \<sigma>)"
-
+*)
 (*** Properties of Helper Relations *****************************************)
 
 section \<open>Properties of Helper Relations\<close>
@@ -970,12 +970,12 @@ lemma to_ordered_collection_det:
   "to_ordered_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    to_ordered_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   by (induct rule: to_ordered_collection.induct; simp add: to_ordered_collection.simps)
-
+(*
 lemma strict_subcollection_det:
   "strict_subcollection \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    strict_subcollection \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   by (induct rule: strict_subcollection.induct; simp add: strict_subcollection.simps)
-
+*)
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
@@ -1136,6 +1136,6 @@ code_pred update_element_type .
 code_pred to_unique_collection .
 code_pred to_nonunique_collection .
 code_pred to_ordered_collection .
-code_pred strict_subcollection .
+(*code_pred strict_subcollection .*)
 
 end
