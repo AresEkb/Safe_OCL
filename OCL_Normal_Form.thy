@@ -30,14 +30,14 @@ inductive is_collection_of_required where
 inductive normalize
     :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
     ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50) and
-    normalize_call ("_ \<turnstile> _ \<Rrightarrow>\<^sub>C/ _" [51,51,51] 50) and
-    normalize_expr_list
+    normalize_call ("_ \<turnstile>\<^sub>C _ \<Rrightarrow>/ _" [51,51,51] 50) and
+    normalize_expr_list ("_ \<turnstile>\<^sub>L _ \<Rrightarrow>/ _" [51,51,51] 50)
     where
  LiteralN:
   "\<Gamma> \<turnstile> Literal a \<Rrightarrow> Literal a"
 |LetN:
   "\<Gamma> \<turnstile> init1 \<Rrightarrow> init2 \<Longrightarrow>
-   fmupd v \<tau> \<Gamma> \<turnstile> body1 \<Rrightarrow> body2 \<Longrightarrow>
+   \<Gamma>(v \<mapsto>\<^sub>f \<tau>) \<turnstile> body1 \<Rrightarrow> body2 \<Longrightarrow>
    \<Gamma> \<turnstile> Let v \<tau> init1 body1 \<Rrightarrow> Let v \<tau> init2 body2"
 |VarN:
   "\<Gamma> \<turnstile> Var v \<Rrightarrow> Var v"
@@ -50,7 +50,7 @@ inductive normalize
 |MetaOperationCallN:
   "\<Gamma> \<turnstile> MetaOperationCall \<tau> op \<Rrightarrow> MetaOperationCall \<tau> op"
 |StaticOperationCallN:
-  "normalize_expr_list \<Gamma> as bs \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>L as \<Rrightarrow> bs \<Longrightarrow>
    \<Gamma> \<turnstile> StaticOperationCall \<tau> op as \<Rrightarrow>
        StaticOperationCall \<tau> op bs"
 
@@ -58,14 +58,14 @@ inductive normalize
   "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
    \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
    \<tau> \<le> OclAny[1] \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call1 \<Rrightarrow> call2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 DotCall call1 \<Rrightarrow> Call src2 DotCall call2"
 |OclAnySafeDotCallN:
   "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
    \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
    OclVoid \<le> \<tau> \<Longrightarrow>
    \<tau> \<le> OclAny[?] \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call1 \<Rrightarrow> call2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 SafeDotCall call1 \<Rrightarrow>
        If (OperationCall src2 DotCall NotEqualOp [NullLiteral])
           (Call src2 DotCall call2)
@@ -74,7 +74,7 @@ inductive normalize
   "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
    \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
    \<tau> \<le> OclAny[?] \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call1 \<Rrightarrow> call2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 ArrowCall call1 \<Rrightarrow>
        Call (OperationCall src2 DotCall OclAsSetOp []) ArrowCall call2"
 
@@ -82,7 +82,7 @@ inductive normalize
   "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
    \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
    element_type \<tau> _ \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call1 \<Rrightarrow> call2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 ArrowCall call1 \<Rrightarrow> Call src2 ArrowCall call2"
 |CollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src1 \<Rrightarrow> src2 \<Longrightarrow>
@@ -90,7 +90,7 @@ inductive normalize
    element_type \<tau> \<sigma> \<Longrightarrow>
    OclVoid \<le> \<sigma> \<Longrightarrow>
    \<sigma> \<le> OclAny[?] \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call1 \<Rrightarrow> call2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 SafeArrowCall call1 \<Rrightarrow>
        Call (OperationCall src2 ArrowCall ExcludingOp [NullLiteral]) ArrowCall call2"
 |CollectionDotCallN:
@@ -98,7 +98,7 @@ inductive normalize
    \<Gamma> \<turnstile> src2 : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
    \<not> OclVoid \<le> \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call1 \<Rrightarrow> call2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 DotCall call1 \<Rrightarrow> CollectIteratorCall src2 [it]
           (Call (Var it) DotCall call2)"
@@ -108,40 +108,40 @@ inductive normalize
    element_type \<tau> \<sigma> \<Longrightarrow>
    OclVoid \<le> \<sigma> \<Longrightarrow>
    \<sigma> \<le> OclAny[?] \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> call1 \<Rrightarrow>\<^sub>C call2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call1 \<Rrightarrow> call2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src1 SafeDotCall call1 \<Rrightarrow>
       CollectIteratorCall (OperationCall src2 ArrowCall ExcludingOp [NullLiteral])
         [it] (Call (Var it) DotCall call2)"
 
 |TypeOperationN:
-  "(\<Gamma>, \<tau>) \<turnstile> TypeOperation op ty \<Rrightarrow>\<^sub>C TypeOperation op ty"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C TypeOperation op ty \<Rrightarrow> TypeOperation op ty"
 |IterateN:
   "element_type \<tau> \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile> res_init1 \<Rrightarrow> res_init2 \<Longrightarrow>
    fmadd \<Gamma> (fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its)) \<turnstile>
       Let res res_t res_init1 body1 \<Rrightarrow> Let res res_t res_init2 body2 \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> Iterate its res res_t res_init1 body1 \<Rrightarrow>\<^sub>C Iterate its res res_t res_init2 body2"
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its res res_t res_init1 body1 \<Rrightarrow> Iterate its res res_t res_init2 body2"
 |IteratorN:
   "element_type \<tau> \<sigma> \<Longrightarrow>
    fmadd \<Gamma> (fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its)) \<turnstile> body1 \<Rrightarrow> body2  \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> Iterator iter its body1 \<Rrightarrow>\<^sub>C Iterator iter its body2"
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its body1 \<Rrightarrow> Iterator iter its body2"
 |AttributeN:
-  "(\<Gamma>, \<tau>) \<turnstile> Attribute attr \<Rrightarrow>\<^sub>C Attribute attr"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Attribute attr \<Rrightarrow> Attribute attr"
 |AssociationEndN:
-  "(\<Gamma>, \<tau>) \<turnstile> AssociationEnd role \<Rrightarrow>\<^sub>C AssociationEnd role"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationEnd role \<Rrightarrow> AssociationEnd role"
 |OperationN:
-  "normalize_expr_list \<Gamma> as bs \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile> Operation op as \<Rrightarrow>\<^sub>C Operation op bs"
+  "\<Gamma> \<turnstile>\<^sub>L as \<Rrightarrow> bs \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> Operation op bs"
 |TupleElementN:
-  "(\<Gamma>, \<tau>) \<turnstile> TupleElement elem \<Rrightarrow>\<^sub>C TupleElement elem"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C TupleElement elem \<Rrightarrow> TupleElement elem"
 
 |ExprListNilN:
-  "normalize_expr_list \<Gamma> [] []"
+  "\<Gamma> \<turnstile>\<^sub>L [] \<Rrightarrow> []"
 |ExprListConsN:
   "\<Gamma> \<turnstile> x \<Rrightarrow> y \<Longrightarrow>
-   normalize_expr_list \<Gamma> xs ys \<Longrightarrow>
-   normalize_expr_list \<Gamma> (x # xs) (y # ys)"
+   \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> y # ys"
 
 code_pred [show_modes] normalize .
 
@@ -156,20 +156,20 @@ inductive_cases SafeDotCall_normalize [elim]: "\<Gamma> \<turnstile> Call src Sa
 inductive_cases ArrowCall_normalize [elim]: "\<Gamma> \<turnstile> Call src ArrowCall call \<Rrightarrow> b"
 inductive_cases SafeArrowCall_normalize [elim]: "\<Gamma> \<turnstile> Call src SafeArrowCall call \<Rrightarrow> b"
 
-inductive_cases normalize_call_elim [elim]: "(\<Gamma>, \<tau>) \<turnstile> call \<Rrightarrow>\<^sub>C b"
+inductive_cases normalize_call_elim [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C call \<Rrightarrow> b"
 (*inductive_cases BinaryOperation_normalize_call [elim]:
   "(\<Gamma>, \<tau>) \<turnstile> BinaryOperation op a1 \<Rrightarrow>\<^sub>C call2"
 inductive_cases TernaryOperation_normalize_call [elim]:
   "(\<Gamma>, \<tau>) \<turnstile> TernaryOperation op a1 b1 \<Rrightarrow>\<^sub>C call2"*)
 inductive_cases Operation_normalize_call [elim]:
-  "(\<Gamma>, \<tau>) \<turnstile> Operation op as \<Rrightarrow>\<^sub>C call2"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> call2"
 inductive_cases Iterate_normalize_call [elim]:
-  "(\<Gamma>, \<tau>) \<turnstile> Iterate its res res_t res_init1 body1 \<Rrightarrow>\<^sub>C call2"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its res res_t res_init1 body1 \<Rrightarrow> call2"
 inductive_cases Iterator_normalize_call [elim]:
-  "(\<Gamma>, \<tau>) \<turnstile> Iterator iter its body1 \<Rrightarrow>\<^sub>C call2"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its body1 \<Rrightarrow> call2"
 
 inductive_cases normalize_expr_list_elim [elim]:
-  "normalize_expr_list \<Gamma> (x # xs) zs"
+  "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> zs"
 
 lemma any_has_not_element_type:
   "\<tau> \<le> OclAny[?] \<Longrightarrow> element_type \<tau> \<sigma> \<Longrightarrow> False"
@@ -177,9 +177,9 @@ lemma any_has_not_element_type:
 
 lemma
   normalize_det: "\<Gamma> \<turnstile> expr \<Rrightarrow> expr1 \<Longrightarrow> \<Gamma> \<turnstile> expr \<Rrightarrow> expr2 \<Longrightarrow> expr1 = expr2" and
-  normalize_call_det: "\<Gamma>1 \<turnstile> call \<Rrightarrow>\<^sub>C call1 \<Longrightarrow> \<Gamma>1 \<turnstile> call \<Rrightarrow>\<^sub>C call2 \<Longrightarrow> call1 = call2" and
+  normalize_call_det: "\<Gamma>1 \<turnstile>\<^sub>C call \<Rrightarrow> call1 \<Longrightarrow> \<Gamma>1 \<turnstile>\<^sub>C call \<Rrightarrow> call2 \<Longrightarrow> call1 = call2" and
   normalize_expr_list_det:
-    "normalize_expr_list \<Gamma> xs ys \<Longrightarrow> normalize_expr_list \<Gamma> xs zs \<Longrightarrow> ys = zs"
+    "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> zs \<Longrightarrow> ys = zs"
   for \<Gamma> :: "('a :: ocl_object_model) type env"
   and \<Gamma>1 :: "('a :: ocl_object_model) type env \<times> 'a type"
 proof (induct \<Gamma> expr expr1 and \<Gamma>1 call call1

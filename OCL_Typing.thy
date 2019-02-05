@@ -86,19 +86,19 @@ subsection \<open>SupType Operations\<close>
 inductive suptype_binop_type
     :: "suptype_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
   "\<tau> \<le> \<sigma> \<Longrightarrow>
-   \<tau> \<noteq> OclInvalid \<Longrightarrow>
+   (*\<tau> \<noteq> OclInvalid \<Longrightarrow>*)
    suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   \<sigma> \<noteq> OclInvalid \<Longrightarrow>
+   (*\<sigma> \<noteq> OclInvalid \<Longrightarrow>*)
    suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
 
-| "OclInvalid < \<tau> \<Longrightarrow>
+| "(*OclInvalid < \<tau> \<Longrightarrow>*)
    \<tau> \<le> \<sigma> \<Longrightarrow>
-   \<tau> \<noteq> OclInvalid \<Longrightarrow>
+   (*\<tau> \<noteq> OclInvalid \<Longrightarrow>*)
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
-| "OclInvalid < \<sigma> \<Longrightarrow>
+| "(*OclInvalid < \<sigma> \<Longrightarrow>*)
    \<sigma> < \<tau> \<Longrightarrow>
-   \<sigma> \<noteq> OclInvalid \<Longrightarrow>
+   (*\<sigma> \<noteq> OclInvalid \<Longrightarrow>*)
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>OclAny Operations\<close>
@@ -110,7 +110,7 @@ text \<open>
 
 inductive any_unop_type where
   "\<tau> \<le> OclAny[?] \<Longrightarrow>
-   \<tau> \<noteq> OclInvalid \<Longrightarrow>
+   (*\<tau> \<noteq> OclInvalid \<Longrightarrow>*)
    any_unop_type OclAsSetOp \<tau> (Set \<tau>)"
 | "\<tau> \<le> OclAny[?] \<Longrightarrow>
    any_unop_type OclIsNewOp \<tau> Boolean[1]"
@@ -348,8 +348,9 @@ text \<open>
 *)
 
 fun to_required_type' where
-  "to_required_type' OclInvalid = OclInvalid"
+(*  "to_required_type' OclInvalid = OclInvalid"
 | "to_required_type' OclVoid = OclInvalid"
+|*) "to_required_type' OclVoid = undefined"
 | "to_required_type' \<tau>[1] = \<tau>[1]"
 | "to_required_type' \<tau>[?] = \<tau>[1]"
 | "to_required_type' \<tau> = \<tau>"
@@ -616,13 +617,15 @@ translations
   "_FMap (_FMaplets ms1 ms2)"     \<leftharpoondown> "_FMapUpd (_FMap ms1) ms2"
   "_FMaplets ms1 (_FMaplets ms2 ms3)" \<leftharpoondown> "_FMaplets (_FMaplets ms1 ms2) ms3"
 
-
-term "x(a := 1)"
-term "x(a \<mapsto> 1)"
-term "x(a \<mapsto>\<^sub>f 1)"
-
-
-
+(*
+code_pred [show_modes] typeop_type .
+code_pred [show_modes] unop_type .
+code_pred [show_modes] binop_type .
+code_pred [show_modes] ternop_type .
+code_pred [show_modes] class_of .
+code_pred [show_modes] mataop_type .
+code_pred [show_modes] op_type .
+*)
 
 inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
        ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
@@ -713,8 +716,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 
 \<comment> \<open>Call Expressions\<close>
 |MetaOperationCallT:
-  "type_ok \<tau> \<Longrightarrow>
-   mataop_type \<tau> op \<sigma> \<Longrightarrow>
+  "mataop_type \<tau> op \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile> MetaOperationCall \<tau> op : \<sigma>"
 |StaticOperationCallT:
   "\<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
@@ -723,7 +725,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 
 |TypeOperationCallT:
   "\<Gamma> \<turnstile> a : \<tau> \<Longrightarrow>
-   \<sigma> \<noteq> OclInvalid \<Longrightarrow>
+   (*\<sigma> \<noteq> OclInvalid \<Longrightarrow>*)
    typeop_type k op \<tau> \<sigma> \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<rho>"
 
@@ -822,6 +824,9 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L expr # exprs : \<tau> # \<pi>"
 
+(*code_pred [show_modes] typing .*)
+
+
 inductive_cases NullLiteral_typing [elim]: "\<Gamma> \<turnstile> NullLiteral : \<tau>"
 inductive_cases InvalidLiteral_typing [elim]: "\<Gamma> \<turnstile> InvalidLiteral : \<tau>"
 inductive_cases BooleanLiteral_typing [elim]: "\<Gamma> \<turnstile> BooleanLiteral c : \<tau>"
@@ -842,7 +847,7 @@ inductive_cases Call_typing [elim]: "\<Gamma> \<turnstile> Call a k c : \<tau>"
 inductive_cases MetaOperationCall_typing [elim]: "\<Gamma> \<turnstile> MetaOperationCall \<tau> op : \<sigma>"
 inductive_cases StaticOperationCall_typing [elim]: "\<Gamma> \<turnstile> StaticOperationCall \<tau> op as : \<sigma>"
 inductive_cases TypeOperationCall_typing [elim]: "\<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<tau>"
-inductive_cases iterator_typing [elim]: "iterator_typing \<Gamma> (src, its, body) (\<tau>, \<sigma>, \<rho>)"
+inductive_cases Iterator_typing [elim]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
 inductive_cases Iterate_typing [elim]: "\<Gamma> \<turnstile> IterateCall src its res res_t res_init body : \<tau>"
 inductive_cases AnyIterator_typing [elim]: "\<Gamma> \<turnstile> AnyIteratorCall src its body : \<tau>"
 inductive_cases ClosureIterator_typing [elim]: "\<Gamma> \<turnstile> ClosureIteratorCall src its body : \<tau>"
@@ -861,10 +866,16 @@ inductive_cases OperationCall_typing [elim]: "\<Gamma> \<turnstile> OperationCal
 inductive_cases expr_list_typing [elim]: "expr_list_typing \<Gamma> exprs \<pi>"
 inductive_cases TupleElementCall_typing [elim]: "\<Gamma> \<turnstile> TupleElementCall src elem : \<tau>"
 
+inductive_cases CollectionPartsNil_typing [elim]: "\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
+inductive_cases CollectionPartsItem_typing [elim]: "\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
+inductive_cases CollectionItem_typing [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
+inductive_cases CollectionRange_typing [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
+
+
 (*** Properties *************************************************************)
 
 section \<open>Properties\<close>
-
+(*
 lemma typeop_type_wd:
   "typeop_type k op \<tau> \<sigma> \<rho> \<Longrightarrow>
    \<tau> \<noteq> OclInvalid \<Longrightarrow>
@@ -1068,30 +1079,39 @@ next
   case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>)
   then show ?case sorry
 qed
+*)
 
 
+(*
+    and collection_parts_typing ("(1_/ \<turnstile>\<^sub>C/ (_ :/ _))" [51,51,51] 50)
+    and collection_part_typing ("(1_/ \<turnstile>\<^sub>P/ (_ :/ _))" [51,51,51] 50)
+    and expr_list_typing ("(1_/ \<turnstile>\<^sub>L/ (_ :/ _))" [51,51,51] 50)
+    and iterator_typing ("(1_/ \<turnstile>\<^sub>I/ (_ :/ _))" [51,51,51] 50) where
 
-
+*)
 
 lemma
   typing_det: "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   collection_parts_typing_det:
     "collection_parts_typing \<Gamma> prts \<tau> \<Longrightarrow>
      collection_parts_typing \<Gamma> prts \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
-  iterator_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>\<^sub>1, \<sigma>\<^sub>1, \<rho>\<^sub>1) \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>\<^sub>2, \<sigma>\<^sub>2, \<rho>\<^sub>2) \<Longrightarrow>
-     \<tau>\<^sub>1 = \<tau>\<^sub>2 \<and> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> \<rho>\<^sub>1 = \<rho>\<^sub>2" and
+  collection_part_typing_det:
+    "collection_part_typing \<Gamma> prt \<tau> \<Longrightarrow>
+     collection_part_typing \<Gamma> prt \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   expr_list_typing_det:
     "expr_list_typing \<Gamma> exprs \<pi> \<Longrightarrow>
-     expr_list_typing \<Gamma> exprs \<xi> \<Longrightarrow> \<pi> = \<xi>"
+     expr_list_typing \<Gamma> exprs \<xi> \<Longrightarrow> \<pi> = \<xi>" and
+  iterator_typing_det:
+    "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow>
+     \<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys \<Longrightarrow>
+     xs = ys"
 proof (induct (*\<Gamma> expr \<tau> and \<Gamma> prts \<tau> and \<Gamma> src its body \<tau>\<^sub>1 \<sigma>\<^sub>1 \<rho>\<^sub>1*)
-       arbitrary: \<sigma> and \<sigma> and \<tau>\<^sub>2 \<sigma>\<^sub>2 \<rho>\<^sub>2 and \<xi>
-       rule: typing_collection_parts_typing_iterator_typing_expr_list_typing.inducts)
+       arbitrary: \<sigma> and \<sigma> and \<sigma> and \<xi> and ys
+       rule: typing_collection_parts_typing_collection_part_typing_expr_list_typing_iterator_typing.inducts)
   case (NullLiteralT \<Gamma>) thus ?case by auto
 next
-  case (InvalidLiteralT \<Gamma>) thus ?case by auto
-next
+  (*case (InvalidLiteralT \<Gamma>) thus ?case by auto
+next*)
   case (BooleanLiteralT \<Gamma> c) thus ?case by auto
 next
   case (RealLiteralT \<Gamma> c) thus ?case by auto
@@ -1114,14 +1134,13 @@ next
 next
   case (SequenceLiteralT \<Gamma> prts \<tau>) thus ?case by blast
 next
-  case (CollectionPartsNilT \<Gamma>) thus ?case by auto
+  case (CollectionPartsNilT \<Gamma> x \<tau>) thus ?case by blast
 next
-  case (CollectionPartsItemT \<Gamma> a \<tau> xs \<sigma>) thus ?case by blast
+  case (CollectionPartsItemT \<Gamma> x \<tau> y xs \<sigma>) thus ?case by blast
 next
-  case (CollectionPartsRangeT \<Gamma> a \<tau> b \<sigma> xs \<rho>) thus ?case
-    apply (insert CollectionPartsRangeT.prems)
-    apply (erule collection_parts_range_typing)
-    by (simp add: CollectionPartsRangeT.hyps(8))
+  case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by blast
+next
+  case (CollectionPartRangeT \<Gamma> a \<tau> b \<sigma>) thus ?case by blast
 next
   case (EmptyTupleLiteralT \<Gamma>) thus ?case by auto
 next
@@ -1134,52 +1153,55 @@ next
   case (IfT \<Gamma> a \<tau> b \<sigma> c \<rho>) thus ?case
     apply (insert IfT.prems)
     apply (erule If_typing)
-    using IfT.hyps(5) IfT.hyps(7) by auto
+    by (simp add: IfT.hyps(4) IfT.hyps(6))
 next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCall_typing typeop_type_det)
 next
-  case (IteratorT \<Gamma> \<M> src \<tau> \<sigma> its body \<rho>) thus ?case
+  case (IteratorT \<Gamma> src \<tau> \<sigma> its body \<rho>) thus ?case
     apply (insert IteratorT.prems)
-    apply (erule iterator_typing)
-    using IteratorT.hyps(2) IteratorT.hyps(3)
-          IteratorT.hyps(5) element_type_det by fastforce
+    apply (erule Iterator_typing)
+    using IteratorT.hyps(2) IteratorT.hyps(3) IteratorT.hyps(5)
+          element_type_det by blast
 next
-  case (IterateT \<Gamma> \<M> src its res res_t res_init body \<tau> \<sigma> \<rho>) thus ?case
-    by (insert IterateT.prems) (auto simp add: IterateT.hyps(2))
+  case (IterateT \<Gamma> src its res res_t res_init body \<tau> \<sigma> \<rho>)
+  then show ?case
+    apply (insert IterateT.prems)
+    using IterateT.hyps(2) by blast
 next
-  case (AnyIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
-    by (insert AnyIteratorT.prems) (auto simp add: AnyIteratorT.hyps(2))
+  case (AnyIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho>)
+  then show ?case
+    by (meson AnyIterator_typing Pair_inject)
 next
-  case (ClosureIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (ClosureIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert ClosureIteratorT.prems)
     apply (erule ClosureIterator_typing)
     using ClosureIteratorT.hyps(2) ClosureIteratorT.hyps(5)
           to_unique_collection_det by blast
 next
-  case (CollectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (CollectIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert CollectIteratorT.prems)
     apply (erule CollectIterator_typing)
     using CollectIteratorT.hyps(2) CollectIteratorT.hyps(4)
           CollectIteratorT.hyps(5) to_nonunique_collection_det
           update_element_type_det by blast
 next
-  case (CollectNestedIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (CollectNestedIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert CollectNestedIteratorT.prems)
     apply (erule CollectNestedIterator_typing)
     using CollectNestedIteratorT.hyps(2) CollectNestedIteratorT.hyps(4)
           CollectNestedIteratorT.hyps(5) to_nonunique_collection_det
           update_element_type_det by blast
 next
-  case (ExistsIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+  case (ExistsIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert ExistsIteratorT.prems)
     apply (erule ExistsIterator_typing)
-    by (simp add: ExistsIteratorT.hyps(2))
+    using ExistsIteratorT.hyps(2) by blast
 next
   case (ForAllIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert ForAllIteratorT.prems)
     apply (erule ForAllIterator_typing)
-    by (simp add: ForAllIteratorT.hyps(2))
+    using ForAllIteratorT.hyps(2) by blast
 next
   case (OneIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert OneIteratorT.prems)
@@ -1194,12 +1216,12 @@ next
   case (RejectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert RejectIteratorT.prems)
     apply (erule RejectIterator_typing)
-    by (simp add: RejectIteratorT.hyps(2))
+    using RejectIteratorT.hyps(2) by blast
 next
   case (SelectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert SelectIteratorT.prems)
     apply (erule SelectIterator_typing)
-    by (simp add: SelectIteratorT.hyps(2))
+    using SelectIteratorT.hyps(2) by blast
 next
   case (SortedByIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert SortedByIteratorT.prems)

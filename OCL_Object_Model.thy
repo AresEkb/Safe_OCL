@@ -31,7 +31,7 @@ definition "oper_type op \<equiv>
     else Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
       (params @ [(STR ''result'', oper_result op, Out)])))"
 
-class ocl_object_model' =
+class ocl_object_model =
   fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
   and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
   and operations :: "('a type, 'a expr) oper_spec list"
@@ -51,7 +51,7 @@ end
 lemma find_implies_in_set:
   "find P xs = Some x \<Longrightarrow> x \<in> set xs"
   by (metis find_Some_iff nth_mem)
-
+(*
 lemma oper_type_wd:
   "oper_result op \<noteq> OclInvalid \<Longrightarrow> oper_type op \<noteq> OclInvalid"
   unfolding oper_type_def
@@ -68,5 +68,5 @@ lemma find_static_operation_wd:
   by (simp add: operations_wd oper_type_wd find_implies_in_set)
 
 end
-
+*)
 end
