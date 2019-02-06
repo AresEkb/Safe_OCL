@@ -38,7 +38,8 @@ text \<open>
   At first we decided to allow casting only to subtypes.
   However sometimes it's necessary to cast expressions to supertypes,
   for example, to access overridden attributes of a supertype.
-  So we prohibit casting to types not related to a current type by a subtype relation.\<close>
+  So we allow casting to subtypes and supertypes.
+  Casting to other types is meaningless.\<close>
 
 text \<open>
   According to the section 7.4.7 of the OCL specification
@@ -47,10 +48,16 @@ text \<open>
   and @{text "oclIsKindOf()"} for collections too.\<close>
 
 text \<open>
+  Please take a note that the following expressions are prohibited,
+  because they always true or false:
+  \<^verbatim>\<open>1.oclIsKindOf(OclAny[?])
+1.oclIsKindOf(String[1])\<close>\<close>
+
+text \<open>
   Please take a note that:
   \<^verbatim>\<open>Set{1,2,null,'abc'}->selectByKind(Integer[1]) = Set{1,2}
 Set{1,2,null,'abc'}->selectByKind(Integer[?]) = Set{1,2,null}\<close>
-  And the following expressions are prohibited, because they always
+  The following expressions are prohibited, because they always
   returns either the same or empty collections:
   \<^verbatim>\<open>Set{1,2,null,'abc'}->selectByKind(OclAny[?])
 Set{1,2,null,'abc'}->selectByKind(Collection(Boolean[1]))\<close>\<close>
@@ -76,29 +83,23 @@ inductive typeop_type where
    update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<upsilon>"
 
+subsection \<open>SupType Operations\<close>
+
 text \<open>
   It makes sense to compare values only with compatible types.\<close>
-
-subsection \<open>SupType Operations\<close>
 
 (* We have to specify predicate type explicitly to let
    a generated code work *)
 inductive suptype_binop_type
     :: "suptype_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
   "\<tau> \<le> \<sigma> \<Longrightarrow>
-   (*\<tau> \<noteq> OclInvalid \<Longrightarrow>*)
    suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   (*\<sigma> \<noteq> OclInvalid \<Longrightarrow>*)
    suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
 
-| "(*OclInvalid < \<tau> \<Longrightarrow>*)
-   \<tau> \<le> \<sigma> \<Longrightarrow>
-   (*\<tau> \<noteq> OclInvalid \<Longrightarrow>*)
+| "\<tau> \<le> \<sigma> \<Longrightarrow>
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
-| "(*OclInvalid < \<sigma> \<Longrightarrow>*)
-   \<sigma> < \<tau> \<Longrightarrow>
-   (*\<sigma> \<noteq> OclInvalid \<Longrightarrow>*)
+| "\<sigma> < \<tau> \<Longrightarrow>
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>OclAny Operations\<close>
@@ -106,11 +107,11 @@ subsection \<open>OclAny Operations\<close>
 text \<open>
   The OCL specification defines @{text "toString()"} operation
   only for boolean and numeric types. However, I guess it's a good
-  idea to define it once for all basic types.\<close>
+  idea to define it once for all basic types. Maybe it should be defined
+  for collections as well.\<close>
 
 inductive any_unop_type where
   "\<tau> \<le> OclAny[?] \<Longrightarrow>
-   (*\<tau> \<noteq> OclInvalid \<Longrightarrow>*)
    any_unop_type OclAsSetOp \<tau> (Set \<tau>)"
 | "\<tau> \<le> OclAny[?] \<Longrightarrow>
    any_unop_type OclIsNewOp \<tau> Boolean[1]"
@@ -124,6 +125,12 @@ inductive any_unop_type where
    any_unop_type ToStringOp \<tau> String[1]"
 
 subsection \<open>Boolean Operations\<close>
+
+text \<open>
+  Please take a note that:
+  \<^verbatim>\<open>true and false : Boolean[1]
+true and null : Boolean[?]
+null and null : OclVoid\<close>\<close>
 
 inductive boolean_unop_type where
   "\<tau> \<le> Boolean[?] \<Longrightarrow>
@@ -146,9 +153,8 @@ inductive boolean_binop_type where
 subsection \<open>Numeric Operations\<close>
 
 text \<open>
-  Formally null conforms to numeric types. However expressions
-  like @{text "null + null"} makes no sense. So we use
-  @{text "UnlimitedNatural[1]"} as a lower bound.\<close>
+  Nullable arithmetics is prohibited: @{text "1 + null"}.
+  This is a significant difference from the OCL specification.\<close>
 
 text \<open>
   Please take a note that many operations automatically casts
@@ -159,123 +165,83 @@ text \<open>
   @{text "toInteger()"} for unlimited naturals is unclear.\<close>
 
 inductive numeric_unop_type where
-  "\<tau> \<simeq> Real \<Longrightarrow>
+  "\<tau> = Real[1] \<Longrightarrow>
    numeric_unop_type UMinusOp \<tau> Real[1]"
-| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<tau> \<le> Integer[1] \<Longrightarrow>
    numeric_unop_type UMinusOp \<tau> Integer[1]"
 
-| "\<tau> \<simeq> Real \<Longrightarrow>
+| "\<tau> = Real[1] \<Longrightarrow>
    numeric_unop_type AbsOp \<tau> Real[1]"
-| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<tau> \<le> Integer[1] \<Longrightarrow>
    numeric_unop_type AbsOp \<tau> Integer[1]"
 
-| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+| "\<tau> \<le> Real[1] \<Longrightarrow>
    numeric_unop_type FloorOp \<tau> Integer[1]"
-| "\<tau> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+| "\<tau> \<le> Real[1] \<Longrightarrow>
    numeric_unop_type RoundOp \<tau> Integer[1]"
 
-| "\<tau> \<simeq> UnlimitedNatural \<Longrightarrow>
+| "\<tau> = UnlimitedNatural[1] \<Longrightarrow>
    numeric_unop_type numeric_unop.ToIntegerOp \<tau> Integer[1]"
 
 inductive numeric_binop_type where
-  "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
-   numeric_binop_type PlusOp \<tau> \<sigma> Real[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
-   numeric_binop_type PlusOp \<tau> \<sigma> Integer[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
-   numeric_binop_type PlusOp \<tau> \<sigma> UnlimitedNatural[1]"
+  "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Real[1] \<Longrightarrow>
+   numeric_binop_type PlusOp \<tau> \<sigma> \<rho>"
 
-| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
+| "\<tau> \<squnion> \<sigma> = Real[1] \<Longrightarrow>
    numeric_binop_type MinusOp \<tau> \<sigma> Real[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<tau> \<squnion> \<sigma> \<le> Integer[1] \<Longrightarrow>
    numeric_binop_type MinusOp \<tau> \<sigma> Integer[1]"
 
-| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
-   numeric_binop_type MultOp \<tau> \<sigma> Real[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
-   numeric_binop_type MultOp \<tau> \<sigma> Integer[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
-   numeric_binop_type MultOp \<tau> \<sigma> UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Real[1] \<Longrightarrow>
+   numeric_binop_type MultOp \<tau> \<sigma> \<rho>"
 
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+| "\<tau> \<le> Real[1] \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
    numeric_binop_type DivideOp \<tau> \<sigma> Real[1]"
 
-| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
-   numeric_binop_type DivOp \<tau> \<sigma> Integer[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
-   numeric_binop_type DivOp \<tau> \<sigma> UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Integer[1] \<Longrightarrow>
+   numeric_binop_type DivOp \<tau> \<sigma> \<rho>"
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Integer[1] \<Longrightarrow>
+   numeric_binop_type ModOp \<tau> \<sigma> \<rho>"
 
-| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
-   numeric_binop_type ModOp \<tau> \<sigma> Integer[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
-   numeric_binop_type ModOp \<tau> \<sigma> UnlimitedNatural[1]"
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Real[1] \<Longrightarrow>
+   numeric_binop_type MaxOp \<tau> \<sigma> \<rho>"
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Real[1] \<Longrightarrow>
+   numeric_binop_type MinOp \<tau> \<sigma> \<rho>"
 
-| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
-   numeric_binop_type MaxOp \<tau> \<sigma> Real[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
-   numeric_binop_type MaxOp \<tau> \<sigma> Integer[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
-   numeric_binop_type MaxOp \<tau> \<sigma> UnlimitedNatural[1]"
-
-| "\<tau> \<squnion> \<sigma> \<simeq> Real \<Longrightarrow>
-   numeric_binop_type MinOp \<tau> \<sigma> Real[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> Integer \<Longrightarrow>
-   numeric_binop_type MinOp \<tau> \<sigma> Integer[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural \<Longrightarrow>
-   numeric_binop_type MinOp \<tau> \<sigma> UnlimitedNatural[1]"
-
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+| "\<tau> \<le> Real[1] \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
    numeric_binop_type numeric_binop.LessOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+| "\<tau> \<le> Real[1] \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
    numeric_binop_type numeric_binop.LessEqOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+| "\<tau> \<le> Real[1] \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
    numeric_binop_type numeric_binop.GreaterOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
+| "\<tau> \<le> Real[1] \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
    numeric_binop_type numeric_binop.GreaterEqOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>String Operations\<close>
 
 inductive string_unop_type where
-  "\<tau> \<simeq> String \<Longrightarrow>
-   string_unop_type SizeOp \<tau> Integer[1]"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   string_unop_type CharactersOp \<tau> (Sequence String[1])"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   string_unop_type ToUpperCaseOp \<tau> String[1]"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   string_unop_type ToLowerCaseOp \<tau> String[1]"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   string_unop_type ToBooleanOp \<tau> Boolean[1]"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   string_unop_type ToIntegerOp \<tau> Integer[1]"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   string_unop_type ToRealOp \<tau> Real[1]"
+  "string_unop_type SizeOp String[1] Integer[1]"
+| "string_unop_type CharactersOp String[1] (Sequence String[1])"
+| "string_unop_type ToUpperCaseOp String[1] String[1]"
+| "string_unop_type ToLowerCaseOp String[1] String[1]"
+| "string_unop_type ToBooleanOp String[1] Boolean[1]"
+| "string_unop_type ToIntegerOp String[1] Integer[1]"
+| "string_unop_type ToRealOp String[1] Real[1]"
 
 inductive string_binop_type where
-  "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
-   string_binop_type ConcatOp \<tau> \<sigma> String[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
-   string_binop_type EqualsIgnoreCaseOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
-   string_binop_type LessOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
-   string_binop_type LessEqOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
-   string_binop_type GreaterOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<squnion> \<sigma> \<simeq> String \<Longrightarrow>
-   string_binop_type GreaterEqOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   \<sigma> \<simeq> String \<Longrightarrow>
-   string_binop_type IndexOfOp \<tau> \<sigma> Integer[1]"
-| "\<tau> \<simeq> String \<Longrightarrow>
-   \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
-   string_binop_type AtOp \<tau> \<sigma> String[1]"
+  "string_binop_type ConcatOp String[1] String[1] String[1]"
+| "string_binop_type EqualsIgnoreCaseOp String[1] String[1] Boolean[1]"
+| "string_binop_type LessOp String[1] String[1] Boolean[1]"
+| "string_binop_type LessEqOp String[1] String[1] Boolean[1]"
+| "string_binop_type GreaterOp String[1] String[1] Boolean[1]"
+| "string_binop_type GreaterEqOp String[1] String[1] Boolean[1]"
+| "string_binop_type IndexOfOp String[1] String[1] Integer[1]"
+| "string_binop_type AtOp String[1] UnlimitedNatural[1] String[1]"
+| "string_binop_type AtOp String[1] Integer[1] String[1]"
 
 inductive string_ternop_type where
-  "\<tau> \<simeq> String \<Longrightarrow>
-   \<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
-   \<rho> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
-   string_ternop_type SubstringOp \<tau> \<sigma> \<rho> String[1]"
+  "\<sigma> \<le> Integer[1] \<Longrightarrow> \<rho> \<le> Integer[1] \<Longrightarrow>
+   string_ternop_type SubstringOp String[1] \<sigma> \<rho> String[1]"
 
 subsection \<open>Collection Operations\<close>
 
@@ -290,15 +256,12 @@ inductive collection_unop_type where
 | "element_type \<tau> _ \<Longrightarrow>
    collection_unop_type NotEmptyOp \<tau> Boolean[1]"
 
-| "element_type \<tau> \<sigma> \<Longrightarrow>
-   \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
-   collection_unop_type CollectionMaxOp \<tau> (to_required_type \<sigma>)"
-| "element_type \<tau> \<sigma> \<Longrightarrow>
-   \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
-   collection_unop_type CollectionMinOp \<tau> (to_required_type \<sigma>)"
-| "element_type \<tau> \<sigma> \<Longrightarrow>
-   \<sigma> \<simeq> UnlimitedNatural\<midarrow>Real \<Longrightarrow>
-   collection_unop_type SumOp \<tau> (to_required_type \<sigma>)"
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
+   collection_unop_type CollectionMaxOp \<tau> \<sigma>"
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
+   collection_unop_type CollectionMinOp \<tau> \<sigma>"
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
+   collection_unop_type SumOp \<tau> \<sigma>"
 
 | "element_type \<tau> \<sigma> \<Longrightarrow>
    collection_unop_type AsSetOp \<tau> (Set \<sigma>)"
@@ -355,6 +318,12 @@ fun to_required_type' where
 | "to_required_type' \<tau>[?] = \<tau>[1]"
 | "to_required_type' \<tau> = \<tau>"
 
+text \<open>
+  Please take a note that we allow the following expressions:
+  \<^verbatim>\<open>let nullable_value : Integer[?] = null in
+Sequence{1..3}->inculdes(nullable_value) and
+Sequence{1..3}->inculdes(null) and
+Sequence{1..3}->inculdesAll(Set{1,null})\<close>\<close>
 
 inductive collection_binop_type where
   "element_type \<tau> \<rho> \<Longrightarrow>
@@ -385,10 +354,8 @@ inductive collection_binop_type where
 | "collection_binop_type IntersectionOp (Set \<tau>) (Bag \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type IntersectionOp (Bag \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type IntersectionOp (Bag \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
-| "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type IncludingOp (Set \<tau>) \<sigma> (Set \<tau>)"
-| "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type IncludingOp (Bag \<tau>) \<sigma> (Bag \<tau>)"
+| "collection_binop_type IncludingOp (Set \<tau>) \<sigma> (Set (\<tau> \<squnion> \<sigma>))"
+| "collection_binop_type IncludingOp (Bag \<tau>) \<sigma> (Bag (\<tau> \<squnion> \<sigma>))"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    \<sigma> \<noteq> OclVoid \<Longrightarrow>
    collection_binop_type ExcludingOp (Set \<tau>) \<sigma> (Set \<tau>)"
@@ -405,28 +372,27 @@ inductive collection_binop_type where
    collection_binop_type PrependOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type PrependOp (Sequence \<tau>) \<sigma> (Sequence \<tau>)"
-| "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<sigma> \<le> Integer[1] \<Longrightarrow>
    collection_binop_type CollectionAtOp (OrderedSet \<tau>) \<sigma> \<tau>"
-| "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<sigma> \<le> Integer[1] \<Longrightarrow>
    collection_binop_type CollectionAtOp (Sequence \<tau>) \<sigma> \<tau>"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (OrderedSet \<tau>) \<sigma> Integer[1]"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (Sequence \<tau>) \<sigma> Integer[1]"
 
-
 inductive collection_ternop_type where
-  "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+  "\<sigma> \<le> Integer[1] \<Longrightarrow>
    \<rho> \<le> \<tau> \<Longrightarrow>
    collection_ternop_type InsertAtOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
-| "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<sigma> \<le> Integer[1] \<Longrightarrow>
    \<rho> \<le> \<tau> \<Longrightarrow>
    collection_ternop_type InsertAtOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
-| "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
-   \<rho> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<sigma> \<le> Integer[1] \<Longrightarrow>
+   \<rho> \<le> Integer[1] \<Longrightarrow>
    collection_ternop_type SubOrderedSetOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
-| "\<sigma> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
-   \<rho> \<simeq> UnlimitedNatural\<midarrow>Integer \<Longrightarrow>
+| "\<sigma> \<le> Integer[1] \<Longrightarrow>
+   \<rho> \<le> Integer[1] \<Longrightarrow>
    collection_ternop_type SubSequenceOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
 
 subsection \<open>Coercions\<close>
@@ -507,14 +473,8 @@ lemma collection_unop_type_det:
   apply (induct rule: collection_unop_type.induct)
   apply (erule collection_unop_type.cases;
          auto simp add: element_type_det update_element_type_det)+
-  using element_type_det update_element_type_det apply blast+
-  apply (erule collection_unop_type.cases; auto)
-  using element_type_det update_element_type_det apply blast+
-  apply (erule collection_unop_type.cases; auto)
-  using element_type_det update_element_type_det apply blast+
-  apply (erule collection_unop_type.cases; auto simp add: element_type_det)+
   using element_type_det update_element_type_det apply blast
-  apply (erule collection_unop_type.cases; auto)+
+  apply (simp_all add: collection_unop_type.simps)
   done
 
 lemma unop_type_det:
@@ -595,27 +555,6 @@ section \<open>Expressions Typing\<close>
 
 (* Запрещаем Set{} и т.п., потому что у них тип по идее должен быть
    Set(OclInvalid), чего хотелось бы избежать *)
-
-nonterminal fmaplets and fmaplet
-
-syntax
-  "_fmaplet"  :: "['a, 'a] \<Rightarrow> fmaplet"             ("_ /\<mapsto>\<^sub>f/ _")
-  "_fmaplets" :: "['a, 'a] \<Rightarrow> fmaplet"             ("_ /[\<mapsto>\<^sub>f]/ _")
-  ""         :: "fmaplet \<Rightarrow> fmaplets"             ("_")
-  "_FMaplets" :: "[fmaplet, fmaplets] \<Rightarrow> fmaplets" ("_,/ _")
-  "_FMapUpd"  :: "['a \<rightharpoonup> 'b, fmaplets] \<Rightarrow> 'a \<rightharpoonup> 'b" ("_/'(_')" [900, 0] 900)
-  "_FMap"     :: "fmaplets \<Rightarrow> 'a \<rightharpoonup> 'b"            ("(1[_])")
-
-syntax (ASCII)
-  "_fmaplet"  :: "['a, 'a] \<Rightarrow> fmaplet"             ("_ /|->f/ _")
-  "_fmaplets" :: "['a, 'a] \<Rightarrow> fmaplet"             ("_ /[|->f]/ _")
-
-translations
-  "_FMapUpd m (_FMaplets xy ms)"  \<rightleftharpoons> "_FMapUpd (_FMapUpd m xy) ms"
-  "_FMapUpd m (_fmaplet  x y)"    \<rightleftharpoons> "CONST fmupd x y m"
-  "_FMap ms"                     \<rightleftharpoons> "_FMapUpd (CONST fmempty) ms"
-  "_FMap (_FMaplets ms1 ms2)"     \<leftharpoondown> "_FMapUpd (_FMap ms1) ms2"
-  "_FMaplets ms1 (_FMaplets ms2 ms3)" \<leftharpoondown> "_FMaplets (_FMaplets ms1 ms2) ms3"
 
 (*
 code_pred [show_modes] typeop_type .

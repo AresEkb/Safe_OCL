@@ -10,7 +10,26 @@ begin
 
 type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)
 
-(* declare [[coercion "Abs_fmap"]] *)
+nonterminal fmaplets and fmaplet
+
+syntax
+  "_fmaplet"  :: "['a, 'a] \<Rightarrow> fmaplet"              ("_ /\<mapsto>\<^sub>f/ _")
+  "_fmaplets" :: "['a, 'a] \<Rightarrow> fmaplet"              ("_ /[\<mapsto>\<^sub>f]/ _")
+  ""          :: "fmaplet \<Rightarrow> fmaplets"              ("_")
+  "_FMaplets" :: "[fmaplet, fmaplets] \<Rightarrow> fmaplets"  ("_,/ _")
+  "_FMapUpd"  :: "['a \<rightharpoonup> 'b, fmaplets] \<Rightarrow> 'a \<rightharpoonup> 'b" ("_/'(_')" [900, 0] 900)
+  "_FMap"     :: "fmaplets \<Rightarrow> 'a \<rightharpoonup> 'b"             ("(1[_])")
+
+syntax (ASCII)
+  "_fmaplet"  :: "['a, 'a] \<Rightarrow> fmaplet"              ("_ /|->f/ _")
+  "_fmaplets" :: "['a, 'a] \<Rightarrow> fmaplet"              ("_ /[|->f]/ _")
+
+translations
+  "_FMapUpd m (_FMaplets xy ms)"      \<rightleftharpoons> "_FMapUpd (_FMapUpd m xy) ms"
+  "_FMapUpd m (_fmaplet  x y)"        \<rightleftharpoons> "CONST fmupd x y m"
+  "_FMap ms"                          \<rightleftharpoons> "_FMapUpd (CONST fmempty) ms"
+  "_FMap (_FMaplets ms1 ms2)"         \<leftharpoondown> "_FMapUpd (_FMap ms1) ms2"
+  "_FMaplets ms1 (_FMaplets ms2 ms3)" \<leftharpoondown> "_FMaplets (_FMaplets ms1 ms2) ms3"
 
 (*** Helper Lemmas **********************************************************)
 

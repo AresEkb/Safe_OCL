@@ -26,7 +26,13 @@ datatype (plugins del: "size") 'a type =
 | Collection "'a type"
 | Tuple "telem \<rightharpoonup>\<^sub>f 'a type"
 | SupType
+(*
+abbreviation interval_closed_closed ("(_ \<le> _ \<le> _)"  [10, 10] 900) where
+  "interval_closed_closed x y z \<equiv> x = y (*\<le> y \<and> y \<le> z*)"
 
+term "(UnlimitedNatural[1] \<le> \<tau> \<le> Integer[1]) \<Longrightarrow> q"
+term "UnlimitedNatural[1] \<le> \<tau> \<le> Integer[1] \<Longrightarrow> q"
+*)
 instantiation type :: (type) size
 begin
 
