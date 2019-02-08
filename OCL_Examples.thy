@@ -1,4 +1,4 @@
-(*  Title:       Simple OCL Semantics
+(*  Title:       Safe OCL
     Author:      Denis Nikiforov, December 2018
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
@@ -304,23 +304,34 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
   BooleanLiteral True : x}"
 
 text \<open>
-  \<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
+\<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False] : x}"
 
+value "check_type (fmempty :: classes1 type env)
+  (OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False])
+  Boolean[1]"
+value "check_type (fmempty :: classes1 type env)
+  (OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False])
+  Boolean[?]"
+value "synthesize_type (fmempty :: classes1 type env)
+  (OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False])"
+value "synthesize_type (fmempty :: classes1 type env)
+  (OperationCall (BooleanLiteral True) DotCall OrOp [IntegerLiteral 1])"
+
 text \<open>
-  \<^verbatim>\<open>true and null : Boolean[?]\<close>\<close>
+\<^verbatim>\<open>true and null : Boolean[?]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall (BooleanLiteral True) DotCall AndOp [NullLiteral] : x}"
 
 text \<open>
-  \<^verbatim>\<open>let x : Real[?] = 5 in x + 7 : Real[1]\<close>\<close>
+\<^verbatim>\<open>let x : Real[?] = 5 in x + 7 : Real[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let (STR ''x'') Real[?] (IntegerLiteral 5)
     (OperationCall (Var STR ''x'') DotCall PlusOp [IntegerLiteral 7]) : x}"
 
 text \<open>
-  \<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
+\<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
   : Tuple(first: Integer[1], second: String[1])\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall
@@ -332,7 +343,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
       [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]] : x}"
 
 text \<open>
-  \<^verbatim>\<open>Sequence{1..5}->iterate(x, acc : Real[?] = 5 | acc + x) : Real[1]\<close>\<close>
+\<^verbatim>\<open>Sequence{1..5}->iterate(x, acc : Real[?] = 5 | acc + x) : Real[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   IterateCall (CollectionLiteral SequenceKind
               [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
@@ -341,7 +352,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
     (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : x}"
 
 text \<open>
-  \<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
+\<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
 x->any(it | it = 'test') : String[?]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let (STR ''x'') (Sequence String[?]) (CollectionLiteral SequenceKind
@@ -351,7 +362,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
     (OperationCall (Var STR ''it'') DotCall EqualOp [StringLiteral ''test''])) : x}"
 
 text \<open>
-  \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
+\<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
 x->closure(it | it) : OrderedSet String[?]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
@@ -361,26 +372,26 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
     (Var STR ''it'')) : x}"
 
 text \<open>
-  \<^verbatim>\<open>context Employee:
+\<^verbatim>\<open>context Employee:
 position : String[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
   AttributeCall (Var STR ''self'') STR ''position'' : x}"
 
 (* TODO: Inherited properties *)
 text \<open>
-  \<^verbatim>\<open>context Employee:
+\<^verbatim>\<open>context Employee:
 position : String[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
   AttributeCall (Var STR ''self'') STR ''name'' : x}"
 
 text \<open>
-  \<^verbatim>\<open>context Employee:
+\<^verbatim>\<open>context Employee:
 projects : Set (Project[1])\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
   AssociationEndCall (Var STR ''self'') STR ''projects'' : x}"
 
 text \<open>
-  \<^verbatim>\<open>context Employee:
+\<^verbatim>\<open>context Employee:
 projects.members : Bag(Employee[1])\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
   CollectIteratorCall (AssociationEndCall (Var STR ''self'') STR ''projects'')
@@ -388,31 +399,31 @@ values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<
     (AssociationEndCall (Var STR ''it'') STR ''members'') : x}"
 
 text \<open>
-  \<^verbatim>\<open>context Project:
+\<^verbatim>\<open>context Project:
 manager : Employee[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Project[?])] :: classes1 type env) \<turnstile>
   AssociationEndCall (Var STR ''self'') STR ''manager'' : x}"
 
 text \<open>
-  \<^verbatim>\<open>Project[?].allInstances() : Project[?]\<close>\<close>
+\<^verbatim>\<open>Project[?].allInstances() : Project[?]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   MetaOperationCall Project[?] AllInstancesOp : x}"
 
 text \<open>
-  \<^verbatim>\<open>Project[1]::allProjects() : Project[1]\<close>\<close>
+\<^verbatim>\<open>Project[1]::allProjects() : Project[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   StaticOperationCall Project[1] STR ''allProjects'' [] : x}"
 
 subsection \<open>Negative Cases\<close>
 
 text \<open>
-  \<^verbatim>\<open>let x : Boolean[1] = 5 in x and true\<close>\<close>
+\<^verbatim>\<open>let x : Boolean[1] = 5 in x and true\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' Boolean[1] (IntegerLiteral 5)
     (OperationCall (Var STR ''x'') DotCall AndOp [BooleanLiteral True]) : x}"
 
 text \<open>
-  \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
+\<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
 x->closure(it | 1)\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind

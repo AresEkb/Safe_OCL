@@ -2,6 +2,7 @@
 \usepackage{isabelle,isabellesym}
 \usepackage{amssymb}
 \usepackage[english]{babel}
+\usepackage{caption} 
 
 % this should be the last package used
 \usepackage{pdfsetup}
@@ -10,6 +11,7 @@
 \urlstyle{rm}
 \isabellestyle{it}
 
+\captionsetup[table]{skip=10pt}
 
 \makeatletter
 \newenvironment{abstract}{%
@@ -22,24 +24,24 @@
 
 \begin{document}
 
-\title{Simple OCL}
-%\author{Denis Nikiforov}
+\title{Safe OCL}
+\author{Denis Nikiforov}
 \maketitle
 
 \begin{abstract}
-  The theory is a simple formalization of the OCL type system,
+  The theory is a simple formalization of the OCL type system~\cite{OCL24},
   its abstract syntax and expressions typing.
   In contrast to Featherweight OCL~\cite{Featherweight_OCL-AFP},
   it's based on a deep embedding approach.
 
-  Simple OCL distincts nullable and non-nullable types. Also
+  Safe OCL distincts nullable and non-nullable types. Also
   the theory gives a formal definition of safe navigation
   operations~\cite{DBLP:conf/models/Willink15}.
 
   The Preliminaries Section of the theory defines a number of
   helper lemmas for transitive closures, tuples and arbitrary
   object models independent from OCL. It allows to use
-  Simple OCL as a refenerence theory for formalization of
+  Safe OCL as a refenerence theory for formalization of
   analogous languages.
 \end{abstract}
 

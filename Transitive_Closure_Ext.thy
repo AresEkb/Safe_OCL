@@ -1,9 +1,8 @@
-(*  Title:       Simple OCL Semantics
+(*  Title:       Safe OCL
     Author:      Denis Nikiforov, December 2018
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>Preliminaries\<close>
 section \<open>Transitive Closures\<close>
 theory Transitive_Closure_Ext
   imports "HOL-Library.FuncSet"

@@ -1,4 +1,4 @@
-(*  Title:       Simple OCL Semantics
+(*  Title:       Safe OCL
     Author:      Denis Nikiforov, December 2018
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
@@ -14,7 +14,7 @@ type_synonym vname = "String.literal"
 type_synonym 'a env = "vname \<rightharpoonup>\<^sub>f 'a"
 
 text \<open>
-  In OCL @{text "1 + \<infinity> = \<bottom>"}. So we don't use @{typ enat} and
+  In OCL @{text "1 + \<infinity> = \<bottom>"}. So we do not use @{typ enat} and
   define the new data type.\<close>
 
 typedef unat = "UNIV :: nat option set" ..
@@ -128,10 +128,15 @@ text \<open>
 datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
 
 text \<open>
-  We don't define a @{text Classifier} type (a type of all types),
+  We do not define a @{text Classifier} type (a type of all types),
   because it will add unnecessary complications to the theory.
   So we have to define type operations as a pure syntactic constructs.
-  And also we don't define @{text Type} expressions.\<close>
+  And also we do not define @{text Type} expressions.\<close>
+
+text \<open>
+  We do not define @{text InvalidLiteral}, because it allows us to
+  exclude @{text OclInvalid} type from typing rules. It simplifies
+  the types system.\<close>
 
 datatype 'a expr =
   Literal "'a literal_expr"
@@ -143,7 +148,6 @@ datatype 'a expr =
 | Call (source : "'a expr") (kind : call_kind) "'a call_expr"
 and 'a literal_expr =
   NullLiteral
-| InvalidLiteral
 | BooleanLiteral (boolean_symbol : bool)
 | RealLiteral (real_symbol : real)
 | IntegerLiteral (integer_symbol : int)

@@ -1,1 +1,1 @@
-isabelle build -c -d . -v -o document=pdf -b Simple_OCL
+isabelle build -c -d . -v -o document=pdf -b Safe_OCL

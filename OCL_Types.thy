@@ -1,11 +1,11 @@
-(*  Title:       Simple OCL Semantics
+(*  Title:       Safe OCL
     Author:      Denis Nikiforov, December 2018
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
 chapter \<open>Types\<close>
 theory OCL_Types
-  imports OCL_Basic_Types Tuple
+  imports OCL_Basic_Types Errorable Tuple
 begin
 
 (*** Types ******************************************************************)
@@ -15,8 +15,7 @@ section \<open>Definition of Types and a Subtype Relation\<close>
 type_synonym telem = String.literal
 
 datatype (plugins del: "size") 'a type =
-  OclVoid
-| Required "'a basic_type" ("_[1]" [1000] 1000)
+  Required "'a basic_type" ("_[1]" [1000] 1000)
 | Optional "'a basic_type" ("_[?]" [1000] 1000)
 | Set "'a type"
 | OrderedSet "'a type"
@@ -24,14 +23,24 @@ datatype (plugins del: "size") 'a type =
 | Sequence "'a type"
 | Collection "'a type"
 | Tuple "telem \<rightharpoonup>\<^sub>f 'a type"
-| SupType
+| OclSuper
+
+text \<open>
+  We define the @{term OclInvalid} type separately, because we
+  do not need types like @{term "Set(OclInvalid)"} in the theory.
+  An @{term "OclVoid[1]"} type is not equal to @{term OclInvalid}.
+  For example, @{term "Set(OclVoid[1])"} is a valid type of the
+  following expression:
+
+\<^verbatim>\<open>Set{null}->excluding(null)\<close>\<close>
+
+definition "OclInvalid :: 'a type\<^sub>\<bottom> \<equiv> \<bottom>"
 
 instantiation type :: (type) size
 begin
 
 primrec size_type :: "'a type \<Rightarrow> nat" where
-  "size_type OclVoid = 0"
-| "size_type (Required _) = 0"
+  "size_type (Required _) = 0"
 | "size_type (Optional _) = 0"
 | "size_type (Set x) = Suc (size_type x)"
 | "size_type (OrderedSet x) = Suc (size_type x)"
@@ -39,18 +48,18 @@ primrec size_type :: "'a type \<Rightarrow> nat" where
 | "size_type (Sequence x) = Suc (size_type x)"
 | "size_type (Collection x) = Suc (size_type x)"
 | "size_type (Tuple xs) = Suc (ffold tcf 0 (fset_of_fmap (fmmap size_type xs)))"
-| "size_type SupType = 0"
+| "size_type OclSuper = 0"
 
 instance ..
 
 end
 
 inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" ("_ \<sqsubset> _" [65, 65] 65) where
-  "OclVoid \<sqsubset> \<sigma>[?]"
-| "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[1] \<sqsubset> \<sigma>[1]"
+  "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[1] \<sqsubset> \<sigma>[1]"
 | "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[?] \<sqsubset> \<sigma>[?]"
 | "\<tau>[1] \<sqsubset> \<tau>[?]"
-| "OclAny[?] \<sqsubset> SupType"
+| "OclAny[?] \<sqsubset> OclSuper"
+
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Set \<tau> \<sqsubset> Set \<sigma>"
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> OrderedSet \<tau> \<sqsubset> OrderedSet \<sigma>"
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Bag \<tau> \<sqsubset> Bag \<sigma>"
@@ -60,14 +69,14 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "OrderedSet \<tau> \<sqsubset> Collection \<tau>"
 | "Bag \<tau> \<sqsubset> Collection \<tau>"
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
-| "Collection SupType \<sqsubset> SupType"
+| "Collection OclSuper \<sqsubset> OclSuper"
+
 | "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>"
-| "Tuple \<pi> \<sqsubset> SupType"
+| "Tuple \<pi> \<sqsubset> OclSuper"
 
 declare subtype.intros [intro!]
 
-inductive_cases subtype_x_OclVoid [elim!]: "\<tau> \<sqsubset> OclVoid"
 inductive_cases subtype_x_Required [elim!]: "\<tau> \<sqsubset> \<sigma>[1]"
 inductive_cases subtype_x_Optional [elim!]: "\<tau> \<sqsubset> \<sigma>[?]"
 inductive_cases subtype_x_Set [elim!]: "\<tau> \<sqsubset> Set \<sigma>"
@@ -76,10 +85,10 @@ inductive_cases subtype_x_Bag [elim!]: "\<tau> \<sqsubset> Bag \<sigma>"
 inductive_cases subtype_x_Sequence [elim!]: "\<tau> \<sqsubset> Sequence \<sigma>"
 inductive_cases subtype_x_Collection [elim!]: "\<tau> \<sqsubset> Collection \<sigma>"
 inductive_cases subtype_x_Tuple [elim!]: "\<tau> \<sqsubset> Tuple \<pi>"
-inductive_cases subtype_x_SupType [elim!]: "\<tau> \<sqsubset> SupType"
+inductive_cases subtype_x_OclSuper [elim!]: "\<tau> \<sqsubset> OclSuper"
 
 inductive_cases subtype_Collection_x [elim!]: "Collection \<tau> \<sqsubset> \<sigma>"
-inductive_cases subtype_SupType_x [elim!]: "SupType \<sqsubset> \<sigma>"
+inductive_cases subtype_OclSuper_x [elim!]: "OclSuper \<sqsubset> \<sigma>"
 
 lemma subtype_antisym:
   "\<tau> \<sqsubset> \<sigma> \<Longrightarrow>
@@ -104,7 +113,6 @@ lemma not_subtype_Optional_Required:
 lemma Optional_bij_on_trancl [simp]:
   "bij_on_trancl subtype Optional"
   apply (auto simp add: inj_def)
-  using tranclp.cases apply fastforce
   using not_subtype_Optional_Required by blast
 
 lemma Set_bij_on_trancl [simp]:
@@ -126,9 +134,9 @@ lemma Sequence_bij_on_trancl [simp]:
 lemma subtype_tranclp_Collection_x:
   "subtype\<^sup>+\<^sup>+ (Collection \<tau>) \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<sigma> = Collection \<rho> \<Longrightarrow> subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
-   (\<sigma> = SupType \<Longrightarrow> P) \<Longrightarrow> P"
+   (\<sigma> = OclSuper \<Longrightarrow> P) \<Longrightarrow> P"
   apply (induct rule: tranclp_induct, auto)
-  by (metis subtype_Collection_x subtype_SupType_x
+  by (metis subtype_Collection_x subtype_OclSuper_x
             tranclp.trancl_into_trancl)
 
 lemma Collection_bij_on_trancl [simp]:
@@ -160,7 +168,6 @@ lemma type_less_eq_x_Required_intro [intro]:
   by (simp) (rule preserve_rtranclp; auto)
 
 lemma type_less_eq_x_Optional_intro [intro]:
-  "\<tau> = OclVoid \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
   "\<tau> \<le> \<sigma>[1] \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
   "\<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
   unfolding less_eq_type_def less_eq_basic_type_def
@@ -229,63 +236,58 @@ proof -
     by (rule preserve_rtranclp[of "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)"]; auto)
 qed
 
-lemma type_less_eq_x_SupType_intro [intro]:
-  "\<tau> \<le> SupType"
+lemma type_less_eq_x_OclSuper_intro [intro]:
+  "\<tau> \<le> OclSuper"
   unfolding less_eq_type_def
 proof (induct \<tau>)
-  case OclVoid
-  have "subtype\<^sup>*\<^sup>* OclVoid OclAny[?]" by auto
-  also have "subtype\<^sup>*\<^sup>* OclAny[?] SupType" by auto
-  finally show ?case by simp
-next
   case (Required x)
   have "subtype\<^sup>*\<^sup>* x[1] OclAny[1]" using less_eq_type_def by auto
   also have "subtype\<^sup>*\<^sup>* OclAny[1] OclAny[?]" by auto
-  also have "subtype\<^sup>*\<^sup>* OclAny[?] SupType" by auto
+  also have "subtype\<^sup>*\<^sup>* OclAny[?] OclSuper" by auto
   finally show ?case by auto
 next
   case (Optional x)
   have "subtype\<^sup>*\<^sup>* x[?] OclAny[?]" using less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* OclAny[?] SupType" by auto
+  also have "subtype\<^sup>*\<^sup>* OclAny[?] OclSuper" by auto
   finally show ?case by auto
 next
   case (Set \<tau>)
   have "subtype\<^sup>*\<^sup>* (Set \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
+  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
     using Set.hyps less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection SupType) SupType" by auto
+  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (OrderedSet \<tau>)
   have "subtype\<^sup>*\<^sup>* (OrderedSet \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
+  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
     using OrderedSet.hyps less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection SupType) SupType" by auto
+  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (Bag \<tau>)
   have "subtype\<^sup>*\<^sup>* (Bag \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
+  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
     using Bag.hyps less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection SupType) SupType" by auto
+  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (Sequence \<tau>)
   have "subtype\<^sup>*\<^sup>* (Sequence \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
+  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
     using Sequence.hyps less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection SupType) SupType" by auto
+  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (Collection \<tau>)
-  have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection SupType)"
+  have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
     using Collection.hyps less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection SupType) SupType" by auto
+  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (Tuple x) thus ?case by auto
 next
-  case SupType thus ?case by auto
+  case OclSuper thus ?case by auto
 qed
 
 (*** Strict Elimination Rules ***********************************************)
@@ -337,7 +339,6 @@ qed
 *)
 lemma type_less_x_Optional [elim!]:
   "\<tau> < \<sigma>[?] \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
    (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def
@@ -443,8 +444,8 @@ proof -
     using assms by auto
 qed
 
-lemma type_less_x_SupType [elim!]:
-  "\<tau> < SupType \<Longrightarrow> (\<tau> \<noteq> SupType \<Longrightarrow> P) \<Longrightarrow> P"
+lemma type_less_x_OclSuper [elim!]:
+  "\<tau> < OclSuper \<Longrightarrow> (\<tau> \<noteq> OclSuper \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def
   by (drule tranclpD, auto)
 
@@ -509,11 +510,6 @@ end
 
 subsection \<open>Non-strict Elimination Rules\<close>
 
-lemma type_less_eq_x_OclVoid [elim!]:
-  "\<tau> \<le> OclVoid \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
-  by (drule le_imp_less_or_eq; auto)
-
 lemma type_less_eq_x_Required [elim!]:
   "\<tau> \<le> \<sigma>[1] \<Longrightarrow>
    (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
@@ -521,7 +517,6 @@ lemma type_less_eq_x_Required [elim!]:
 
 lemma type_less_eq_x_Optional [elim!]:
   "\<tau> \<le> \<sigma>[?] \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
    (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq, auto)
@@ -575,66 +570,58 @@ instantiation type :: (semilattice_sup) semilattice_sup
 begin
 
 fun sup_type where
-  "OclVoid \<squnion> \<sigma> = (case \<sigma>
-    of OclVoid \<Rightarrow> OclVoid
-     | \<rho>[1] \<Rightarrow> \<rho>[?]
-     | \<rho>[?] \<Rightarrow> \<rho>[?]
-     | _ \<Rightarrow> SupType)"
-| "Required \<tau> \<squnion> \<sigma> = (case \<sigma>
-    of OclVoid \<Rightarrow> \<tau>[?]
-     | \<rho>[1] \<Rightarrow> (\<tau> \<squnion> \<rho>)[1]
+  "Required \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of \<rho>[1] \<Rightarrow> (\<tau> \<squnion> \<rho>)[1]
      | \<rho>[?] \<Rightarrow> (\<tau> \<squnion> \<rho>)[?]
-     | _ \<Rightarrow> SupType)"
+     | _ \<Rightarrow> OclSuper)"
 | "Optional \<tau> \<squnion> \<sigma> = (case \<sigma>
-    of OclVoid \<Rightarrow> \<tau>[?]
-     | \<rho>[1] \<Rightarrow> (\<tau> \<squnion> \<rho>)[?]
+    of \<rho>[1] \<Rightarrow> (\<tau> \<squnion> \<rho>)[?]
      | \<rho>[?] \<Rightarrow> (\<tau> \<squnion> \<rho>)[?]
-     | _ \<Rightarrow> SupType)"
+     | _ \<Rightarrow> OclSuper)"
 | "Set \<tau> \<squnion> \<sigma> = (case \<sigma>
     of Set \<rho> \<Rightarrow> Set (\<tau> \<squnion> \<rho>)
      | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
-     | _ \<Rightarrow> SupType)"
+     | _ \<Rightarrow> OclSuper)"
 | "OrderedSet \<tau> \<squnion> \<sigma> = (case \<sigma>
     of Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | OrderedSet \<rho> \<Rightarrow> OrderedSet (\<tau> \<squnion> \<rho>)
      | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
-     | _ \<Rightarrow> SupType)"
+     | _ \<Rightarrow> OclSuper)"
 | "Bag \<tau> \<squnion> \<sigma> = (case \<sigma>
     of Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Bag \<rho> \<Rightarrow> Bag (\<tau> \<squnion> \<rho>)
      | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
-     | _ \<Rightarrow> SupType)"
+     | _ \<Rightarrow> OclSuper)"
 | "Sequence \<tau> \<squnion> \<sigma> = (case \<sigma>
     of Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Sequence \<rho> \<Rightarrow> Sequence (\<tau> \<squnion> \<rho>)
      | Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
-     | _ \<Rightarrow> SupType)"
+     | _ \<Rightarrow> OclSuper)"
 | "Collection \<tau> \<squnion> \<sigma> = (case \<sigma>
     of Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
      | Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion> \<rho>)
-     | _ \<Rightarrow> SupType)"
+     | _ \<Rightarrow> OclSuper)"
 | "Tuple \<pi> \<squnion> \<sigma> = (case \<sigma>
     of Tuple \<xi> \<Rightarrow> Tuple (fmmerge_fun (\<squnion>) \<pi> \<xi>)
-     | _ \<Rightarrow> SupType)"
-| "SupType \<squnion> \<sigma> = SupType"
+     | _ \<Rightarrow> OclSuper)"
+| "OclSuper \<squnion> \<sigma> = OclSuper"
 
 lemma sup_ge1_type:
   "\<tau> \<le> \<tau> \<squnion> \<sigma>"
   for \<tau> \<sigma> :: "'a type"
 proof (induct \<tau> arbitrary: \<sigma>)
-  case OclVoid show ?case by (induct \<sigma>; auto)
   case (Required x) show ?case by (induct \<sigma>;
     auto simp add: type_less_eq_x_Optional_intro(2) type_less_eq_x_Required_intro)
   case (Optional x) show ?case by (induct \<sigma>; auto)
@@ -651,14 +638,13 @@ next
     by (cases \<sigma>, auto)
   ultimately show ?case by (cases \<sigma>, auto)
 next
-  case SupType show ?case by simp
+  case OclSuper show ?case by simp
 qed
 
 lemma sup_commut_type:
   "\<tau> \<squnion> \<sigma> = \<sigma> \<squnion> \<tau>"
   for \<tau> \<sigma> :: "'a type"
 proof (induct \<tau> arbitrary: \<sigma>)
-  case OclVoid show ?case by (cases \<sigma>; simp add: less_eq_type_def)
   case (Required \<tau>) show ?case by (cases \<sigma>; simp add: sup_commute)
   case (Optional \<tau>) show ?case by (cases \<sigma>; simp add: sup_commute)
   case (Set \<tau>) thus ?case by (cases \<sigma>; simp)
@@ -671,17 +657,13 @@ next
     apply (cases \<sigma>; simp add: less_eq_type_def)
     using fmmerge_commut by blast
 next
-  case SupType show ?case by (cases \<sigma>; simp add: less_eq_type_def)
+  case OclSuper show ?case by (cases \<sigma>; simp add: less_eq_type_def)
 qed
 
 lemma sup_least_type:
   "\<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow> \<tau> \<squnion> \<sigma> \<le> \<rho>"
   for \<tau> \<sigma> \<rho> :: "'a type"
 proof (induct \<rho> arbitrary: \<tau> \<sigma>)
-  case OclVoid show ?case
-    apply (insert OclVoid)
-    by (erule type_less_eq_x_OclVoid; erule type_less_eq_x_OclVoid; auto)
-next
   case (Required x) show ?case
     apply (insert Required)
     by (erule type_less_eq_x_Required; erule type_less_eq_x_Required; auto)
@@ -717,7 +699,7 @@ next
     by (rule_tac ?\<pi>="(fmmerge (\<squnion>) \<pi>' \<pi>'')" in type_less_eq_x_Tuple_intro;
         simp add: fmrel_on_fset_fmmerge1)
 next
-  case SupType show ?case using eq_refl by auto
+  case OclSuper show ?case using eq_refl by auto
 qed
 
 instance
@@ -777,33 +759,8 @@ inductive to_ordered_collection where
 | "to_ordered_collection (Sequence \<tau>) (Sequence \<tau>)"
 | "to_ordered_collection (Collection \<tau>) (Sequence \<tau>)"
 
-typedef 'a type' = "UNIV :: 'a type option set" ..
-
-definition "OclInvalid \<equiv> Abs_type' None"
-
-definition "type' \<tau> = Abs_type' (Some \<tau>)"
-
-notation
-  bot ("\<bottom>")
-
-instantiation type' :: (type) bot
-begin
-definition "\<bottom> \<equiv> OclInvalid"
-instance ..
-end
-
-free_constructors case_type for
-  type'
-| "\<bottom> :: 'a type'"
-  apply (metis OclInvalid_def Rep_type'_inverse bot_type'_def not_Some_eq type'_def)
-  apply (metis Abs_type'_inverse UNIV_I option.inject type'_def)
-  by (metis Abs_type'_inverse OclInvalid_def UNIV_I bot_type'_def option.distinct(1) type'_def)
-
-
 fun to_single_type where
-(*  "to_single_type OclInvalid = OclInvalid"
-|*) "to_single_type OclVoid = OclVoid"
-| "to_single_type \<tau>[1] = \<tau>[1]"
+  "to_single_type \<tau>[1] = \<tau>[1]"
 | "to_single_type \<tau>[?] = \<tau>[?]"
 | "to_single_type (Set \<tau>) = to_single_type \<tau>"
 | "to_single_type (OrderedSet \<tau>) = to_single_type \<tau>"
@@ -811,11 +768,10 @@ fun to_single_type where
 | "to_single_type (Sequence \<tau>) = to_single_type \<tau>"
 | "to_single_type (Collection \<tau>) = to_single_type \<tau>"
 | "to_single_type (Tuple \<pi>) = Tuple \<pi>"
-| "to_single_type SupType = SupType"
+| "to_single_type OclSuper = OclSuper"
 
 fun to_required_type where
-  "to_required_type OclVoid = undefined"
-| "to_required_type \<tau>[1] = \<tau>[1]"
+  "to_required_type \<tau>[1] = \<tau>[1]"
 | "to_required_type \<tau>[?] = \<tau>[1]"
 | "to_required_type (Set \<tau>) = Set (to_required_type \<tau>)"
 | "to_required_type (OrderedSet \<tau>) = OrderedSet (to_required_type \<tau>)"
@@ -823,11 +779,10 @@ fun to_required_type where
 | "to_required_type (Sequence \<tau>) = Sequence (to_required_type \<tau>)"
 | "to_required_type (Collection \<tau>) = Collection (to_required_type \<tau>)"
 | "to_required_type (Tuple \<pi>) = Tuple (fmmap to_required_type \<pi>)"
-| "to_required_type SupType = SupType"
+| "to_required_type OclSuper = OclSuper"
 
 fun to_optional_type where
-  "to_optional_type OclVoid = OclVoid"
-| "to_optional_type \<tau>[1] = \<tau>[?]"
+  "to_optional_type \<tau>[1] = \<tau>[?]"
 | "to_optional_type \<tau>[?] = \<tau>[?]"
 | "to_optional_type (Set \<tau>) = Set (to_optional_type \<tau>)"
 | "to_optional_type (OrderedSet \<tau>) = OrderedSet (to_optional_type \<tau>)"
@@ -835,7 +790,7 @@ fun to_optional_type where
 | "to_optional_type (Sequence \<tau>) = Sequence (to_optional_type \<tau>)"
 | "to_optional_type (Collection \<tau>) = Collection (to_optional_type \<tau>)"
 | "to_optional_type (Tuple \<pi>) = Tuple (fmmap to_optional_type \<pi>)"
-| "to_optional_type SupType = SupType"
+| "to_optional_type OclSuper = OclSuper"
 
 (*** Properties of Helper Relations *****************************************)
 
@@ -878,48 +833,44 @@ section \<open>Code Setup\<close>
 code_pred subtype .
 
 function subtype_fun :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" where
-  "subtype_fun OclVoid \<sigma> = (case \<sigma>
-    of _[?] \<Rightarrow> True
-     | SupType \<Rightarrow> True
-     | _ \<Rightarrow> False)"
-| "subtype_fun (Required \<tau>) \<sigma> = (case \<sigma>
+  "subtype_fun (Required \<tau>) \<sigma> = (case \<sigma>
     of \<rho>[1] \<Rightarrow> basic_subtype_fun \<tau> \<rho>
      | \<rho>[?] \<Rightarrow> basic_subtype_fun \<tau> \<rho> \<or> \<tau> = \<rho>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "subtype_fun (Optional \<tau>) \<sigma> = (case \<sigma>
     of \<rho>[?] \<Rightarrow> basic_subtype_fun \<tau> \<rho>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "subtype_fun (Set \<tau>) \<sigma> = (case \<sigma>
     of Set \<rho> \<Rightarrow> subtype_fun \<tau> \<rho>
      | Collection \<rho> \<Rightarrow> subtype_fun \<tau> \<rho> \<or> \<tau> = \<rho>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "subtype_fun (OrderedSet \<tau>) \<sigma> = (case \<sigma>
     of OrderedSet \<rho> \<Rightarrow> subtype_fun \<tau> \<rho>
      | Collection \<rho> \<Rightarrow> subtype_fun \<tau> \<rho> \<or> \<tau> = \<rho>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "subtype_fun (Bag \<tau>) \<sigma> = (case \<sigma>
     of Bag \<rho> \<Rightarrow> subtype_fun \<tau> \<rho>
      | Collection \<rho> \<Rightarrow> subtype_fun \<tau> \<rho> \<or> \<tau> = \<rho>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "subtype_fun (Sequence \<tau>) \<sigma> = (case \<sigma>
     of Sequence \<rho> \<Rightarrow> subtype_fun \<tau> \<rho>
      | Collection \<rho> \<Rightarrow> subtype_fun \<tau> \<rho> \<or> \<tau> = \<rho>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "subtype_fun (Collection \<tau>) \<sigma> = (case \<sigma>
     of Collection \<rho> \<Rightarrow> subtype_fun \<tau> \<rho>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
 | "subtype_fun (Tuple \<pi>) \<sigma> = (case \<sigma>
     of Tuple \<xi> \<Rightarrow> strict_subtuple_fun (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi>
-     | SupType \<Rightarrow> True
+     | OclSuper \<Rightarrow> True
      | _ \<Rightarrow> False)"
-| "subtype_fun SupType _ = False"
+| "subtype_fun OclSuper _ = False"
   by pat_completeness auto
 termination
   by (relation "measure (\<lambda>(xs, ys). size ys)";
@@ -930,17 +881,13 @@ lemma less_eq_type_code [code_abbrev, simp]:
 proof
   show "\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>"
   proof (induct \<sigma> arbitrary: \<tau>)
-    case OclVoid thus ?case
-      by (auto) (erule subtype_fun.elims; auto)
-  next
     case (Required x) thus ?case
       by (auto) (erule subtype_fun.elims; auto)
   next
     case (Optional x) thus ?case
       apply (auto)
-      by (erule subtype_fun.elims;
-          auto simp add: type_less_eq_x_Optional_intro(2)
-                         type_less_eq_x_Required_intro)
+      apply (erule subtype_fun.elims, auto)
+      using dual_order.order_iff_strict by auto
   next
     case (Set \<sigma>) thus ?case
       by (auto) (erule subtype_fun.elims; auto)
@@ -963,13 +910,11 @@ proof
       apply (erule subtype_fun.elims; auto)
       by (metis (mono_tags, lifting) subtuple_mono type_less_eq_x_Tuple_intro)
   next
-    case SupType thus ?case
+    case OclSuper thus ?case
       by auto
   qed
   show "\<tau> \<le> \<sigma> \<Longrightarrow> \<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma>"
   proof (induct \<sigma> arbitrary: \<tau>)
-    case OclVoid thus ?case by auto
-  next
     case (Required x) thus ?case
       apply (insert Required)
       by (erule type_less_eq_x_Required; auto simp add: dual_order.order_iff_strict)
@@ -1003,7 +948,7 @@ proof
       apply (erule type_less_eq_x_Tuple; auto)
       by (smt subtuple_mono)
   next
-    case SupType thus ?case by (cases \<tau>, auto)
+    case OclSuper thus ?case by (cases \<tau>, auto)
   qed
 qed
 
