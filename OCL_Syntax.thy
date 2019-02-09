@@ -30,9 +30,10 @@ end
 free_constructors cases_unat for
   unat
 | "\<infinity> :: unat"
-  apply (metis Abs_unat_cases infinity_unat_def option.exhaust unat_def)
-  apply (metis Abs_unat_inverse iso_tuple_UNIV_I option.inject unat_def)
-  by (simp add: Abs_unat_inject infinity_unat_def unat_def)
+  unfolding unat_def infinity_unat_def
+  apply (metis Rep_unat_inverse option.collapse)
+  apply (metis Abs_unat_inverse UNIV_I option.sel)
+  by (simp add: Abs_unat_inject)
 
 section \<open>Standard Library Operations\<close>
 
@@ -121,17 +122,17 @@ datatype collection_literal_kind =
   SetKind | OrderedSetKind | BagKind | SequenceKind | CollectionKind
 
 text \<open>
-  It could be defined as 2 boolean values (@{text "is_arrow_call"},
+  A call kind could be defined as 2 boolean values (@{text "is_arrow_call"},
   @{text "is_safe_call"}). Also we could derive @{text "is_arrow_call"}
   value automatically based on an operation kind.
-  But it's much easier and more natural to define such an enumeration.\<close>
+  But it's much easier and more natural to use the following enumeration.\<close>
 datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
 
 text \<open>
   We do not define a @{text Classifier} type (a type of all types),
   because it will add unnecessary complications to the theory.
   So we have to define type operations as a pure syntactic constructs.
-  And also we do not define @{text Type} expressions.\<close>
+  We do not define @{text Type} expressions either.\<close>
 
 text \<open>
   We do not define @{text InvalidLiteral}, because it allows us to
@@ -176,22 +177,39 @@ definition "tuple_element_expr \<equiv> snd \<circ> snd"
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 
-abbreviation "TypeOperationCall src k op ty \<equiv> Call src k (TypeOperation op ty)"
-abbreviation "AttributeCall src attr \<equiv> Call src DotCall (Attribute attr)"
-abbreviation "AssociationEndCall src role \<equiv> Call src DotCall (AssociationEnd role)"
-abbreviation "OperationCall src k op as \<equiv> Call src k (Operation op as)"
-abbreviation "TupleElementCall src elem \<equiv> Call src DotCall (TupleElement elem)"
-abbreviation "IterateCall src its v ty init body \<equiv> Call src ArrowCall (Iterate its v ty init body)"
-abbreviation "AnyIteratorCall src its body \<equiv> Call src ArrowCall (Iterator AnyIter its body)"
-abbreviation "ClosureIteratorCall src its body \<equiv> Call src ArrowCall (Iterator ClosureIter its body)"
-abbreviation "CollectIteratorCall src its body \<equiv> Call src ArrowCall (Iterator CollectIter its body)"
-abbreviation "CollectNestedIteratorCall src its body \<equiv> Call src ArrowCall (Iterator CollectNestedIter its body)"
-abbreviation "ExistsIteratorCall src its body \<equiv> Call src ArrowCall (Iterator ExistsIter its body)"
-abbreviation "ForAllIteratorCall src its body \<equiv> Call src ArrowCall (Iterator ForAllIter its body)"
-abbreviation "OneIteratorCall src its body \<equiv> Call src ArrowCall (Iterator OneIter its body)"
-abbreviation "IsUniqueIteratorCall src its body \<equiv> Call src ArrowCall (Iterator IsUniqueIter its body)"
-abbreviation "SelectIteratorCall src its body \<equiv> Call src ArrowCall (Iterator SelectIter its body)"
-abbreviation "RejectIteratorCall src its body \<equiv> Call src ArrowCall (Iterator RejectIter its body)"
-abbreviation "SortedByIteratorCall src its body \<equiv> Call src ArrowCall (Iterator SortedByIter its body)"
+abbreviation "TypeOperationCall src k op ty \<equiv>
+  Call src k (TypeOperation op ty)"
+abbreviation "AttributeCall src attr \<equiv>
+  Call src DotCall (Attribute attr)"
+abbreviation "AssociationEndCall src role \<equiv>
+  Call src DotCall (AssociationEnd role)"
+abbreviation "OperationCall src k op as \<equiv>
+  Call src k (Operation op as)"
+abbreviation "TupleElementCall src elem \<equiv>
+  Call src DotCall (TupleElement elem)"
+abbreviation "IterateCall src its v ty init body \<equiv>
+  Call src ArrowCall (Iterate its v ty init body)"
+abbreviation "AnyIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator AnyIter its body)"
+abbreviation "ClosureIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator ClosureIter its body)"
+abbreviation "CollectIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator CollectIter its body)"
+abbreviation "CollectNestedIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator CollectNestedIter its body)"
+abbreviation "ExistsIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator ExistsIter its body)"
+abbreviation "ForAllIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator ForAllIter its body)"
+abbreviation "OneIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator OneIter its body)"
+abbreviation "IsUniqueIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator IsUniqueIter its body)"
+abbreviation "SelectIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator SelectIter its body)"
+abbreviation "RejectIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator RejectIter its body)"
+abbreviation "SortedByIteratorCall src its body \<equiv>
+  Call src ArrowCall (Iterator SortedByIter its body)"
 
 end

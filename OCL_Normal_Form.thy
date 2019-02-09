@@ -8,6 +8,10 @@ theory OCL_Normal_Form
   imports OCL_Typing
 begin
 
+(*** Normalization Rules ****************************************************)
+
+section \<open>Normalization Rules\<close>
+
 text \<open>
   \autoref{tab:norm_rules} describes normalization rules for OCL expressions.
   The following variables are used in the table:
@@ -194,28 +198,30 @@ lemma any_has_not_element_type:
   by (erule element_type.cases; auto)
 
 lemma any_has_not_element_type':
-  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[1] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow> False"
+  "element_type \<tau> \<sigma> \<Longrightarrow> OclVoid[?] \<le> \<tau> \<Longrightarrow> False"
   by (erule element_type.cases; auto)
 
 lemma any_has_not_element_type'':
-  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow> False"
+  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[1] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow> False"
   by (erule element_type.cases; auto)
 
 lemma any_has_not_element_type''':
-  "element_type \<tau> \<sigma> \<Longrightarrow> OclVoid[?] \<le> \<tau> \<Longrightarrow> False"
+  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow> False"
   by (erule element_type.cases; auto)
 
 lemma
   normalize_det:
-    "\<Gamma> \<turnstile> expr \<Rrightarrow> expr\<^sub>1 \<Longrightarrow> \<Gamma> \<turnstile> expr \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> expr\<^sub>1 = expr\<^sub>2" and
+    "\<Gamma> \<turnstile> expr \<Rrightarrow> expr\<^sub>1 \<Longrightarrow>
+     \<Gamma> \<turnstile> expr \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> expr\<^sub>1 = expr\<^sub>2" and
   normalize_call_det:
-    "\<Gamma>_\<tau> \<turnstile>\<^sub>C call \<Rrightarrow> call\<^sub>1 \<Longrightarrow> \<Gamma>_\<tau> \<turnstile>\<^sub>C call \<Rrightarrow> call\<^sub>2 \<Longrightarrow> call\<^sub>1 = call\<^sub>2" and
+    "\<Gamma>_\<tau> \<turnstile>\<^sub>C call \<Rrightarrow> call\<^sub>1 \<Longrightarrow>
+     \<Gamma>_\<tau> \<turnstile>\<^sub>C call \<Rrightarrow> call\<^sub>2 \<Longrightarrow> call\<^sub>1 = call\<^sub>2" and
   normalize_expr_list_det:
-    "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> zs \<Longrightarrow> ys = zs"
+    "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow>
+     \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> zs \<Longrightarrow> ys = zs"
   for \<Gamma> :: "('a :: ocl_object_model) type env"
   and \<Gamma>_\<tau> :: "('a :: ocl_object_model) type env \<times> 'a type"
-proof (induct \<Gamma> expr expr\<^sub>1 and \<Gamma>_\<tau> call call\<^sub>1
-       arbitrary: expr\<^sub>2 and call\<^sub>2 and zs
+proof (induct arbitrary: expr\<^sub>2 and call\<^sub>2 and zs
        rule: normalize_normalize_call_normalize_expr_list.inducts)
   case (LiteralN \<Gamma> a) thus ?case by auto
 next
@@ -236,25 +242,25 @@ next
     apply (insert OclAnyDotCallN.prems)
     apply (erule DotCallNE)
     using OclAnyDotCallN.hyps typing_det apply metis
-    using OclAnyDotCallN.hyps any_has_not_element_type' typing_det by metis
+    using OclAnyDotCallN.hyps any_has_not_element_type'' typing_det by metis
 next
   case (OclAnySafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
     apply (insert OclAnySafeDotCallN.prems)
     apply (erule SafeDotCallNE)
     using OclAnySafeDotCallN.hyps typing_det comp_apply
     apply (metis (no_types, lifting) list.simps(8) list.simps(9))
-    using OclAnySafeDotCallN.hyps typing_det any_has_not_element_type''' by metis
+    using OclAnySafeDotCallN.hyps typing_det any_has_not_element_type' by metis
 next
   case (OclAnyArrowDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
     apply (insert OclAnyArrowDotCallN.prems)
     apply (erule ArrowCallNE)
     using OclAnyArrowDotCallN.hyps typing_det comp_apply apply metis
-    using OclAnyArrowDotCallN.hyps typing_det any_has_not_element_type'' by metis
+    using OclAnyArrowDotCallN.hyps typing_det any_has_not_element_type''' by metis
 next
   case (CollectionArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2 uu) show ?case
     apply (insert CollectionArrowCallN.prems)
     apply (erule ArrowCallNE)
-    using CollectionArrowCallN.hyps typing_det any_has_not_element_type'' apply metis
+    using CollectionArrowCallN.hyps typing_det any_has_not_element_type''' apply metis
     using CollectionArrowCallN.hyps typing_det by metis
 next
   case (CollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2 \<sigma>) show ?case
@@ -266,13 +272,13 @@ next
   case (CollectionDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2 \<sigma> it) show ?case
     apply (insert CollectionDotCallN.prems)
     apply (erule DotCallNE)
-    using CollectionDotCallN.hyps typing_det any_has_not_element_type' apply metis
+    using CollectionDotCallN.hyps typing_det any_has_not_element_type'' apply metis
     using CollectionDotCallN.hyps typing_det by metis
 next
   case (CollectionSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2 \<sigma> it) show ?case
     apply (insert CollectionSafeDotCallN.prems)
     apply (erule SafeDotCallNE)
-    using CollectionSafeDotCallN.hyps typing_det any_has_not_element_type''' apply metis
+    using CollectionSafeDotCallN.hyps typing_det any_has_not_element_type' apply metis
     using CollectionSafeDotCallN.hyps typing_det comp_apply
     by (metis (no_types, lifting) list.simps(8) list.simps(9))
 next

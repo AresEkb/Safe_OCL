@@ -12,6 +12,9 @@ begin
 
 section \<open>Definition of Types and a Subtype Relation\<close>
 
+text \<open>
+  Types are parameterized over classes.\<close>
+
 type_synonym telem = String.literal
 
 datatype (plugins del: "size") 'a type =
@@ -26,12 +29,13 @@ datatype (plugins del: "size") 'a type =
 | Tuple "telem \<rightharpoonup>\<^sub>f 'a type"
 
 text \<open>
-  We define the @{term OclInvalid} type separately, because we
-  do not need types like @{term "Set(OclInvalid)"} in the theory.
-  An @{term "OclVoid[1]"} type is not equal to @{term OclInvalid}.
-  For example, @{term "Set(OclVoid[1])"} is a valid type of the
-  following expression:
+  We define the @{text OclInvalid} type separately, because we
+  do not need types like @{text "Set(OclInvalid)"} in the theory.
+  The @{text "OclVoid[1]"} type is not equal to @{text OclInvalid}.
+  For example, @{text "Set(OclVoid[1])"} is a valid type of the
+  following expression:\<close>
 
+text \<open>
 \<^verbatim>\<open>Set{null}->excluding(null)\<close>\<close>
 
 definition "OclInvalid :: 'a type\<^sub>\<bottom> \<equiv> \<bottom>"
@@ -60,11 +64,11 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "\<tau>[1] \<sqsubset> \<tau>[?]"
 | "OclAny[?] \<sqsubset> OclSuper"
 
+| "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Collection \<tau> \<sqsubset> Collection \<sigma>"
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Set \<tau> \<sqsubset> Set \<sigma>"
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> OrderedSet \<tau> \<sqsubset> OrderedSet \<sigma>"
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Bag \<tau> \<sqsubset> Bag \<sigma>"
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Sequence \<tau> \<sqsubset> Sequence \<sigma>"
-| "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Collection \<tau> \<sqsubset> Collection \<sigma>"
 | "Set \<tau> \<sqsubset> Collection \<tau>"
 | "OrderedSet \<tau> \<sqsubset> Collection \<tau>"
 | "Bag \<tau> \<sqsubset> Collection \<tau>"
@@ -709,6 +713,9 @@ end
 (*** Helper Relations *******************************************************)
 
 section \<open>Helper Relations\<close>
+
+abbreviation between ("_/ = _\<midarrow>_"  [51, 51, 51] 50) where
+  "x = y\<midarrow>z \<equiv> y \<le> x \<and> x \<le> z"
 
 inductive class_of where
   "class_of \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<C>"

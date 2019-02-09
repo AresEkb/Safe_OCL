@@ -5,10 +5,13 @@
 *)
 section \<open>Object Model\<close>
 theory Object_Model
-  imports "HOL-Library.Extended_Nat" "HOL-Library.Finite_Map"
+  imports "HOL-Library.Extended_Nat" "Finite_Map_Ext"
 begin
 
-type_notation fmap ("(_ \<rightharpoonup>\<^sub>f /_)" [22, 21] 21)
+text \<open>
+  This theory defines a very simplified object model. It does not
+  support attribute and operation redefinition and overloading.
+  It does not define any constraints either.\<close>
 
 type_synonym attr = String.literal
 type_synonym assoc = String.literal
@@ -29,7 +32,6 @@ definition "assoc_end_min \<equiv> fst \<circ> snd"
 definition "assoc_end_max \<equiv> fst \<circ> snd \<circ> snd"
 definition "assoc_end_ordered \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
 definition "assoc_end_unique \<equiv> snd \<circ> snd \<circ> snd \<circ> snd"
-definition "assoc_end_min_le_max end \<equiv> assoc_end_min end \<le> assoc_end_max end"
 
 definition "assoc_refer_class ends \<C> \<equiv>
   fBex (fmdom ends) (\<lambda>role. assoc_end_class (the (fmlookup ends role)) = \<C>)"

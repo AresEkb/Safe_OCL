@@ -172,9 +172,9 @@ section \<open>OCL Types\<close>
 
 subsection \<open>Positive Cases\<close>
 
-value "Integer[?] < (SupType :: classes1 type)"
-value "Collection Real[?] < (SupType :: classes1 type)"
-value "Set (Collection Boolean[1]) < (SupType :: classes1 type)"
+value "Integer[?] < (OclSuper :: classes1 type)"
+value "Collection Real[?] < (OclSuper :: classes1 type)"
+value "Set (Collection Boolean[1]) < (OclSuper :: classes1 type)"
 value "Set (Bag Boolean[1]) < Set (Collection Boolean[?] :: classes1 type)"
 value "Tuple (fmap_of_list [(STR ''1'', Boolean[1] :: classes1 type), (STR ''2'', Integer[1])]) <
        Tuple (fmap_of_list [(STR ''1'', Boolean[?] :: classes1 type)])"
@@ -182,7 +182,7 @@ value "Tuple (fmap_of_list [(STR ''1'', Boolean[1] :: classes1 type), (STR ''2''
 value "Integer[1] \<squnion> Real[?] :: classes1 type" \<comment> \<open>Real[?]\<close>
 value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<open>Set Real[1]\<close>
 value "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type)" \<comment> \<open>Collection OclAny[?]\<close>
-value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>SupType\<close>
+value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>OclSuper\<close>
 
 subsection \<open>Negative Cases\<close>
 
@@ -240,7 +240,7 @@ context Project
 def: membersCount() : Integer[1] = members->size()
 def: membersByName(mn : String[1]) : Set(Employee[1]) =
        members->select(member | member.name = mn)
-static def: allProjects() : Set(Project[1]) = Project.allInstances()
+static def: allProjects() : Set(Project[1]) = Project[1].allInstances()
 \end{verbatim}\<close>
 
 definition "operations_classes1 \<equiv> [
@@ -332,7 +332,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
 
 text \<open>
 \<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
-  : Tuple(first: Integer[1], second: String[1])\<close>\<close>
+  : Set(Tuple(first: Integer[1], second: String[1]))\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall
     (CollectionLiteral SequenceKind
@@ -363,7 +363,7 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
 
 text \<open>
 \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-x->closure(it | it) : OrderedSet String[?]\<close>\<close>
+x->closure(it | it) : OrderedSet(String[?])\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Sequence String[?]) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
@@ -386,7 +386,7 @@ values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<
 
 text \<open>
 \<^verbatim>\<open>context Employee:
-projects : Set (Project[1])\<close>\<close>
+projects : Set(Project[1])\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
   AssociationEndCall (Var STR ''self'') STR ''projects'' : x}"
 

@@ -12,11 +12,9 @@ begin
 
 subsection \<open>Definitions\<close>
 
-abbreviation
-  "subtuple f xm ym \<equiv> fmrel_on_fset (fmdom ym) f xm ym"
+abbreviation "subtuple f xm ym \<equiv> fmrel_on_fset (fmdom ym) f xm ym"
 
-abbreviation
-  "strict_subtuple f xm ym \<equiv> subtuple f xm ym \<and> xm \<noteq> ym"
+abbreviation "strict_subtuple f xm ym \<equiv> subtuple f xm ym \<and> xm \<noteq> ym"
 
 (*** Helper Lemmas **********************************************************)
 
@@ -256,25 +254,4 @@ lemma strict_subtuple_fun_simp [code_abbrev, simp]:
   "strict_subtuple_fun f xm ym = strict_subtuple f xm ym"
   by simp
 
-(*** Test Cases *************************************************************)
-(*
-subsection \<open>Test Cases\<close>
-
-value "subtuple (\<le>)
-  (fmap_of_list [(STR ''1'',1::nat),(STR ''2'',2),(STR ''3'',3)])
-  (fmap_of_list [(STR ''1'',1),(STR ''2'',3)])"
-
-value "subtuple (\<le>)
-  (fmap_of_list [(1::nat,1::nat),(2,2),(3,3)])
-  (fmap_of_list [(1,1),(2,3)])"
-value "subtuple (\<le>)
-  (fmap_of_list [(1::nat,1::nat),(2,2)])
-  (fmap_of_list [(1,1),(2,2),(3,3)])"
-value "subtuple (\<le>)
-  (fmap_of_list [(1::nat,1::nat),(2,2)])
-  (fmap_of_list [(1,1),(3,2)])"
-value "strict_subtuple (\<le>)
-  (fmap_of_list [(1::nat,1::nat),(2,2)])
-  (fmap_of_list [(1,1),(2,2)])"
-*)
 end

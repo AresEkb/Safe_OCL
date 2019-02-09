@@ -12,6 +12,9 @@ begin
 
 section \<open>Definition of Basic Types and a Subtype Relation\<close>
 
+text \<open>
+  Basic types are parameterized over classes.\<close>
+
 type_synonym 'a enum = "('a, String.literal) phantom"
 type_synonym elit = String.literal
 
@@ -280,7 +283,8 @@ lemma tranclp_less_basic_type:
 lemma basic_subtype_acyclic:
   "acyclicP basic_subtype"
   apply (rule acyclicI)
-  using OCL_Basic_Types.basic_subtype_irrefl OCL_Basic_Types.tranclp_less_basic_type by auto
+  using OCL_Basic_Types.basic_subtype_irrefl
+    OCL_Basic_Types.tranclp_less_basic_type by auto
 
 lemma antisym_basic_type:
   "\<tau> \<le> \<sigma> \<Longrightarrow> \<sigma> \<le> \<tau> \<Longrightarrow> \<tau> = \<sigma>"

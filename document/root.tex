@@ -22,6 +22,9 @@
   \quotation}{\endquotation}
 \makeatother
 
+% HACK: It's required to align multiline definitions and lemmas
+\renewcommand{\isachardoublequoteopen}{\ }
+
 \begin{document}
 
 \title{Safe OCL}
@@ -30,17 +33,28 @@
 
 \begin{abstract}
   The theory is a simple formalization of the OCL type system~\cite{OCL24},
-  its abstract syntax and expressions typing.
+  its abstract syntax and expression typing rules.
   In contrast to Featherweight OCL~\cite{Featherweight_OCL-AFP},
-  it's based on a deep embedding approach.
+  it is based on a deep embedding approach.
 
-  Safe OCL distincts nullable and non-nullable types. Also
+  The Safe OCL distincts nullable and non-nullable types. Also
   the theory gives a formal definition of safe navigation
-  operations~\cite{DBLP:conf/models/Willink15}.
+  operations~\cite{DBLP:conf/models/Willink15}. The Safe OCL typing rules
+  are much stricter than rules given in the OCL specification.
+  It allows one to catch more errors on a type checking phase.
+
+  The type theory presented is four-layered: classes, basic types,
+  generic types, errorable types. We introduce the following new types:
+  non-nullable types (\isa{{\isasymtau}{\isacharbrackleft}{\isadigit{1}}{\isacharbrackright}}),
+  nullable types (\isa{{\isasymtau}{\isacharbrackleft}{\isacharquery}{\isacharbrackright}}),
+  \isa{OclSuper}. \isa{OclSuper} is a supertype of all other types
+  (basic types, collections, tuples). This type allows us to define
+  a total supremum function, so types forms an upper semilattice.
+  It allows us to define rich expression typing rules in an elegant manner.
 
   The Preliminaries Section of the theory defines a number of
   helper lemmas for transitive closures, tuples and arbitrary
-  object models independent from OCL. It allows to use
+  object models independent from OCL. It allows one to use
   Safe OCL as a refenerence theory for formalization of
   analogous languages.
 \end{abstract}
@@ -50,7 +64,7 @@
 % include generated text of all theories
 \input{session}
 
-\bibliographystyle{abbrv}
+\bibliographystyle{ieeetr}
 \bibliography{root}
 
 \end{document}

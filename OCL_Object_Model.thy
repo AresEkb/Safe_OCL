@@ -17,10 +17,10 @@ definition
       if assoc_end_min end = 0 then \<langle>\<C>\<rangle>\<^sub>\<T>[?] else \<langle>\<C>\<rangle>\<^sub>\<T>[1]
     else
       (case (assoc_end_unique end, assoc_end_ordered end)
-        of (False, False) \<Rightarrow> Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-         | (False, True)  \<Rightarrow> Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-         | (True,  False) \<Rightarrow> Set \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-         | (True,  True)  \<Rightarrow> OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1])"
+        of (True,  False) \<Rightarrow> Set \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+         | (True,  True)  \<Rightarrow> OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+         | (False, False) \<Rightarrow> Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+         | (False, True)  \<Rightarrow> Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1])"
 
 definition "oper_type op \<equiv>
   let params = oper_out_params op in
