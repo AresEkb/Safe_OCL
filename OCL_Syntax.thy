@@ -141,7 +141,7 @@ text \<open>
 
 datatype 'a expr =
   Literal "'a literal_expr"
-| Let (var : vname) (type : "'a type") (init_expr : "'a expr") (body_expr : "'a expr")
+| Let (var : vname) (var_type : "'a type option") (init_expr : "'a expr") (body_expr : "'a expr")
 | Var (var : vname)
 | If (if_expr : "'a expr") (then_expr : "'a expr") (else_expr : "'a expr")
 | MetaOperationCall (type : "'a type") metaop
@@ -157,19 +157,22 @@ and 'a literal_expr =
 | EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
 | CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
-| TupleLiteral (tuple_elements : "(telem \<times> 'a type \<times> 'a expr) list")
+| TupleLiteral (tuple_elements : "(telem \<times> 'a type option \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
 and 'a call_expr =
   TypeOperation typeop (type : "'a type")
 | Attribute attr
-| AssociationEnd role
+| AssociationEnd role (from_role : "role option")
+| AssociationClass 'a (from_role : "role option")
 | Operation op (args : "'a expr list")
 | TupleElement telem
-| Iterate (iterators : "vname list") (var : vname) (type : "'a type")
-    (init_expr : "'a expr") (body_expr : "'a expr")
-| Iterator iterator (iterators : "vname list") (body_expr : "'a expr")
+| Iterate (iterators : "vname list") (iterators_type : "'a type option")
+    (var : vname) (var_type : "'a type option") (init_expr : "'a expr")
+    (body_expr : "'a expr")
+| Iterator iterator (iterators : "vname list") (iterators_type : "'a type option")
+    (body_expr : "'a expr")
 
 definition "tuple_element_name \<equiv> fst"
 definition "tuple_element_type \<equiv> fst \<circ> snd"
@@ -181,35 +184,35 @@ abbreviation "TypeOperationCall src k op ty \<equiv>
   Call src k (TypeOperation op ty)"
 abbreviation "AttributeCall src attr \<equiv>
   Call src DotCall (Attribute attr)"
-abbreviation "AssociationEndCall src role \<equiv>
-  Call src DotCall (AssociationEnd role)"
+abbreviation "AssociationEndCall src role from \<equiv>
+  Call src DotCall (AssociationEnd role from)"
 abbreviation "OperationCall src k op as \<equiv>
   Call src k (Operation op as)"
 abbreviation "TupleElementCall src elem \<equiv>
   Call src DotCall (TupleElement elem)"
-abbreviation "IterateCall src its v ty init body \<equiv>
-  Call src ArrowCall (Iterate its v ty init body)"
-abbreviation "AnyIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator AnyIter its body)"
-abbreviation "ClosureIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator ClosureIter its body)"
-abbreviation "CollectIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator CollectIter its body)"
-abbreviation "CollectNestedIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator CollectNestedIter its body)"
-abbreviation "ExistsIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator ExistsIter its body)"
-abbreviation "ForAllIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator ForAllIter its body)"
-abbreviation "OneIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator OneIter its body)"
-abbreviation "IsUniqueIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator IsUniqueIter its body)"
-abbreviation "SelectIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator SelectIter its body)"
-abbreviation "RejectIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator RejectIter its body)"
-abbreviation "SortedByIteratorCall src its body \<equiv>
-  Call src ArrowCall (Iterator SortedByIter its body)"
+abbreviation "IterateCall src its its_ty v ty init body \<equiv>
+  Call src ArrowCall (Iterate its its_ty v ty init body)"
+abbreviation "AnyIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator AnyIter its its_ty body)"
+abbreviation "ClosureIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator ClosureIter its its_ty body)"
+abbreviation "CollectIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator CollectIter its its_ty body)"
+abbreviation "CollectNestedIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator CollectNestedIter its its_ty body)"
+abbreviation "ExistsIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator ExistsIter its its_ty body)"
+abbreviation "ForAllIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator ForAllIter its its_ty body)"
+abbreviation "OneIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator OneIter its its_ty body)"
+abbreviation "IsUniqueIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator IsUniqueIter its its_ty body)"
+abbreviation "SelectIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator SelectIter its its_ty body)"
+abbreviation "RejectIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator RejectIter its its_ty body)"
+abbreviation "SortedByIteratorCall src its its_ty body \<equiv>
+  Call src ArrowCall (Iterator SortedByIter its its_ty body)"
 
 end

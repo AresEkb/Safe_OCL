@@ -10,7 +10,7 @@ begin
 
 text \<open>
   This theory defines a very simplified object model. It does not
-  support attribute and operation redefinition and overloading.
+  support attributes redefinition and operations overloading.
   It does not define any constraints either.\<close>
 
 type_synonym attr = String.literal
