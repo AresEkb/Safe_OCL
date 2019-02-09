@@ -172,27 +172,27 @@ text \<open>
   The difference between @{text "oclAsType(Integer)"} and
   @{text "toInteger()"} for unlimited naturals is unclear.\<close>
 
+abbreviation between_type ("(_/ = _\<midarrow>_)"  [51, 51, 51] 50) where
+  "\<tau> = \<sigma>\<midarrow>\<rho> \<equiv> \<sigma> \<le> \<tau> \<and> \<tau> \<le> \<rho>"
+
 inductive numeric_unop_type where
   "\<tau> = Real[1] \<Longrightarrow>
    numeric_unop_type UMinusOp \<tau> Real[1]"
-| "\<tau> \<le> Integer[1] \<Longrightarrow>
+| "\<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    numeric_unop_type UMinusOp \<tau> Integer[1]"
 
 | "\<tau> = Real[1] \<Longrightarrow>
    numeric_unop_type AbsOp \<tau> Real[1]"
-| "\<tau> \<le> Integer[1] \<Longrightarrow>
+| "\<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    numeric_unop_type AbsOp \<tau> Integer[1]"
 
-| "\<tau> \<le> Real[1] \<Longrightarrow>
+| "\<tau> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    numeric_unop_type FloorOp \<tau> Integer[1]"
-| "\<tau> \<le> Real[1] \<Longrightarrow>
+| "\<tau> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    numeric_unop_type RoundOp \<tau> Integer[1]"
 
 | "\<tau> = UnlimitedNatural[1] \<Longrightarrow>
    numeric_unop_type numeric_unop.ToIntegerOp \<tau> Integer[1]"
-
-abbreviation between_type ("(_/ = _\<midarrow>_)"  [51, 51, 51] 50) where
-  "\<tau> = \<sigma>\<midarrow>\<rho> \<equiv> \<sigma> \<le> \<tau> \<and> \<tau> \<le> \<rho>"
 
 inductive numeric_binop_type where
   "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
@@ -247,11 +247,11 @@ inductive string_binop_type where
 | "string_binop_type GreaterOp String[1] String[1] Boolean[1]"
 | "string_binop_type GreaterEqOp String[1] String[1] Boolean[1]"
 | "string_binop_type IndexOfOp String[1] String[1] Integer[1]"
-| "\<tau> \<le> Integer[1] \<Longrightarrow>
+| "\<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    string_binop_type AtOp String[1] \<tau> String[1]"
 
 inductive string_ternop_type where
-  "\<sigma> \<le> Integer[1] \<Longrightarrow> \<rho> \<le> Integer[1] \<Longrightarrow>
+  "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    string_ternop_type SubstringOp String[1] \<sigma> \<rho> String[1]"
 
 subsection \<open>Collection Operations\<close>
@@ -267,11 +267,11 @@ inductive collection_unop_type where
 | "element_type \<tau> _ \<Longrightarrow>
    collection_unop_type NotEmptyOp \<tau> Boolean[1]"
 
-| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
-| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMinOp \<tau> \<sigma>"
-| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> \<le> Real[1] \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type SumOp \<tau> \<sigma>"
 
 | "element_type \<tau> \<sigma> \<Longrightarrow>
@@ -297,33 +297,9 @@ text \<open>
   Please take a note that if both arguments are collections,
   then an element type of the resulting collection is a super type
   of element types of orginal collections. However for single-valued
-  operations (@{text "including()"}, @{text "insertAt()"}, ...)
+  operations (@{text "append()"}, @{text "insertAt()"}, ...)
   this behavior looks undesirable. So we restrict such arguments
   to have a subtype of the collection element type.\<close>
-
-text \<open>
-  It is unclear what is the result of the @{text "indexOf()"}
-  operation if the item not found: @{text "null"} or @{text "invalid"}?\<close>
-
-(* including и excluding почему-то не определены для OrderedSet, хотя
- определены для остальных коллекций включая Sequence. А у меня для Sequence
- не определено! Нужно внимательно проверить все операции!
- excluding используется в определении selectByKind, который определен для
- Collection. По идее excluding должно быть определено и для Collection?
-*)
-
-(*
- Правило для excluding(null) нужно подробно описать.
- Это выглядит как хак, но реально это очень простой способ определить
- правила для безопасной навигации
-
- Подумать про excludingNested
-*)
-
-fun to_required_type' where
-  "to_required_type' \<tau>[1] = \<tau>[1]"
-| "to_required_type' \<tau>[?] = \<tau>[1]"
-| "to_required_type' \<tau> = \<tau>"
 
 text \<open>
   Please take a note that we allow the following expressions:\<close>
@@ -352,17 +328,20 @@ text \<open>
 text \<open>
 \<^verbatim>\<open>Sequence{1,2,null}->exculding(null) : Integer[1]\<close>\<close>
 
+text \<open>
+  Should we define an @{text "excludingNested()"} operation?\<close>
+
 inductive collection_binop_type where
-  "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type \<rho> \<Longrightarrow>
+  "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type IncludesOp \<tau> \<sigma> Boolean[1]"
-| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type ExcludesOp \<tau> \<sigma> Boolean[1]"
-| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type CountOp \<tau> \<sigma> Integer[1]"
 
-| "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type IncludesAllOp \<tau> \<sigma> Boolean[1]"
-| "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
 
 | "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow>
@@ -378,17 +357,17 @@ inductive collection_binop_type where
 | "collection_binop_type IntersectionOp (Bag \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type IntersectionOp (Bag \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
 
+| "collection_binop_type SetMinusOp (Set \<tau>) (Set \<sigma>) (Set \<tau>)"
+| "collection_binop_type SymmetricDifferenceOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
+
 | "element_type \<tau> \<rho> \<Longrightarrow>
    update_element_type \<tau> (\<rho> \<squnion> \<sigma>) \<upsilon> \<Longrightarrow>
    collection_binop_type IncludingOp \<tau> \<sigma> \<upsilon>"
 
 | "\<sigma> \<noteq> OclVoid[?] \<Longrightarrow> element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow>
    collection_binop_type ExcludingOp \<tau> \<sigma> \<tau>"
-| "\<sigma> = OclVoid[?] \<Longrightarrow> element_type \<tau> \<rho> \<Longrightarrow> update_element_type \<tau> (to_required_type' \<rho>) \<upsilon> \<Longrightarrow>
+| "\<sigma> = OclVoid[?] \<Longrightarrow> element_type \<tau> \<rho> \<Longrightarrow> update_element_type \<tau> (to_required_type \<rho>) \<upsilon> \<Longrightarrow>
    collection_binop_type ExcludingOp \<tau> \<sigma> \<upsilon>"
-
-| "collection_binop_type SetMinusOp (Set \<tau>) (Set \<sigma>) (Set \<tau>)"
-| "collection_binop_type SymmetricDifferenceOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type AppendOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
@@ -398,23 +377,25 @@ inductive collection_binop_type where
    collection_binop_type PrependOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type PrependOp (Sequence \<tau>) \<sigma> (Sequence \<tau>)"
-| "\<sigma> \<le> Integer[1] \<Longrightarrow>
+
+| "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    collection_binop_type CollectionAtOp (OrderedSet \<tau>) \<sigma> \<tau>"
-| "\<sigma> \<le> Integer[1] \<Longrightarrow>
+| "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    collection_binop_type CollectionAtOp (Sequence \<tau>) \<sigma> \<tau>"
+
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (OrderedSet \<tau>) \<sigma> Integer[1]"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (Sequence \<tau>) \<sigma> Integer[1]"
 
 inductive collection_ternop_type where
-  "\<sigma> \<le> Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
+  "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
    collection_ternop_type InsertAtOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
-| "\<sigma> \<le> Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
+| "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
    collection_ternop_type InsertAtOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
-| "\<sigma> \<le> Integer[1] \<Longrightarrow> \<rho> \<le> Integer[1] \<Longrightarrow>
+| "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    collection_ternop_type SubOrderedSetOp (OrderedSet \<tau>) \<sigma> \<rho> (OrderedSet \<tau>)"
-| "\<sigma> \<le> Integer[1] \<Longrightarrow> \<rho> \<le> Integer[1] \<Longrightarrow>
+| "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    collection_ternop_type SubSequenceOp (Sequence \<tau>) \<sigma> \<rho> (Sequence \<tau>)"
 
 subsection \<open>Coercions\<close>
@@ -459,9 +440,9 @@ inductive op_type where
 | "find_operation \<tau> op \<pi> = Some oper \<Longrightarrow>
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
-(*** Properties *************************************************************)
+(*** Determinism ************************************************************)
 
-subsection \<open>Properties\<close>
+subsection \<open>Determinism\<close>
 
 lemma typeop_type_det:
   "typeop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
@@ -518,19 +499,8 @@ lemma boolean_binop_type_det:
 lemma numeric_binop_type_det:
   "numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    numeric_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  apply (induct rule: numeric_binop_type.induct; auto simp add: numeric_binop_type.simps)
-  apply (simp add: type_less_eq_OclVoid_x_intro)
-  apply (simp add: type_less_eq_OclVoid_x_intro)
-  apply (metis basic_type.distinct(33) basic_type.distinct(59) basic_type.simps(10))
-  apply (simp add: type_less_eq_x_Integer_intro)
-  apply (metis basic_type.distinct(43) basic_type.distinct(59) basic_type.simps(10))
-  apply (meson basic_type.distinct(33) basic_type.distinct(43) type_less_eq_x_Integer_intro)
-  apply (simp add: type_less_eq_OclVoid_x_intro)
-  apply (simp add: type_less_eq_OclVoid_x_intro)
-  apply (metis basic_type.distinct(33) basic_type.distinct(59) basic_type.simps(10))
-  apply (simp add: type_less_eq_x_Integer_intro)
-  apply (metis basic_type.distinct(43) basic_type.distinct(59) basic_type.simps(10))
-  by (meson basic_type.distinct(33) basic_type.distinct(43) type_less_eq_x_Integer_intro)
+  by (induct rule: numeric_binop_type.induct;
+      auto simp add: numeric_binop_type.simps split: if_splits)
 
 lemma string_binop_type_det:
   "string_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
@@ -541,7 +511,6 @@ lemma collection_binop_type_det:
   "collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   apply (induct rule: collection_binop_type.induct; simp add: collection_binop_type.simps)
-  using element_type_det apply blast
   using element_type_det update_element_type_det by blast+
 
 lemma binop_type_det:
@@ -645,7 +614,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>P CollectionRange a b : Integer[1]"
 
 \<comment> \<open>Tuple Literals\<close>
-\<comment> \<open>We do not prohibit an empty tuple, because it could be useful.
+\<comment> \<open>We do not prohibit empty tuples, because it could be useful.
   @{text "Tuple()"} is a supertype of all tuples.\<close>
 |EmptyTupleLiteralT:
   "\<Gamma> \<turnstile> TupleLiteral [] : Tuple fmempty"
@@ -832,20 +801,15 @@ section \<open>Determinism\<close>
 
 lemma
   typing_det:
-    "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow>
-     \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
+    "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow> \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   collection_parts_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>C prts : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
+    "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>C prts : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   collection_part_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>P prt : \<tau> \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>P prt : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
+    "\<Gamma> \<turnstile>\<^sub>P prt : \<tau> \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>P prt : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   expr_list_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>L exprs : \<xi> \<Longrightarrow> \<pi> = \<xi>" and
+    "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>L exprs : \<xi> \<Longrightarrow> \<pi> = \<xi>" and
   iterator_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys \<Longrightarrow> xs = ys"
+    "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys \<Longrightarrow> xs = ys"
 proof (induct arbitrary: \<sigma> and \<sigma> and \<sigma> and \<xi> and ys
        rule: typing_collection_parts_typing_collection_part_typing_expr_list_typing_iterator_typing.inducts)
   case (NullLiteralT \<Gamma>) thus ?case by auto
@@ -1004,39 +968,6 @@ next
     apply (erule StaticOperationCallTE)
     using StaticOperationCallT.hyps(2) StaticOperationCallT.hyps(3) by auto
 qed
-
-(*
-non_strict_op both for null and error
-=, <>, oclAsType, oclIsInState, oclIsKindOf, oclIsTypeOf,
-oclIsInvalid, oclIsUndefined, oclType, oclIsNew, oclAsSet
-and, implies, not, or, xor
-
-и ещё особый случай:
-null.oclAsSet() = Set{}
-invalid.oclAsSet() = invalid
-
-Видимо в спецификации ошибка:
-
-для null результат этих операций тоже будет invalid:
-oclIsKindOf, oclIsTypeOf
-Не понимаю зачем это сделано.
-На самом деле там определено так для OclVoid, а не null
-
-для invalid результат этих операций тоже будет invalid:
-=, <>, oclAsType, oclIsInState, oclIsKindOf, oclIsTypeOf,
-oclIsNew, oclAsSet
-
-По идее должно быть так:
-null.oclIsTypeOf(OclVoid) = true
-null.oclIsTypeOf(OclInvalid) = false
-invalid.oclIsTypeOf(OclVoid) = true
-invalid.oclIsTypeOf(OclInvalid) = true
-
-Сравнение invalid не имеет смысла, иначе можно получить:
-1/0 = 2/0
-Т.е. это обычная strict операция
-
-*)
 
 (*** Code Setup *************************************************************)
 
