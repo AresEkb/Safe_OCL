@@ -10,7 +10,7 @@ begin
 
 (*** Types ******************************************************************)
 
-section \<open>Definition of Types and a Subtype Relation\<close>
+section \<open>Definition of Types and a Subtype Relation\label{sec:types-def}\<close>
 
 text \<open>
   Types are parameterized over classes.\<close>
@@ -119,6 +119,19 @@ lemma Optional_bij_on_trancl [simp]:
   apply (auto simp add: inj_def)
   using not_subtype_Optional_Required by blast
 
+lemma subtype_tranclp_Collection_x:
+  "subtype\<^sup>+\<^sup>+ (Collection \<tau>) \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<sigma> = Collection \<rho> \<Longrightarrow> subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sigma> = OclSuper \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: tranclp_induct, auto)
+  by (metis subtype_Collection_x subtype_OclSuper_x
+            tranclp.trancl_into_trancl)
+
+lemma Collection_bij_on_trancl [simp]:
+  "bij_on_trancl subtype Collection"
+  apply (auto simp add: inj_def)
+  using subtype_tranclp_Collection_x by auto
+
 lemma Set_bij_on_trancl [simp]:
   "bij_on_trancl subtype Set"
   by (auto simp add: inj_def)
@@ -134,19 +147,6 @@ lemma Bag_bij_on_trancl [simp]:
 lemma Sequence_bij_on_trancl [simp]:
   "bij_on_trancl subtype Sequence"
   by (auto simp add: inj_def)
-
-lemma subtype_tranclp_Collection_x:
-  "subtype\<^sup>+\<^sup>+ (Collection \<tau>) \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<sigma> = Collection \<rho> \<Longrightarrow> subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
-   (\<sigma> = OclSuper \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (induct rule: tranclp_induct, auto)
-  by (metis subtype_Collection_x subtype_OclSuper_x
-            tranclp.trancl_into_trancl)
-
-lemma Collection_bij_on_trancl [simp]:
-  "bij_on_trancl subtype Collection"
-  apply (auto simp add: inj_def)
-  using subtype_tranclp_Collection_x by auto
 
 lemma Tuple_bij_on_trancl [simp]:
   "bij_on_trancl subtype Tuple"

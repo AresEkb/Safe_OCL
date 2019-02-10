@@ -73,9 +73,7 @@ text \<open>
 Set{1,2,null,'abc'}->selectByKind(Collection(Boolean[1]))\<close>\<close>
 
 inductive typeop_type where
-  "\<sigma> < \<tau> \<Longrightarrow>
-   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
-| "\<tau> < \<sigma> \<Longrightarrow>
+  "\<sigma> < \<tau> \<or> \<tau> < \<sigma> \<Longrightarrow>
    typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
 
 | "\<sigma> < \<tau> \<Longrightarrow>
@@ -83,13 +81,11 @@ inductive typeop_type where
 | "\<sigma> < \<tau> \<Longrightarrow>
    typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
 
-| "element_type \<tau> \<rho> \<Longrightarrow>
-   \<sigma> < \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
    update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByKindOp \<tau> \<sigma> \<upsilon>"
 
-| "element_type \<tau> \<rho> \<Longrightarrow>
-   \<sigma> < \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
    update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<upsilon>"
 
@@ -102,14 +98,9 @@ text \<open>
    a generated code work *)
 inductive suptype_binop_type
     :: "suptype_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
-  "\<tau> \<le> \<sigma> \<Longrightarrow>
+  "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
    suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
-| "\<sigma> < \<tau> \<Longrightarrow>
-   suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
-
-| "\<tau> \<le> \<sigma> \<Longrightarrow>
-   suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
-| "\<sigma> < \<tau> \<Longrightarrow>
+| "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
    suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>OclAny Operations\<close>
@@ -267,9 +258,17 @@ inductive collection_unop_type where
 
 | "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
+| "element_type \<tau> \<sigma> \<Longrightarrow> find_operation \<sigma> STR ''max'' [\<sigma>] = Some oper \<Longrightarrow>
+   collection_unop_type CollectionMaxOp \<tau> \<sigma>"
+
 | "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMinOp \<tau> \<sigma>"
+| "element_type \<tau> \<sigma> \<Longrightarrow> find_operation \<sigma> STR ''min'' [\<sigma>] = Some oper \<Longrightarrow>
+   collection_unop_type CollectionMinOp \<tau> \<sigma>"
+
 | "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
+   collection_unop_type SumOp \<tau> \<sigma>"
+| "element_type \<tau> \<sigma> \<Longrightarrow> find_operation \<sigma> STR ''+'' [\<sigma>] = Some oper \<Longrightarrow>
    collection_unop_type SumOp \<tau> \<sigma>"
 
 | "element_type \<tau> \<sigma> \<Longrightarrow>
@@ -318,16 +317,24 @@ text \<open>
   do not conform to a collection element type.
   However we do not restrict it.
 
-  The @{text "excluding()"} operation plays a special role in
-  a definition of safe navigation operations. So we define a
-  special typing rule for this operation. It allows us to
-  elegantly change a collection element type:\<close>
+  At first we defined the following typing rules for the
+  @{text "excluding()"} operation:
+
+{\isacharbar}\ {\isachardoublequoteopen}element{\isacharunderscore}type\ {\isasymtau}\ {\isasymrho}\ {\isasymLongrightarrow}\ {\isasymsigma}\ {\isasymle}\ {\isasymrho}\ {\isasymLongrightarrow}\ {\isasymsigma}\ {\isasymnoteq}\ OclVoid{\isacharbrackleft}{\isacharquery}{\isacharbrackright}\ {\isasymLongrightarrow}\isanewline
+\ \ \ collection{\isacharunderscore}binop{\isacharunderscore}type\ ExcludingOp\ {\isasymtau}\ {\isasymsigma}\ {\isasymtau}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}element{\isacharunderscore}type\ {\isasymtau}\ {\isasymrho}\ {\isasymLongrightarrow}\ {\isasymsigma}\ {\isasymle}\ {\isasymrho}\ {\isasymLongrightarrow}\ {\isasymsigma}\ {\isacharequal}\ OclVoid{\isacharbrackleft}{\isacharquery}{\isacharbrackright}\ {\isasymLongrightarrow}\isanewline
+\ \ \ update{\isacharunderscore}element{\isacharunderscore}type\ {\isasymtau}\ {\isacharparenleft}to{\isacharunderscore}required{\isacharunderscore}type\ {\isasymrho}{\isacharparenright}\ {\isasymupsilon}\ {\isasymLongrightarrow}\isanewline
+\ \ \ collection{\isacharunderscore}binop{\isacharunderscore}type\ ExcludingOp\ {\isasymtau}\ {\isasymsigma}\ {\isasymupsilon}{\isachardoublequoteclose}\isanewline
+
+  This operation could play a special role in a definition
+  of safe navigation operations:\<close>
 
 text \<open>
 \<^verbatim>\<open>Sequence{1,2,null}->exculding(null) : Integer[1]\<close>\<close>
 
 text \<open>
-  Should we define an @{text "excludingNested()"} operation?\<close>
+  However it is more natural to use a @{text "selectByKind(T[1])"}
+  operation.\<close>
 
 inductive collection_binop_type where
   "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
@@ -359,15 +366,10 @@ inductive collection_binop_type where
 | "collection_binop_type SetMinusOp (Set \<tau>) (Set \<sigma>) (Set \<tau>)"
 | "collection_binop_type SymmetricDifferenceOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 
-| "element_type \<tau> \<rho> \<Longrightarrow>
-   update_element_type \<tau> (\<rho> \<squnion> \<sigma>) \<upsilon> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> update_element_type \<tau> (\<rho> \<squnion> \<sigma>) \<upsilon> \<Longrightarrow>
    collection_binop_type IncludingOp \<tau> \<sigma> \<upsilon>"
-
-| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow> \<sigma> \<noteq> OclVoid[?] \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow>
    collection_binop_type ExcludingOp \<tau> \<sigma> \<tau>"
-| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow> \<sigma> = OclVoid[?] \<Longrightarrow>
-   update_element_type \<tau> (to_required_type \<rho>) \<upsilon> \<Longrightarrow>
-   collection_binop_type ExcludingOp \<tau> \<sigma> \<upsilon>"
 
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type AppendOp (OrderedSet \<tau>) \<sigma> (OrderedSet \<tau>)"
@@ -679,66 +681,67 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 |IteratorT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
-   \<Gamma> ++\<^sub>f (fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its)) \<turnstile> body : \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>)"
+   \<sigma> \<le> its_ty \<Longrightarrow>
+   \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, its_ty)) its) \<turnstile> body : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty), body) : (\<tau>, \<sigma>, \<rho>)"
 
 |IterateT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, Let res (Some res_t) res_init body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, Let res (Some res_t) res_init body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> res_t \<Longrightarrow>
    \<Gamma> \<turnstile> IterateCall src its its_ty res (Some res_t) res_init body : \<rho>"
 
 |AnyIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile> AnyIteratorCall src its its_ty body : \<sigma>"
 |ClosureIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_single_type \<rho> \<le> \<sigma> \<Longrightarrow>
    to_unique_collection \<tau> \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile> ClosureIteratorCall src its its_ty body : \<upsilon>"
 |CollectIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> (to_single_type \<rho>) \<phi> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectIteratorCall src its its_ty body : \<phi>"
 |CollectNestedIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> \<rho> \<phi> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectNestedIteratorCall src its its_ty body : \<phi>"
 |ExistsIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile> ExistsIteratorCall src its its_ty body : \<rho>"
 |ForAllIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile> ForAllIteratorCall src its its_ty body : \<rho>"
 |OneIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile> OneIteratorCall src its its_ty body : Boolean[1]"
 |IsUniqueIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<Gamma> \<turnstile> IsUniqueIteratorCall src its its_ty body : Boolean[1]"
 |SelectIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile> SelectIteratorCall src its its_ty body : \<tau>"
 |RejectIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile> RejectIteratorCall src its its_ty body : \<tau>"
 |SortedByIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_ordered_collection \<tau> \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile> SortedByIteratorCall src its its_ty body : \<upsilon>"
@@ -867,66 +870,66 @@ next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCallTE typeop_type_det)
 next
-  case (IteratorT \<Gamma> src \<tau> \<sigma> its body \<rho>) thus ?case
+  case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>) thus ?case
     apply (insert IteratorT.prems)
     apply (erule IteratorTE)
     using IteratorT.hyps element_type_det by blast
 next
-  case (IterateT \<Gamma> src its res res_t res_init body \<tau> \<sigma> \<rho>) thus ?case
+  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert IterateT.prems)
     using IterateT.hyps by blast
 next
-  case (AnyIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho>) thus ?case
+  case (AnyIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     by (meson AnyIteratorTE Pair_inject)
 next
-  case (ClosureIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (ClosureIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert ClosureIteratorT.prems)
     apply (erule ClosureIteratorTE)
     using ClosureIteratorT.hyps to_unique_collection_det by blast
 next
-  case (CollectIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (CollectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert CollectIteratorT.prems)
     apply (erule CollectIteratorTE)
     using CollectIteratorT.hyps to_nonunique_collection_det
-      update_element_type_det by blast
+      update_element_type_det Pair_inject by metis
 next
-  case (CollectNestedIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (CollectNestedIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert CollectNestedIteratorT.prems)
     apply (erule CollectNestedIteratorTE)
     using CollectNestedIteratorT.hyps to_nonunique_collection_det
-      update_element_type_det by blast
+      update_element_type_det Pair_inject by metis
 next
-  case (ExistsIteratorT \<Gamma> src its body \<tau> \<sigma> \<rho>) thus ?case
+  case (ExistsIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert ExistsIteratorT.prems)
     apply (erule ExistsIteratorTE)
-    using ExistsIteratorT.hyps by blast
+    using ExistsIteratorT.hyps Pair_inject by metis
 next
-  case (ForAllIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+  case (ForAllIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert ForAllIteratorT.prems)
     apply (erule ForAllIteratorTE)
-    using ForAllIteratorT.hyps by blast
+    using ForAllIteratorT.hyps Pair_inject by metis
 next
-  case (OneIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+  case (OneIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert OneIteratorT.prems)
     apply (erule OneIteratorTE)
     by simp
 next
-  case (IsUniqueIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+  case (IsUniqueIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert IsUniqueIteratorT.prems)
     apply (erule IsUniqueIteratorTE)
     by simp
 next
-  case (RejectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
-    apply (insert RejectIteratorT.prems)
-    apply (erule RejectIteratorTE)
-    using RejectIteratorT.hyps by blast
-next
-  case (SelectIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho>) thus ?case
+  case (SelectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     apply (insert SelectIteratorT.prems)
     apply (erule SelectIteratorTE)
     using SelectIteratorT.hyps by blast
 next
-  case (SortedByIteratorT \<Gamma> \<M> src its body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (RejectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+    apply (insert RejectIteratorT.prems)
+    apply (erule RejectIteratorTE)
+    using RejectIteratorT.hyps by blast
+next
+  case (SortedByIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
     apply (insert SortedByIteratorT.prems)
     apply (erule SortedByIteratorTE)
     using SortedByIteratorT.hyps to_ordered_collection_det by blast

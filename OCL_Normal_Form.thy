@@ -13,7 +13,15 @@ begin
 section \<open>Normalization Rules\<close>
 
 text \<open>
-  \autoref{tab:norm_rules} describes normalization rules for OCL expressions.
+  The following expression normalization rules includes two kinds of an
+  abstract syntax tree transformations:
+\begin{itemize}
+\item determination of implicit types of variables, iterators, and
+      tuple elements,
+\item unfolding of navigation shorthands and safe navigation operators,
+      described in \autoref{tab:norm_rules}.
+\end{itemize}
+
   The following variables are used in the table:
 \begin{itemize}
 \item \<^verbatim>\<open>x\<close> is a non-nullable value.
@@ -27,12 +35,12 @@ text \<open>
     \caption{Normalization rules}
     \label{tab:norm_rules}
     \begin{tabular}{c|c}
-      \textbf{Original expression} & \textbf{Normalized expression}\\
+      \textbf{Original expr.} & \textbf{Normalized expression}\\
       \hline
       \<^verbatim>\<open>x.op()\<close> & \<^verbatim>\<open>x.op()\<close>\\
       \<^verbatim>\<open>n.op()\<close> & ---\\
       \<^verbatim>\<open>x?.op()\<close> & ---\\
-      \<^verbatim>\<open>n?.op()\<close> & \<^verbatim>\<open>if n <> null then n.op() else null endif\<close>\\
+      \<^verbatim>\<open>n?.op()\<close> & \<^verbatim>\<open>if n <> null then n.oclAsType(T[1]).op() else null endif\<close>\\
       \<^verbatim>\<open>x->op()\<close> & \<^verbatim>\<open>x.oclAsSet()->op()\<close>\\
       \<^verbatim>\<open>n->op()\<close> & \<^verbatim>\<open>n.oclAsSet()->op()\<close>\\
       \<^verbatim>\<open>x?->op()\<close> & ---\\
@@ -41,14 +49,19 @@ text \<open>
       \<^verbatim>\<open>xs.op()\<close> & \<^verbatim>\<open>xs->collect(x | x.op())\<close>\\
       \<^verbatim>\<open>ns.op()\<close> & ---\\
       \<^verbatim>\<open>xs?.op()\<close> & ---\\
-      \<^verbatim>\<open>ns?.op()\<close> & \<^verbatim>\<open>ns->excluding(null)->collect(x | x.op())\<close>\\
+      \<^verbatim>\<open>ns?.op()\<close> & \<^verbatim>\<open>ns->selectByKind(T[1])->collect(x | x.op())\<close>\\
       \<^verbatim>\<open>xs->op()\<close> & \<^verbatim>\<open>xs->op()\<close>\\
       \<^verbatim>\<open>ns->op()\<close> & \<^verbatim>\<open>ns->op()\<close>\\
       \<^verbatim>\<open>xs?->op()\<close> & ---\\
-      \<^verbatim>\<open>ns?->op()\<close> & \<^verbatim>\<open>ns->excluding(null)->op()\<close>\\
+      \<^verbatim>\<open>ns?->op()\<close> & \<^verbatim>\<open>ns->selectByKind(T[1])->op()\<close>\\
     \end{tabular}
   \end{center}
-\end{table}\<close>
+\end{table}
+
+  Please take a note that name resolution of variables, types,
+  attributes, and associations is out of scope of this section.
+  It should be done on a previous phase during transformation
+  of a concrete syntax tree to an abstract syntax tree.\<close>
 
 fun string_of_nat :: "nat \<Rightarrow> string" where
   "string_of_nat n = (if n < 10 then [char_of (48 + n)] else 
@@ -97,10 +110,11 @@ inductive normalize
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>2 : \<tau> \<Longrightarrow>
    OclVoid[?] \<le> \<tau> \<Longrightarrow>
+   src\<^sub>3 = TypeOperationCall src\<^sub>2 DotCall OclAsTypeOp (to_required_type \<tau>) \<Longrightarrow>
    (\<Gamma>, to_required_type \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeDotCall call\<^sub>1 \<Rrightarrow>
        If (OperationCall src\<^sub>2 DotCall NotEqualOp [NullLiteral])
-          (Call src\<^sub>2 DotCall call\<^sub>2)
+          (Call src\<^sub>3 DotCall call\<^sub>2)
           NullLiteral"
 |OclAnyArrowDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
@@ -122,7 +136,8 @@ inductive normalize
    \<Gamma> \<turnstile> src\<^sub>2 : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
    OclVoid[?] \<le> \<sigma> \<Longrightarrow>
-   src\<^sub>3 = OperationCall src\<^sub>2 ArrowCall ExcludingOp [NullLiteral] \<Longrightarrow>
+   src\<^sub>3 = TypeOperationCall src\<^sub>2 ArrowCall SelectByKindOp
+              (to_required_type \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>3 : \<rho> \<Longrightarrow>
    (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeArrowCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>3 ArrowCall call\<^sub>2"
@@ -133,18 +148,19 @@ inductive normalize
    \<not> OclVoid[?] \<le> \<sigma> \<Longrightarrow>
    (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
-   \<Gamma> \<turnstile> Call src\<^sub>1 DotCall call\<^sub>1 \<Rrightarrow> CollectIteratorCall src\<^sub>2 [it] (Some \<sigma>)
-          (Call (Var it) DotCall call\<^sub>2)"
+   \<Gamma> \<turnstile> Call src\<^sub>1 DotCall call\<^sub>1 \<Rrightarrow>
+      CollectIteratorCall src\<^sub>2 [it] (Some \<sigma>) (Call (Var it) DotCall call\<^sub>2)"
 |CollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>2 : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
    OclVoid[?] \<le> \<sigma> \<Longrightarrow>
-   src\<^sub>3 = OperationCall src\<^sub>2 ArrowCall ExcludingOp [NullLiteral] \<Longrightarrow>
-   (\<Gamma>, to_required_type \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<rho> = to_required_type \<sigma> \<Longrightarrow>
+   src\<^sub>3 = TypeOperationCall src\<^sub>2 ArrowCall SelectByKindOp \<rho> \<Longrightarrow>
+   (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeDotCall call\<^sub>1 \<Rrightarrow>
-      CollectIteratorCall src\<^sub>3 [it] (Some \<sigma>) (Call (Var it) DotCall call\<^sub>2)"
+      CollectIteratorCall src\<^sub>3 [it] (Some \<rho>) (Call (Var it) DotCall call\<^sub>2)"
 
 |TypeOperationN:
   "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C TypeOperation op ty \<Rrightarrow> TypeOperation op ty"
@@ -204,7 +220,7 @@ inductive_cases OperationCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C
 inductive_cases IterateCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
 inductive_cases IteratorCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
 
-inductive_cases ExprListNilNE [elim]: "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> zs"
+inductive_cases ExprListConsNE [elim]: "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> zs"
 
 (*** Determinism ************************************************************)
 
@@ -270,38 +286,41 @@ next
     apply (erule SafeDotCallNE)
     using OclAnySafeDotCallN.hyps typing_det comp_apply
     apply (metis (no_types, lifting) list.simps(8) list.simps(9))
-    using OclAnySafeDotCallN.hyps typing_det any_has_not_element_type' by metis
+    using OclAnySafeDotCallN.hyps typing_det any_has_not_element_type'
+    by metis
 next
   case (OclAnyArrowDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2) show ?case
     apply (insert OclAnyArrowDotCallN.prems)
     apply (erule ArrowCallNE)
     using OclAnyArrowDotCallN.hyps typing_det comp_apply apply metis
-    using OclAnyArrowDotCallN.hyps typing_det any_has_not_element_type''' by metis
+    using OclAnyArrowDotCallN.hyps typing_det any_has_not_element_type'''
+    by metis
 next
   case (CollectionArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> uu call\<^sub>1 call\<^sub>2) show ?case
     apply (insert CollectionArrowCallN.prems)
     apply (erule ArrowCallNE)
-    using CollectionArrowCallN.hyps typing_det any_has_not_element_type''' apply metis
+    using CollectionArrowCallN.hyps typing_det any_has_not_element_type'''
+    apply metis
     using CollectionArrowCallN.hyps typing_det by metis
 next
   case (CollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2) show ?case
     apply (insert CollectionSafeArrowCallN.prems)
     apply (erule SafeArrowCallNE)
-    using CollectionSafeArrowCallN.hyps typing_det comp_apply
-    by (metis (no_types, lifting) list.simps(8) list.simps(9))
+    using CollectionSafeArrowCallN.hyps typing_det element_type_det by metis
 next
   case (CollectionDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> call\<^sub>1 call\<^sub>2 it) show ?case
     apply (insert CollectionDotCallN.prems)
     apply (erule DotCallNE)
-    using CollectionDotCallN.hyps typing_det any_has_not_element_type'' apply metis
+    using CollectionDotCallN.hyps typing_det any_has_not_element_type''
+    apply metis
     using CollectionDotCallN.hyps typing_det element_type_det by metis
 next
   case (CollectionSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 call\<^sub>1 call\<^sub>2 it) show ?case
     apply (insert CollectionSafeDotCallN.prems)
     apply (erule SafeDotCallNE)
-    using CollectionSafeDotCallN.hyps typing_det any_has_not_element_type' apply metis
-    using CollectionSafeDotCallN.hyps typing_det element_type_det comp_apply
-    by (metis list.simps(8) list.simps(9))
+    using CollectionSafeDotCallN.hyps typing_det any_has_not_element_type'
+    apply metis
+    using CollectionSafeDotCallN.hyps typing_det element_type_det by metis
 next
   case (TypeOperationN \<Gamma> \<tau> op ty) thus ?case by auto
 next
@@ -313,13 +332,15 @@ next
 next
   case (TupleElementN \<Gamma> \<tau> elem) thus ?case by auto
 next
-  case (ExplicitlyTypedIterateN \<Gamma> res_init\<^sub>1 res_init\<^sub>2 \<sigma> its res res_t\<^sub>1 body\<^sub>1 res_t\<^sub>2 body\<^sub>2 \<tau>)
+  case (ExplicitlyTypedIterateN
+    \<Gamma> res_init\<^sub>1 res_init\<^sub>2 \<sigma> its res res_t\<^sub>1 body\<^sub>1 res_t\<^sub>2 body\<^sub>2 \<tau>)
   show ?case
     apply (insert ExplicitlyTypedIterateN.prems)
     apply (erule IterateCallNE)
     using ExplicitlyTypedIterateN.hyps element_type_det by blast+
 next
-  case (ImplicitlyTypedIterateN \<tau> \<sigma> \<Gamma> res_init\<^sub>1 res_init\<^sub>2 its res res_t\<^sub>1 body\<^sub>1 res_t\<^sub>2 body\<^sub>2)
+  case (ImplicitlyTypedIterateN
+    \<tau> \<sigma> \<Gamma> res_init\<^sub>1 res_init\<^sub>2 its res res_t\<^sub>1 body\<^sub>1 res_t\<^sub>2 body\<^sub>2)
   show ?case
     apply (insert ImplicitlyTypedIterateN.prems)
     apply (erule IterateCallNE)

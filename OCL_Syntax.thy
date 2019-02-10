@@ -122,7 +122,7 @@ datatype collection_literal_kind =
   SetKind | OrderedSetKind | BagKind | SequenceKind | CollectionKind
 
 text \<open>
-  A call kind could be defined as 2 boolean values (@{text "is_arrow_call"},
+  A call kind could be defined as two boolean values (@{text "is_arrow_call"},
   @{text "is_safe_call"}). Also we could derive @{text "is_arrow_call"}
   value automatically based on an operation kind.
   But it's much easier and more natural to use the following enumeration.\<close>
@@ -132,9 +132,8 @@ text \<open>
   We do not define a @{text Classifier} type (a type of all types),
   because it will add unnecessary complications to the theory.
   So we have to define type operations as a pure syntactic constructs.
-  We do not define @{text Type} expressions either.\<close>
+  We do not define @{text Type} expressions either.
 
-text \<open>
   We do not define @{text InvalidLiteral}, because it allows us to
   exclude @{text OclInvalid} type from typing rules. It simplifies
   the types system.\<close>
