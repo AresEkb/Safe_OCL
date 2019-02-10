@@ -10,7 +10,7 @@ begin
 
 (*** Basic Types ************************************************************)
 
-section \<open>Definition of Basic Types and a Subtype Relation\<close>
+section \<open>Definition of Basic Types and a Subtype Relation\label{sec:basic-types-def}\<close>
 
 text \<open>
   Basic types are parameterized over classes.\<close>
