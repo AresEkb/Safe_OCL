@@ -33,9 +33,15 @@ definition "assoc_end_max \<equiv> fst \<circ> snd \<circ> snd"
 definition "assoc_end_ordered \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
 definition "assoc_end_unique \<equiv> snd \<circ> snd \<circ> snd \<circ> snd"
 
+definition "role_refer_class ends \<C> role \<equiv>
+  assoc_end_class (the (fmlookup ends role)) = \<C>"
+
+definition "assoc_refer_class ends \<C> \<equiv>
+  fBex (fmdom ends) (role_refer_class ends \<C>)"
+(*
 definition "assoc_refer_class ends \<C> \<equiv>
   fBex (fmdom ends) (\<lambda>role. assoc_end_class (the (fmlookup ends role)) = \<C>)"
-
+*)
 definition "assoc_refer_role ends role \<equiv> fmlookup ends role \<noteq> None"
 
 definition "oper_name \<equiv> fst"
@@ -67,6 +73,7 @@ text \<open>
 locale object_model = 
   fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"
   and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
+  and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
   and operations :: "('t, 'e) oper_spec list"
   and literals :: "'n \<rightharpoonup>\<^sub>f elit fset"
 begin
@@ -81,18 +88,34 @@ abbreviation "find_attribute \<C> attr \<equiv>
   let found = Option.these {find_owned_attribute \<D> attr | \<D>. \<C> \<le> \<D>} in
   if card found = 1 then Some (the_elem found) else None"
 
-abbreviation "find_associations \<C> role \<equiv>
+abbreviation "find_associations \<C> role from \<equiv>
   fmfilter (\<lambda>assoc.
     case fmlookup associations assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
-      assoc_refer_class (fmdrop role ends) \<C> \<and> assoc_refer_role ends role) associations"
+      (case from
+        of None \<Rightarrow> assoc_refer_class (fmdrop role ends) \<C>
+         | Some from_role \<Rightarrow> role_refer_class ends \<C> from_role) \<and>
+      assoc_refer_role ends role) associations"
 
-abbreviation "find_owned_association_end \<C> role \<equiv>
-  let found = fmran (find_associations \<C> role) in
+abbreviation "find_owned_association_end \<C> role from \<equiv>
+  let found = fmran (find_associations \<C> role from) in
   if fcard found = 1 then fmlookup (fthe_elem found) role else None"
 
-abbreviation "find_association_end \<C> role \<equiv>
-  let found = Option.these {find_owned_association_end \<D> role | \<D>. \<C> \<le> \<D>} in
+abbreviation "find_association_end \<C> role from \<equiv>
+  let found = Option.these {find_owned_association_end \<D> role from | \<D>. \<C> \<le> \<D>} in
   if card found = 1 then Some (the_elem found) else None"
+
+abbreviation "referred_by_association_class \<C> \<A> from \<equiv>
+  case fmlookup association_classes \<A> of None \<Rightarrow> False | Some assoc \<Rightarrow>
+    (case fmlookup associations assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
+      (\<exists>\<D>. \<C> \<le> \<D> \<and>
+        (case from
+          of None \<Rightarrow> assoc_refer_class ends \<D>
+           | Some from_role \<Rightarrow> role_refer_class ends \<D> from_role)))"
+
+abbreviation "find_association_class_end \<A> role \<equiv>
+  case fmlookup association_classes \<A> of None \<Rightarrow> None | Some assoc \<Rightarrow>
+    (case fmlookup associations assoc of None \<Rightarrow> None | Some ends \<Rightarrow>
+      fmlookup ends role)"
 
 abbreviation "find_operation \<tau> op \<pi> \<equiv>
   find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> \<not> oper_static x) operations"

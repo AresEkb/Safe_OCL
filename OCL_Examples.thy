@@ -234,6 +234,8 @@ definition "associations_classes1 \<equiv> fmap_of_list [
     (STR ''tasks'', (Task, 0, 5, False, False)),
     (STR ''assignee'', (Employee, 0, 1, False, False))])]"
 
+definition "association_classes_classes1 \<equiv> fmempty :: classes1 \<rightharpoonup>\<^sub>f assoc"
+
 text \<open>
 \begin{verbatim}
 context Project

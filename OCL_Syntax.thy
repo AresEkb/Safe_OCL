@@ -165,6 +165,7 @@ and 'a call_expr =
 | Attribute attr
 | AssociationEnd role (from_role : "role option")
 | AssociationClass 'a (from_role : "role option")
+| AssociationClassEnd role
 | Operation op (args : "'a expr list")
 | TupleElement telem
 | Iterate (iterators : "vname list") (iterators_type : "'a type option")
@@ -185,6 +186,10 @@ abbreviation "AttributeCall src attr \<equiv>
   Call src DotCall (Attribute attr)"
 abbreviation "AssociationEndCall src role from \<equiv>
   Call src DotCall (AssociationEnd role from)"
+abbreviation "AssociationClassCall src cls from \<equiv>
+  Call src DotCall (AssociationClass cls from)"
+abbreviation "AssociationClassEndCall src role \<equiv>
+  Call src DotCall (AssociationClassEnd role)"
 abbreviation "OperationCall src k op as \<equiv>
   Call src k (Operation op as)"
 abbreviation "TupleElementCall src elem \<equiv>

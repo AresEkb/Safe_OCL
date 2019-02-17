@@ -664,8 +664,18 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 |AssociationEndCallT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    class_of \<tau> \<C> \<Longrightarrow>
-   find_association_end \<C> role = Some end \<Longrightarrow>
+   find_association_end \<C> role from = Some end \<Longrightarrow>
    \<Gamma> \<turnstile> AssociationEndCall src role from : assoc_end_type end"
+|AssociationClassCallT:
+  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+   class_of \<tau> \<C> \<Longrightarrow>
+   referred_by_association_class \<C> \<A> from \<Longrightarrow>
+   \<Gamma> \<turnstile> AssociationClassCall src \<A> from : class_assoc_type \<A>"
+|AssociationClassEndCallT:
+  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+   class_of \<tau> \<A> \<Longrightarrow>
+   find_association_class_end \<A> role = Some end \<Longrightarrow>
+   \<Gamma> \<turnstile> AssociationClassEndCall src role : class_assoc_end_type end"
 |OperationCallT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
@@ -774,6 +784,8 @@ inductive_cases StaticOperationCallTE [elim]: "\<Gamma> \<turnstile> StaticOpera
 inductive_cases TypeOperationCallTE [elim]: "\<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<tau>"
 inductive_cases AttributeCallTE [elim]: "\<Gamma> \<turnstile> AttributeCall src prop : \<tau>"
 inductive_cases AssociationEndCallTE [elim]: "\<Gamma> \<turnstile> AssociationEndCall src role from : \<tau>"
+inductive_cases AssociationClassCallTE [elim]: "\<Gamma> \<turnstile> AssociationClassCall src a from : \<tau>"
+inductive_cases AssociationClassEndCallTE [elim]: "\<Gamma> \<turnstile> AssociationClassEndCall src role : \<tau>"
 inductive_cases OperationCallTE [elim]: "\<Gamma> \<turnstile> OperationCall src k op params : \<tau>"
 inductive_cases TupleElementCallTE [elim]: "\<Gamma> \<turnstile> TupleElementCall src elem : \<tau>"
 
@@ -870,79 +882,86 @@ next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCallTE typeop_type_det)
 next
-  case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>) thus ?case
+  case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>) show ?case
     apply (insert IteratorT.prems)
     apply (erule IteratorTE)
     using IteratorT.hyps element_type_det by blast
 next
-  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) thus ?case
+  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) show ?case
     apply (insert IterateT.prems)
     using IterateT.hyps by blast
 next
   case (AnyIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     by (meson AnyIteratorTE Pair_inject)
 next
-  case (ClosureIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (ClosureIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert ClosureIteratorT.prems)
     apply (erule ClosureIteratorTE)
     using ClosureIteratorT.hyps to_unique_collection_det by blast
 next
-  case (CollectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (CollectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert CollectIteratorT.prems)
     apply (erule CollectIteratorTE)
     using CollectIteratorT.hyps to_nonunique_collection_det
       update_element_type_det Pair_inject by metis
 next
-  case (CollectNestedIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (CollectNestedIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert CollectNestedIteratorT.prems)
     apply (erule CollectNestedIteratorTE)
     using CollectNestedIteratorT.hyps to_nonunique_collection_det
       update_element_type_det Pair_inject by metis
 next
-  case (ExistsIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+  case (ExistsIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
     apply (insert ExistsIteratorT.prems)
     apply (erule ExistsIteratorTE)
     using ExistsIteratorT.hyps Pair_inject by metis
 next
-  case (ForAllIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+  case (ForAllIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
     apply (insert ForAllIteratorT.prems)
     apply (erule ForAllIteratorTE)
     using ForAllIteratorT.hyps Pair_inject by metis
 next
-  case (OneIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+  case (OneIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
     apply (insert OneIteratorT.prems)
     apply (erule OneIteratorTE)
     by simp
 next
-  case (IsUniqueIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+  case (IsUniqueIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
     apply (insert IsUniqueIteratorT.prems)
     apply (erule IsUniqueIteratorTE)
     by simp
 next
-  case (SelectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+  case (SelectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
     apply (insert SelectIteratorT.prems)
     apply (erule SelectIteratorTE)
     using SelectIteratorT.hyps by blast
 next
-  case (RejectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+  case (RejectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
     apply (insert RejectIteratorT.prems)
     apply (erule RejectIteratorTE)
     using RejectIteratorT.hyps by blast
 next
-  case (SortedByIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) thus ?case
+  case (SortedByIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert SortedByIteratorT.prems)
     apply (erule SortedByIteratorTE)
     using SortedByIteratorT.hyps to_ordered_collection_det by blast
 next
-  case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) thus ?case
+  case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
     apply (insert AttributeCallT.prems)
     apply (erule AttributeCallTE)
     using AttributeCallT.hyps class_of_det by fastforce
 next
-  case (AssociationEndCallT \<Gamma> src \<tau> \<C> role "end") thus ?case
+  case (AssociationEndCallT \<Gamma> src \<tau> \<C> role "end") show ?case
     apply (insert AssociationEndCallT.prems)
     apply (erule AssociationEndCallTE)
     using AssociationEndCallT.hyps class_of_det by fastforce
+next
+  case (AssociationClassCallT \<Gamma> src \<tau> \<C> \<A> "from") thus ?case by blast
+next
+  case (AssociationClassEndCallT \<Gamma> src \<tau> \<A> role "end") show ?case
+    apply (insert AssociationClassEndCallT.prems)
+    apply (erule AssociationClassEndCallTE)
+    using AssociationClassEndCallT.hyps class_of_det by fastforce
 next
   case (OperationCallT \<Gamma> src \<tau> params \<pi> op k) show ?case
     apply (insert OperationCallT.prems)

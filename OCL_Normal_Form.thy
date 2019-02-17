@@ -168,6 +168,10 @@ inductive normalize
   "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Attribute attr \<Rrightarrow> Attribute attr"
 |AssociationEndN:
   "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationEnd role from \<Rrightarrow> AssociationEnd role from"
+|AssociationClassN:
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationClass \<A> from \<Rrightarrow> AssociationClass \<A> from"
+|AssociationClassEndN:
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationClassEnd role \<Rrightarrow> AssociationClassEnd role"
 |OperationN:
   "\<Gamma> \<turnstile>\<^sub>L as \<Rrightarrow> bs \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> Operation op bs"
@@ -327,6 +331,10 @@ next
   case (AttributeN \<Gamma> \<tau> attr) thus ?case by auto
 next
   case (AssociationEndN \<Gamma> \<tau> role "from") thus ?case by auto
+next
+  case (AssociationClassN \<Gamma> \<tau> \<A> "from") thus ?case by auto
+next
+  case (AssociationClassEndN \<Gamma> \<tau> role) thus ?case by auto
 next
   case (OperationN \<Gamma> as bs \<tau> op) thus ?case by blast
 next
