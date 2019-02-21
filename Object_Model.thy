@@ -10,7 +10,7 @@ begin
 
 text \<open>
   This theory defines a very simplified object model. It does not
-  support attributes redefinition and operations overloading.
+  support attributes and operations redefinition.
   It does not define any constraints either.\<close>
 
 type_synonym attr = String.literal
@@ -25,7 +25,8 @@ datatype param_dir = In | Out | InOut
 
 type_synonym 'c assoc_end = "'c \<times> nat \<times> enat \<times> bool \<times> bool"
 type_synonym 't param_spec = "param \<times> 't \<times> param_dir"
-type_synonym ('t, 'e) oper_spec = "oper \<times> 't \<times> 't param_spec list \<times> 't \<times> bool \<times> 'e option"
+type_synonym ('t, 'e) oper_spec =
+  "oper \<times> 't \<times> 't param_spec list \<times> 't \<times> bool \<times> 'e option"
 
 definition "assoc_end_class \<equiv> fst"
 definition "assoc_end_min \<equiv> fst \<circ> snd"
@@ -38,10 +39,7 @@ definition "role_refer_class ends \<C> role \<equiv>
 
 definition "assoc_refer_class ends \<C> \<equiv>
   fBex (fmdom ends) (role_refer_class ends \<C>)"
-(*
-definition "assoc_refer_class ends \<C> \<equiv>
-  fBex (fmdom ends) (\<lambda>role. assoc_end_class (the (fmlookup ends role)) = \<C>)"
-*)
+
 definition "assoc_refer_role ends role \<equiv> fmlookup ends role \<noteq> None"
 
 definition "oper_name \<equiv> fst"
@@ -81,9 +79,6 @@ begin
 abbreviation "find_owned_attribute \<C> attr \<equiv>
   map_option (Pair \<C>) (Option.bind (fmlookup attributes \<C>) (\<lambda>attrs\<^sub>\<C>. fmlookup attrs\<^sub>\<C> attr))"
 
-(* Спецификация разрешает переопределение атрибутов.
-   Для нескольких результатов должен возвращаться самый близкий к текущему классу
-   А если множественное наследование? Тогда нужно уточнять с помощью oclAsType *)
 abbreviation "find_attribute \<C> attr \<equiv>
   let found = Option.these {find_owned_attribute \<D> attr | \<D>. \<C> \<le> \<D>} in
   if card found = 1 then Some (the_elem found) else None"

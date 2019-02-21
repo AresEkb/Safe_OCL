@@ -42,7 +42,7 @@ datatype metaop = AllInstancesOp
 datatype typeop = OclAsTypeOp | OclIsTypeOfOp | OclIsKindOfOp
 | SelectByKindOp | SelectByTypeOp
 
-datatype suptype_binop = EqualOp | NotEqualOp
+datatype super_binop = EqualOp | NotEqualOp
 
 datatype any_unop = OclAsSetOp | OclIsNewOp
 | OclIsUndefinedOp | OclIsInvalidOp | OclLocaleOp | ToStringOp
@@ -80,9 +80,9 @@ declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> un
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> unop"]]
 
-type_synonym binop = "suptype_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
+type_synonym binop = "super_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
 
-declare [[coercion "Inl :: suptype_binop \<Rightarrow> binop"]]
+declare [[coercion "Inl :: super_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> binop"]]
@@ -101,7 +101,7 @@ declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Ri
 declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> op"]]
 declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> op"]]
 
-declare [[coercion "Inr \<circ> Inl \<circ> Inl :: suptype_binop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inl \<circ> Inl :: super_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inl :: boolean_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> op"]]
@@ -126,6 +126,7 @@ text \<open>
   @{text "is_safe_call"}). Also we could derive @{text "is_arrow_call"}
   value automatically based on an operation kind.
   But it's much easier and more natural to use the following enumeration.\<close>
+
 datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
 
 text \<open>
@@ -136,11 +137,21 @@ text \<open>
 
   We do not define @{text InvalidLiteral}, because it allows us to
   exclude @{text OclInvalid} type from typing rules. It simplifies
-  the types system.\<close>
+  the types system.
+
+  Please take a note that for @{text AssociationEnd} and
+  @{text AssociationClass} call expressions one can specify an
+  optional role of a source class (@{text from_role}).
+  It differs from the OCL specification, which allows one to specify
+  a role of a destination class. However, the latter one does not
+  allow to determine uniquely a set of linked objects, for example,
+  in a ternary self relation.
+\<close>
 
 datatype 'a expr =
   Literal "'a literal_expr"
-| Let (var : vname) (var_type : "'a type option") (init_expr : "'a expr") (body_expr : "'a expr")
+| Let (var : vname) (var_type : "'a type option") (init_expr : "'a expr")
+    (body_expr : "'a expr")
 | Var (var : vname)
 | If (if_expr : "'a expr") (then_expr : "'a expr") (else_expr : "'a expr")
 | MetaOperationCall (type : "'a type") metaop

@@ -8,8 +8,6 @@ theory OCL_Examples
   imports OCL_Normal_Form
 begin
 
-(*** Classes ****************************************************************)
-
 (* В 8.3.8 операции для метаклассов включая allInstances()
    Ещё статические операции
    И зачем-то обращение к переопределенным свойствам базового класса через oclAsType()
@@ -47,13 +45,12 @@ begin
 *)
 
 
+(*** Classes ****************************************************************)
+
 section \<open>Classes\<close>
 
 datatype classes1 =
   Object | Person | Employee | Customer | Project | Task | Sprint
-
-instantiation classes1 :: semilattice_sup
-begin
 
 inductive subclass1 where
   "c \<noteq> Object \<Longrightarrow>
@@ -61,7 +58,10 @@ inductive subclass1 where
 | "subclass1 Employee Person"
 | "subclass1 Customer Person"
 
-code_pred [show_modes] subclass1 .
+code_pred subclass1 .
+
+instantiation classes1 :: semilattice_sup
+begin
 
 definition "(<) \<equiv> subclass1"
 definition "(c::classes1) \<le> d \<equiv> c = d \<or> c < d"
@@ -145,13 +145,13 @@ definition [simp]: "enum_ex_classes1 P \<equiv>
 instance
   apply intro_classes
   apply auto
-  by (case_tac x, auto)+
+  by (metis classes1.exhaust)+
 
 end
 
-(*** Basic OCL Types ********************************************************)
+(*** Basic Types ************************************************************)
 
-section \<open>Basic OCL Types\<close>
+section \<open>Basic Types\<close>
 
 subsection \<open>Positive Cases\<close>
 
@@ -159,16 +159,13 @@ value "(UnlimitedNatural :: classes1 basic_type) < Real"
 value "\<langle>Employee\<rangle>\<^sub>\<T> < \<langle>Person\<rangle>\<^sub>\<T>"
 value "\<langle>Person\<rangle>\<^sub>\<T> \<le> OclAny"
 
-(*values "{x. Employee \<le> x}"*)
-(*values "{x. x \<le> Object}"*)
-
 subsection \<open>Negative Cases\<close>
 
 value "(String :: classes1 basic_type) \<le> Boolean"
 
-(*** OCL Types **************************************************************)
+(*** Types ******************************************************************)
 
-section \<open>OCL Types\<close>
+section \<open>Types\<close>
 
 subsection \<open>Positive Cases\<close>
 
@@ -176,21 +173,21 @@ value "Integer[?] < (OclSuper :: classes1 type)"
 value "Collection Real[?] < (OclSuper :: classes1 type)"
 value "Set (Collection Boolean[1]) < (OclSuper :: classes1 type)"
 value "Set (Bag Boolean[1]) < Set (Collection Boolean[?] :: classes1 type)"
-value "Tuple (fmap_of_list [(STR ''1'', Boolean[1] :: classes1 type), (STR ''2'', Integer[1])]) <
+value "Tuple (fmap_of_list [(STR ''1'', Boolean[1]), (STR ''2'', Integer[1])]) <
        Tuple (fmap_of_list [(STR ''1'', Boolean[?] :: classes1 type)])"
 
-value "Integer[1] \<squnion> Real[?] :: classes1 type" \<comment> \<open>Real[?]\<close>
-value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<open>Set Real[1]\<close>
-value "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type)" \<comment> \<open>Collection OclAny[?]\<close>
-value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>OclSuper\<close>
+value "Integer[1] \<squnion> Real[?] :: classes1 type" \<comment> \<open>@{text "Real[?]"}\<close>
+value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<open>@{text "Set(Real[1])"}\<close>
+value "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type)" \<comment> \<open>@{text "Collection(OclAny[?])"}\<close>
+value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>@{text "OclSuper"}\<close>
 
 subsection \<open>Negative Cases\<close>
 
 value "OrderedSet Boolean[1] < Set (Boolean[1] :: classes1 type)"
 
-(*** OCL Object Model *******************************************************)
+(*** Object Model ***********************************************************)
 
-section \<open>OCL Object Model\<close>
+section \<open>Object Model\<close>
 
 instantiation classes1 :: ocl_object_model
 begin
@@ -280,19 +277,19 @@ subsection \<open>Positive Cases\<close>
 (* TODO: Check *)
 value "find_attribute Employee STR ''name''"
 value "find_attribute Employee STR ''position''"
-value "find_association_end Employee STR ''projects''"
-value "find_association_end Person STR ''projects''"
+value "find_association_end Employee STR ''projects'' None"
 value "find_operation Project[1] STR ''membersCount'' []"
 value "find_operation Project[1] STR ''membersByName'' [String[1]]"
 value "has_literal STR ''E1'' STR ''A''"
 
 subsection \<open>Negative Cases\<close>
 
+value "find_association_end Person STR ''projects'' None"
 value "has_literal STR ''E1'' STR ''C''"
 
-(*** OCL Typing *************************************************************)
+(*** Typing *****************************************************************)
 
-section \<open>OCL Typing\<close>
+section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
 

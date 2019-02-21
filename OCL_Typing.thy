@@ -22,7 +22,7 @@ section \<open>Operations Typing\<close>
 subsection \<open>Metaclass Operations\<close>
 
 text \<open>
-  All primitive types in the theory are either nullable or non-nullable.
+  All basic types in the theory are either nullable or non-nullable.
   For example, instead of @{text Boolean} type we have two types:
   @{text "Boolean[1]"} and @{text "Boolean[?]"}.
   The @{text "allInstances()"} operation is extended accordingly:\<close>
@@ -96,12 +96,12 @@ text \<open>
 
 (* We have to specify predicate type explicitly to let
    a generated code work *)
-inductive suptype_binop_type
-    :: "suptype_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
+inductive super_binop_type
+    :: "super_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
   "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
-   suptype_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
+   super_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
 | "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
-   suptype_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
+   super_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>OclAny Operations\<close>
 
@@ -152,7 +152,8 @@ inductive boolean_binop_type where
 subsection \<open>Numeric Operations\<close>
 
 text \<open>
-  Nullable arithmetics is prohibited: @{text "1 + null"}.
+  The expression @{text "1 + null"} is not well-typed.
+  Nullable numeric values should be converted to non-nullable ones.
   This is a significant difference from the OCL specification.\<close>
 
 text \<open>
@@ -350,8 +351,8 @@ inductive collection_binop_type where
    collection_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
 
 | "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow>
-   collection_binop_type ProductOp \<tau> \<sigma> (Set (Tuple (fmap_of_list
-      [(STR ''first'', \<rho>), (STR ''second'', \<upsilon>)])))"
+   collection_binop_type ProductOp \<tau> \<sigma>
+      (Set (Tuple (fmap_of_list [(STR ''first'', \<rho>), (STR ''second'', \<upsilon>)])))"
 
 | "collection_binop_type UnionOp (Set \<tau>) (Set \<sigma>) (Set (\<tau> \<squnion> \<sigma>))"
 | "collection_binop_type UnionOp (Set \<tau>) (Bag \<sigma>) (Bag (\<tau> \<squnion> \<sigma>))"
@@ -417,7 +418,7 @@ inductive unop_type where
    unop_type (Inr (Inr (Inr (Inr op)))) ArrowCall \<tau> \<sigma>"
 
 inductive binop_type where
-  "suptype_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
+  "super_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
    binop_type (Inl op) DotCall \<tau> \<sigma> \<rho>"
 | "boolean_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
    binop_type (Inr (Inl op)) DotCall \<tau> \<sigma> \<rho>"
@@ -490,10 +491,10 @@ lemma unop_type_det:
                 boolean_unop_type_det numeric_unop_type_det
                 string_unop_type_det collection_unop_type_det)
 
-lemma suptype_binop_type_det:
-  "suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   suptype_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: suptype_binop_type.induct; auto simp add: suptype_binop_type.simps)
+lemma super_binop_type_det:
+  "super_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   super_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: super_binop_type.induct; auto simp add: super_binop_type.simps)
 
 lemma boolean_binop_type_det:
   "boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
@@ -521,7 +522,7 @@ lemma binop_type_det:
   "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    binop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   by (induct rule: binop_type.induct;
-      simp add: binop_type.simps suptype_binop_type_det
+      simp add: binop_type.simps super_binop_type_det
                 boolean_binop_type_det numeric_binop_type_det
                 string_binop_type_det collection_binop_type_det)
 
@@ -559,10 +560,11 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
        ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
     and collection_parts_typing ("(1_/ \<turnstile>\<^sub>C/ (_ :/ _))" [51,51,51] 50)
     and collection_part_typing ("(1_/ \<turnstile>\<^sub>P/ (_ :/ _))" [51,51,51] 50)
-    and expr_list_typing ("(1_/ \<turnstile>\<^sub>L/ (_ :/ _))" [51,51,51] 50)
-    and iterator_typing ("(1_/ \<turnstile>\<^sub>I/ (_ :/ _))" [51,51,51] 50) where
+    and iterator_typing ("(1_/ \<turnstile>\<^sub>I/ (_ :/ _))" [51,51,51] 50)
+    and expr_list_typing ("(1_/ \<turnstile>\<^sub>L/ (_ :/ _))" [51,51,51] 50) where
 
 \<comment> \<open>Primitive Literals\<close>
+
  NullLiteralT:
   "\<Gamma> \<turnstile> NullLiteral : OclVoid[?]"
 |BooleanLiteralT:
@@ -571,7 +573,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
   "\<Gamma> \<turnstile> RealLiteral c : Real[1]"
 |IntegerLiteralT:
   "\<Gamma> \<turnstile> IntegerLiteral c : Integer[1]"
-|UnlimNatLiteralT:
+|UnlimitedNaturalLiteralT:
   "\<Gamma> \<turnstile> UnlimitedNaturalLiteral c : UnlimitedNatural[1]"
 |StringLiteralT:
   "\<Gamma> \<turnstile> StringLiteral c : String[1]"
@@ -580,6 +582,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile> EnumLiteral enum lit : (Enum enum)[1]"
 
 \<comment> \<open>Collection Literals\<close>
+
 |SetLiteralT:
   "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile> CollectionLiteral SetKind prts : Set \<tau>"
@@ -595,8 +598,9 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 
 \<comment> \<open>We prohibit empty collection literals, because their type is unclear.
   We could use @{text "OclVoid[1]"} element type for empty collections, but
-  it will give wrong types for nested collections, because, for example,
-  @{text "OclVoid[1] \<squnion> Set(Integer[1]) = OclSuper"}\<close>
+  the typing rules will give wrong types for nested collections, because,
+  for example, @{text "OclVoid[1] \<squnion> Set(Integer[1]) = OclSuper"}\<close>
+
 |CollectionPartsSingletonT:
   "\<Gamma> \<turnstile>\<^sub>P x : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
@@ -617,10 +621,11 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 
 \<comment> \<open>Tuple Literals\<close>
 \<comment> \<open>We do not prohibit empty tuples, because it could be useful.
-  @{text "Tuple()"} is a supertype of all tuples.\<close>
-|NilTupleLiteralT:
+  @{text "Tuple()"} is a supertype of all other tuple types.\<close>
+
+|TupleLiteralNilT:
   "\<Gamma> \<turnstile> TupleLiteral [] : Tuple fmempty"
-|ConsTupleLiteralT:
+|TupleLiteralConsT:
   "\<Gamma> \<turnstile> TupleLiteral elems : Tuple \<xi> \<Longrightarrow>
    \<Gamma> \<turnstile> tuple_element_expr el : \<tau> \<Longrightarrow>
    tuple_element_type el = Some \<sigma> \<Longrightarrow>
@@ -628,6 +633,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile> TupleLiteral (el # elems) : Tuple (\<xi>(tuple_element_name el \<mapsto>\<^sub>f \<sigma>))"
 
 \<comment> \<open>Misc Expressions\<close>
+
 |LetT:
   "\<Gamma> \<turnstile> init : \<sigma> \<Longrightarrow>
    \<sigma> \<le> \<tau> \<Longrightarrow>
@@ -643,6 +649,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile> If a b c : \<sigma> \<squnion> \<rho>"
 
 \<comment> \<open>Call Expressions\<close>
+
 |MetaOperationCallT:
   "mataop_type \<tau> op \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile> MetaOperationCall \<tau> op : \<sigma>"
@@ -688,6 +695,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile> TupleElementCall src elem : \<tau>"
 
 \<comment> \<open>Iterator Expressions\<close>
+
 |IteratorT:
   "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
@@ -757,6 +765,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile> SortedByIteratorCall src its its_ty body : \<upsilon>"
 
 \<comment> \<open>Expression Lists\<close>
+
 |ExprListNilT:
   "\<Gamma> \<turnstile>\<^sub>L [] : []"
 |ExprListConsT:
@@ -772,7 +781,7 @@ inductive_cases UnlimitedNaturalLiteralTE [elim]: "\<Gamma> \<turnstile> Unlimit
 inductive_cases StringLiteralTE [elim]: "\<Gamma> \<turnstile> StringLiteral c : \<tau>"
 inductive_cases EnumLiteralTE [elim]: "\<Gamma> \<turnstile> EnumLiteral enm lit : \<tau>"
 inductive_cases CollectionLiteralTE [elim]: "\<Gamma> \<turnstile> CollectionLiteral k prts : \<tau>"
-inductive_cases ConsTupleLiteralTE [elim]: "\<Gamma> \<turnstile> TupleLiteral elems : \<tau>"
+inductive_cases TupleLiteralTE [elim]: "\<Gamma> \<turnstile> TupleLiteral elems : \<tau>"
 
 inductive_cases LetTE [elim]: "\<Gamma> \<turnstile> Let v \<tau> init body : \<sigma>"
 inductive_cases VarTE [elim]: "\<Gamma> \<turnstile> Var v : \<tau>"
@@ -825,14 +834,14 @@ lemma
   collection_part_typing_det:
     "\<Gamma> \<turnstile>\<^sub>P prt : \<tau> \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>P prt : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
-  expr_list_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>L exprs : \<xi> \<Longrightarrow> \<pi> = \<xi>" and
   iterator_typing_det:
     "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys \<Longrightarrow> xs = ys"
-proof (induct arbitrary: \<sigma> and \<sigma> and \<sigma> and \<xi> and ys
-       rule: typing_collection_parts_typing_collection_part_typing_expr_list_typing_iterator_typing.inducts)
+     \<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys \<Longrightarrow> xs = ys" and
+  expr_list_typing_det:
+    "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
+     \<Gamma> \<turnstile>\<^sub>L exprs : \<xi> \<Longrightarrow> \<pi> = \<xi>"
+proof (induct arbitrary: \<sigma> and \<sigma> and \<sigma> and ys and \<xi>
+       rule: typing_collection_parts_typing_collection_part_typing_iterator_typing_expr_list_typing.inducts)
   case (NullLiteralT \<Gamma>) thus ?case by auto
 next
   case (BooleanLiteralT \<Gamma> c) thus ?case by auto
@@ -841,7 +850,7 @@ next
 next
   case (IntegerLiteralT \<Gamma> c) thus ?case by auto
 next
-  case (UnlimNatLiteralT \<Gamma> c) thus ?case by auto
+  case (UnlimitedNaturalLiteralT \<Gamma> c) thus ?case by auto
 next
   case (StringLiteralT \<Gamma> c) thus ?case by auto
 next
@@ -863,12 +872,12 @@ next
 next
   case (CollectionPartRangeT \<Gamma> a \<tau> b \<sigma>) thus ?case by blast
 next
-  case (NilTupleLiteralT \<Gamma>) thus ?case by auto
+  case (TupleLiteralNilT \<Gamma>) thus ?case by auto
 next
-  case (ConsTupleLiteralT \<Gamma> elems \<xi> el \<tau>) show ?case
-    apply (insert ConsTupleLiteralT.prems)
-    apply (erule ConsTupleLiteralTE, simp)
-    using ConsTupleLiteralT.hyps by auto
+  case (TupleLiteralConsT \<Gamma> elems \<xi> el \<tau>) show ?case
+    apply (insert TupleLiteralConsT.prems)
+    apply (erule TupleLiteralTE, simp)
+    using TupleLiteralConsT.hyps by auto
 next
   case (LetT \<Gamma> \<M> init \<sigma> \<tau> v body \<rho>) thus ?case by blast
 next
@@ -879,8 +888,43 @@ next
     apply (erule IfTE)
     by (simp add: IfT.hyps)
 next
+  case (MetaOperationCallT \<tau> op \<sigma> \<Gamma>) thus ?case
+    by (metis MetaOperationCallTE mataop_type.cases)
+next
+  case (StaticOperationCallT \<tau> op \<pi> oper \<Gamma> as) thus ?case
+    apply (insert StaticOperationCallT.prems)
+    apply (erule StaticOperationCallTE)
+    using StaticOperationCallT.hyps by auto
+next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCallTE typeop_type_det)
+next
+  case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
+    apply (insert AttributeCallT.prems)
+    apply (erule AttributeCallTE)
+    using AttributeCallT.hyps class_of_det by fastforce
+next
+  case (AssociationEndCallT \<Gamma> src \<tau> \<C> role "end") show ?case
+    apply (insert AssociationEndCallT.prems)
+    apply (erule AssociationEndCallTE)
+    using AssociationEndCallT.hyps class_of_det by fastforce
+next
+  case (AssociationClassCallT \<Gamma> src \<tau> \<C> \<A> "from") thus ?case by blast
+next
+  case (AssociationClassEndCallT \<Gamma> src \<tau> \<A> role "end") show ?case
+    apply (insert AssociationClassEndCallT.prems)
+    apply (erule AssociationClassEndCallTE)
+    using AssociationClassEndCallT.hyps class_of_det by fastforce
+next
+  case (OperationCallT \<Gamma> src \<tau> params \<pi> op k) show ?case
+    apply (insert OperationCallT.prems)
+    apply (erule OperationCallTE)
+    using OperationCallT.hyps op_type_det by blast
+next
+  case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>) thus ?case 
+    apply (insert TupleElementCallT.prems)
+    apply (erule TupleElementCallTE)
+    using TupleElementCallT.hyps by fastforce
 next
   case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>) show ?case
     apply (insert IteratorT.prems)
@@ -946,28 +990,6 @@ next
     apply (erule SortedByIteratorTE)
     using SortedByIteratorT.hyps to_ordered_collection_det by blast
 next
-  case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
-    apply (insert AttributeCallT.prems)
-    apply (erule AttributeCallTE)
-    using AttributeCallT.hyps class_of_det by fastforce
-next
-  case (AssociationEndCallT \<Gamma> src \<tau> \<C> role "end") show ?case
-    apply (insert AssociationEndCallT.prems)
-    apply (erule AssociationEndCallTE)
-    using AssociationEndCallT.hyps class_of_det by fastforce
-next
-  case (AssociationClassCallT \<Gamma> src \<tau> \<C> \<A> "from") thus ?case by blast
-next
-  case (AssociationClassEndCallT \<Gamma> src \<tau> \<A> role "end") show ?case
-    apply (insert AssociationClassEndCallT.prems)
-    apply (erule AssociationClassEndCallTE)
-    using AssociationClassEndCallT.hyps class_of_det by fastforce
-next
-  case (OperationCallT \<Gamma> src \<tau> params \<pi> op k) show ?case
-    apply (insert OperationCallT.prems)
-    apply (erule OperationCallTE)
-    using OperationCallT.hyps op_type_det by blast
-next
   case (ExprListNilT \<Gamma>) thus ?case
     using expr_list_typing.cases by auto
 next
@@ -975,26 +997,13 @@ next
     apply (insert ExprListConsT.prems)
     apply (erule ExprListTE)
     by (simp_all add: ExprListConsT.hyps)
-next
-  case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>) thus ?case 
-    apply (insert TupleElementCallT.prems)
-    apply (erule TupleElementCallTE)
-    using TupleElementCallT.hyps by fastforce
-next
-  case (MetaOperationCallT \<tau> op \<sigma> \<Gamma>) thus ?case
-    by (metis MetaOperationCallTE mataop_type.cases)
-next
-  case (StaticOperationCallT \<tau> op \<pi> oper \<Gamma> as) thus ?case
-    apply (insert StaticOperationCallT.prems)
-    apply (erule StaticOperationCallTE)
-    using StaticOperationCallT.hyps by auto
 qed
 
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
 
-code_pred [show_modes] typing .
+code_pred typing .
 
 definition "check_type \<Gamma> expr \<tau> \<equiv>
   Predicate.eval (typing_i_i_i \<Gamma> expr \<tau>) ()"

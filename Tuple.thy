@@ -57,56 +57,83 @@ lemma strict_subtuple_mono [mono]:
    strict_subtuple f xm ym \<longrightarrow> strict_subtuple g xm ym"
   using subtuple_mono by blast
 
+thm fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom
+
 lemma subtuple_antisym:
-  "subtuple (\<lambda>x y. x = y \<or> f x y \<and> \<not> f y x) xm ym \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> f x y) ym xm \<Longrightarrow>
-   xm = ym"
-  apply (frule subtuple_fmdom, simp)
-  apply (rule fmap_ext)
-  apply (unfold subtuple_eq_fmrel_fmrestrict_fset)
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply force
-  apply (erule_tac ?x="x" in fmrel_cases)
-  apply force
-  by (metis fmrestrict_fset_dom option.sel)
+  assumes "subtuple (\<lambda>x y. x = y \<or> f x y) xm ym"
+  assumes "subtuple (\<lambda>x y. x = y \<or> f x y \<and> \<not> f y x) ym xm"
+  shows "xm = ym"
+proof (rule fmap_ext)
+  fix x
+  from assms have "fmdom xm = fmdom ym"
+    using subtuple_fmdom by blast
+  with assms show "fmlookup xm x = fmlookup ym x"
+    by (smt fmdomE fmdom_notD fmrel_on_fsetD option.rel_sel option.sel)
+qed
 
 lemma strict_subtuple_antisym:
-  "strict_subtuple (\<lambda>x y. x = y \<or> f x y \<and> \<not> f y x) xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> f x y) ym xm \<Longrightarrow> False"
+  "strict_subtuple (\<lambda>x y. x = y \<or> f x y) xm ym \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. x = y \<or> f x y \<and> \<not> f y x) ym xm \<Longrightarrow> False"
   by (auto simp add: subtuple_antisym)
 
 lemma subtuple_acyclic:
-  "acyclicP_on (fmran' xm) P \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> P x y) ym xm \<Longrightarrow>
-   xm = ym"
-  apply (frule subtuple_fmdom, simp)
-  apply (unfold fmrel_on_fset_fmrel_restrict, simp)
-  apply (rule fmap_ext)
-  apply (erule_tac ?x="x" in fmrel_cases, metis fmrestrict_fset_dom)+
-  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp1 tranclp_unfold)
+  assumes "acyclicP_on (fmran' xm) P"
+  assumes "subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym"
+  assumes "subtuple (\<lambda>x y. x = y \<or> P x y) ym xm"
+  shows "xm = ym"
+proof (rule fmap_ext)
+  fix x
+  from assms have fmdom_eq: "fmdom xm = fmdom ym"
+    using subtuple_fmdom by blast
+  have "\<And>x a b. acyclicP_on (fmran' xm) P \<Longrightarrow>
+     fmlookup xm x = Some a \<Longrightarrow>
+     fmlookup ym x = Some b \<Longrightarrow>
+    P\<^sup>*\<^sup>* a b \<Longrightarrow> a = b \<or> P b a \<Longrightarrow> a = b"
+    by (meson Nitpick.tranclp_unfold fmran'I rtranclp_into_tranclp1)
+  moreover from fmdom_eq assms(2) have "fmrel P\<^sup>*\<^sup>* xm ym"
+    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    by (metis fmrestrict_fset_dom)
+  moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. x = y \<or> P x y) ym xm"
+    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    by (metis fmrestrict_fset_dom)
+  ultimately show "fmlookup xm x = fmlookup ym x"
+    apply (erule_tac ?x="x" in fmrel_cases)
+    apply (erule_tac ?x="x" in fmrel_cases, simp_all)+
+    using assms(1) by blast
+qed
 
 lemma subtuple_acyclic':
-  "acyclicP_on (fmran' ym) P \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   subtuple (\<lambda>x y. x = y \<or> P x y) ym xm \<Longrightarrow>
-   xm = ym"
-  apply (frule subtuple_fmdom, simp)
-  apply (unfold fmrel_on_fset_fmrel_restrict, simp)
-  apply (rule fmap_ext)
-  apply (erule_tac ?x="x" in fmrel_cases, metis fmrestrict_fset_dom)+
-  by (metis fmran'I fmrestrict_fset_dom option.inject rtranclp_into_tranclp2 tranclp_unfold)
+  assumes "acyclicP_on (fmran' ym) P"
+  assumes "subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym"
+  assumes "subtuple (\<lambda>x y. x = y \<or> P x y) ym xm"
+  shows "xm = ym"
+proof (rule fmap_ext)
+  fix x
+  from assms have fmdom_eq: "fmdom xm = fmdom ym"
+    using subtuple_fmdom by blast
+  have "\<And>x a b. acyclicP_on (fmran' ym) P \<Longrightarrow>
+     fmlookup xm x = Some a \<Longrightarrow>
+     fmlookup ym x = Some b \<Longrightarrow>
+    P\<^sup>*\<^sup>* a b \<Longrightarrow> a = b \<or> P b a \<Longrightarrow> a = b"
+    by (meson Nitpick.tranclp_unfold fmran'I rtranclp_into_tranclp2)
+  moreover from fmdom_eq assms(2) have "fmrel P\<^sup>*\<^sup>* xm ym"
+    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    by (metis fmrestrict_fset_dom)
+  moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. x = y \<or> P x y) ym xm"
+    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    by (metis fmrestrict_fset_dom)
+  ultimately show "fmlookup xm x = fmlookup ym x"
+    apply (erule_tac ?x="x" in fmrel_cases)
+    apply (erule_tac ?x="x" in fmrel_cases, simp_all)+
+    using assms(1) by blast
+qed
 
 lemma subtuple_acyclic'':
   "acyclicP_on (fmran' ym) R \<Longrightarrow>
    subtuple R\<^sup>*\<^sup>* xm ym \<Longrightarrow>
    subtuple R ym xm \<Longrightarrow>
    xm = ym"
-  apply (frule subtuple_fmdom, simp)
-  apply (unfold fmrel_on_fset_fmrel_restrict, simp)
-  apply (rule fmap_ext)
-  apply (erule_tac ?x="x" in fmrel_cases, metis fmrestrict_fset_dom)+
-  by (metis fmran'I option.inject rtranclp_into_tranclp2 tranclp_unfold)
+  by (metis (no_types, lifting) subtuple_acyclic' subtuple_mono tranclp_eq_rtranclp)
 
 lemma strict_subtuple_trans:
   "acyclicP_on (fmran' xm) P \<Longrightarrow>
@@ -159,15 +186,14 @@ lemma trancl_to_subtuple:
    subtuple r\<^sup>+\<^sup>+ xm ym"
   apply (induct rule: tranclp_induct)
   apply (metis subtuple_mono tranclp.r_into_trancl)
-  by (rule fmrel_on_fset_trans, auto)
+  by (rule fmrel_on_fset_trans; auto)
 
 lemma rtrancl_to_subtuple:
   "(subtuple r)\<^sup>*\<^sup>* xm ym \<Longrightarrow>
    subtuple r\<^sup>*\<^sup>* xm ym"
   apply (induct rule: rtranclp_induct)
   apply (simp add: fmap.rel_refl_strong fmrel_to_subtuple)
-  apply (rule fmrel_on_fset_trans; auto)
-  done
+  by (rule fmrel_on_fset_trans; auto)
 
 lemma fmrel_to_subtuple_trancl:
   "reflp r \<Longrightarrow>

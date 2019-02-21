@@ -8,7 +8,10 @@ theory OCL_Object_Model
   imports OCL_Syntax "HOL-Library.Transitive_Closure_Table"
 begin
 
-section \<open>Definition\<close>
+text \<open>
+  I see no reason why objects should refer nulls using multi-valued
+  associations. Therefore, multi-valued associations have collection
+  types with non-nullable element types.\<close>
 
 definition
   "assoc_end_type end \<equiv>

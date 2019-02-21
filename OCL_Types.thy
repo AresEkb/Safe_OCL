@@ -32,8 +32,8 @@ text \<open>
   We define the @{text OclInvalid} type separately, because we
   do not need types like @{text "Set(OclInvalid)"} in the theory.
   The @{text "OclVoid[1]"} type is not equal to @{text OclInvalid}.
-  For example, @{text "Set(OclVoid[1])"} is a valid type of the
-  following expression:\<close>
+  For example, @{text "Set(OclVoid[1])"} could theoretically be
+  a valid type of the following expression:\<close>
 
 text \<open>
 \<^verbatim>\<open>Set{null}->excluding(null)\<close>\<close>
@@ -100,7 +100,7 @@ lemma subtype_antisym:
    False"
   apply (induct rule: subtype.induct)
   using basic_subtype_asym apply auto
-  by (rule_tac ?f="subtype" and ?xm="\<pi>" and ?ym="\<pi>'" in strict_subtuple_antisym; simp)
+  using subtuple_antisym by fastforce
 
 (*** Constructors Bijectivity on Transitive Closures ************************)
 
@@ -124,8 +124,7 @@ lemma subtype_tranclp_Collection_x:
    (\<And>\<rho>. \<sigma> = Collection \<rho> \<Longrightarrow> subtype\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sigma> = OclSuper \<Longrightarrow> P) \<Longrightarrow> P"
   apply (induct rule: tranclp_induct, auto)
-  by (metis subtype_Collection_x subtype_OclSuper_x
-            tranclp.trancl_into_trancl)
+  by (metis subtype_Collection_x subtype_OclSuper_x tranclp.trancl_into_trancl)
 
 lemma Collection_bij_on_trancl [simp]:
   "bij_on_trancl subtype Collection"

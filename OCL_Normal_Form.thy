@@ -224,7 +224,7 @@ inductive_cases OperationCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C
 inductive_cases IterateCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
 inductive_cases IteratorCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
 
-inductive_cases ExprListConsNE [elim]: "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> zs"
+inductive_cases ExprListNE [elim]: "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys"
 
 (*** Determinism ************************************************************)
 
@@ -376,6 +376,6 @@ qed
 
 section \<open>Code Setup\<close>
 
-code_pred [show_modes] normalize .
+code_pred normalize .
 
 end

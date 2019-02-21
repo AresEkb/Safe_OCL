@@ -305,11 +305,8 @@ lemma order_refl_basic_type [iff]:
   by (simp add: less_eq_basic_type_def)
 
 instance
-  apply intro_classes
-  apply (simp add: less_le_not_le_basic_type)
-  apply (simp)
-  apply (auto simp add: less_eq_basic_type_def)[1]
-  by (simp add: antisym_basic_type)
+  by standard (auto simp add: less_eq_basic_type_def
+        less_le_not_le_basic_type antisym_basic_type)
 
 end
 
@@ -349,10 +346,8 @@ lemma sup_least_basic_type:
   by (induct \<rho>; auto)
 
 instance
-  apply intro_classes
-  apply (simp add: sup_ge1_basic_type)
-  apply (simp add: sup_commut_basic_type sup_ge1_basic_type)
-  by (simp add: sup_least_basic_type)
+  by standard (auto simp add: sup_ge1_basic_type
+        sup_commut_basic_type sup_least_basic_type)
 
 end
 
