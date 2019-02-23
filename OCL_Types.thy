@@ -75,7 +75,7 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
 | "Collection OclSuper \<sqsubset> OclSuper"
 
-| "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>) \<pi> \<xi> \<Longrightarrow>
+| "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi> \<Longrightarrow>
    Tuple \<pi> \<sqsubset> Tuple \<xi>"
 | "Tuple \<pi> \<sqsubset> OclSuper"
 
@@ -213,7 +213,7 @@ lemma type_less_eq_x_Sequence_intro [intro]:
   by (simp) (rule preserve_rtranclp; auto)
 
 lemma fun_or_eq_refl [intro]:
-  "reflp (\<lambda>x y. x = y \<or> f x y)"
+  "reflp (\<lambda>x y. f x y \<or> x = y)"
   by (simp add: reflpI)
 
 lemma type_less_eq_x_Tuple_intro [intro]:
@@ -221,20 +221,14 @@ lemma type_less_eq_x_Tuple_intro [intro]:
       and "subtuple (\<le>) \<pi> \<xi>"
     shows "\<tau> \<le> Tuple \<xi>"
 proof -
-  have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>*\<^sup>* \<pi> \<xi>"
+  have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>)\<^sup>*\<^sup>* \<pi> \<xi>"
     using assms(2) less_eq_type_def by auto
-  hence "subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)\<^sup>+\<^sup>+ \<pi> \<xi>"
-    by auto
-  hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
-    by (simp) (rule subtuple_to_trancl; auto)
-  hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
-    by simp
-  hence "(strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
-    by (smt mono_rtranclp rtranclp_eq_rtranclp)
+  hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
+    by simp (rule subtuple_to_trancl; auto)
   thus ?thesis
     unfolding less_eq_type_def
     using assms(1) apply simp
-    by (rule preserve_rtranclp[of "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> = \<sigma> \<or> \<tau> \<sqsubset> \<sigma>)"]; auto)
+    by (rule preserve_rtranclp[of "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>)"]; auto)
 qed
 
 lemma type_less_eq_x_OclSuper_intro [intro]:
@@ -923,10 +917,15 @@ proof
     case (Sequence \<sigma>) thus ?case
       by (insert Sequence) (erule type_less_eq_x_Sequence; auto)
   next
-    case (Tuple x) thus ?case
+    case (Tuple \<xi>)
+    have subtuple_simp:
+      "\<And>\<pi>. subtuple (\<le>) \<pi> \<xi> \<longrightarrow> subtuple (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi>"
+      apply (rule subtuple_mono)
+      using Tuple.hyps by auto
+    show ?case
       apply (insert Tuple)
       apply (erule type_less_eq_x_Tuple; auto)
-      by (smt subtuple_mono)
+      by (simp add: subtuple_simp)
   qed
 qed
 

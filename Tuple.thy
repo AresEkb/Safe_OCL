@@ -57,29 +57,31 @@ lemma strict_subtuple_mono [mono]:
    strict_subtuple f xm ym \<longrightarrow> strict_subtuple g xm ym"
   using subtuple_mono by blast
 
-thm fmrel_on_fset_fmrel_restrict fmrestrict_fset_dom
-
 lemma subtuple_antisym:
-  assumes "subtuple (\<lambda>x y. x = y \<or> f x y) xm ym"
-  assumes "subtuple (\<lambda>x y. x = y \<or> f x y \<and> \<not> f y x) ym xm"
+  assumes "subtuple (\<lambda>x y. f x y \<or> x = y) xm ym"
+  assumes "subtuple (\<lambda>x y. f x y \<and> \<not> f y x \<or> x = y) ym xm"
   shows "xm = ym"
 proof (rule fmap_ext)
   fix x
   from assms have "fmdom xm = fmdom ym"
     using subtuple_fmdom by blast
-  with assms show "fmlookup xm x = fmlookup ym x"
-    by (smt fmdomE fmdom_notD fmrel_on_fsetD option.rel_sel option.sel)
+  with assms have "fmrel (\<lambda>x y. f x y \<or> x = y) xm ym"
+      and "fmrel (\<lambda>x y. f x y \<and> \<not> f y x \<or> x = y) ym xm"
+    by (metis (mono_tags, lifting) fmrel_code fmrel_on_fset_alt_def)+
+  thus "fmlookup xm x = fmlookup ym x"
+    apply (erule_tac ?x="x" in fmrel_cases)
+    by (erule_tac ?x="x" in fmrel_cases, auto)+
 qed
 
 lemma strict_subtuple_antisym:
-  "strict_subtuple (\<lambda>x y. x = y \<or> f x y) xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> f x y \<and> \<not> f y x) ym xm \<Longrightarrow> False"
+  "strict_subtuple (\<lambda>x y. f x y \<or> x = y) xm ym \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. f x y \<and> \<not> f y x \<or> x = y) ym xm \<Longrightarrow> False"
   by (auto simp add: subtuple_antisym)
 
 lemma subtuple_acyclic:
   assumes "acyclicP_on (fmran' xm) P"
-  assumes "subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym"
-  assumes "subtuple (\<lambda>x y. x = y \<or> P x y) ym xm"
+  assumes "subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm ym"
+  assumes "subtuple (\<lambda>x y. P x y \<or> x = y) ym xm"
   shows "xm = ym"
 proof (rule fmap_ext)
   fix x
@@ -88,12 +90,12 @@ proof (rule fmap_ext)
   have "\<And>x a b. acyclicP_on (fmran' xm) P \<Longrightarrow>
      fmlookup xm x = Some a \<Longrightarrow>
      fmlookup ym x = Some b \<Longrightarrow>
-    P\<^sup>*\<^sup>* a b \<Longrightarrow> a = b \<or> P b a \<Longrightarrow> a = b"
+    P\<^sup>*\<^sup>* a b \<Longrightarrow> P b a \<or> a = b \<Longrightarrow> a = b"
     by (meson Nitpick.tranclp_unfold fmran'I rtranclp_into_tranclp1)
   moreover from fmdom_eq assms(2) have "fmrel P\<^sup>*\<^sup>* xm ym"
     unfolding fmrel_on_fset_fmrel_restrict apply auto
     by (metis fmrestrict_fset_dom)
-  moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. x = y \<or> P x y) ym xm"
+  moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. P x y \<or> x = y) ym xm"
     unfolding fmrel_on_fset_fmrel_restrict apply auto
     by (metis fmrestrict_fset_dom)
   ultimately show "fmlookup xm x = fmlookup ym x"
@@ -104,8 +106,8 @@ qed
 
 lemma subtuple_acyclic':
   assumes "acyclicP_on (fmran' ym) P"
-  assumes "subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym"
-  assumes "subtuple (\<lambda>x y. x = y \<or> P x y) ym xm"
+  assumes "subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm ym"
+  assumes "subtuple (\<lambda>x y. P x y \<or> x = y) ym xm"
   shows "xm = ym"
 proof (rule fmap_ext)
   fix x
@@ -114,12 +116,12 @@ proof (rule fmap_ext)
   have "\<And>x a b. acyclicP_on (fmran' ym) P \<Longrightarrow>
      fmlookup xm x = Some a \<Longrightarrow>
      fmlookup ym x = Some b \<Longrightarrow>
-    P\<^sup>*\<^sup>* a b \<Longrightarrow> a = b \<or> P b a \<Longrightarrow> a = b"
+    P\<^sup>*\<^sup>* a b \<Longrightarrow> P b a \<or> a = b \<Longrightarrow> a = b"
     by (meson Nitpick.tranclp_unfold fmran'I rtranclp_into_tranclp2)
   moreover from fmdom_eq assms(2) have "fmrel P\<^sup>*\<^sup>* xm ym"
     unfolding fmrel_on_fset_fmrel_restrict apply auto
     by (metis fmrestrict_fset_dom)
-  moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. x = y \<or> P x y) ym xm"
+  moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. P x y \<or> x = y) ym xm"
     unfolding fmrel_on_fset_fmrel_restrict apply auto
     by (metis fmrestrict_fset_dom)
   ultimately show "fmlookup xm x = fmlookup ym x"
@@ -137,18 +139,18 @@ lemma subtuple_acyclic'':
 
 lemma strict_subtuple_trans:
   "acyclicP_on (fmran' xm) P \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y) ym zm \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm zm"
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y) ym zm \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm zm"
   apply auto
   apply (rule fmrel_on_fset_trans, auto)
   by (drule_tac ?ym="ym" in subtuple_acyclic; auto)
 
 lemma strict_subtuple_trans':
   "acyclicP_on (fmran' zm) P \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y) xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ ym zm \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ xm zm"
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y) xm ym \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ ym zm \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm zm"
   apply auto
   apply (rule fmrel_on_fset_trans, auto)
   by (drule_tac ?xm="ym" in subtuple_acyclic'; auto)
@@ -165,9 +167,9 @@ lemma strict_subtuple_trans'':
 
 lemma strict_subtuple_trans''':
   "acyclicP_on (fmran' zm) P \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y) xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>*\<^sup>* ym zm \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> P x y)\<^sup>*\<^sup>* xm zm"
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y) xm ym \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* ym zm \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* xm zm"
   apply auto
   apply (rule fmrel_on_fset_trans, auto)
   by (drule_tac ?xm="ym" in subtuple_acyclic'; auto)
@@ -223,8 +225,8 @@ lemma trancl_to_strict_subtuple:
 
 lemma trancl_to_strict_subtuple':
   "acyclicP_on (fmran' ym) R \<Longrightarrow>
-   (strict_subtuple (\<lambda>x y. x = y \<or> R x y))\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. x = y \<or> R x y)\<^sup>*\<^sup>* xm ym"
+   (strict_subtuple (\<lambda>x y. R x y \<or> x = y))\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
+   strict_subtuple (\<lambda>x y. R x y \<or> x = y)\<^sup>*\<^sup>* xm ym"
   apply (erule converse_tranclp_induct)
   apply (metis (no_types, lifting) r_into_rtranclp strict_subtuple_mono)
   using strict_subtuple_trans''' by blast
@@ -238,14 +240,16 @@ proof -
   have "(\<lambda>xm ym. R (f xm) (f ym))\<^sup>*\<^sup>* xm ym"
     apply (insert assms(2) assms(3))
     by (rule reflect_rtranclp; auto)
-  hence "(subtuple R)\<^sup>*\<^sup>* xm ym" by (smt assms(1) mono_rtranclp)
-  hence "subtuple R\<^sup>*\<^sup>* xm ym" by (rule rtrancl_to_subtuple)
-  thus ?thesis by (simp)
+  with assms(1) have "(subtuple R)\<^sup>*\<^sup>* xm ym"
+    by (metis (mono_tags, lifting) mono_rtranclp)
+  hence "subtuple R\<^sup>*\<^sup>* xm ym"
+    by (rule rtrancl_to_subtuple)
+  thus ?thesis by simp
 qed
 
 lemma strict_subtuple_rtranclp_intro:
   assumes "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow>
-           strict_subtuple (\<lambda>x y. x = y \<or> R x y) xm ym"
+           strict_subtuple (\<lambda>x y. R x y \<or> x = y) xm ym"
       and "bij_on_trancl R f"
       and "acyclicP_on (fmran' ym) R"
       and "R\<^sup>+\<^sup>+ (f xm) (f ym)"
@@ -254,10 +258,10 @@ proof -
   have "(\<lambda>xm ym. R (f xm) (f ym))\<^sup>+\<^sup>+ xm ym"
     apply (insert assms(1) assms(2) assms(4))
     by (rule reflect_tranclp; auto)
-  hence "(strict_subtuple (\<lambda>x y. x = y \<or> R x y))\<^sup>+\<^sup>+ xm ym"
+  hence "(strict_subtuple (\<lambda>x y. R x y \<or> x = y))\<^sup>+\<^sup>+ xm ym"
     by (rule tranclp_trans_induct;
         auto simp add: assms(1) tranclp.r_into_trancl)
-  with assms(3) have "strict_subtuple (\<lambda>x y. x = y \<or> R x y)\<^sup>*\<^sup>* xm ym"
+  with assms(3) have "strict_subtuple (\<lambda>x y. R x y \<or> x = y)\<^sup>*\<^sup>* xm ym"
     by (rule trancl_to_strict_subtuple')
   thus ?thesis by simp
 qed

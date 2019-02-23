@@ -34,20 +34,43 @@ abbreviation "bij_on_trancl R f \<equiv> inj f \<and> surj_on_trancl R f"
 
 subsection \<open>Helper Lemmas\<close>
 
-lemma tranclp_eq_rtranclp [simp]:
-  "(\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ = P\<^sup>*\<^sup>*"
+lemma rtranclp_eq_rtranclp [iff]:
+  "(\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* = P\<^sup>*\<^sup>*"
 proof (intro ext iffI)
-  show "\<And>x y. (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y \<Longrightarrow> P\<^sup>*\<^sup>* x y"
-    by (smt Nitpick.rtranclp_unfold mono_rtranclp r_into_rtranclp
-            rtranclp_idemp tranclp_into_rtranclp)
-  show "\<And>x y. P\<^sup>*\<^sup>* x y \<Longrightarrow> (\<lambda>x y. x = y \<or> P x y)\<^sup>+\<^sup>+ x y"
-    by (metis (mono_tags, lifting) mono_rtranclp rtranclpD
-              tranclp.r_into_trancl)
+  fix x y
+  have "(\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* x y \<longrightarrow> P\<^sup>=\<^sup>=\<^sup>*\<^sup>* x y"
+    by (rule mono_rtranclp) simp
+  thus "(\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* x y \<Longrightarrow> P\<^sup>*\<^sup>* x y"
+    by simp
+  show "P\<^sup>*\<^sup>* x y \<Longrightarrow> (\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* x y"
+    by (metis (no_types, lifting) mono_rtranclp)
 qed
 
-lemma rtranclp_eq_rtranclp [simp]:
-  "(\<lambda>x y. x = y \<or> P x y)\<^sup>*\<^sup>* = P\<^sup>*\<^sup>*"
-  by (metis reflclp_idemp reflclp_tranclp tranclp_eq_rtranclp)
+lemma tranclp_eq_rtranclp [iff]:
+  "(\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ = P\<^sup>*\<^sup>*"
+proof (intro ext iffI)
+  fix x y
+  have "(\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* x y \<longrightarrow> P\<^sup>=\<^sup>=\<^sup>*\<^sup>* x y"
+    by (rule mono_rtranclp) simp
+  thus "(\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ x y \<Longrightarrow> P\<^sup>*\<^sup>* x y"
+    using tranclp_into_rtranclp by force
+  show "P\<^sup>*\<^sup>* x y \<Longrightarrow> (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ x y"
+    by (metis (mono_tags, lifting) mono_rtranclp rtranclpD tranclp.r_into_trancl)
+qed
+
+lemma rtranclp_eq_rtranclp' [iff]:
+  "(\<lambda>x y. P x y \<and> x \<noteq> y)\<^sup>*\<^sup>* = P\<^sup>*\<^sup>*"
+proof (intro ext iffI)
+  fix x y
+  show "(\<lambda>x y. P x y \<and> x \<noteq> y)\<^sup>*\<^sup>* x y \<Longrightarrow> P\<^sup>*\<^sup>* x y"
+    by (metis (no_types, lifting) mono_rtranclp)
+  assume "P\<^sup>*\<^sup>* x y"
+  hence "(inf P (\<noteq>))\<^sup>*\<^sup>* x y"
+    by (simp add: rtranclp_r_diff_Id)
+  also have "(inf P (\<noteq>))\<^sup>*\<^sup>* x y \<longrightarrow> (\<lambda>x y. P x y \<and> x \<noteq> y)\<^sup>*\<^sup>* x y"
+    by (rule mono_rtranclp) simp
+  finally show "P\<^sup>*\<^sup>* x y \<Longrightarrow> (\<lambda>x y. P x y \<and> x \<noteq> y)\<^sup>*\<^sup>* x y" by simp
+qed
 
 lemma tranclp_tranclp_to_tranclp_r:
   assumes "(\<And>x y z. R\<^sup>+\<^sup>+ x y \<Longrightarrow> R y z \<Longrightarrow> P x \<Longrightarrow> P z \<Longrightarrow> P y)"

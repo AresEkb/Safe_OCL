@@ -209,6 +209,13 @@ text \<open>
   @{url "https://stackoverflow.com/a/53585232/632199"}
   and provided with the permission of the author of the answer.\<close>
 
+lemma fmupd_fmdrop:
+  "fmlookup xm k = Some x \<Longrightarrow>
+   xm = fmupd k x (fmdrop k xm)"
+  apply (rule fmap_ext)
+  unfolding fmlookup_drop fmupd_lookup
+  by auto
+
 lemma fmap_eqdom_Cons1:
   assumes "fmlookup xm i = None"
       and "fmdom (fmupd i x xm) = fmdom ym"  
@@ -217,8 +224,8 @@ lemma fmap_eqdom_Cons1:
                    R x z \<and> fmrel R xm zm)"
 proof - 
   from assms(2) obtain y where "fmlookup ym i = Some y" by force
-  then obtain z zm where z_zm: "ym = (fmupd i z zm) \<and> fmlookup zm i = None"
-    by (smt fmap_ext fmlookup_drop fmupd_lookup)
+  then obtain z zm where z_zm: "ym = fmupd i z zm \<and> fmlookup zm i = None"
+    using fmupd_fmdrop by force
   {
     assume "\<not> R x z"
     with z_zm have "\<not> fmrel R (fmupd i x xm) ym"
@@ -432,9 +439,8 @@ abbreviation "fmmerge_fun f xm ym \<equiv>
 
 lemma fmmerge_fun_simp [code_abbrev, simp]:
   "fmmerge_fun f xm ym = fmmerge f xm ym"
-  unfolding fmmerge_def fmap_of_list.abs_eq map_of_map_restrict
-  apply auto
-  by (smt IntD1 IntD2 fmember.rep_eq inf_fset.rep_eq map_eq_conv
-          map_of_map_restrict sorted_list_of_fset_simps(1))
+  unfolding fmmerge_def
+  apply (rule_tac ?f="fmap_of_list" in HOL.arg_cong)
+  by (simp add: notin_fset)
 
 end
