@@ -75,6 +75,9 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
+text \<open>
+  A safe operation is an operation well-typed for a nullable source.\<close>
+
 definition "safe_operation op k \<tau> \<pi> \<equiv>
   Predicate.singleton (\<lambda>_. False)
     (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
@@ -158,7 +161,7 @@ inductive normalize
    (\<Gamma>, \<sigma>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 DotCall call\<^sub>1 \<Rrightarrow>
-      CollectIteratorCall src\<^sub>2 ArrowCall [it] (Some \<sigma>) (Call (Var it) DotCall call\<^sub>2)"
+    CollectIteratorCall src\<^sub>2 ArrowCall [it] (Some \<sigma>) (Call (Var it) DotCall call\<^sub>2)"
 |CollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
@@ -169,7 +172,7 @@ inductive normalize
    (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeDotCall call\<^sub>1 \<Rrightarrow>
-      CollectIteratorCall src\<^sub>3 ArrowCall [it] (Some \<rho>) (Call (Var it) DotCall call\<^sub>2)"
+    CollectIteratorCall src\<^sub>3 ArrowCall [it] (Some \<rho>) (Call (Var it) DotCall call\<^sub>2)"
 
 |TypeOperationN:
   "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C TypeOperation op ty \<Rrightarrow> TypeOperation op ty"
@@ -368,7 +371,8 @@ next
     using OperationSafeDotCallN.hyps(2) OperationSafeDotCallN.prems by auto
 next
   case (OperationSafeArrowCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<pi> op \<tau>) show ?case
-    using OperationSafeArrowCallN.hyps(2) OperationSafeArrowCallN.prems by auto
+    using OperationSafeArrowCallN.hyps(2) OperationSafeArrowCallN.prems
+    by auto
 next
   case (TupleElementN \<Gamma> \<tau> elem) thus ?case by auto
 next

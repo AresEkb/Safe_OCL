@@ -93,8 +93,6 @@ instance
 
 end
 
-declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 basic_type"]]
-
 instantiation classes1 :: enum
 begin
 
@@ -113,6 +111,8 @@ instance
   by (metis classes1.exhaust)+
 
 end
+
+declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 basic_type"]]
 
 (*** Basic Types ************************************************************)
 
@@ -208,10 +208,6 @@ definition "operations_classes1 \<equiv> [
    Some (OperationCall
     (AssociationEndCall (Var STR ''self'') DotCall STR ''members'' None)
     ArrowCall CollectionSizeOp [])),
-  (STR ''membersCount'', Project[?], [], Set Employee[1], False,
-   Some (OperationCall
-    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'' None)
-    ArrowCall CollectionSizeOp [])),
   (STR ''membersByName'', Project[?], [(STR ''mn'', String[1], In)],
     Set Employee[1], False,
    Some (SelectIteratorCall
@@ -301,7 +297,8 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
       [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]] : x}"
 
 text \<open>
-\<^verbatim>\<open>Sequence{1..5, null}?->iterate(x, acc : Real[1] = 0 | acc + x) : Real[1]\<close>\<close>
+\<^verbatim>\<open>Sequence{1..5, null}?->iterate(x, acc : Real[1] = 0 | acc + x)
+  : Real[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   IterateCall (CollectionLiteral SequenceKind
               [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
