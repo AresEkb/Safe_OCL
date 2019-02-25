@@ -115,3 +115,38 @@
    С другой стороны, не очень понятно зачем. Для определения типа не нужен,
    нужен для вычисления значения  *)
 
+(* В 8.3.8 операции для метаклассов включая allInstances()
+   Ещё статические операции
+   И зачем-то обращение к переопределенным свойствам базового класса через oclAsType()
+   Добавить пакеты: имена классов должны быть списком имен
+
+   В разделе 10.4 есть сопоставление:
+   ObjectValue - Class
+   StaticValue - DataType
+   Value - Classifier
+
+   Но нет ничего про TypeExp
+   На рисунке 8.2 - referredType - Classifier
+   На рисунке 13.3 - referredType - Type
+
+   В A.3.1.1 пишут для операций с типами:
+   This maps into some special instances of OclOperationWithTypeArgument.
+   И потом:
+   Note that in previous OCL versions these type
+   casts and tests were defined as operations with parameters
+   of type OclType. Here, we technically define them as first class
+   expressions, which has the benefit that we do not need the metatype
+   OclType. Thus the type system is kept simple while
+   preserving compatibility with standard OCL syntax.
+
+   Но то, что написано в основной части противоречит этому. Там передается Classifier
+   И ещё там есть TypeExp, которого у меня нет. У меня нет в абстрактном синтаксисе,
+   а в конкретном может и быть
+
+   Это смешение уровней. Вопрос нужно оно или нет. По-моему в этой нет
+   особой необходимости. По сути вопрос в том нужна рефлексия в OCL или нет.
+   Я думаю, нет. Она должна быть максимально локализована в нескольких операциях
+
+   Но что тогда такое allInstances()? Это же рефлексия и она нужна.
+   Да, но таких операций не много и их можно реализовать явно
+*)

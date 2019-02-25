@@ -17,7 +17,7 @@ text \<open>
 
 type_synonym telem = String.literal
 
-datatype (plugins del: "size") 'a type =
+datatype (plugins del: size) 'a type =
   OclSuper
 | Required "'a basic_type" ("_[1]" [1000] 1000)
 | Optional "'a basic_type" ("_[?]" [1000] 1000)
@@ -58,7 +58,7 @@ instance ..
 
 end
 
-inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" ("_ \<sqsubset> _" [65, 65] 65) where
+inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (infix "\<sqsubset>" 65) where
   "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[1] \<sqsubset> \<sigma>[1]"
 | "\<tau> \<sqsubset>\<^sub>B \<sigma> \<Longrightarrow> \<tau>[?] \<sqsubset> \<sigma>[?]"
 | "\<tau>[1] \<sqsubset> \<tau>[?]"
@@ -94,10 +94,8 @@ inductive_cases subtype_x_Tuple [elim!]: "\<tau> \<sqsubset> Tuple \<pi>"
 inductive_cases subtype_OclSuper_x [elim!]: "OclSuper \<sqsubset> \<sigma>"
 inductive_cases subtype_Collection_x [elim!]: "Collection \<tau> \<sqsubset> \<sigma>"
 
-lemma subtype_antisym:
-  "\<tau> \<sqsubset> \<sigma> \<Longrightarrow>
-   \<sigma> \<sqsubset> \<tau> \<Longrightarrow>
-   False"
+lemma subtype_asym:
+  "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> \<sigma> \<sqsubset> \<tau> \<Longrightarrow> False"
   apply (induct rule: subtype.induct)
   using basic_subtype_asym apply auto
   using subtuple_antisym by fastforce
@@ -715,66 +713,71 @@ inductive class_of where
 | "class_of \<langle>\<C>\<rangle>\<^sub>\<T>[?] \<C>"
 
 inductive element_type where
-  "element_type (Set \<tau>) \<tau>"
+  "element_type (Collection \<tau>) \<tau>"
+| "element_type (Set \<tau>) \<tau>"
 | "element_type (OrderedSet \<tau>) \<tau>"
 | "element_type (Bag \<tau>) \<tau>"
 | "element_type (Sequence \<tau>) \<tau>"
-| "element_type (Collection \<tau>) \<tau>"
 
 inductive update_element_type where
-  "update_element_type (Set _) \<tau> (Set \<tau>)"
+  "update_element_type (Collection _) \<tau> (Collection \<tau>)"
+| "update_element_type (Set _) \<tau> (Set \<tau>)"
 | "update_element_type (OrderedSet _) \<tau> (OrderedSet \<tau>)"
 | "update_element_type (Bag _) \<tau> (Bag \<tau>)"
 | "update_element_type (Sequence _) \<tau> (Sequence \<tau>)"
-| "update_element_type (Collection _) \<tau> (Collection \<tau>)"
 
 inductive to_unique_collection where
-  "to_unique_collection (Set \<tau>) (Set \<tau>)"
+  "to_unique_collection (Collection \<tau>) (Set \<tau>)"
+| "to_unique_collection (Set \<tau>) (Set \<tau>)"
 | "to_unique_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
 | "to_unique_collection (Bag \<tau>) (Set \<tau>)"
 | "to_unique_collection (Sequence \<tau>) (OrderedSet \<tau>)"
-| "to_unique_collection (Collection \<tau>) (Set \<tau>)"
 
 inductive to_nonunique_collection where
-  "to_nonunique_collection (Set \<tau>) (Bag \<tau>)"
+  "to_nonunique_collection (Collection \<tau>) (Bag \<tau>)"
+| "to_nonunique_collection (Set \<tau>) (Bag \<tau>)"
 | "to_nonunique_collection (OrderedSet \<tau>) (Sequence \<tau>)"
 | "to_nonunique_collection (Bag \<tau>) (Bag \<tau>)"
 | "to_nonunique_collection (Sequence \<tau>) (Sequence \<tau>)"
-| "to_nonunique_collection (Collection \<tau>) (Bag \<tau>)"
 
 inductive to_ordered_collection where
-  "to_ordered_collection (Set \<tau>) (OrderedSet \<tau>)"
+  "to_ordered_collection (Collection \<tau>) (Sequence \<tau>)"
+| "to_ordered_collection (Set \<tau>) (OrderedSet \<tau>)"
 | "to_ordered_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
 | "to_ordered_collection (Bag \<tau>) (Sequence \<tau>)"
 | "to_ordered_collection (Sequence \<tau>) (Sequence \<tau>)"
-| "to_ordered_collection (Collection \<tau>) (Sequence \<tau>)"
 
 fun to_single_type where
-  "to_single_type \<tau>[1] = \<tau>[1]"
+  "to_single_type OclSuper = OclSuper"
+| "to_single_type \<tau>[1] = \<tau>[1]"
 | "to_single_type \<tau>[?] = \<tau>[?]"
+| "to_single_type (Collection \<tau>) = to_single_type \<tau>"
 | "to_single_type (Set \<tau>) = to_single_type \<tau>"
 | "to_single_type (OrderedSet \<tau>) = to_single_type \<tau>"
 | "to_single_type (Bag \<tau>) = to_single_type \<tau>"
 | "to_single_type (Sequence \<tau>) = to_single_type \<tau>"
-| "to_single_type (Collection \<tau>) = to_single_type \<tau>"
 | "to_single_type (Tuple \<pi>) = Tuple \<pi>"
-| "to_single_type OclSuper = OclSuper"
 
 fun to_required_type where
   "to_required_type \<tau>[1] = \<tau>[1]"
 | "to_required_type \<tau>[?] = \<tau>[1]"
 | "to_required_type \<tau> = \<tau>"
 
+fun to_optional_type where
+  "to_optional_type \<tau>[1] = \<tau>[?]"
+| "to_optional_type \<tau>[?] = \<tau>[?]"
+| "to_optional_type \<tau> = \<tau>"
+
 fun to_optional_type_nested where
-  "to_optional_type_nested \<tau>[1] = \<tau>[?]"
+  "to_optional_type_nested OclSuper = OclSuper"
+| "to_optional_type_nested \<tau>[1] = \<tau>[?]"
 | "to_optional_type_nested \<tau>[?] = \<tau>[?]"
+| "to_optional_type_nested (Collection \<tau>) = Collection (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Set \<tau>) = Set (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (OrderedSet \<tau>) = OrderedSet (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Bag \<tau>) = Bag (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Sequence \<tau>) = Sequence (to_optional_type_nested \<tau>)"
-| "to_optional_type_nested (Collection \<tau>) = Collection (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested \<pi>)"
-| "to_optional_type_nested OclSuper = OclSuper"
 
 (*** Determinism ************************************************************)
 

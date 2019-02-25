@@ -355,8 +355,7 @@ lemma fmrel_tranclp_induct:
    (\<And>y. fmrel r a y \<Longrightarrow> P y) \<Longrightarrow>
    (\<And>y z. (fmrel r)\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel r y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
   apply (drule fmrel_to_trancl, simp)
-  apply (erule tranclp_induct; simp)
-  done
+  by (erule tranclp_induct; simp)
 
 lemma fmrel_converse_tranclp_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
@@ -364,8 +363,7 @@ lemma fmrel_converse_tranclp_induct:
    (\<And>y. fmrel r y b \<Longrightarrow> P y) \<Longrightarrow>
    (\<And>y z. fmrel r y z \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ z b \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow> P a"
   apply (drule fmrel_to_trancl, simp)
-  apply (erule converse_tranclp_induct; simp add: trancl_to_fmrel)
-  done
+  by (erule converse_tranclp_induct; simp add: trancl_to_fmrel)
 
 lemma fmrel_tranclp_trans_induct:
   "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>

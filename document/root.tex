@@ -3,6 +3,7 @@
 \usepackage{amssymb}
 \usepackage[english]{babel}
 \usepackage{caption} 
+\usepackage[flushleft]{threeparttable}
 
 % this should be the last package used
 \usepackage{pdfsetup}
@@ -33,10 +34,12 @@
 \maketitle
 
 \begin{abstract}
-  The theory is a formalization of the OCL type system~\cite{OCL24},
-  its abstract syntax and expression typing rules.
+  The theory is a formalization of the OCL type system,
+  its abstract syntax and expression typing rules~\cite{OCL24}.
+  The theory does not define a concrete syntax and a semantics.
   In contrast to Featherweight OCL~\cite{Featherweight_OCL-AFP},
-  it is based on a deep embedding approach.
+  it is based on a deep embedding approach. The type system is defined
+  from scratch, it is not based on the Isabelle HOL type system.
 
   The Safe OCL distincts nullable and non-nullable types. Also
   the theory gives a formal definition of safe navigation
@@ -52,8 +55,6 @@
   (basic types, collections, tuples). This type allows us to define
   a total supremum function, so types form an upper semilattice.
   It allows us to define rich expression typing rules in an elegant manner.
-
-  The theory does not define a concrete syntax and a semantics.
 
   The Preliminaries Section of the theory defines a number of
   helper lemmas for transitive closures, tuples and arbitrary

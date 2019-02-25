@@ -29,7 +29,7 @@ datatype ('a :: order) basic_type =
 | ObjectType 'a ("\<langle>_\<rangle>\<^sub>\<T>" [0] 1000)
 | Enum "'a enum"
 
-inductive basic_subtype ("_ \<sqsubset>\<^sub>B _" [65, 65] 65) where
+inductive basic_subtype (infix "\<sqsubset>\<^sub>B" 65) where
   "OclVoid \<sqsubset>\<^sub>B Boolean"
 | "OclVoid \<sqsubset>\<^sub>B UnlimitedNatural"
 | "OclVoid \<sqsubset>\<^sub>B String"

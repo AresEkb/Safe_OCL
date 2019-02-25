@@ -98,9 +98,9 @@ text \<open>
    a generated code work *)
 inductive super_binop_type
     :: "super_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
-  "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
+  "\<tau> \<le> to_optional_type_nested \<sigma> \<or> \<sigma> < to_optional_type_nested \<tau> \<Longrightarrow>
    super_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
+| "\<tau> \<le> to_optional_type_nested \<sigma> \<or> \<sigma> < to_optional_type_nested \<tau> \<Longrightarrow>
    super_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>OclAny Operations\<close>
@@ -335,7 +335,7 @@ text \<open>
 
 text \<open>
   However it is more natural to use a @{text "selectByKind(T[1])"}
-  operation.\<close>
+  operation instead.\<close>
 
 inductive collection_binop_type where
   "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
@@ -479,9 +479,8 @@ lemma collection_unop_type_det:
   "collection_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    collection_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   apply (induct rule: collection_unop_type.induct)
-  apply (erule collection_unop_type.cases;
-         auto simp add: element_type_det update_element_type_det)+
-  done
+  by (erule collection_unop_type.cases;
+      auto simp add: element_type_det update_element_type_det)+
 
 lemma unop_type_det:
   "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -556,8 +555,12 @@ lemma op_type_det:
 
 section \<open>Expressions Typing\<close>
 
+text \<open>
+  The following typing rules are preliminary. The final rules are given at
+  the end of the next section.\<close>
+
 inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
-       ("(1_/ \<turnstile>/ (_ :/ _))" [51,51,51] 50)
+       ("(1_/ \<turnstile>\<^sub>E/ (_ :/ _))" [51,51,51] 50)
     and collection_parts_typing ("(1_/ \<turnstile>\<^sub>C/ (_ :/ _))" [51,51,51] 50)
     and collection_part_typing ("(1_/ \<turnstile>\<^sub>P/ (_ :/ _))" [51,51,51] 50)
     and iterator_typing ("(1_/ \<turnstile>\<^sub>I/ (_ :/ _))" [51,51,51] 50)
@@ -566,35 +569,35 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 \<comment> \<open>Primitive Literals\<close>
 
  NullLiteralT:
-  "\<Gamma> \<turnstile> NullLiteral : OclVoid[?]"
+  "\<Gamma> \<turnstile>\<^sub>E NullLiteral : OclVoid[?]"
 |BooleanLiteralT:
-  "\<Gamma> \<turnstile> BooleanLiteral c : Boolean[1]"
+  "\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : Boolean[1]"
 |RealLiteralT:
-  "\<Gamma> \<turnstile> RealLiteral c : Real[1]"
+  "\<Gamma> \<turnstile>\<^sub>E RealLiteral c : Real[1]"
 |IntegerLiteralT:
-  "\<Gamma> \<turnstile> IntegerLiteral c : Integer[1]"
+  "\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : Integer[1]"
 |UnlimitedNaturalLiteralT:
-  "\<Gamma> \<turnstile> UnlimitedNaturalLiteral c : UnlimitedNatural[1]"
+  "\<Gamma> \<turnstile>\<^sub>E UnlimitedNaturalLiteral c : UnlimitedNatural[1]"
 |StringLiteralT:
-  "\<Gamma> \<turnstile> StringLiteral c : String[1]"
+  "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : String[1]"
 |EnumLiteralT:
   "has_literal enum lit \<Longrightarrow>
-   \<Gamma> \<turnstile> EnumLiteral enum lit : (Enum enum)[1]"
+   \<Gamma> \<turnstile>\<^sub>E EnumLiteral enum lit : (Enum enum)[1]"
 
 \<comment> \<open>Collection Literals\<close>
 
 |SetLiteralT:
   "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> CollectionLiteral SetKind prts : Set \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind prts : Set \<tau>"
 |OrderedSetLiteralT:
   "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> CollectionLiteral OrderedSetKind prts : OrderedSet \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral OrderedSetKind prts : OrderedSet \<tau>"
 |BagLiteralT:
   "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> CollectionLiteral BagKind prts : Bag \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral BagKind prts : Bag \<tau>"
 |SequenceLiteralT:
   "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> CollectionLiteral SequenceKind prts : Sequence \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral SequenceKind prts : Sequence \<tau>"
 
 \<comment> \<open>We prohibit empty collection literals, because their type is unclear.
   We could use @{text "OclVoid[1]"} element type for empty collections, but
@@ -610,11 +613,11 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau> \<squnion> \<sigma>"
 
 |CollectionPartItemT:
-  "\<Gamma> \<turnstile> a : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
 |CollectionPartRangeT:
-  "\<Gamma> \<turnstile> a : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> b : \<sigma> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E b : \<sigma> \<Longrightarrow>
    \<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>P CollectionRange a b : Integer[1]"
@@ -624,193 +627,193 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
   @{text "Tuple()"} is a supertype of all other tuple types.\<close>
 
 |TupleLiteralNilT:
-  "\<Gamma> \<turnstile> TupleLiteral [] : Tuple fmempty"
+  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : Tuple fmempty"
 |TupleLiteralConsT:
-  "\<Gamma> \<turnstile> TupleLiteral elems : Tuple \<xi> \<Longrightarrow>
-   \<Gamma> \<turnstile> tuple_element_expr el : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : Tuple \<xi> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E tuple_element_expr el : \<tau> \<Longrightarrow>
    tuple_element_type el = Some \<sigma> \<Longrightarrow>
    \<tau> \<le> \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile> TupleLiteral (el # elems) : Tuple (\<xi>(tuple_element_name el \<mapsto>\<^sub>f \<sigma>))"
+   \<Gamma> \<turnstile>\<^sub>E TupleLiteral (el # elems) : Tuple (\<xi>(tuple_element_name el \<mapsto>\<^sub>f \<sigma>))"
 
 \<comment> \<open>Misc Expressions\<close>
 
 |LetT:
-  "\<Gamma> \<turnstile> init : \<sigma> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E init : \<sigma> \<Longrightarrow>
    \<sigma> \<le> \<tau> \<Longrightarrow>
-   \<Gamma>(v \<mapsto>\<^sub>f \<tau>) \<turnstile> body : \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile> Let v (Some \<tau>) init body : \<rho>"
+   \<Gamma>(v \<mapsto>\<^sub>f \<tau>) \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E Let v (Some \<tau>) init body : \<rho>"
 |VarT:
   "fmlookup \<Gamma> v = Some \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> Var v : \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
 |IfT:
-  "\<Gamma> \<turnstile> a : Boolean[1] \<Longrightarrow>
-   \<Gamma> \<turnstile> b : \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile> c : \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile> If a b c : \<sigma> \<squnion> \<rho>"
+  "\<Gamma> \<turnstile>\<^sub>E a : Boolean[1] \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E b : \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E c : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E If a b c : \<sigma> \<squnion> \<rho>"
 
 \<comment> \<open>Call Expressions\<close>
 
 |MetaOperationCallT:
   "mataop_type \<tau> op \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile> MetaOperationCall \<tau> op : \<sigma>"
+   \<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
 |StaticOperationCallT:
   "\<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
    find_static_operation \<tau> op \<pi> = Some oper \<Longrightarrow>
-   \<Gamma> \<turnstile> StaticOperationCall \<tau> op params : oper_type oper"
+   \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : oper_type oper"
 
 |TypeOperationCallT:
-  "\<Gamma> \<turnstile> a : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
    typeop_type k op \<tau> \<sigma> \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<rho>"
+   \<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<rho>"
 
 |AttributeCallT:
-  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    class_of \<tau> \<C> \<Longrightarrow>
    find_attribute \<C> prop = Some (\<D>, \<sigma>) \<Longrightarrow>
-   \<Gamma> \<turnstile> AttributeCall src prop : \<sigma>"
+   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<sigma>"
 |AssociationEndCallT:
-  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    class_of \<tau> \<C> \<Longrightarrow>
    find_association_end \<C> role from = Some end \<Longrightarrow>
-   \<Gamma> \<turnstile> AssociationEndCall src role from : assoc_end_type end"
+   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall role from : assoc_end_type end"
 |AssociationClassCallT:
-  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    class_of \<tau> \<C> \<Longrightarrow>
    referred_by_association_class \<C> \<A> from \<Longrightarrow>
-   \<Gamma> \<turnstile> AssociationClassCall src \<A> from : class_assoc_type \<A>"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall \<A> from : class_assoc_type \<A>"
 |AssociationClassEndCallT:
-  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    class_of \<tau> \<A> \<Longrightarrow>
    find_association_class_end \<A> role = Some end \<Longrightarrow>
-   \<Gamma> \<turnstile> AssociationClassEndCall src role : class_assoc_end_type end"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : class_assoc_end_type end"
 |OperationCallT:
-  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
    op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile> OperationCall src k op params : \<sigma>"
+   \<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<sigma>"
 
 |TupleElementCallT:
-  "\<Gamma> \<turnstile> src : Tuple \<pi> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : Tuple \<pi> \<Longrightarrow>
    fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile> TupleElementCall src elem : \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<tau>"
 
 \<comment> \<open>Iterator Expressions\<close>
 
 |IteratorT:
-  "\<Gamma> \<turnstile> src : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
    \<sigma> \<le> its_ty \<Longrightarrow>
-   \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, its_ty)) its) \<turnstile> body : \<rho> \<Longrightarrow>
+   \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, its_ty)) its) \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty), body) : (\<tau>, \<sigma>, \<rho>)"
 
 |IterateT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, Let res (Some res_t) res_init body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> res_t \<Longrightarrow>
-   \<Gamma> \<turnstile> IterateCall src its its_ty res (Some res_t) res_init body : \<rho>"
+   \<Gamma> \<turnstile>\<^sub>E IterateCall src ArrowCall its its_ty res (Some res_t) res_init body : \<rho>"
 
 |AnyIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> AnyIteratorCall src its its_ty body : \<sigma>"
+   \<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src ArrowCall its its_ty body : \<sigma>"
 |ClosureIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_single_type \<rho> \<le> \<sigma> \<Longrightarrow>
    to_unique_collection \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> ClosureIteratorCall src its its_ty body : \<upsilon>"
+   \<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src ArrowCall its its_ty body : \<upsilon>"
 |CollectIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> (to_single_type \<rho>) \<phi> \<Longrightarrow>
-   \<Gamma> \<turnstile> CollectIteratorCall src its its_ty body : \<phi>"
+   \<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src ArrowCall its its_ty body : \<phi>"
 |CollectNestedIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> \<rho> \<phi> \<Longrightarrow>
-   \<Gamma> \<turnstile> CollectNestedIteratorCall src its its_ty body : \<phi>"
+   \<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src ArrowCall its its_ty body : \<phi>"
 |ExistsIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> ExistsIteratorCall src its its_ty body : \<rho>"
+   \<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src ArrowCall its its_ty body : \<rho>"
 |ForAllIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> ForAllIteratorCall src its its_ty body : \<rho>"
+   \<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src ArrowCall its its_ty body : \<rho>"
 |OneIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> OneIteratorCall src its its_ty body : Boolean[1]"
+   \<Gamma> \<turnstile>\<^sub>E OneIteratorCall src ArrowCall its its_ty body : Boolean[1]"
 |IsUniqueIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   \<Gamma> \<turnstile> IsUniqueIteratorCall src its its_ty body : Boolean[1]"
+   \<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src ArrowCall its its_ty body : Boolean[1]"
 |SelectIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> SelectIteratorCall src its its_ty body : \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src ArrowCall its its_ty body : \<tau>"
 |RejectIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile> RejectIteratorCall src its its_ty body : \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src ArrowCall its its_ty body : \<tau>"
 |SortedByIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_ordered_collection \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile> SortedByIteratorCall src its its_ty body : \<upsilon>"
+   \<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src ArrowCall its its_ty body : \<upsilon>"
 
 \<comment> \<open>Expression Lists\<close>
 
 |ExprListNilT:
   "\<Gamma> \<turnstile>\<^sub>L [] : []"
 |ExprListConsT:
-  "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L expr # exprs : \<tau> # \<pi>"
 
-inductive_cases NullLiteralTE [elim]: "\<Gamma> \<turnstile> NullLiteral : \<tau>"
-inductive_cases BooleanLiteralTE [elim]: "\<Gamma> \<turnstile> BooleanLiteral c : \<tau>"
-inductive_cases RealLiteralTE [elim]: "\<Gamma> \<turnstile> RealLiteral c : \<tau>"
-inductive_cases IntegerLiteralTE [elim]: "\<Gamma> \<turnstile> IntegerLiteral c : \<tau>"
-inductive_cases UnlimitedNaturalLiteralTE [elim]: "\<Gamma> \<turnstile> UnlimitedNaturalLiteral c : \<tau>"
-inductive_cases StringLiteralTE [elim]: "\<Gamma> \<turnstile> StringLiteral c : \<tau>"
-inductive_cases EnumLiteralTE [elim]: "\<Gamma> \<turnstile> EnumLiteral enm lit : \<tau>"
-inductive_cases CollectionLiteralTE [elim]: "\<Gamma> \<turnstile> CollectionLiteral k prts : \<tau>"
-inductive_cases TupleLiteralTE [elim]: "\<Gamma> \<turnstile> TupleLiteral elems : \<tau>"
+inductive_cases NullLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E NullLiteral : \<tau>"
+inductive_cases BooleanLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : \<tau>"
+inductive_cases RealLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E RealLiteral c : \<tau>"
+inductive_cases IntegerLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : \<tau>"
+inductive_cases UnlimitedNaturalLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E UnlimitedNaturalLiteral c : \<tau>"
+inductive_cases StringLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
+inductive_cases EnumLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
+inductive_cases CollectionLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
+inductive_cases TupleLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : \<tau>"
 
-inductive_cases LetTE [elim]: "\<Gamma> \<turnstile> Let v \<tau> init body : \<sigma>"
-inductive_cases VarTE [elim]: "\<Gamma> \<turnstile> Var v : \<tau>"
-inductive_cases IfTE [elim]: "\<Gamma> \<turnstile> If a b c : \<tau>"
+inductive_cases LetTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
+inductive_cases VarTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
+inductive_cases IfTE [elim]: "\<Gamma> \<turnstile>\<^sub>E If a b c : \<tau>"
 
-inductive_cases MetaOperationCallTE [elim]: "\<Gamma> \<turnstile> MetaOperationCall \<tau> op : \<sigma>"
-inductive_cases StaticOperationCallTE [elim]: "\<Gamma> \<turnstile> StaticOperationCall \<tau> op as : \<sigma>"
+inductive_cases MetaOperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
+inductive_cases StaticOperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op as : \<sigma>"
 
-inductive_cases TypeOperationCallTE [elim]: "\<Gamma> \<turnstile> TypeOperationCall a k op \<sigma> : \<tau>"
-inductive_cases AttributeCallTE [elim]: "\<Gamma> \<turnstile> AttributeCall src prop : \<tau>"
-inductive_cases AssociationEndCallTE [elim]: "\<Gamma> \<turnstile> AssociationEndCall src role from : \<tau>"
-inductive_cases AssociationClassCallTE [elim]: "\<Gamma> \<turnstile> AssociationClassCall src a from : \<tau>"
-inductive_cases AssociationClassEndCallTE [elim]: "\<Gamma> \<turnstile> AssociationClassEndCall src role : \<tau>"
-inductive_cases OperationCallTE [elim]: "\<Gamma> \<turnstile> OperationCall src k op params : \<tau>"
-inductive_cases TupleElementCallTE [elim]: "\<Gamma> \<turnstile> TupleElementCall src elem : \<tau>"
+inductive_cases TypeOperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<tau>"
+inductive_cases AttributeCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AttributeCall src k prop : \<tau>"
+inductive_cases AssociationEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src k role from : \<tau>"
+inductive_cases AssociationClassCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src k a from : \<tau>"
+inductive_cases AssociationClassEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src k role : \<tau>"
+inductive_cases OperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
+inductive_cases TupleElementCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
 
 inductive_cases IteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
-inductive_cases IterateTE [elim]: "\<Gamma> \<turnstile> IterateCall src its its_ty res res_t res_init body : \<tau>"
-inductive_cases AnyIteratorTE [elim]: "\<Gamma> \<turnstile> AnyIteratorCall src its its_ty body : \<tau>"
-inductive_cases ClosureIteratorTE [elim]: "\<Gamma> \<turnstile> ClosureIteratorCall src its its_ty body : \<tau>"
-inductive_cases CollectIteratorTE [elim]: "\<Gamma> \<turnstile> CollectIteratorCall src its its_ty body : \<tau>"
-inductive_cases CollectNestedIteratorTE [elim]: "\<Gamma> \<turnstile> CollectNestedIteratorCall src its its_ty body : \<tau>"
-inductive_cases ExistsIteratorTE [elim]: "\<Gamma> \<turnstile> ExistsIteratorCall src its its_ty body : \<tau>"
-inductive_cases ForAllIteratorTE [elim]: "\<Gamma> \<turnstile> ForAllIteratorCall src its its_ty body : \<tau>"
-inductive_cases OneIteratorTE [elim]: "\<Gamma> \<turnstile> OneIteratorCall src its its_ty body : \<tau>"
-inductive_cases IsUniqueIteratorTE [elim]: "\<Gamma> \<turnstile> IsUniqueIteratorCall src its its_ty body : \<tau>"
-inductive_cases SelectIteratorTE [elim]: "\<Gamma> \<turnstile> SelectIteratorCall src its its_ty body : \<tau>"
-inductive_cases RejectIteratorTE [elim]: "\<Gamma> \<turnstile> RejectIteratorCall src its its_ty body : \<tau>"
-inductive_cases SortedByIteratorTE [elim]: "\<Gamma> \<turnstile> SortedByIteratorCall src its its_ty body : \<tau>"
+inductive_cases IterateTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IterateCall src k its its_ty res res_t res_init body : \<tau>"
+inductive_cases AnyIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src k its its_ty body : \<tau>"
+inductive_cases ClosureIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src k its its_ty body : \<tau>"
+inductive_cases CollectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src k its its_ty body : \<tau>"
+inductive_cases CollectNestedIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src k its its_ty body : \<tau>"
+inductive_cases ExistsIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src k its its_ty body : \<tau>"
+inductive_cases ForAllIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src k its its_ty body : \<tau>"
+inductive_cases OneIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E OneIteratorCall src k its its_ty body : \<tau>"
+inductive_cases IsUniqueIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src k its its_ty body : \<tau>"
+inductive_cases SelectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src k its its_ty body : \<tau>"
+inductive_cases RejectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
+inductive_cases SortedByIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
 
 inductive_cases CollectionPartsNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
 inductive_cases CollectionPartsItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
@@ -826,8 +829,8 @@ section \<open>Determinism\<close>
 
 lemma
   typing_det:
-    "\<Gamma> \<turnstile> expr : \<tau> \<Longrightarrow>
-     \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
+    "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
+     \<Gamma> \<turnstile>\<^sub>E expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   collection_parts_typing_det:
     "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>C prts : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
@@ -1004,16 +1007,5 @@ qed
 section \<open>Code Setup\<close>
 
 code_pred typing .
-
-definition "check_type \<Gamma> expr \<tau> \<equiv>
-  Predicate.eval (typing_i_i_i \<Gamma> expr \<tau>) ()"
-
-definition "synthesize_type \<Gamma> expr \<equiv>
-  Predicate.singleton (\<lambda>_. OclInvalid) (Predicate.map errorable (typing_i_i_o \<Gamma> expr))"
-
-text \<open>
-  It is the only usage of the @{text OclInvalid} type.
-  This type is not required to define typing rules.
-  It is only required to make the typing function total.\<close>
 
 end

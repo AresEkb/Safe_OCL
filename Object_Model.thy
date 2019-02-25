@@ -10,7 +10,7 @@ begin
 
 text \<open>
   This theory defines a very simplified object model. It does not
-  support attributes and operations redefinition.
+  support attribute and operation redefinition.
   It does not define any constraints either.\<close>
 
 type_synonym attr = String.literal
@@ -64,9 +64,6 @@ definition "oper_out_params op \<equiv>
 abbreviation "has_matching_signature \<tau> op \<pi> x \<equiv>
   op = oper_name x \<and> \<tau> \<le> oper_context x \<and>
   list_all2 (\<lambda>x y. x \<le> y) \<pi> (map param_type (oper_in_params x))"
-
-text \<open>
-  An object model constraints will be defined in future versions.\<close>
 
 locale object_model = 
   fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"

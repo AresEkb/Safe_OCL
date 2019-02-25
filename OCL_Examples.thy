@@ -8,43 +8,6 @@ theory OCL_Examples
   imports OCL_Normal_Form
 begin
 
-(* В 8.3.8 операции для метаклассов включая allInstances()
-   Ещё статические операции
-   И зачем-то обращение к переопределенным свойствам базового класса через oclAsType()
-   Добавить пакеты: имена классов должны быть списком имен
-
-   В разделе 10.4 есть сопоставление:
-   ObjectValue - Class
-   StaticValue - DataType
-   Value - Classifier
-
-   Но нет ничего про TypeExp
-   На рисунке 8.2 - referredType - Classifier
-   На рисунке 13.3 - referredType - Type
-
-   В A.3.1.1 пишут для операций с типами:
-   This maps into some special instances of OclOperationWithTypeArgument.
-   И потом:
-   Note that in previous OCL versions these type
-   casts and tests were defined as operations with parameters
-   of type OclType. Here, we technically define them as first class
-   expressions, which has the benefit that we do not need the metatype
-   OclType. Thus the type system is kept simple while
-   preserving compatibility with standard OCL syntax.
-
-   Но то, что написано в основной части противоречит этому. Там передается Classifier
-   И ещё там есть TypeExp, которого у меня нет. У меня нет в абстрактном синтаксисе,
-   а в конкретном может и быть
-
-   Это смешение уровней. Вопрос нужно оно или нет. По-моему в этой нет
-   особой необходимости. По сути вопрос в том нужна рефлексия в OCL или нет.
-   Я думаю, нет. Она должна быть максимально локализована в нескольких операциях
-
-   Но что тогда такое allInstances()? Это же рефлексия и она нужна.
-   Да, но таких операций не много и их можно реализовать явно
-*)
-
-
 (*** Classes ****************************************************************)
 
 section \<open>Classes\<close>
@@ -64,7 +27,7 @@ instantiation classes1 :: semilattice_sup
 begin
 
 definition "(<) \<equiv> subclass1"
-definition "(c::classes1) \<le> d \<equiv> c = d \<or> c < d"
+definition "(\<le>) \<equiv> subclass1\<^sup>=\<^sup>="
 
 fun sup_classes1 where
   "Object \<squnion> _ = Object"
@@ -92,12 +55,14 @@ lemma order_refl_classes1:
 lemma order_trans_classes1:
   "c \<le> d \<Longrightarrow> d \<le> e \<Longrightarrow> c \<le> e"
   for c d e :: classes1
-  using less_eq_classes1_def less_classes1_def subclass1.simps by auto
+  unfolding less_eq_classes1_def
+  using subclass1.simps by auto
 
 lemma antisym_classes1:
   "c \<le> d \<Longrightarrow> d \<le> c \<Longrightarrow> c = d"
   for c d :: classes1
-  using less_eq_classes1_def less_classes1_def subclass1.simps by auto
+  unfolding less_eq_classes1_def
+  using subclass1.simps by auto
 
 lemma sup_ge1_classes1:
   "c \<le> c \<squnion> d"
@@ -155,13 +120,13 @@ section \<open>Basic Types\<close>
 
 subsection \<open>Positive Cases\<close>
 
-value "(UnlimitedNatural :: classes1 basic_type) < Real"
+value "UnlimitedNatural < (Real :: classes1 basic_type)"
 value "\<langle>Employee\<rangle>\<^sub>\<T> < \<langle>Person\<rangle>\<^sub>\<T>"
 value "\<langle>Person\<rangle>\<^sub>\<T> \<le> OclAny"
 
 subsection \<open>Negative Cases\<close>
 
-value "(String :: classes1 basic_type) \<le> Boolean"
+value "String \<le> (Boolean :: classes1 basic_type)"
 
 (*** Types ******************************************************************)
 
@@ -194,9 +159,8 @@ begin
 
 definition "attributes_classes1 \<equiv> fmap_of_list [
   (Person, fmap_of_list [
-    (STR ''name1'', String[1] :: classes1 type)]),
+    (STR ''name'', String[1] :: classes1 type)]),
   (Employee, fmap_of_list [
-    (STR ''name'', Integer[1] :: classes1 type),
     (STR ''position'', String[1])]),
   (Customer, fmap_of_list [
     (STR ''vip'', Boolean[1])]),
@@ -207,28 +171,25 @@ definition "attributes_classes1 \<equiv> fmap_of_list [
     (STR ''description'', String[1])])]"
 
 definition "associations_classes1 \<equiv> fmap_of_list [
-  (STR ''ProjectPerson'', fmap_of_list [
-    (STR ''projects1'', (Project, 0::nat, 5, False, False)),
-    (STR ''person'', (Person, 0, 1, False, False))]),
   (STR ''ProjectManager'', fmap_of_list [
-    (STR ''projects'', (Project, 0::nat, \<infinity>::enat, False, False)),
+    (STR ''projects'', (Project, 0::nat, \<infinity>::enat, False, True)),
     (STR ''manager'', (Employee, 1, 1, False, False))]),
   (STR ''ProjectMember'', fmap_of_list [
     (STR ''member_of'', (Project, 0, \<infinity>, False, False)),
-    (STR ''members'', (Employee, 1, 20, False, False))]),
+    (STR ''members'', (Employee, 1, 20, True, True))]),
   (STR ''ManagerEmployee'', fmap_of_list [
     (STR ''line_manager'', (Employee, 0::nat, 1, False, False)),
     (STR ''project_manager'', (Employee, 0::nat, \<infinity>, False, False)),
     (STR ''employees'', (Employee, 3, 7, False, False))]),
   (STR ''ProjectCustomer'', fmap_of_list [
-    (STR ''projects'', (Project, 0, \<infinity>, False, False)),
+    (STR ''projects'', (Project, 0, \<infinity>, False, True)),
     (STR ''customer'', (Customer, 1, 1, False, False))]),
   (STR ''ProjectTask'', fmap_of_list [
     (STR ''project'', (Project, 1, 1, False, False)),
-    (STR ''tasks'', (Task, 0, \<infinity>, False, False))]),
+    (STR ''tasks'', (Task, 0, \<infinity>, True, True))]),
   (STR ''SprintTaskAssignee'', fmap_of_list [
-    (STR ''sprint'', (Sprint, 0, 10, False, False)),
-    (STR ''tasks'', (Task, 0, 5, False, False)),
+    (STR ''sprint'', (Sprint, 0, 10, False, True)),
+    (STR ''tasks'', (Task, 0, 5, False, True)),
     (STR ''assignee'', (Employee, 0, 1, False, False))])]"
 
 definition "association_classes_classes1 \<equiv> fmempty :: classes1 \<rightharpoonup>\<^sub>f assoc"
@@ -245,18 +206,19 @@ static def: allProjects() : Set(Project[1]) = Project[1].allInstances()
 definition "operations_classes1 \<equiv> [
   (STR ''membersCount'', Project[?], [], Integer[1], False,
    Some (OperationCall
-    (AssociationEndCall (Var STR ''self'') STR ''members'' None)
+    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'' None)
     ArrowCall CollectionSizeOp [])),
   (STR ''membersCount'', Project[?], [], Set Employee[1], False,
    Some (OperationCall
-    (AssociationEndCall (Var STR ''self'') STR ''members'' None)
+    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'' None)
     ArrowCall CollectionSizeOp [])),
-  (STR ''membersByName'', Project[?], [(STR ''mn'', String[1], In)], Set Employee[1], False,
+  (STR ''membersByName'', Project[?], [(STR ''mn'', String[1], In)],
+    Set Employee[1], False,
    Some (SelectIteratorCall
-    (AssociationEndCall (Var STR ''self'') STR ''members'' None)
-    [STR ''member''] None
+    (AssociationEndCall (Var STR ''self'') DotCall STR ''members'' None)
+    ArrowCall [STR ''member''] None
     (OperationCall
-      (AttributeCall (Var STR ''member'') STR ''name'')
+      (AttributeCall (Var STR ''member'') DotCall STR ''name'')
       DotCall EqualOp [Var STR ''mn'']))),
   (STR ''allProjects'', Project[1], [], Set Project[1], True,
    Some (MetaOperationCall Project[1] AllInstancesOp))
@@ -274,7 +236,6 @@ end
 
 subsection \<open>Positive Cases\<close>
 
-(* TODO: Check *)
 value "find_attribute Employee STR ''name''"
 value "find_attribute Employee STR ''position''"
 value "find_association_end Employee STR ''projects'' None"
@@ -293,41 +254,39 @@ section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
 
+text \<open>
+\<^verbatim>\<open>E1::A : E1[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   EnumLiteral STR ''E1'' STR ''A'' : x}"
-
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  EnumLiteral STR ''E1'' STR ''C'' : x}"
-
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  BooleanLiteral True : x}"
 
 text \<open>
 \<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False] : x}"
 
-value "check_type (fmempty :: classes1 type env)
-  (OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False])
-  Boolean[1]"
-value "check_type (fmempty :: classes1 type env)
-  (OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False])
-  Boolean[?]"
-value "synthesize_type (fmempty :: classes1 type env)
-  (OperationCall (BooleanLiteral True) DotCall OrOp [BooleanLiteral False])"
-value "synthesize_type (fmempty :: classes1 type env)
-  (OperationCall (BooleanLiteral True) DotCall OrOp [IntegerLiteral 1])"
+text \<open>
+\<^verbatim>\<open>null and true : Boolean[?]\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (NullLiteral) DotCall AndOp [BooleanLiteral True] : x}"
 
 text \<open>
-\<^verbatim>\<open>true and null : Boolean[?]\<close>\<close>
+\<^verbatim>\<open>let x : Real[1] = 5 in x + 7 : Real[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
-  OperationCall (BooleanLiteral True) DotCall AndOp [NullLiteral] : x}"
-
-text \<open>
-\<^verbatim>\<open>let x : Real[?] = 5 in x + 7 : Real[1]\<close>\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  Let (STR ''x'') (Some Real[?]) (IntegerLiteral 5)
+  Let (STR ''x'') (Some Real[1]) (IntegerLiteral 5)
     (OperationCall (Var STR ''x'') DotCall PlusOp [IntegerLiteral 7]) : x}"
+
+text \<open>
+\<^verbatim>\<open>null.oclIsUndefined() : Boolean[1]\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (NullLiteral) DotCall OclIsUndefinedOp [] : x}"
+
+text \<open>
+\<^verbatim>\<open>Sequence{1..5, null}.oclIsUndefined() : Sequence(Boolean[1])\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (CollectionLiteral SequenceKind
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+               CollectionItem NullLiteral])
+    DotCall OclIsUndefinedOp [] : x}"
 
 text \<open>
 \<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
@@ -342,12 +301,13 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
       [CollectionItem (StringLiteral ''a''), CollectionItem (StringLiteral ''b'')]] : x}"
 
 text \<open>
-\<^verbatim>\<open>Sequence{1..5}->iterate(x, acc : Real[?] = 5 | acc + x) : Real[1]\<close>\<close>
+\<^verbatim>\<open>Sequence{1..5, null}?->iterate(x, acc : Real[1] = 0 | acc + x) : Real[1]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   IterateCall (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+               CollectionItem NullLiteral]) SafeArrowCall
       [STR ''x''] None
-      (STR ''acc'') (Some Real[?]) (IntegerLiteral 5)
+      (STR ''acc'') (Some Real[1]) (IntegerLiteral 0)
     (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : x}"
 
 text \<open>
@@ -357,59 +317,46 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let (STR ''x'') (Some (Sequence String[?])) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (AnyIteratorCall (Var STR ''x'') [STR ''it''] None
+  (AnyIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] (Some String[?])
     (OperationCall (Var STR ''it'') DotCall EqualOp [StringLiteral ''test''])) : x}"
 
 text \<open>
-\<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
-x->closure(it | it) : OrderedSet(String[?])\<close>\<close>
+\<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
+x?->closure(it | it) : OrderedSet(String[1])\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Some (Sequence String[?])) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (ClosureIteratorCall (Var STR ''x'') [STR ''it''] None
+  (ClosureIteratorCall (Var STR ''x'') SafeArrowCall [STR ''it''] None
     (Var STR ''it'')) : x}"
 
 text \<open>
 \<^verbatim>\<open>context Employee:
-position : String[1]\<close>\<close>
+name : String[1]\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') STR ''position'' : x}"
-
-(* TODO: Inherited properties *)
-text \<open>
-\<^verbatim>\<open>context Employee:
-position : String[1]\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
-  AttributeCall (Var STR ''self'') STR ''name'' : x}"
+  AttributeCall (Var STR ''self'') DotCall STR ''name'' : x}"
 
 text \<open>
 \<^verbatim>\<open>context Employee:
 projects : Set(Project[1])\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') STR ''projects'' None : x}"
+  AssociationEndCall (Var STR ''self'') DotCall STR ''projects'' None : x}"
 
 text \<open>
 \<^verbatim>\<open>context Employee:
 projects.members : Bag(Employee[1])\<close>\<close>
 values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
-  CollectIteratorCall (AssociationEndCall (Var STR ''self'') STR ''projects'' None)
-    [STR ''it''] None
-    (AssociationEndCall (Var STR ''it'') STR ''members'' None) : x}"
+  AssociationEndCall (AssociationEndCall (Var STR ''self'')
+      DotCall STR ''projects'' None)
+    DotCall STR ''members'' None : x}"
 
 text \<open>
-\<^verbatim>\<open>context Project:
-manager : Employee[1]\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', Project[?])] :: classes1 type env) \<turnstile>
-  AssociationEndCall (Var STR ''self'') STR ''manager'' None : x}"
-
-text \<open>
-\<^verbatim>\<open>Project[?].allInstances() : Project[?]\<close>\<close>
+\<^verbatim>\<open>Project[?].allInstances() : Set(Project[?])\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   MetaOperationCall Project[?] AllInstancesOp : x}"
 
 text \<open>
-\<^verbatim>\<open>Project[1]::allProjects() : Project[1]\<close>\<close>
+\<^verbatim>\<open>Project[1]::allProjects() : Set(Project[1])\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   StaticOperationCall Project[1] STR ''allProjects'' [] : x}"
 
@@ -428,12 +375,25 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
   Let STR ''x'' (Some (Sequence String[?])) (CollectionLiteral SequenceKind
     [CollectionItem (StringLiteral ''abc''),
      CollectionItem (StringLiteral ''zxc'')])
-  (ClosureIteratorCall (Var STR ''x'') [STR ''it''] None
+  (ClosureIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] None
     (IntegerLiteral 1)) : x}"
 
+text \<open>
+\<^verbatim>\<open>null?._'='(true)\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
-  (OperationCall
-    (CollectionLiteral SequenceKind [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-    DotCall ToStringOp []) \<Rrightarrow> x}"
+  OperationCall (NullLiteral) SafeDotCall EqualOp [BooleanLiteral True] : x}"
+
+text \<open>
+\<^verbatim>\<open>null?.oclIsUndefined()\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (NullLiteral) SafeDotCall OclIsUndefinedOp [] : x}"
+
+text \<open>
+\<^verbatim>\<open>Sequence{1..5, null}?.oclIsUndefined()\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (CollectionLiteral SequenceKind
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+               CollectionItem NullLiteral])
+    SafeDotCall OclIsUndefinedOp [] : x}"
 
 end

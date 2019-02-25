@@ -49,8 +49,7 @@ lemma subtuple_mono [mono]:
   apply (rule fmrel_on_fsetI)
   apply (drule_tac ?P="f" and ?m="xm" and ?n="ym" in fmrel_on_fsetD, simp)
   apply (erule option.rel_cases, simp)
-  apply (auto simp add: option.rel_sel fmran'I)
-  done
+  by (auto simp add: option.rel_sel fmran'I)
 
 lemma strict_subtuple_mono [mono]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> y \<in> fmran' ym \<Longrightarrow> f x y \<longrightarrow> g x y) \<Longrightarrow>
@@ -162,8 +161,7 @@ lemma strict_subtuple_trans'':
    strict_subtuple R\<^sup>*\<^sup>* xm zm"
   apply auto
   apply (rule fmrel_on_fset_trans, auto)
-  apply (drule_tac ?xm="ym" in subtuple_acyclic''; auto)
-  done
+  by (drule_tac ?xm="ym" in subtuple_acyclic''; auto)
 
 lemma strict_subtuple_trans''':
   "acyclicP_on (fmran' zm) P \<Longrightarrow>
