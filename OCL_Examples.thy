@@ -204,11 +204,11 @@ static def: allProjects() : Set(Project[1]) = Project[1].allInstances()
 \end{verbatim}\<close>
 
 definition "operations_classes1 \<equiv> [
-  (STR ''membersCount'', Project[?], [], Integer[1], False,
+  (STR ''membersCount'', Project[1], [], Integer[1], False,
    Some (OperationCall
     (AssociationEndCall (Var STR ''self'') DotCall STR ''members'' None)
     ArrowCall CollectionSizeOp [])),
-  (STR ''membersByName'', Project[?], [(STR ''mn'', String[1], In)],
+  (STR ''membersByName'', Project[1], [(STR ''mn'', String[1], In)],
     Set Employee[1], False,
    Some (SelectIteratorCall
     (AssociationEndCall (Var STR ''self'') DotCall STR ''members'' None)
@@ -251,7 +251,7 @@ definition "safe_operation2 op k \<tau> \<pi> \<equiv>
     (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
 
 text \<open>
-  An unsafe operation is a  well-typed operation, but not
+  An unsafe operation is a well-typed operation, but not
   well-typed for a nullable source.\<close>
 
 definition "unsafe_operation2 op k \<tau> \<pi> \<equiv>
@@ -263,20 +263,30 @@ lemma q:
   "\<exists>\<sigma>. op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
    safe_operation op k \<tau> \<pi> \<or> unsafe_operation op k \<tau> \<pi>"
 *)
-(*
-value "safe_operation EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
-value "safe_operation EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
-value "safe_operation EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
-value "unsafe_operation EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
-value "unsafe_operation EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
-value "unsafe_operation EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
-*)
+
+value "safe_op EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
+value "safe_op EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
+value "safe_op EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
+value "unsafe_op EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
+value "unsafe_op EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
+value "unsafe_op EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
+
+value "well_typed_op EqualOp DotCall OclVoid[1] [Boolean[1] :: classes1 type]"
+value "safe_op EqualOp DotCall OclVoid[1] [Boolean[1] :: classes1 type]"
+value "unsafe_op EqualOp DotCall OclVoid[1] [Boolean[1] :: classes1 type]"
+
 
 
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall (NullLiteral) DotCall EqualOp [BooleanLiteral True] : x}"
+values "{x. (fmempty :: classes1 type env) \<turnstile>\<^sub>E
+  OperationCall (NullLiteral) DotCall EqualOp [BooleanLiteral True] : x}"
 values "{x. (fmempty :: classes1 type env) \<turnstile>
   OperationCall (NullLiteral) SafeDotCall EqualOp [BooleanLiteral True] : x}"
+
+values "{x.
+  (fmempty :: classes1 type env, OclVoid[1], SafeDotCall) \<turnstile>\<^sub>C
+    Operation EqualOp [BooleanLiteral True] \<Rrightarrow> Operation EqualOp [BooleanLiteral True]}"
 
 section \<open>Typing\<close>
 

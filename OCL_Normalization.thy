@@ -14,20 +14,20 @@ section \<open>Normalization Rules\<close>
 
 text \<open>
   A safe operation is an operation well-typed for a nullable source.\<close>
-
+(*
 definition "safe_operation op k \<tau> \<pi> \<equiv>
   Predicate.singleton (\<lambda>_. False)
     (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
-
+*)
 text \<open>
   An unsafe operation is a  well-typed operation, but not
   well-typed for a nullable source.\<close>
-
+(*
 definition "unsafe_operation op k \<tau> \<pi> \<equiv>
   Predicate.singleton (\<lambda>_. False)
     (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) \<and>
   \<not> safe_operation op k \<tau> \<pi>"
-
+*)
 text \<open>
   Safe operations can not be invoked using a safe navigation.
   If we allowed this case, it would violate the semantics of both
@@ -96,23 +96,37 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
-
+(*
 datatype ty = A | B | C
 
 inductive test where
   "test A B"
 | "test B C"
 
+definition "test_ex x \<equiv> \<exists>z. test x z"
+
 inductive test2 where
-  "\<not>(\<exists>z. test x z) \<Longrightarrow> test2 x"
+  "\<not> test_ex x \<Longrightarrow> test2 x"
 
 code_pred [show_modes] test .
+
+lemma test_ex_code [code_abbrev, simp]:
+  "Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (test_i_o x)) = (\<exists>y. test x y)"
+  apply (intro ext iffI)
+  unfolding Predicate.singleton_def
+  apply (simp_all split: if_split)
+  apply (metis SUP1_E mem_Collect_eq pred.sel test_i_o_def)
+  apply (intro conjI impI)
+  apply (smt SUP1_E the_equality)
+  apply (metis (full_types) SUP1_E SUP1_I mem_Collect_eq pred.sel test_i_o_def)
+  done
+
 code_pred [show_modes] test2 .
 
 values "{x. test A x}"
-
-
 values "{x. test2 A}"
+values "{x. test2 C}"
 
 term Predicate.single
 term Predicate.singleton
@@ -121,22 +135,19 @@ term Predicate.map
 term Ex
 term test_i_o
 
-definition "test_ex x \<equiv> \<exists>y. test x y"
 
 definition "test_ex_fun x \<equiv>
   Predicate.singleton (\<lambda>_. False)
     (Predicate.map (\<lambda>_. True) (test_i_o x))"
+*)
 
-lemma test_ex_code [code_abbrev, simp]:
-  "\<exists>y. test x y" if 
-
+(*
 lemma test_ex_code [code_abbrev, simp]:
   "test_ex_fun = test_ex"
   apply (intro ext)
   unfolding test_ex_def test_ex_fun_def Predicate.singleton_def
   apply (simp split: if_split)
-
-value "test_ex_fun A"
+*)
 
 (*
   HOL.all_not_ex: (\<forall>x. ?P x) = (\<nexists>x. \<not> ?P x)
@@ -162,29 +173,45 @@ definition "test_ex_fun x \<equiv>
     (Predicate.map (\<lambda>_. True) (test_i_o x))"
 *)
 
+term "op_type_i_i_i_i_o"
+
+definition "well_typed_op op k \<tau> \<pi> \<equiv> \<exists>\<sigma>. op_type op k \<tau> \<pi> \<sigma>"
+
+definition "well_typed_op2 op k \<tau> \<equiv> \<exists>\<pi> \<sigma>. op_type op k \<tau> \<pi> \<sigma>"
+
+definition "safe_op op k \<tau> \<pi> \<equiv>
+  well_typed_op op k \<tau> \<pi> \<and> well_typed_op op k (to_optional_type \<tau>) \<pi>"
+
+definition "unsafe_op op k \<tau> \<pi> \<equiv> \<not> safe_op op k \<tau> \<pi>"
+
 (*
-definition "safe_operation op k \<tau> \<pi> \<equiv> \<exists>\<sigma>. op_type op k (to_optional_type \<tau>) \<pi> \<sigma>"
-
-definition "safe_operation_fun op k \<tau> \<pi> \<equiv>
-  Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
-
-lemma safe_operation_code [code_abbrev, simp]:
-  "safe_operation_fun = safe_operation"
-  apply (intro ext)
-  unfolding safe_operation_def safe_operation_fun_def Predicate.singleton_def
-  apply (simp split: if_split)
-(*  apply auto*)
-
-term Predicate.single
-term Predicate.singleton
-term Predicate.eval
-term op_type_i_i_i_i_o
-term Predicate.the_only
+definition "unsafe_op op k \<tau> \<pi> \<equiv>
+  well_typed_op op k \<tau> \<pi> \<and> \<not> well_typed_op op k (to_optional_type \<tau>) \<pi>"
 *)
+lemma well_typed_op_either_safe_or_unsafe:
+  "well_typed_op op k \<tau> \<pi> \<longleftrightarrow>
+   safe_op op k \<tau> \<pi> \<and> \<not> unsafe_op op k \<tau> \<pi> \<or>
+   \<not> safe_op op k \<tau> \<pi> \<and> unsafe_op op k \<tau> \<pi>"
+  unfolding safe_op_def unsafe_op_def
+  by auto
 
-
-
+lemma well_typed_op_code [code_abbrev, simp]:
+  "Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) =
+   well_typed_op op k \<tau> \<pi>"
+  apply (intro ext iffI)
+  unfolding well_typed_op_def Predicate.singleton_def
+  apply (simp_all split: if_split)
+  apply (metis SUP1_E mem_Collect_eq op_type_i_i_i_i_o_def pred.sel)
+  apply (intro conjI impI)
+  apply (smt SUP1_E the_equality)
+  by (metis (mono_tags) SUP1_E SUP1_I mem_Collect_eq op_type_i_i_i_i_o_def pred.sel)
+(*
+lemma well_typed_op2_code [code_abbrev, simp]:
+  "Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) =
+   well_typed_op2 op k \<tau>"
+*)
 
 
 inductive normalize
@@ -298,8 +325,8 @@ inductive normalize
    (\<Gamma>, \<tau>, ArrowCall) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
 |OperationSafeDotCallN:
   "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>L params\<^sub>2 : \<pi> \<Longrightarrow>
-   unsafe_operation op DotCall \<tau> \<pi> \<Longrightarrow>
+(*   \<Gamma> \<turnstile>\<^sub>L params\<^sub>2 : \<pi> \<Longrightarrow>
+   unsafe_op op DotCall \<tau> \<pi> \<Longrightarrow>*)
    (\<Gamma>, \<tau>, SafeDotCall) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
 |OperationSafeArrowCallN:
   "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
