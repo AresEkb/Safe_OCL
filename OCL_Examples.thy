@@ -5,7 +5,7 @@
 *)
 chapter \<open>Examples\<close>
 theory OCL_Examples
-  imports OCL_Normal_Form
+  imports OCL_Normalization
 begin
 
 (*** Classes ****************************************************************)
@@ -246,6 +246,38 @@ value "has_literal STR ''E1'' STR ''C''"
 
 (*** Typing *****************************************************************)
 
+definition "safe_operation2 op k \<tau> \<pi> \<equiv>
+  Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
+
+text \<open>
+  An unsafe operation is a  well-typed operation, but not
+  well-typed for a nullable source.\<close>
+
+definition "unsafe_operation2 op k \<tau> \<pi> \<equiv>
+  Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) \<and>
+  \<not> safe_operation2 op k \<tau> \<pi>"
+(*
+lemma q:
+  "\<exists>\<sigma>. op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
+   safe_operation op k \<tau> \<pi> \<or> unsafe_operation op k \<tau> \<pi>"
+*)
+(*
+value "safe_operation EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
+value "safe_operation EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
+value "safe_operation EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
+value "unsafe_operation EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
+value "unsafe_operation EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
+value "unsafe_operation EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
+*)
+
+
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (NullLiteral) DotCall EqualOp [BooleanLiteral True] : x}"
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (NullLiteral) SafeDotCall EqualOp [BooleanLiteral True] : x}"
+
 section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
@@ -358,6 +390,11 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
   StaticOperationCall Project[1] STR ''allProjects'' [] : x}"
 
 subsection \<open>Negative Cases\<close>
+
+text \<open>
+\<^verbatim>\<open>true = null\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (BooleanLiteral True) DotCall EqualOp [NullLiteral] : x}"
 
 text \<open>
 \<^verbatim>\<open>let x : Boolean[1] = 5 in x and true\<close>\<close>

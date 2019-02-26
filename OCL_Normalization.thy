@@ -3,14 +3,35 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>Expressions Normal Form\<close>
-theory OCL_Normal_Form
+chapter \<open>Normalization\<close>
+theory OCL_Normalization
   imports OCL_Typing
 begin
 
 (*** Normalization Rules ****************************************************)
 
 section \<open>Normalization Rules\<close>
+
+text \<open>
+  A safe operation is an operation well-typed for a nullable source.\<close>
+
+definition "safe_operation op k \<tau> \<pi> \<equiv>
+  Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
+
+text \<open>
+  An unsafe operation is a  well-typed operation, but not
+  well-typed for a nullable source.\<close>
+
+definition "unsafe_operation op k \<tau> \<pi> \<equiv>
+  Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) \<and>
+  \<not> safe_operation op k \<tau> \<pi>"
+
+text \<open>
+  Safe operations can not be invoked using a safe navigation.
+  If we allowed this case, it would violate the semantics of both
+  safe operations and safe navigation.\<close>
 
 text \<open>
   The following expression normalization rules includes two kinds of an
@@ -75,12 +96,96 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
-text \<open>
-  A safe operation is an operation well-typed for a nullable source.\<close>
 
-definition "safe_operation op k \<tau> \<pi> \<equiv>
+datatype ty = A | B | C
+
+inductive test where
+  "test A B"
+| "test B C"
+
+inductive test2 where
+  "\<not>(\<exists>z. test x z) \<Longrightarrow> test2 x"
+
+code_pred [show_modes] test .
+code_pred [show_modes] test2 .
+
+values "{x. test A x}"
+
+
+values "{x. test2 A}"
+
+term Predicate.single
+term Predicate.singleton
+term Predicate.eval
+term Predicate.map
+term Ex
+term test_i_o
+
+definition "test_ex x \<equiv> \<exists>y. test x y"
+
+definition "test_ex_fun x \<equiv>
+  Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (test_i_o x))"
+
+lemma test_ex_code [code_abbrev, simp]:
+  "\<exists>y. test x y" if 
+
+lemma test_ex_code [code_abbrev, simp]:
+  "test_ex_fun = test_ex"
+  apply (intro ext)
+  unfolding test_ex_def test_ex_fun_def Predicate.singleton_def
+  apply (simp split: if_split)
+
+value "test_ex_fun A"
+
+(*
+  HOL.all_not_ex: (\<forall>x. ?P x) = (\<nexists>x. \<not> ?P x)
+  HOL.not_all: (\<not> (\<forall>x. ?P x)) = (\<exists>x. \<not> ?P x)
+  HOL.not_ex: (\<nexists>x. ?P x) = (\<forall>x. \<not> ?P x)
+  Meson.not_allD: \<not> (\<forall>x. ?P x) \<Longrightarrow> \<exists>x. \<not> ?P x
+  Meson.not_exD: \<nexists>x. ?P x \<Longrightarrow> \<forall>x. \<not> ?P x
+*)
+(*
+definition "test_ex_fun x \<equiv>
+  Predicate.bind (Predicate.if_pred (\<exists>z. test x z))
+    (\<lambda>x. case x of () \<Rightarrow> Predicate.single ())"
+*)
+(*
+term test_ex_fun
+term Predicate.if_pred
+term Predicate.bind
+term Predicate.map
+*)
+(*
+definition "test_ex_fun x \<equiv>
+  Predicate.singleton (\<lambda>_. False)
+    (Predicate.map (\<lambda>_. True) (test_i_o x))"
+*)
+
+(*
+definition "safe_operation op k \<tau> \<pi> \<equiv> \<exists>\<sigma>. op_type op k (to_optional_type \<tau>) \<pi> \<sigma>"
+
+definition "safe_operation_fun op k \<tau> \<pi> \<equiv>
   Predicate.singleton (\<lambda>_. False)
     (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
+
+lemma safe_operation_code [code_abbrev, simp]:
+  "safe_operation_fun = safe_operation"
+  apply (intro ext)
+  unfolding safe_operation_def safe_operation_fun_def Predicate.singleton_def
+  apply (simp split: if_split)
+(*  apply auto*)
+
+term Predicate.single
+term Predicate.singleton
+term Predicate.eval
+term op_type_i_i_i_i_o
+term Predicate.the_only
+*)
+
+
+
+
 
 inductive normalize
     :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
@@ -194,7 +299,7 @@ inductive normalize
 |OperationSafeDotCallN:
   "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L params\<^sub>2 : \<pi> \<Longrightarrow>
-   \<not> safe_operation op DotCall \<tau> \<pi> \<Longrightarrow>
+   unsafe_operation op DotCall \<tau> \<pi> \<Longrightarrow>
    (\<Gamma>, \<tau>, SafeDotCall) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
 |OperationSafeArrowCallN:
   "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>

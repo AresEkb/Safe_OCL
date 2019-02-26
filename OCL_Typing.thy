@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-chapter \<open>Typing Rules\<close>
+chapter \<open>Typing\<close>
 theory OCL_Typing
   imports OCL_Object_Model
 begin
@@ -94,13 +94,13 @@ subsection \<open>OclSuper Operations\<close>
 text \<open>
   It makes sense to compare values only with compatible types.\<close>
 
-(* We have to specify predicate type explicitly to let
+(* We have to specify the predicate type explicitly to let
    a generated code work *)
 inductive super_binop_type
     :: "super_binop \<Rightarrow> ('a :: order) type \<Rightarrow> 'a type \<Rightarrow> 'a type \<Rightarrow> bool" where
-  "\<tau> \<le> to_optional_type_nested \<sigma> \<or> \<sigma> < to_optional_type_nested \<tau> \<Longrightarrow>
+  "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
    super_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<le> to_optional_type_nested \<sigma> \<or> \<sigma> < to_optional_type_nested \<tau> \<Longrightarrow>
+| "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
    super_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>OclAny Operations\<close>
