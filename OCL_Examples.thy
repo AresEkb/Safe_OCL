@@ -246,48 +246,6 @@ value "has_literal STR ''E1'' STR ''C''"
 
 (*** Typing *****************************************************************)
 
-definition "safe_operation2 op k \<tau> \<pi> \<equiv>
-  Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
-
-text \<open>
-  An unsafe operation is a well-typed operation, but not
-  well-typed for a nullable source.\<close>
-
-definition "unsafe_operation2 op k \<tau> \<pi> \<equiv>
-  Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) \<and>
-  \<not> safe_operation2 op k \<tau> \<pi>"
-(*
-lemma q:
-  "\<exists>\<sigma>. op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
-   safe_operation op k \<tau> \<pi> \<or> unsafe_operation op k \<tau> \<pi>"
-*)
-
-value "safe_op EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
-value "safe_op EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
-value "safe_op EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
-value "unsafe_op EqualOp DotCall OclVoid[?] [Boolean[1] :: classes1 type]"
-value "unsafe_op EqualOp DotCall OclVoid[1] [Boolean[?] :: classes1 type]"
-value "unsafe_op EqualOp DotCall OclVoid[?] [Boolean[?] :: classes1 type]"
-
-value "well_typed_op EqualOp DotCall OclVoid[1] [Boolean[1] :: classes1 type]"
-value "safe_op EqualOp DotCall OclVoid[1] [Boolean[1] :: classes1 type]"
-value "unsafe_op EqualOp DotCall OclVoid[1] [Boolean[1] :: classes1 type]"
-
-
-
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  OperationCall (NullLiteral) DotCall EqualOp [BooleanLiteral True] : x}"
-values "{x. (fmempty :: classes1 type env) \<turnstile>\<^sub>E
-  OperationCall (NullLiteral) DotCall EqualOp [BooleanLiteral True] : x}"
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  OperationCall (NullLiteral) SafeDotCall EqualOp [BooleanLiteral True] : x}"
-
-values "{x.
-  (fmempty :: classes1 type env, OclVoid[1], SafeDotCall) \<turnstile>\<^sub>C
-    Operation EqualOp [BooleanLiteral True] \<Rrightarrow> Operation EqualOp [BooleanLiteral True]}"
-
 section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
@@ -378,13 +336,13 @@ values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<
 text \<open>
 \<^verbatim>\<open>context Employee:
 projects : Set(Project[1])\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
+values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
   AssociationEndCall (Var STR ''self'') DotCall STR ''projects'' None : x}"
 
 text \<open>
 \<^verbatim>\<open>context Employee:
 projects.members : Bag(Employee[1])\<close>\<close>
-values "{x. (fmap_of_list [(STR ''self'', Employee[?])] :: classes1 type env) \<turnstile>
+values "{x. (fmap_of_list [(STR ''self'', Employee[1])] :: classes1 type env) \<turnstile>
   AssociationEndCall (AssociationEndCall (Var STR ''self'')
       DotCall STR ''projects'' None)
     DotCall STR ''members'' None : x}"
@@ -421,23 +379,5 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
      CollectionItem (StringLiteral ''zxc'')])
   (ClosureIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] None
     (IntegerLiteral 1)) : x}"
-
-text \<open>
-\<^verbatim>\<open>null?._'='(true)\<close>\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  OperationCall (NullLiteral) SafeDotCall EqualOp [BooleanLiteral True] : x}"
-
-text \<open>
-\<^verbatim>\<open>null?.oclIsUndefined()\<close>\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  OperationCall (NullLiteral) SafeDotCall OclIsUndefinedOp [] : x}"
-
-text \<open>
-\<^verbatim>\<open>Sequence{1..5, null}?.oclIsUndefined()\<close>\<close>
-values "{x. (fmempty :: classes1 type env) \<turnstile>
-  OperationCall (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-               CollectionItem NullLiteral])
-    SafeDotCall OclIsUndefinedOp [] : x}"
 
 end

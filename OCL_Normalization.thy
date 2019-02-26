@@ -13,27 +13,6 @@ begin
 section \<open>Normalization Rules\<close>
 
 text \<open>
-  A safe operation is an operation well-typed for a nullable source.\<close>
-(*
-definition "safe_operation op k \<tau> \<pi> \<equiv>
-  Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k (to_optional_type \<tau>) \<pi>))"
-*)
-text \<open>
-  An unsafe operation is a  well-typed operation, but not
-  well-typed for a nullable source.\<close>
-(*
-definition "unsafe_operation op k \<tau> \<pi> \<equiv>
-  Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) \<and>
-  \<not> safe_operation op k \<tau> \<pi>"
-*)
-text \<open>
-  Safe operations can not be invoked using a safe navigation.
-  If we allowed this case, it would violate the semantics of both
-  safe operations and safe navigation.\<close>
-
-text \<open>
   The following expression normalization rules includes two kinds of an
   abstract syntax tree transformations:
 \begin{itemize}
@@ -79,7 +58,12 @@ text \<open>
     \end{tabular}
     \begin{tablenotes}
     \item[*] The resulting expression will be ill-typed if the operation is unsafe.
-    \item[**] The operation should be unsafe.
+    \item[**] It would be a good idea to prohibit such a transformation
+    for safe operations. A safe operation is an operation which is well-typed
+    for a nullable source. However, it is hard to define safe operations
+    formally considering operations overloading, complex relations between
+    operation parameters types (please see the typing rules for the equality
+    operator), and user-defined operations.
     \end{tablenotes}
     \end{threeparttable}
   \end{center}
@@ -95,124 +79,6 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
      string_of_nat (n div 10) @ [char_of (48 + (n mod 10))])"
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
-
-(*
-datatype ty = A | B | C
-
-inductive test where
-  "test A B"
-| "test B C"
-
-definition "test_ex x \<equiv> \<exists>z. test x z"
-
-inductive test2 where
-  "\<not> test_ex x \<Longrightarrow> test2 x"
-
-code_pred [show_modes] test .
-
-lemma test_ex_code [code_abbrev, simp]:
-  "Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (test_i_o x)) = (\<exists>y. test x y)"
-  apply (intro ext iffI)
-  unfolding Predicate.singleton_def
-  apply (simp_all split: if_split)
-  apply (metis SUP1_E mem_Collect_eq pred.sel test_i_o_def)
-  apply (intro conjI impI)
-  apply (smt SUP1_E the_equality)
-  apply (metis (full_types) SUP1_E SUP1_I mem_Collect_eq pred.sel test_i_o_def)
-  done
-
-code_pred [show_modes] test2 .
-
-values "{x. test A x}"
-values "{x. test2 A}"
-values "{x. test2 C}"
-
-term Predicate.single
-term Predicate.singleton
-term Predicate.eval
-term Predicate.map
-term Ex
-term test_i_o
-
-
-definition "test_ex_fun x \<equiv>
-  Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (test_i_o x))"
-*)
-
-(*
-lemma test_ex_code [code_abbrev, simp]:
-  "test_ex_fun = test_ex"
-  apply (intro ext)
-  unfolding test_ex_def test_ex_fun_def Predicate.singleton_def
-  apply (simp split: if_split)
-*)
-
-(*
-  HOL.all_not_ex: (\<forall>x. ?P x) = (\<nexists>x. \<not> ?P x)
-  HOL.not_all: (\<not> (\<forall>x. ?P x)) = (\<exists>x. \<not> ?P x)
-  HOL.not_ex: (\<nexists>x. ?P x) = (\<forall>x. \<not> ?P x)
-  Meson.not_allD: \<not> (\<forall>x. ?P x) \<Longrightarrow> \<exists>x. \<not> ?P x
-  Meson.not_exD: \<nexists>x. ?P x \<Longrightarrow> \<forall>x. \<not> ?P x
-*)
-(*
-definition "test_ex_fun x \<equiv>
-  Predicate.bind (Predicate.if_pred (\<exists>z. test x z))
-    (\<lambda>x. case x of () \<Rightarrow> Predicate.single ())"
-*)
-(*
-term test_ex_fun
-term Predicate.if_pred
-term Predicate.bind
-term Predicate.map
-*)
-(*
-definition "test_ex_fun x \<equiv>
-  Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (test_i_o x))"
-*)
-
-term "op_type_i_i_i_i_o"
-
-definition "well_typed_op op k \<tau> \<pi> \<equiv> \<exists>\<sigma>. op_type op k \<tau> \<pi> \<sigma>"
-
-definition "well_typed_op2 op k \<tau> \<equiv> \<exists>\<pi> \<sigma>. op_type op k \<tau> \<pi> \<sigma>"
-
-definition "safe_op op k \<tau> \<pi> \<equiv>
-  well_typed_op op k \<tau> \<pi> \<and> well_typed_op op k (to_optional_type \<tau>) \<pi>"
-
-definition "unsafe_op op k \<tau> \<pi> \<equiv> \<not> safe_op op k \<tau> \<pi>"
-
-(*
-definition "unsafe_op op k \<tau> \<pi> \<equiv>
-  well_typed_op op k \<tau> \<pi> \<and> \<not> well_typed_op op k (to_optional_type \<tau>) \<pi>"
-*)
-lemma well_typed_op_either_safe_or_unsafe:
-  "well_typed_op op k \<tau> \<pi> \<longleftrightarrow>
-   safe_op op k \<tau> \<pi> \<and> \<not> unsafe_op op k \<tau> \<pi> \<or>
-   \<not> safe_op op k \<tau> \<pi> \<and> unsafe_op op k \<tau> \<pi>"
-  unfolding safe_op_def unsafe_op_def
-  by auto
-
-lemma well_typed_op_code [code_abbrev, simp]:
-  "Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) =
-   well_typed_op op k \<tau> \<pi>"
-  apply (intro ext iffI)
-  unfolding well_typed_op_def Predicate.singleton_def
-  apply (simp_all split: if_split)
-  apply (metis SUP1_E mem_Collect_eq op_type_i_i_i_i_o_def pred.sel)
-  apply (intro conjI impI)
-  apply (smt SUP1_E the_equality)
-  by (metis (mono_tags) SUP1_E SUP1_I mem_Collect_eq op_type_i_i_i_i_o_def pred.sel)
-(*
-lemma well_typed_op2_code [code_abbrev, simp]:
-  "Predicate.singleton (\<lambda>_. False)
-    (Predicate.map (\<lambda>_. True) (op_type_i_i_i_i_o op k \<tau> \<pi>)) =
-   well_typed_op2 op k \<tau>"
-*)
-
 
 inductive normalize
     :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
@@ -249,13 +115,13 @@ inductive normalize
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    \<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow>
-   (\<Gamma>, \<tau>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 DotCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>2 DotCall call\<^sub>2"
 |OclAnySafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    OclVoid[?] \<le> \<tau> \<Longrightarrow>
-   (\<Gamma>, to_required_type \<tau>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, to_required_type \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    src\<^sub>3 = TypeOperationCall src\<^sub>2 DotCall OclAsTypeOp (to_required_type \<tau>) \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeDotCall call\<^sub>1 \<Rrightarrow>
        If (OperationCall src\<^sub>2 DotCall NotEqualOp [NullLiteral])
@@ -267,14 +133,14 @@ inductive normalize
    \<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow>
    src\<^sub>3 = OperationCall src\<^sub>2 DotCall OclAsSetOp [] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<sigma>, ArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 ArrowCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>3 ArrowCall call\<^sub>2"
 
 |CollectionArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    element_type \<tau> _ \<Longrightarrow>
-   (\<Gamma>, \<tau>, ArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 ArrowCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>2 ArrowCall call\<^sub>2"
 |CollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
@@ -284,13 +150,13 @@ inductive normalize
    src\<^sub>3 = TypeOperationCall src\<^sub>2 ArrowCall SelectByKindOp
               (to_required_type \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
-   (\<Gamma>, \<rho>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeArrowCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>3 ArrowCall call\<^sub>2"
 |CollectionDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<sigma>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 DotCall call\<^sub>1 \<Rrightarrow>
     CollectIteratorCall src\<^sub>2 ArrowCall [it] (Some \<sigma>) (Call (Var it) DotCall call\<^sub>2)"
@@ -301,61 +167,48 @@ inductive normalize
    OclVoid[?] \<le> \<sigma> \<Longrightarrow>
    \<rho> = to_required_type \<sigma> \<Longrightarrow>
    src\<^sub>3 = TypeOperationCall src\<^sub>2 ArrowCall SelectByKindOp \<rho> \<Longrightarrow>
-   (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeDotCall call\<^sub>1 \<Rrightarrow>
     CollectIteratorCall src\<^sub>3 ArrowCall [it] (Some \<rho>) (Call (Var it) DotCall call\<^sub>2)"
 
 |TypeOperationN:
-  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C TypeOperation op ty \<Rrightarrow> TypeOperation op ty"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C TypeOperation op ty \<Rrightarrow> TypeOperation op ty"
 |AttributeN:
-  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Attribute attr \<Rrightarrow> Attribute attr"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Attribute attr \<Rrightarrow> Attribute attr"
 |AssociationEndN:
-  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C AssociationEnd role from \<Rrightarrow> AssociationEnd role from"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationEnd role from \<Rrightarrow> AssociationEnd role from"
 |AssociationClassN:
-  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C AssociationClass \<A> from \<Rrightarrow> AssociationClass \<A> from"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationClass \<A> from \<Rrightarrow> AssociationClass \<A> from"
 |AssociationClassEndN:
-  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C AssociationClassEnd role \<Rrightarrow> AssociationClassEnd role"
-
-|OperationDotCallN:
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationClassEnd role \<Rrightarrow> AssociationClassEnd role"
+|OperationN:
   "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
-   (\<Gamma>, \<tau>, DotCall) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
-|OperationArrowCallN:
-  "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
-   (\<Gamma>, \<tau>, ArrowCall) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
-|OperationSafeDotCallN:
-  "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
-(*   \<Gamma> \<turnstile>\<^sub>L params\<^sub>2 : \<pi> \<Longrightarrow>
-   unsafe_op op DotCall \<tau> \<pi> \<Longrightarrow>*)
-   (\<Gamma>, \<tau>, SafeDotCall) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
-|OperationSafeArrowCallN:
-  "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
-   (\<Gamma>, \<tau>, SafeArrowCall) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
-
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
 |TupleElementN:
-  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C TupleElement elem \<Rrightarrow> TupleElement elem"
+  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C TupleElement elem \<Rrightarrow> TupleElement elem"
 
 |ExplicitlyTypedIterateN:
   "\<Gamma> \<turnstile> res_init\<^sub>1 \<Rrightarrow> res_init\<^sub>2 \<Longrightarrow>
    \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its) \<turnstile>
       Let res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow> Let res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2 \<Longrightarrow>
-   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterate its (Some \<sigma>) res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its (Some \<sigma>) res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow>
       Iterate its (Some \<sigma>) res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2"
 |ImplicitlyTypedIterateN:
   "element_type \<tau> \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile> res_init\<^sub>1 \<Rrightarrow> res_init\<^sub>2 \<Longrightarrow>
    \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its) \<turnstile>
       Let res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow> Let res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2 \<Longrightarrow>
-   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterate its None res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its None res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow>
       Iterate its (Some \<sigma>) res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2"
 
 |ExplicitlyTypedIteratorN:
   "\<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its) \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2  \<Longrightarrow>
-   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its (Some \<sigma>) body\<^sub>1 \<Rrightarrow> Iterator iter its (Some \<sigma>) body\<^sub>2"
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its (Some \<sigma>) body\<^sub>1 \<Rrightarrow> Iterator iter its (Some \<sigma>) body\<^sub>2"
 |ImplicitlyTypedIteratorN:
   "element_type \<tau> \<sigma> \<Longrightarrow>
    \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its) \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2  \<Longrightarrow>
-   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its None body\<^sub>1 \<Rrightarrow> Iterator iter its (Some \<sigma>) body\<^sub>2"
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its None body\<^sub>1 \<Rrightarrow> Iterator iter its (Some \<sigma>) body\<^sub>2"
 
 |ExprListNilN:
   "\<Gamma> \<turnstile>\<^sub>L [] \<Rrightarrow> []"
@@ -376,10 +229,10 @@ inductive_cases SafeDotCallNE [elim]: "\<Gamma> \<turnstile> Call src SafeDotCal
 inductive_cases ArrowCallNE [elim]: "\<Gamma> \<turnstile> Call src ArrowCall call \<Rrightarrow> b"
 inductive_cases SafeArrowCallNE [elim]: "\<Gamma> \<turnstile> Call src SafeArrowCall call \<Rrightarrow> b"
 
-inductive_cases CallNE [elim]: "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C call \<Rrightarrow> b"
-inductive_cases OperationCallNE [elim]: "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> call"
-inductive_cases IterateCallNE [elim]: "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
-inductive_cases IteratorCallNE [elim]: "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
+inductive_cases CallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C call \<Rrightarrow> b"
+inductive_cases OperationCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> call"
+inductive_cases IterateCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
+inductive_cases IteratorCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
 
 inductive_cases ExprListNE [elim]: "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys"
 
@@ -414,7 +267,7 @@ lemma
     "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> zs \<Longrightarrow> ys = zs"
   for \<Gamma> :: "('a :: ocl_object_model) type env"
-  and \<Gamma>_\<tau> :: "('a :: ocl_object_model) type env \<times> 'a type \<times> call_kind"
+  and \<Gamma>_\<tau> :: "('a :: ocl_object_model) type env \<times> 'a type"
 proof (induct arbitrary: expr\<^sub>2 and call\<^sub>2 and zs
        rule: normalize_normalize_call_normalize_expr_list.inducts)
   case (LiteralN \<Gamma> a) thus ?case by auto
@@ -493,18 +346,7 @@ next
 next
   case (AssociationClassEndN \<Gamma> \<tau> role) thus ?case by auto
 next
-  case (OperationDotCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<tau> op) show ?case
-    using OperationDotCallN.hyps(2) OperationDotCallN.prems by auto
-next
-  case (OperationArrowCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<tau> op) show ?case
-    using OperationArrowCallN.hyps(2) OperationArrowCallN.prems by auto
-next
-  case (OperationSafeDotCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<pi> op \<tau>) show ?case
-    using OperationSafeDotCallN.hyps(2) OperationSafeDotCallN.prems by auto
-next
-  case (OperationSafeArrowCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<pi> op \<tau>) show ?case
-    using OperationSafeArrowCallN.hyps(2) OperationSafeArrowCallN.prems
-    by auto
+  case (OperationN \<Gamma> params\<^sub>1 params\<^sub>2 \<tau> op) thus ?case by blast
 next
   case (TupleElementN \<Gamma> \<tau> elem) thus ?case by auto
 next

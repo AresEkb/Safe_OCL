@@ -708,10 +708,6 @@ section \<open>Helper Relations\<close>
 abbreviation between ("_/ = _\<midarrow>_"  [51, 51, 51] 50) where
   "x = y\<midarrow>z \<equiv> y \<le> x \<and> x \<le> z"
 
-inductive class_of where
-  "class_of \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<C>"
-| "class_of \<langle>\<C>\<rangle>\<^sub>\<T>[?] \<C>"
-
 inductive element_type where
   "element_type (Collection \<tau>) \<tau>"
 | "element_type (Set \<tau>) \<tau>"
@@ -782,11 +778,6 @@ fun to_optional_type_nested where
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
-
-lemma class_of_det:
-  "class_of \<tau> \<C> \<Longrightarrow>
-   class_of \<tau> \<D> \<Longrightarrow> \<C> = \<D>"
-  by (induct rule: class_of.induct; simp add: class_of.simps)
 
 lemma element_type_det:
   "element_type \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -944,7 +935,6 @@ lemma less_type_code [code_abbrev, simp]:
   apply (erule subtype_fun.elims; auto simp add: subtype_fun_irrefl)
   using less_eq_type_code by blast
 
-code_pred class_of .
 code_pred element_type .
 code_pred update_element_type .
 code_pred to_unique_collection .

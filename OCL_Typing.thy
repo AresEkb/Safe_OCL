@@ -667,23 +667,19 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<rho>"
 
 |AttributeCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   class_of \<tau> \<C> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    find_attribute \<C> prop = Some (\<D>, \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<sigma>"
 |AssociationEndCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   class_of \<tau> \<C> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    find_association_end \<C> role from = Some end \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall role from : assoc_end_type end"
 |AssociationClassCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   class_of \<tau> \<C> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    referred_by_association_class \<C> \<A> from \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall \<A> from : class_assoc_type \<A>"
 |AssociationClassEndCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   class_of \<tau> \<A> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    find_association_class_end \<A> role = Some end \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : class_assoc_end_type end"
 |OperationCallT:
@@ -905,19 +901,19 @@ next
   case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
     apply (insert AttributeCallT.prems)
     apply (erule AttributeCallTE)
-    using AttributeCallT.hyps class_of_det by fastforce
+    using AttributeCallT.hyps by fastforce
 next
   case (AssociationEndCallT \<Gamma> src \<tau> \<C> role "end") show ?case
     apply (insert AssociationEndCallT.prems)
     apply (erule AssociationEndCallTE)
-    using AssociationEndCallT.hyps class_of_det by fastforce
+    using AssociationEndCallT.hyps by fastforce
 next
   case (AssociationClassCallT \<Gamma> src \<tau> \<C> \<A> "from") thus ?case by blast
 next
   case (AssociationClassEndCallT \<Gamma> src \<tau> \<A> role "end") show ?case
     apply (insert AssociationClassEndCallT.prems)
     apply (erule AssociationClassEndCallTE)
-    using AssociationClassEndCallT.hyps class_of_det by fastforce
+    using AssociationClassEndCallT.hyps by fastforce
 next
   case (OperationCallT \<Gamma> src \<tau> params \<pi> op k) show ?case
     apply (insert OperationCallT.prems)
