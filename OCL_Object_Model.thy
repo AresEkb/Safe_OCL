@@ -5,7 +5,7 @@
 *)
 chapter \<open>Object Model\<close>
 theory OCL_Object_Model
-  imports OCL_Syntax "HOL-Library.Transitive_Closure_Table"
+  imports OCL_Syntax
 begin
 
 text \<open>

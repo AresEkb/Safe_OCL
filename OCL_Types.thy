@@ -759,11 +759,6 @@ fun to_required_type where
 | "to_required_type \<tau>[?] = \<tau>[1]"
 | "to_required_type \<tau> = \<tau>"
 
-fun to_optional_type where
-  "to_optional_type \<tau>[1] = \<tau>[?]"
-| "to_optional_type \<tau>[?] = \<tau>[?]"
-| "to_optional_type \<tau> = \<tau>"
-
 fun to_optional_type_nested where
   "to_optional_type_nested OclSuper = OclSuper"
 | "to_optional_type_nested \<tau>[1] = \<tau>[?]"

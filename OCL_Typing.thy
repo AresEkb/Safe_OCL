@@ -5,7 +5,7 @@
 *)
 chapter \<open>Typing\<close>
 theory OCL_Typing
-  imports OCL_Object_Model
+  imports OCL_Object_Model "HOL-Library.Transitive_Closure_Table"
 begin
 
 text \<open>

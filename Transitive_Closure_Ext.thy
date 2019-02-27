@@ -26,7 +26,7 @@ abbreviation "surj_on_trancl R f \<equiv>
 
 text \<open>
   A function @{text f} is bijective on @{text "R\<^sup>+\<^sup>+"} iff
-  it's injective and surjective on @{text "R\<^sup>+\<^sup>+"}.\<close>
+  it is injective and surjective on @{text "R\<^sup>+\<^sup>+"}.\<close>
 
 abbreviation "bij_on_trancl R f \<equiv> inj f \<and> surj_on_trancl R f"
 

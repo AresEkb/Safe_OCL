@@ -36,7 +36,7 @@ text \<open>
     \label{tab:norm_rules}
     \begin{threeparttable}
     \begin{tabular}{c|c}
-      \textbf{Original expr.} & \textbf{Normalized expression}\\
+      \textbf{Orig. expr.} & \textbf{Normalized expression}\\
       \hline
       \<^verbatim>\<open>x.op()\<close> & \<^verbatim>\<open>x.op()\<close>\\
       \<^verbatim>\<open>n.op()\<close> & \<^verbatim>\<open>n.op()\<close>\tnote{*}\\
@@ -241,19 +241,11 @@ inductive_cases ExprListNE [elim]: "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarr
 section \<open>Determinism\<close>
 
 lemma any_has_not_element_type:
-  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[?] \<Longrightarrow> False"
+  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow> False"
   by (erule element_type.cases; auto)
 
 lemma any_has_not_element_type':
   "element_type \<tau> \<sigma> \<Longrightarrow> OclVoid[?] \<le> \<tau> \<Longrightarrow> False"
-  by (erule element_type.cases; auto)
-
-lemma any_has_not_element_type'':
-  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[1] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow> False"
-  by (erule element_type.cases; auto)
-
-lemma any_has_not_element_type''':
-  "element_type \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow> False"
   by (erule element_type.cases; auto)
 
 lemma
@@ -293,7 +285,7 @@ next
     apply (insert OclAnyDotCallN.prems)
     apply (erule DotCallNE)
     using OclAnyDotCallN.hyps typing_det apply metis
-    using OclAnyDotCallN.hyps any_has_not_element_type''' typing_det by metis
+    using OclAnyDotCallN.hyps any_has_not_element_type typing_det by metis
 next
   case (OclAnySafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
     apply (insert OclAnySafeDotCallN.prems)
@@ -307,13 +299,13 @@ next
     apply (insert OclAnyArrowCallN.prems)
     apply (erule ArrowCallNE)
     using OclAnyArrowCallN.hyps typing_det comp_apply apply metis
-    using OclAnyArrowCallN.hyps typing_det any_has_not_element_type'''
+    using OclAnyArrowCallN.hyps typing_det any_has_not_element_type
     by metis
 next
   case (CollectionArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> uu call\<^sub>1 call\<^sub>2) show ?case
     apply (insert CollectionArrowCallN.prems)
     apply (erule ArrowCallNE)
-    using CollectionArrowCallN.hyps typing_det any_has_not_element_type'''
+    using CollectionArrowCallN.hyps typing_det any_has_not_element_type
     apply metis
     using CollectionArrowCallN.hyps typing_det by metis
 next
@@ -325,7 +317,7 @@ next
   case (CollectionDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> call\<^sub>1 call\<^sub>2 it) show ?case
     apply (insert CollectionDotCallN.prems)
     apply (erule DotCallNE)
-    using CollectionDotCallN.hyps typing_det any_has_not_element_type'''
+    using CollectionDotCallN.hyps typing_det any_has_not_element_type
     apply metis
     using CollectionDotCallN.hyps typing_det element_type_det by metis
 next

@@ -308,6 +308,14 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
     (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : x}"
 
 text \<open>
+\<^verbatim>\<open>Sequence{1..5, null}?->max() : Integer[1]\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (CollectionLiteral SequenceKind
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+               CollectionItem NullLiteral])
+      SafeArrowCall CollectionMaxOp [] : x}"
+
+text \<open>
 \<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
 x->any(it | it = 'test') : String[?]\<close>\<close>
 values "{x. (fmempty :: classes1 type env) \<turnstile>
@@ -379,5 +387,13 @@ values "{x. (fmempty :: classes1 type env) \<turnstile>
      CollectionItem (StringLiteral ''zxc'')])
   (ClosureIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] None
     (IntegerLiteral 1)) : x}"
+
+text \<open>
+\<^verbatim>\<open>Sequence{1..5, null}->max()\<close>\<close>
+values "{x. (fmempty :: classes1 type env) \<turnstile>
+  OperationCall (CollectionLiteral SequenceKind
+              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+               CollectionItem NullLiteral])
+      ArrowCall CollectionMaxOp [] : x}"
 
 end

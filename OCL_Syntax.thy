@@ -125,7 +125,7 @@ text \<open>
   A call kind could be defined as two boolean values (@{text "is_arrow_call"},
   @{text "is_safe_call"}). Also we could derive @{text "is_arrow_call"}
   value automatically based on an operation kind.
-  However, it's much easier and more natural to use the following enumeration.\<close>
+  However, it is much easier and more natural to use the following enumeration.\<close>
 
 datatype call_kind = DotCall | ArrowCall | SafeDotCall | SafeArrowCall
 
