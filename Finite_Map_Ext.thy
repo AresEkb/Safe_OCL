@@ -189,28 +189,31 @@ text \<open>
   and provided with the permission of the author of the answer.\<close>
 
 lemma fmap_eqdom_Cons1:
-  assumes "fmlookup xm i = None"
-      and "fmdom (fmupd i x xm) = fmdom ym"  
-      and "fmrel R (fmupd i x xm) ym" 
-    shows "(\<exists>z zm. fmlookup zm i = None \<and> ym = (fmupd i z zm) \<and>
-                   R x z \<and> fmrel R xm zm)"
+  assumes as_1: "fmlookup xm i = None"
+    and as_2: "fmrel R (fmupd i x xm) ym" 
+  shows 
+    "(\<exists>z zm. 
+    fmlookup zm i = None \<and> ym = (fmupd i z zm) \<and> R x z \<and> fmrel R xm zm)"
 proof - 
-  from assms(2) obtain y where "fmlookup ym i = Some y" by force
-  then obtain z zm where z_zm: "ym = (fmupd i z zm) \<and> fmlookup zm i = None"
-    by (smt fmap_ext fmlookup_drop fmupd_lookup)
+  from as_2 have eq_dom: "fmdom (fmupd i x xm) = fmdom ym" 
+    using fmrel_fmdom_eq by blast
+  from as_1 eq_dom as_2 obtain y where y: "fmlookup ym i = Some y"
+    by force
+  obtain z zm where z_zm: "ym = (fmupd i z zm) \<and> fmlookup zm i = None"
+    using y by (smt fmap_ext fmlookup_drop fmupd_lookup)
   {
-    assume "\<not> R x z"
-    with z_zm have "\<not> fmrel R (fmupd i x xm) ym"
+    assume "\<not>R x z"
+    with as_1 z_zm have "\<not>fmrel R (fmupd i x xm) ym"
       by (metis fmrel_iff fmupd_lookup option.simps(11))
   }
-  with assms(3) moreover have "R x z" by auto
+  with as_2 have c3: "R x z" by auto
   {
-    assume "\<not> fmrel R xm zm"
-    with assms(1) have "\<not> fmrel R (fmupd i x xm) ym" 
+    assume "\<not>fmrel R xm zm"
+    with as_1 have "\<not>fmrel R (fmupd i x xm) ym" 
       by (metis fmrel_iff fmupd_lookup option.rel_sel z_zm)
   }
-  with assms(3) moreover have "fmrel R xm zm" by auto
-  ultimately show ?thesis using z_zm by blast
+  with as_2 have c4: "fmrel R xm zm" by auto
+  from z_zm c3 c4 show ?thesis by auto
 qed
 
 text \<open>
@@ -219,38 +222,34 @@ text \<open>
   @{url "https://stackoverflow.com/a/53585232/632199"}
   and provided with the permission of the author of the answer.\<close>
 
-lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
+lemma fmap_eqdom_induct [consumes 1, case_names nil step]:
   assumes R: "fmrel R xm ym"
-    and dom_eq: "fmdom xm = fmdom ym"
-    and nil: "P (fmap_of_list []) (fmap_of_list [])"
+    and nil: "P fmempty fmempty"
     and step: 
-    "\<And>x xm y ym i. 
-    \<lbrakk>R x y; fmrel R xm ym; fmdom xm = fmdom ym; P xm ym\<rbrakk> \<Longrightarrow> 
+    "\<And>x xm y ym i. \<lbrakk>R x y; fmrel R xm ym; P xm ym\<rbrakk> \<Longrightarrow> 
     P (fmupd i x xm) (fmupd i y ym)"
   shows "P xm ym"
-  using R dom_eq
-proof (induct xm arbitrary: ym)
-  case fmempty thus ?case
-    by (metis fempty_iff fmdom_empty fmempty_of_list fmfilter_alt_defs(5)
-              fmfilter_false fmrestrict_fset_dom local.nil)
+  using R 
+proof(induct xm arbitrary: ym)
+  case fmempty
+  then show ?case
+    by (metis fempty_iff fmdom_empty fmfilter_alt_defs(5) 
+      fmfilter_false fmrel_fmdom_eq fmrestrict_fset_dom nil)
 next
-  case (fmupd i x xm) show ?case
+  case (fmupd i x xm) show ?case 
   proof -
-    obtain y where "fmlookup ym i = Some y"
+    from fmupd.prems(1) obtain y where y: "fmlookup ym i = Some y"
       by (metis fmupd.prems(1) fmrel_cases fmupd_lookup option.discI)
-    from fmupd.hyps(2) fmupd.prems(1) fmupd.prems(2) obtain z zm where
-      "fmlookup zm i = None" and
-      ym_eq_z_zm: "ym = (fmupd i z zm)" and
+    from fmupd.hyps(2) fmupd.prems(1) fmupd.prems(1) obtain z zm where 
+      zm_i_none: "fmlookup zm i = None" and
+      ym_eq_z_zm: "ym = (fmupd i z zm)" and 
       R_x_z: "R x z" and
       R_xm_zm: "fmrel R xm zm"
       using fmap_eqdom_Cons1 by metis
-    hence dom_xm_eq_dom_zm: "fmdom xm = fmdom zm"
-      using fmrel_fmdom_eq by blast
-    with R_xm_zm fmupd.hyps(1) have "P xm zm" by blast
-    with R_x_z R_xm_zm dom_xm_eq_dom_zm have
-      "P (fmupd i x xm) (fmupd i z zm)"
+    with R_xm_zm fmupd.hyps(1) have P_xm_zm: "P xm zm" by blast
+    from R_x_z R_xm_zm P_xm_zm have "P (fmupd i x xm) (fmupd i z zm)" 
       by (rule step)
-    thus ?thesis by (simp add: ym_eq_z_zm)
+    then show ?thesis by (simp add: ym_eq_z_zm)
   qed
 qed
 
@@ -261,43 +260,41 @@ text \<open>
   and provided with the permission of the author of the answer.\<close>
 
 lemma fmrel_to_rtrancl:
-  assumes as_r: "reflp r"
-      and rel_rpp_xm_ym: "fmrel r\<^sup>*\<^sup>* xm ym"
-    shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
-proof -
-  from rel_rpp_xm_ym have "fmdom xm = fmdom ym"
-    using fmrel_fmdom_eq by blast
-  with rel_rpp_xm_ym show "(fmrel r)\<^sup>*\<^sup>* xm ym"
-  proof (induct rule: fmap_eqdom_induct)
-    case nil show ?case by auto
+  assumes as_r: "(\<And>x. r x x)" 
+    and rel_rpp_xm_ym: "(fmrel r\<^sup>*\<^sup>*) xm ym" 
+  shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
+proof-
+  from rel_rpp_xm_ym show "(fmrel r)\<^sup>*\<^sup>* xm ym"
+  proof(induct rule: fmap_eqdom_induct)
+    case nil then show ?case by auto
   next
     case (step x xm y ym i) show ?case
     proof -
-      from step.hyps(1) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
-      proof (induct rule: rtranclp_induct)
-        case base show ?case by simp
+      from as_r have lp_xs_xs: "fmrel r xm xm" by (simp add: fmap.rel_refl)
+      from step.hyps(1) have x_xs_y_zs: 
+        "(fmrel r)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
+      proof(induction rule: rtranclp_induct)
+        case base then show ?case by simp
       next
-        case (step y z) show ?case
+        case (step y z) then show ?case 
         proof -
-          from as_r have "fmrel r xm xm"
-            by (simp add: fmap.rel_reflp reflpD)
-          with step.hyps(2) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i z xm)"
-            by (simp add: fmrel_upd r_into_rtranclp)
-          with step.hyps(3) show ?thesis by simp
-        qed
+          have rt_step_2: "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i z xm)" 
+            by (rule r_into_rtranclp, simp add: fmrel_upd lp_xs_xs step.hyps(2))
+          from step.IH rt_step_2 show ?thesis by (rule rtranclp_trans) 
+        qed      
       qed
-      also from step.hyps(4) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i y ym)"
-      proof (induct rule: rtranclp_induct)
-        case base show ?case by simp
+      from step.hyps(3) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i y ym)"
+      proof(induction rule: rtranclp_induct)
+        case base then show ?case by simp
       next
         case (step ya za) show ?case
         proof -
-          from step.hyps(2) as_r have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)"
-            by (simp add: fmrel_upd r_into_rtranclp reflp_def) 
-          with step.hyps(3) show ?thesis by simp
+          have rt_step_2: "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)" 
+            by (rule r_into_rtranclp, simp add: as_r fmrel_upd step.hyps(2)) 
+          from step.IH rt_step_2 show ?thesis by (rule rtranclp_trans)
         qed
       qed
-      finally show ?thesis by simp
+      with x_xs_y_zs show ?thesis by simp
     qed
   qed
 qed
@@ -316,7 +313,7 @@ proof -
   from assms(2) have "fmrel r\<^sup>*\<^sup>* xm ym"
     by (drule_tac ?Ra="r\<^sup>*\<^sup>*" in fmap.rel_mono_strong; auto)
   with assms(1) have "(fmrel r)\<^sup>*\<^sup>* xm ym"
-    by (simp add: fmrel_to_rtrancl)
+    by (simp add: fmrel_to_rtrancl reflp_def)
   with assms(1) show ?thesis
     by (metis fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl)
 qed
