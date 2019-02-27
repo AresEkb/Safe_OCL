@@ -5,7 +5,7 @@
 *)
 section \<open>Object Model\label{sec:object-model}\<close>
 theory Object_Model
-  imports "HOL-Library.Extended_Nat" "Finite_Map_Ext"
+  imports "HOL-Library.Extended_Nat" Finite_Map_Ext
 begin
 
 text \<open>

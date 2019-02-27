@@ -108,7 +108,7 @@ proof -
   moreover have "\<And>x y. r x y \<Longrightarrow> P x y" unfolding P r by simp
   moreover have "\<And>x y z. r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z"
     unfolding P by auto
-  ultimately have "P x y" by (rule tranclp_trans_induct, auto)
+  ultimately have "P x y" by (rule tranclp_trans_induct)
   with P show ?thesis by simp
 qed
 
@@ -167,7 +167,7 @@ proof -
     unfolding B
     by auto
   from major cases_1 cases_2 have "P (f x) (f y)"
-    by (rule tranclp_trans_induct, auto)
+    by (rule tranclp_trans_induct)
   with bij_f show ?thesis unfolding P B g gr by (simp add: the_inv_f_f)
 qed
 
