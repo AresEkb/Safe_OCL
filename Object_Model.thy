@@ -73,12 +73,54 @@ locale object_model =
   and literals :: "'n \<rightharpoonup>\<^sub>f elit fset"
 begin
 
+inductive owned_attribute where
+ "fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
+  fmlookup attrs\<^sub>\<C> attr = Some \<tau> \<Longrightarrow>
+  owned_attribute \<C> attr (\<C>, \<tau>)"
+
+inductive attribute where
+ "\<C> \<le> \<D> \<Longrightarrow>
+  owned_attribute \<D> attr (\<D>, \<tau>) \<Longrightarrow>
+  attribute \<C> attr (\<D>, \<tau>)"
+
 abbreviation "find_owned_attribute \<C> attr \<equiv>
   map_option (Pair \<C>) (Option.bind (fmlookup attributes \<C>) (\<lambda>attrs\<^sub>\<C>. fmlookup attrs\<^sub>\<C> attr))"
 
 abbreviation "find_attribute \<C> attr \<equiv>
   let found = Option.these {find_owned_attribute \<D> attr | \<D>. \<C> \<le> \<D>} in
   if card found = 1 then Some (the_elem found) else None"
+
+lemma owned_attribute_code [code_abbrev, simp]:
+  "find_owned_attribute \<C> attr = Some (\<C>, \<tau>) \<longleftrightarrow>
+   owned_attribute \<C> attr (\<C>, \<tau>)"
+proof
+  show
+    "find_owned_attribute \<C> attr = Some (\<C>, \<tau>) \<Longrightarrow>
+     owned_attribute \<C> attr (\<C>, \<tau>)"
+    unfolding Option.map_conv_bind_option Option.bind_eq_Some_conv
+    by (auto simp add: owned_attribute.intros)
+  show
+    "owned_attribute \<C> attr (\<C>, \<tau>) \<Longrightarrow>
+     find_owned_attribute \<C> attr = Some (\<C>, \<tau>)"
+    by (erule owned_attribute.cases; simp)
+qed
+
+lemma attribute_code [code_abbrev, simp]:
+  "(find_attribute \<C> attr = Some (\<D>, \<tau>)) =
+   attribute \<C> attr (\<D>, \<tau>)"
+proof
+  show
+    "find_attribute \<C> attr = Some (\<D>, \<tau>) \<Longrightarrow>
+     attribute \<C> attr (\<D>, \<tau>)"
+    unfolding Let_def
+    by (auto simp add: owned_attribute.intros)
+  show
+    "attribute \<C> attr (\<D>, \<tau>) \<Longrightarrow>
+     find_attribute \<C> attr = Some (\<D>, \<tau>)"
+    apply (erule attribute.cases)
+    apply (auto simp add: Let_def split: if_split)
+    unfolding Let_def
+qed
 
 abbreviation "find_associations \<C> role from \<equiv>
   fmfilter (\<lambda>assoc.

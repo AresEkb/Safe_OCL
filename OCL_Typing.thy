@@ -772,6 +772,10 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L expr # exprs : \<tau> # \<pi>"
 
+(*** Elimination Rules ******************************************************)
+
+section \<open>Elimination Rules\<close>
+
 inductive_cases NullLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E NullLiteral : \<tau>"
 inductive_cases BooleanLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : \<tau>"
 inductive_cases RealLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E RealLiteral c : \<tau>"
@@ -819,6 +823,59 @@ inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>P Collect
 
 inductive_cases ExprListTE [elim]: "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi>"
 
+(*** Simplification Rules ***************************************************)
+(*
+section \<open>Simplification Rules\<close>
+
+inductive_simps NullLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E NullLiteral : \<tau>"
+inductive_simps BooleanLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : \<tau>"
+inductive_simps RealLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E RealLiteral c : \<tau>"
+inductive_simps UnlimitedNaturalLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E UnlimitedNaturalLiteral c : \<tau>"
+inductive_simps IntegerLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : \<tau>"
+inductive_simps StringLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
+inductive_simps EnumLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
+inductive_simps CollectionLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
+inductive_simps TupleLiteralNilTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
+inductive_simps TupleLiteralConsTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
+
+inductive_simps LetTS [simp]: "\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
+inductive_simps VarTS [simp]: "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
+inductive_simps IfTS [simp]: "\<Gamma> \<turnstile>\<^sub>E If a b c : \<tau>"
+
+inductive_simps MetaOperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
+inductive_simps StaticOperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op as : \<sigma>"
+
+inductive_simps TypeOperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<tau>"
+inductive_simps AttributeCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AttributeCall src k prop : \<tau>"
+inductive_simps AssociationEndCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src k role from : \<tau>"
+inductive_simps AssociationClassCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src k a from : \<tau>"
+inductive_simps AssociationClassEndCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src k role : \<tau>"
+inductive_simps OperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
+inductive_simps TupleElementCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
+
+inductive_simps IteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
+inductive_simps IterateTS [simp]: "\<Gamma> \<turnstile>\<^sub>E IterateCall src k its its_ty res res_t res_init body : \<tau>"
+inductive_simps AnyIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src k its its_ty body : \<tau>"
+inductive_simps ClosureIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src k its its_ty body : \<tau>"
+inductive_simps CollectIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src k its its_ty body : \<tau>"
+inductive_simps CollectNestedIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src k its its_ty body : \<tau>"
+inductive_simps ExistsIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src k its its_ty body : \<tau>"
+inductive_simps ForAllIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src k its its_ty body : \<tau>"
+inductive_simps OneIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E OneIteratorCall src k its its_ty body : \<tau>"
+inductive_simps IsUniqueIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src k its its_ty body : \<tau>"
+inductive_simps SelectIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src k its its_ty body : \<tau>"
+inductive_simps RejectIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
+inductive_simps SortedByIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
+
+inductive_simps CollectionPartsNilTS [simp]: "\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
+inductive_simps CollectionPartsItemTS [simp]: "\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
+
+inductive_simps CollectionItemTS [simp]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
+inductive_simps CollectionRangeTS [simp]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
+
+inductive_simps ExprListNilTS [simp]: "\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
+inductive_simps ExprListConsTS [simp]: "\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
+*)
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>

@@ -217,11 +217,15 @@ inductive normalize
    \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> y # ys"
 
+(*** Elimination Rules ******************************************************)
+
+section \<open>Elimination Rules\<close>
 
 inductive_cases LiteralNE [elim]: "\<Gamma> \<turnstile> Literal a \<Rrightarrow> b"
 inductive_cases LetNE [elim]: "\<Gamma> \<turnstile> Let v t init body \<Rrightarrow> b"
 inductive_cases VarNE [elim]: "\<Gamma> \<turnstile> Var v \<Rrightarrow> b"
 inductive_cases IfNE [elim]: "\<Gamma> \<turnstile> If a b c \<Rrightarrow> d"
+
 inductive_cases MetaOperationCallNE [elim]: "\<Gamma> \<turnstile> MetaOperationCall \<tau> op \<Rrightarrow> b"
 inductive_cases StaticOperationCallNE [elim]: "\<Gamma> \<turnstile> StaticOperationCall \<tau> op as \<Rrightarrow> b"
 inductive_cases DotCallNE [elim]: "\<Gamma> \<turnstile> Call src DotCall call \<Rrightarrow> b"
@@ -236,6 +240,30 @@ inductive_cases IteratorCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C 
 
 inductive_cases ExprListNE [elim]: "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys"
 
+(*** Simplification Rules ***************************************************)
+(*
+section \<open>Simplification Rules\<close>
+
+inductive_simps LiteralNS [simp]: "\<Gamma> \<turnstile> Literal a \<Rrightarrow> b"
+inductive_simps LetNS [simp]: "\<Gamma> \<turnstile> Let v t init body \<Rrightarrow> b"
+inductive_simps VarNS [simp]: "\<Gamma> \<turnstile> Var v \<Rrightarrow> b"
+inductive_simps IfNS [simp]: "\<Gamma> \<turnstile> If a b c \<Rrightarrow> d"
+
+inductive_simps MetaOperationCallNS [simp]: "\<Gamma> \<turnstile> MetaOperationCall \<tau> op \<Rrightarrow> b"
+inductive_simps StaticOperationCallNS [simp]: "\<Gamma> \<turnstile> StaticOperationCall \<tau> op as \<Rrightarrow> b"
+inductive_simps DotCallNS [simp]: "\<Gamma> \<turnstile> Call src DotCall call \<Rrightarrow> b"
+inductive_simps SafeDotCallNS [simp]: "\<Gamma> \<turnstile> Call src SafeDotCall call \<Rrightarrow> b"
+inductive_simps ArrowCallNS [simp]: "\<Gamma> \<turnstile> Call src ArrowCall call \<Rrightarrow> b"
+inductive_simps SafeArrowCallNS [simp]: "\<Gamma> \<turnstile> Call src SafeArrowCall call \<Rrightarrow> b"
+
+inductive_simps CallNS [simp]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C call \<Rrightarrow> b"
+inductive_simps OperationCallNS [simp]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> call"
+inductive_simps IterateCallNS [simp]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
+inductive_simps IteratorCallNS [simp]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
+
+inductive_simps ExprListNilNS [simp]: "\<Gamma> \<turnstile>\<^sub>L [] \<Rrightarrow> ys"
+inductive_simps ExprListConsNS [simp]: "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> ys"
+*)
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
