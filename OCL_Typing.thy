@@ -668,11 +668,11 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
 
 |AttributeCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   find_attribute \<C> prop = Some (\<D>, \<sigma>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<sigma>"
+   attribute \<C> prop \<D> \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<tau>"
 |AssociationEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   find_association_end \<C> role from = Some end \<Longrightarrow>
+   association_end \<C> role from end \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall role from : assoc_end_type end"
 |AssociationClassCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
@@ -880,6 +880,21 @@ inductive_simps ExprListConsTS [simp]: "\<Gamma> \<turnstile>\<^sub>L x # xs : \
 
 section \<open>Determinism\<close>
 
+lemma owned_attribute'_det:
+  "owned_attribute' attrs \<C> attr \<tau> \<Longrightarrow>
+   owned_attribute' attrs \<C> attr \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  by (elim owned_attribute'.cases; auto)
+
+lemma attribute_det:
+  "attribute \<C> attr \<D> \<tau> \<Longrightarrow>
+   attribute \<C> attr \<E> \<sigma> \<Longrightarrow> \<D> = \<E> \<and> \<tau> = \<sigma>"
+  by (elim attribute'.cases; auto simp add: owned_attribute'_det)
+
+lemma association_end_det:
+  "association_end \<C> role from end\<^sub>1 \<Longrightarrow>
+   association_end \<C> role from end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
+  by (elim association_end'.cases; auto simp add: owned_association_end_det)
+
 lemma
   typing_det:
     "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
@@ -958,12 +973,12 @@ next
   case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
     apply (insert AttributeCallT.prems)
     apply (erule AttributeCallTE)
-    using AttributeCallT.hyps by fastforce
+    using AttributeCallT.hyps attribute_det by blast
 next
   case (AssociationEndCallT \<Gamma> src \<tau> \<C> role "end") show ?case
     apply (insert AssociationEndCallT.prems)
     apply (erule AssociationEndCallTE)
-    using AssociationEndCallT.hyps by fastforce
+    using AssociationEndCallT.hyps association_end_det by blast
 next
   case (AssociationClassCallT \<Gamma> src \<tau> \<C> \<A> "from") thus ?case by blast
 next
@@ -1059,6 +1074,6 @@ qed
 
 section \<open>Code Setup\<close>
 
-code_pred typing .
+code_pred [show_modes] typing .
 
 end

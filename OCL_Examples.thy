@@ -130,6 +130,99 @@ value "String \<le> (Boolean :: classes1 basic_type)"
 
 (*** Types ******************************************************************)
 
+datatype ty = A | B | C | D | E
+
+instantiation ty :: order
+begin
+
+fun less_ty where
+  "A < x = (x = B \<or> x = C \<or> x = D \<or> x = E)"
+| "B < x = (x = C \<or> x = D \<or> x = E)"
+| "C < x = False"
+| "D < x = (x = E)"
+| "E < x = False"
+
+definition "(x :: ty) \<le> y \<equiv> x < y \<or> x = y"
+
+lemma ty_less_le_not_le:
+  "x < y \<longleftrightarrow> x \<le> y \<and> \<not> (y \<le> x)"
+  for x y :: ty
+  by (cases x; cases y; simp add: less_eq_ty_def)
+
+lemma ty_order_refl [iff]:
+  "x \<le> x"
+  for x :: ty
+  by (simp add: less_eq_ty_def)
+
+lemma ty_order_trans:
+  "x \<le> y \<Longrightarrow> y \<le> z \<Longrightarrow> x \<le> z"
+  for x y z :: ty
+  by (cases x; cases y; cases z; simp add: less_eq_ty_def)
+
+lemma ty_antisym:
+  "x \<le> y \<Longrightarrow> y \<le> x \<Longrightarrow> x = y"
+  for x y :: ty
+  by (cases x; cases y; simp add: less_eq_ty_def)
+
+instance
+  apply intro_classes
+  apply (simp add: ty_less_le_not_le)
+  apply simp
+  using ty_order_trans apply blast
+  by (simp add: ty_antisym)
+
+end
+
+instantiation ty :: enum
+begin
+
+definition "enum_ty \<equiv> [A, B, C, D, E]"
+definition "enum_all_ty P \<equiv> P A \<and> P B \<and> P C \<and> P D \<and> P E"
+definition "enum_ex_ty P \<equiv> P A \<or> P B \<or> P C \<or> P D \<or> P E"
+
+instance
+  apply intro_classes
+  unfolding enum_ty_def enum_all_ty_def enum_ex_ty_def
+  apply (rule UNIV_eq_I; simp; rule ty.exhaust; auto)
+  apply simp
+  apply (metis UNIV_I ty.exhaust)
+  apply (metis UNIV_I ty.exhaust)
+  done
+
+end
+
+inductive test where
+  "Least (\<lambda>z. x < z \<and> z \<noteq> E) = z \<Longrightarrow>
+   z \<le> y \<Longrightarrow>
+   test x y z"
+
+code_pred [show_modes] test .
+
+values "{x. test A E x}"
+(*
+values "{x. test B E x}"
+values "{x. test C E x}"
+values "{x. test D E x}"
+values "{x. test E E x}"
+*)
+
+lemma test_A_E_B:
+  "test A E B"
+  apply (rule test.intros)
+  unfolding Least_def apply auto
+  using less_eq_ty_def apply fastforce
+  by (simp add: less_eq_ty_def)
+
+thm Least_equality
+
+
+
+
+
+
+
+
+
 section \<open>Types\<close>
 
 subsection \<open>Positive Cases\<close>
@@ -169,8 +262,8 @@ definition "attributes_classes1 \<equiv> fmap_of_list [
     (STR ''cost'', Real[?])]),
   (Task, fmap_of_list [
     (STR ''description'', String[1])])]"
-
-definition "associations_classes1 \<equiv> fmap_of_list [
+(*
+abbreviation "assocs \<equiv> fmap_of_list [
   (STR ''ProjectManager'', fmap_of_list [
     (STR ''projects'', (Project, 0::nat, \<infinity>::enat, False, True)),
     (STR ''manager'', (Employee, 1, 1, False, False))]),
@@ -191,6 +284,30 @@ definition "associations_classes1 \<equiv> fmap_of_list [
     (STR ''sprint'', (Sprint, 0, 10, False, True)),
     (STR ''tasks'', (Task, 0, 5, False, True)),
     (STR ''assignee'', (Employee, 0, 1, False, False))])]"
+*)
+abbreviation "assocs \<equiv> [
+  STR ''ProjectManager'' \<mapsto>\<^sub>f [
+    STR ''projects'' \<mapsto>\<^sub>f (Project, 0::nat, \<infinity>::enat, False, True),
+    STR ''manager'' \<mapsto>\<^sub>f (Employee, 1, 1, False, False)],
+  STR ''ProjectMember'' \<mapsto>\<^sub>f [
+    STR ''member_of'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, False),
+    STR ''members'' \<mapsto>\<^sub>f (Employee, 1, 20, True, True)],
+  STR ''ManagerEmployee'' \<mapsto>\<^sub>f [
+    STR ''line_manager'' \<mapsto>\<^sub>f (Employee, 0::nat, 1, False, False),
+    STR ''project_manager'' \<mapsto>\<^sub>f (Employee, 0::nat, \<infinity>, False, False),
+    STR ''employees'' \<mapsto>\<^sub>f (Employee, 3, 7, False, False)],
+  STR ''ProjectCustomer'' \<mapsto>\<^sub>f [
+    STR ''projects'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, True),
+    STR ''customer'' \<mapsto>\<^sub>f (Customer, 1, 1, False, False)],
+  STR ''ProjectTask'' \<mapsto>\<^sub>f [
+    STR ''project'' \<mapsto>\<^sub>f (Project, 1, 1, False, False),
+    STR ''tasks'' \<mapsto>\<^sub>f (Task, 0, \<infinity>, True, True)],
+  STR ''SprintTaskAssignee'' \<mapsto>\<^sub>f [
+    STR ''sprint'' \<mapsto>\<^sub>f (Sprint, 0, 10, False, True),
+    STR ''tasks'' \<mapsto>\<^sub>f (Task, 0, 5, False, True),
+    STR ''assignee'' \<mapsto>\<^sub>f (Employee, 0, 1, False, False)]]"
+
+definition "associations_classes1 \<equiv> assocs"
 
 definition "association_classes_classes1 \<equiv> fmempty :: classes1 \<rightharpoonup>\<^sub>f assoc"
 
@@ -225,24 +342,403 @@ declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum"]]
 definition "literals_classes1 \<equiv> fmap_of_list [
   (STR ''E1'' :: classes1 enum, {|STR ''A'', STR ''B''|}),
   (STR ''E2'', {|STR ''C'', STR ''D'', STR ''E''|})]"
+(*
+lemma q:
+  "owned_association_end' assocs \<C> role from end\<^sub>1 \<Longrightarrow>
+   owned_association_end' assocs \<C> role from end\<^sub>2 \<Longrightarrow>
+   end\<^sub>1 = end\<^sub>2"
+  apply (erule owned_association_end'.cases; erule owned_association_end'.cases; simp)
+  unfolding associations_classes1_def
+  apply simp
+*)
+(*
+lemma q11:
+  "x |\<in>| fmdom (fmupd k y xm) \<longleftrightarrow> x = k \<or> x |\<in>| fmdom xm"
+  by auto
 
-instance ..
+lemma q12:
+  "x |\<in>| fmdom fmempty \<Longrightarrow> False"
+  by simp
+
+lemma q13:
+  "assoc\<^sub>1 |\<in>| fmdom (fmupd k y xm) \<Longrightarrow>
+   fmlookup (fmupd k y xm) assoc\<^sub>1 = Some ends\<^sub>1 \<Longrightarrow>
+   ends\<^sub>1 = y \<or> fmlookup xm assoc\<^sub>1 = Some ends\<^sub>1"
+  by (metis fmupd_lookup option.inject)
+(*
+lemma q14:
+  "fmlookup (m(a \<mapsto>\<^sub>f b)) a' = (if a = a' then Some b else fmlookup m a')"
+*)
+
+lemma q16 []:
+  "(a, b, c, d, e) = x \<longleftrightarrow> x = (a, b, c, d, e)"
+  by auto
+
+lemma q17 []:
+  "fmlookup xm x = Some y \<longleftrightarrow> Some y = fmlookup xm x"
+  by auto
+
+thm fmupd_lookup if_splits
+
+lemma owned_association_end_det':
+  "assoc\<^sub>1 |\<in>| fmdom assocs \<Longrightarrow>
+   assoc\<^sub>2 |\<in>| fmdom assocs \<Longrightarrow>
+   fmlookup assocs assoc\<^sub>1 = Some ends\<^sub>1 \<Longrightarrow>
+   fmlookup assocs assoc\<^sub>2 = Some ends\<^sub>2 \<Longrightarrow>
+   fmlookup ends\<^sub>1 role = Some end\<^sub>1 \<Longrightarrow>
+   fmlookup ends\<^sub>2 role = Some end\<^sub>2 \<Longrightarrow>
+   fmlookup ends\<^sub>1 from\<^sub>1 = Some from_end\<^sub>1 \<Longrightarrow>
+   fmlookup ends\<^sub>2 from\<^sub>2 = Some from_end\<^sub>2 \<Longrightarrow>
+   assoc_end_class from_end\<^sub>1 = assoc_end_class from_end\<^sub>2 \<Longrightarrow>
+   from\<^sub>1 |\<in>| fmdom ends\<^sub>1 \<Longrightarrow>
+   from\<^sub>2 |\<in>| fmdom ends\<^sub>2 \<Longrightarrow>
+   role \<noteq> from\<^sub>1 \<Longrightarrow>
+   role \<noteq> from\<^sub>2 \<Longrightarrow>
+   end\<^sub>1 = end\<^sub>2"
+  apply (cases "role |\<notin>| fmdom ends\<^sub>1")
+  apply (simp add: fmdomI)
+  apply (simp split: if_splits)
+  unfolding q15 assoc_end_class_def
+  unfolding q17
+  apply (simp del: fmupd_lookup)
+  apply (elim disjE; simp)
+  apply simp
+  apply simp
+  apply simp
+  apply simp
+  apply simp
+  unfolding q16
+                      apply simp
+  apply simp
+                      apply simp
+*)
+(*
+  apply (simp)
+  apply (elim disjE; clarsimp)
+  apply (elim disjE; clarsimp)
+  apply (elim disjE; clarsimp)
+  apply (elim disjE; clarsimp)
+  apply (simp; elim disjE)
+*)
+(*
+  apply (simp add: split: if_splits)
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]*)
+(*                      apply auto[1]*)
+(*
+  unfolding q11 assoc_end_class_def
+  apply (elim disjE)
+  apply simp
+  apply auto[1]
+  using [[simp_trace]] apply auto[1]
+*)
+
+term fmdrop
+
+inductive assoc_refer_class' where
+  "role |\<in>| fmdom ends \<Longrightarrow> (* Это можно убрать или нужно для кодогенератора? *)
+   fmlookup ends role = Some end \<Longrightarrow>
+   assoc_end_class end = \<C> \<Longrightarrow>
+   assoc_refer_class' ends \<C> role"
+
+code_pred [show_modes] assoc_refer_class' .
+
+inductive class_roles where
+  "assoc |\<in>| fmdom associations1 \<Longrightarrow> (* Это можно убрать или нужно для кодогенератора? *)
+   fmlookup associations1 assoc = Some ends \<Longrightarrow>
+   assoc_refer_class' ends \<C> from \<Longrightarrow>
+   role |\<in>| fmdom ends \<Longrightarrow> (* Это можно убрать или нужно для кодогенератора? *)
+   fmlookup ends role = Some end \<Longrightarrow>
+   role \<noteq> from \<Longrightarrow>
+   class_roles associations1 \<C> assoc from role"
+
+code_pred [show_modes] class_roles .
+
+thm class_roles_i_i_i_i_i_def
+
+lemma q15:
+  "fmupd k x xm = y \<longleftrightarrow> y = fmupd k x xm"
+  by auto
+
+thm class_roles_i_i_o_o_o_def
+
+lemma class_roles_unique:
+  "class_roles assocs Employee assoc\<^sub>1 from role \<Longrightarrow>
+   class_roles assocs Employee assoc\<^sub>2 from role \<Longrightarrow> assoc\<^sub>1 = assoc\<^sub>2"
+  apply (erule class_roles.cases; erule class_roles.cases;
+     erule assoc_refer_class'.cases; erule assoc_refer_class'.cases)
+  unfolding q15
+  apply simp
+(*
+  apply (drule OCL_Examples.class_roles_i_i_o_o_oI)
+  apply (drule OCL_Examples.class_roles_i_i_o_o_oI)
+  unfolding class_roles_i_i_o_o_o_def
+  apply auto
+*)
+(*
+  apply (erule class_roles.cases; erule class_roles.cases;
+     erule assoc_refer_class'.cases; erule assoc_refer_class'.cases)
+  unfolding q15
+  apply simp
+  apply (elim disjE, simp split: if_splits)
+  apply (simp_all split: if_splits)
+*)
+
+
+ 
+  
+  
+values "{(x, y, z). class_roles assocs Employee x y z}"
+values "{(x, y, z). class_roles assocs Object x y z}"
+values "{(x, y, z). class_roles assocs Project x y z}"
+values "{(x, y, z, a). class_roles assocs x y z a}"
+
+inductive class_roles where
+  "assocs2 = fmfilter (\<lambda>assoc.
+     fmlookup associations1 assoc = Some ends \<and>
+     assoc_refer_class ends \<C>) associations1 \<Longrightarrow>
+   assoc |\<in>| fmdom assocs2 \<Longrightarrow>
+   fmlookup assocs2 assoc = Some ends \<Longrightarrow>
+   class_roles associations1 \<C> ends"
+
+code_pred [show_modes] class_roles .
+
+lemma owned_association_end_det':
+  "assoc\<^sub>1 |\<in>| fmdom assocs \<Longrightarrow>
+   assoc\<^sub>2 |\<in>| fmdom assocs \<Longrightarrow>
+   fmlookup assocs assoc\<^sub>1 = Some ends\<^sub>1 \<Longrightarrow>
+   fmlookup assocs assoc\<^sub>2 = Some ends\<^sub>2 \<Longrightarrow>
+   fmlookup ends\<^sub>1 role = Some end\<^sub>1 \<Longrightarrow>
+   fmlookup ends\<^sub>2 role = Some end\<^sub>2 \<Longrightarrow>
+   fmlookup ends\<^sub>1 from\<^sub>1 = Some from_end\<^sub>1 \<Longrightarrow>
+   fmlookup ends\<^sub>2 from\<^sub>2 = Some from_end\<^sub>2 \<Longrightarrow>
+   assoc_end_class from_end\<^sub>1 = assoc_end_class from_end\<^sub>2 \<Longrightarrow>
+   from\<^sub>1 |\<in>| fmdom ends\<^sub>1 \<Longrightarrow>
+   from\<^sub>2 |\<in>| fmdom ends\<^sub>2 \<Longrightarrow>
+   role \<noteq> from\<^sub>1 \<Longrightarrow>
+   role \<noteq> from\<^sub>2 \<Longrightarrow>
+   end\<^sub>1 = end\<^sub>2"
+  apply (cases "role |\<notin>| fmdom ends\<^sub>1")
+  apply (simp add: fmdomI)
+  apply (simp)
+  apply (elim disjE; simp add: assoc_end_class_def split: if_splits)
+  by auto
+(*
+lemma owned_association_end_det':
+  assumes "assoc\<^sub>1 |\<in>| fmdom assocs"
+   and "assoc\<^sub>2 |\<in>| fmdom assocs"
+   and "fmlookup assocs assoc\<^sub>1 = Some ends\<^sub>1"
+   and "fmlookup assocs assoc\<^sub>2 = Some ends\<^sub>2"
+   and "fmlookup ends\<^sub>1 role = Some end\<^sub>1"
+   and "fmlookup ends\<^sub>2 role = Some end\<^sub>2"
+   and "fmlookup ends\<^sub>1 from\<^sub>1 = Some from_end\<^sub>1"
+   and "fmlookup ends\<^sub>2 from\<^sub>2 = Some from_end\<^sub>2"
+   and "assoc_end_class from_end\<^sub>1 = assoc_end_class from_end\<^sub>2"
+   and "role \<noteq> from\<^sub>1"
+   and "role \<noteq> from\<^sub>2"
+  shows "end\<^sub>1 = end\<^sub>2"
+proof -
+  have "role |\<in>| fmdom ends\<^sub>1"
+    by (simp add: assms(5) fmdomI)
+  have "role |\<in>| fmdom ends\<^sub>2"
+    by (simp add: assms(6) fmdomI)
+  have "from\<^sub>1 |\<in>| fmdom ends\<^sub>1"
+    by (simp add: assms(7) fmdomI)
+  have "from\<^sub>2 |\<in>| fmdom ends\<^sub>2"
+    by (simp add: assms(8) fmdomI)
+  show ?thesis
+qed
+*)
+
+lemma owned_association_end_det'':
+  assumes "assoc\<^sub>1 |\<in>| fmdom assocs"
+   and "assoc\<^sub>2 |\<in>| fmdom assocs"
+   and "fmlookup assocs assoc\<^sub>1 = Some ends\<^sub>1"
+   and "fmlookup assocs assoc\<^sub>2 = Some ends\<^sub>2"
+   and "fmlookup ends\<^sub>1 role = Some end\<^sub>1"
+   and "fmlookup ends\<^sub>2 role = Some end\<^sub>2"
+   and "fmlookup ends\<^sub>1 from = Some from_end\<^sub>1"
+   and "fmlookup ends\<^sub>2 from = Some from_end\<^sub>2"
+   and "assoc_end_class from_end\<^sub>1 = assoc_end_class from_end\<^sub>2"
+   and "role \<noteq> from"
+  shows "end\<^sub>1 = end\<^sub>2"
+proof -
+  have "from |\<in>| fmdom ends\<^sub>1"
+    by (simp add: assms(7) fmdomI)
+  have "from |\<in>| fmdom ends\<^sub>2"
+    by (simp add: assms(8) fmdomI)
+  show ?thesis
+    using \<open>from |\<in>| fmdom ends\<^sub>1\<close> \<open>from |\<in>| fmdom ends\<^sub>2\<close>
+      assms owned_association_end_det' by blast
+qed
+
+(*
+proof -
+  assume a1: "assoc\<^sub>1 |\<in>| fmdom assocs"
+  assume a2: "assoc\<^sub>2 |\<in>| fmdom assocs"
+  assume a3: "fmlookup assocs assoc\<^sub>1 = Some ends\<^sub>1"
+  assume a4: "fmlookup assocs assoc\<^sub>2 = Some ends\<^sub>2"
+  assume a5: "fmlookup ends\<^sub>1 role = Some end\<^sub>1"
+  assume a6: "fmlookup ends\<^sub>2 role = Some end\<^sub>2"
+  assume a7: "fmlookup ends\<^sub>1 from = Some from_end\<^sub>1"
+  assume a8: "fmlookup ends\<^sub>2 from = Some from_end\<^sub>2"
+  assume a9: "assoc_end_class from_end\<^sub>1 = assoc_end_class from_end\<^sub>2"
+  assume a10: "role \<noteq> from"
+  have "\<forall>x0 x10 x1 x2 x3 x4 x5 x6 x7 x8 x9. (x10 |\<in>| fmdom assocs \<and> x9 |\<in>| fmdom assocs \<and> fmlookup assocs x10 = Some x8 \<and> fmlookup assocs x9 = Some x7 \<and> fmlookup x8 x6 = Some x5 \<and> fmlookup x7 x6 = Some x4 \<and> fmlookup x8 x3 = Some x2 \<and> fmlookup x7 x1 = Some x0 \<and> assoc_end_class x2 = assoc_end_class x0 \<and> x3 |\<in>| fmdom x8 \<and> x1 |\<in>| fmdom x7 \<and> x6 \<noteq> x3 \<and> x6 \<noteq> x1 \<longrightarrow> x5 = x4) = ((x10 |\<notin>| fmdom assocs \<or> x9 |\<notin>| fmdom assocs \<or> fmlookup assocs x10 \<noteq> Some x8 \<or> fmlookup assocs x9 \<noteq> Some x7 \<or> fmlookup x8 x6 \<noteq> Some x5 \<or> fmlookup x7 x6 \<noteq> Some x4 \<or> fmlookup x8 x3 \<noteq> Some x2 \<or> fmlookup x7 x1 \<noteq> Some x0 \<or> assoc_end_class x2 \<noteq> assoc_end_class x0 \<or> x3 |\<notin>| fmdom x8 \<or> x1 |\<notin>| fmdom x7 \<or> x6 = x3 \<or> x6 = x1) \<or> x5 = x4)"
+    by meson
+  then have f11: "\<forall>l la f fa lb p pa lc pb ld pc. (l |\<notin>| fmdom assocs \<or> la |\<notin>| fmdom assocs \<or> fmlookup assocs l \<noteq> Some f \<or> fmlookup assocs la \<noteq> Some fa \<or> fmlookup f lb \<noteq> Some p \<or> fmlookup fa lb \<noteq> Some pa \<or> fmlookup f lc \<noteq> Some pb \<or> fmlookup fa ld \<noteq> Some pc \<or> assoc_end_class pb \<noteq> assoc_end_class pc \<or> lc |\<notin>| fmdom f \<or> ld |\<notin>| fmdom fa \<or> lb = lc \<or> lb = ld) \<or> p = pa"
+    by (metis owned_association_end_det') (* > 1.0 s, timed out *)
+  have f12: "from |\<in>| fmdom ends\<^sub>2"
+    using a8 by (metis fmdomI)
+  have "from |\<in>| fmdom ends\<^sub>1"
+    using a7 by (meson fmdomI)
+  then show ?thesis
+    using f12 f11 a10 a9 a8 a7 a6 a5 a4 a3 a2 a1 by blast
+qed
+
+  using owned_association_end_det'
+  by (smt fmdomI)
+*)
+(*
+lemma owned_association_end_det'':
+  "assoc\<^sub>1 |\<in>| fmdom assocs \<Longrightarrow>
+   assoc\<^sub>2 |\<in>| fmdom assocs \<Longrightarrow>
+   fmlookup assocs assoc\<^sub>1 = Some ends\<^sub>1 \<Longrightarrow>
+   fmlookup assocs assoc\<^sub>2 = Some ends\<^sub>2 \<Longrightarrow>
+   fmlookup ends\<^sub>1 role = Some end\<^sub>1 \<Longrightarrow>
+   fmlookup ends\<^sub>2 role = Some end\<^sub>2 \<Longrightarrow>
+   fmlookup ends\<^sub>1 from = Some from_end\<^sub>1 \<Longrightarrow>
+   fmlookup ends\<^sub>2 from = Some from_end\<^sub>2 \<Longrightarrow>
+   assoc_end_class from_end\<^sub>1 = assoc_end_class from_end\<^sub>2 \<Longrightarrow>
+   role \<noteq> from \<Longrightarrow>
+   end\<^sub>1 = end\<^sub>2"
+  apply (cases "role |\<in>| fmdom ends\<^sub>1"; simp)
+  apply (elim disjE; simp split: if_splits)
+  apply (auto)
+  by (auto split: if_splits)
+*)
+instance
+  apply standard
+  apply (erule owned_association_end'.cases; erule owned_association_end'.cases; simp)
+  using associations_classes1_def owned_association_end_det' apply presburger
+  using associations_classes1_def owned_association_end_det'' apply presburger
+  done
 
 end
 
 subsection \<open>Positive Cases\<close>
-
+(*
 value "find_attribute Employee STR ''name''"
 value "find_attribute Employee STR ''position''"
-value "find_association_end Employee STR ''projects'' None"
+*)
+values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
+values "{(\<D>, \<tau>). attribute Employee STR ''position'' \<D> \<tau>}"
+values "{end. association_end Employee STR ''projects'' None end}"
 value "find_operation Project[1] STR ''membersCount'' []"
 value "find_operation Project[1] STR ''membersByName'' [String[1]]"
 value "has_literal STR ''E1'' STR ''A''"
 
 subsection \<open>Negative Cases\<close>
 
-value "find_association_end Person STR ''projects'' None"
+(* TODO: Implement as lemma *)
+(* TODO: Add a separate section with few examples for a generated code *)
+(*values "{end. association_end Person STR ''projects'' None end}"*)
 value "has_literal STR ''E1'' STR ''C''"
+
+lemma subclass1_Person_x [simp]:
+  "Person \<le> \<tau> = (\<tau> = Person \<or> \<tau> = Object)"
+  unfolding dual_order.order_iff_strict less_classes1_def
+  by (auto simp: subclass1.simps subclass1.intros)
+
+lemma subclass1_Employee_x [simp]:
+  "Employee \<le> \<tau> = (\<tau> = Employee \<or> \<tau> = Person \<or> \<tau> = Object)"
+  unfolding dual_order.order_iff_strict less_classes1_def
+  by (auto simp: subclass1.simps subclass1.intros)
+
+declare attribute'.simps [simp]
+declare class_has_attribute'.simps [simp]
+declare owned_attribute'.simps [simp]
+declare attributes_classes1_def [simp]
+declare Least_def [simp]
+
+lemma
+  "attribute Employee STR ''name'' Person String[1]"
+  by auto
+
+inductive_simps q51: "owned_association_end' associations \<C> role None end"
+inductive_simps q52: "owned_association_end' associations \<C> role (Some from) end"
+
+print_theorems
+
+lemma q61 [simp]:
+  "fmupd k x xm = ym \<longleftrightarrow> ym = fmupd k x xm"
+  by auto
+(*
+lemma q21:
+  "owned_association_end' assocs Employee STR ''projects'' from end =
+   ((from = None \<or> from = Some STR ''manager'') \<and>
+    end = (Project, 0::nat, \<infinity>::enat, False, True))"
+proof
+  show "owned_association_end' assocs Employee STR ''projects'' from end \<Longrightarrow>
+    (from = None \<or> from = Some STR ''manager'') \<and>
+     end = (Project, 0, \<infinity>, False, True)"
+    apply (erule owned_association_end'.cases)
+    apply (auto simp add: assoc_end_class_def split: if_splits)
+    done
+  show "(from = None \<or> from = Some STR ''manager'') \<and>
+     end = (Project, 0, \<infinity>, False, True) \<Longrightarrow>
+     owned_association_end' assocs Employee STR ''projects'' from end"
+    apply (simp add: owned_association_end'.simps)
+*)
+
+lemma q21:
+  "owned_association_end' assocs Employee STR ''projects'' from end \<Longrightarrow>
+   ((from = None \<or> from = Some STR ''manager'') \<and>
+    end = (Project, 0::nat, \<infinity>::enat, False, True))"
+  apply (erule owned_association_end'.cases)
+  apply (auto simp add: assoc_end_class_def split: if_splits)
+  done
+
+  thm owned_association_end'.cases
+(*
+  apply (simp add: owned_association_end'.simps)
+  apply auto
+*)
+lemma
+  "association_end Employee STR ''projects'' None (Project, 0, \<infinity>, False, True)"
+  apply (rule association_end'.intros)
+   apply auto
+  apply (simp add: associations_classes1_def)
+   apply auto
+  apply (auto simp add: class_is_association_source'.simps)
+  apply (rule owned_association_end'.intros)
+(*
+   apply (auto simp add: association_end'.simps class_is_association_source'.simps
+      )
+*)
+(*
+owned_association_end'.simps associations_classes1_def
+  apply (rule association_end'.intros)
+  apply auto
+  apply (rule owned_association_end'.intros)
+*)
+   apply (auto simp add: association_end'.simps class_is_association_source'.simps
+      owned_association_end'.simps)
+  apply (intro exI conjI)
+
+thm classes1.distinct(19) classes1.simps(14) classes1.simps(16) classes1.simps(18) the_equality
+
+  thm HOL.imp_conv_disj HOL.conj_disj_distribL
+
+lemma
+  "\<nexists>end. association_end Person STR ''projects'' None end"
+  apply auto
+  apply (erule association_end'.cases)
+  apply auto
 
 (*** Typing *****************************************************************)
 
@@ -601,6 +1097,84 @@ lemma q [simp]:
   "(Employee \<le> \<tau>) = (\<tau> = Employee \<or> \<tau> = Person \<or> \<tau> = Object)"
   by (metis dual_order.order_iff_strict less_classes1_def subclass1.simps)
 
+inductive_simps attribute'_alt_simps[simp]: "attribute' attrs \<C> attr \<D> \<tau>"
+inductive_simps owned_attribute'_alt_simps[simp]: "owned_attribute' attrs \<C> attr \<tau>"
+inductive_simps class_has_attribute'_alt_simps[simp]: "class_has_attribute' attrs \<C> attr"
+
+print_theorems
+
+(*declare classes1.simps [simp]*)
+(*
+lemma q11:
+  "owned_attribute' attributes Person STR ''name'' \<tau> = (\<tau> = String[1])"
+  by (auto simp add: attributes_classes1_def owned_attribute'_alt_simps)
+
+inductive_simps q12[simp]: "owned_attribute' attributes Employee STR ''position'' String[1]"
+inductive_simps q13[simp]: "owned_attribute' attributes Customer STR ''vip'' Boolean[1]"
+inductive_simps q14[simp]: "owned_attribute' attributes Project STR ''name'' String[1]"
+inductive_simps q15[simp]: "owned_attribute' attributes Project STR ''cost'' Real[?]"
+inductive_simps q16[simp]: "owned_attribute' attributes Task STR ''description'' String[1]"
+*)
+(*
+definition "attributes_classes1 \<equiv> fmap_of_list [
+  (Person, fmap_of_list [
+    (STR ''name'', String[1] :: classes1 type)]),
+  (Employee, fmap_of_list [
+    (STR ''position'', String[1])]),
+  (Customer, fmap_of_list [
+    (STR ''vip'', Boolean[1])]),
+  (Project, fmap_of_list [
+    (STR ''name'', String[1]),
+    (STR ''cost'', Real[?])]),
+  (Task, fmap_of_list [
+    (STR ''description'', String[1])])]"
+*)
+
+print_theorems
+
+(*
+  HOL.conj_disj_distribL: (?P \<and> (?Q \<or> ?R)) = (?P \<and> ?Q \<or> ?P \<and> ?R)
+  HOL.conj_disj_distribR: ((?P \<or> ?Q) \<and> ?R) = (?P \<and> ?R \<or> ?Q \<and> ?R)
+  Groebner_Basis.dnf(2): ((?Q \<or> ?R) \<and> ?P) = (?Q \<and> ?P \<or> ?R \<and> ?P)
+  HOL.disj_conj_distribL: (?P \<or> ?Q \<and> ?R) = ((?P \<or> ?Q) \<and> (?P \<or> ?R))
+  HOL.disj_conj_distribR: (?P \<and> ?Q \<or> ?R) = ((?P \<or> ?R) \<and> (?Q \<or> ?R))
+*)
+
+lemma q21:
+  "y \<noteq> z \<Longrightarrow> (z \<noteq> x \<and> y = x) = (y = x)"
+  by auto
+
+lemma q22:
+  "(z \<noteq> x \<and> y = x) = (z \<noteq> y \<and> y = x)"
+  by auto
+
+lemma q23:
+  "P (z \<noteq> x \<and> y = x) = P (z \<noteq> y \<and> y = x)"
+proof -
+  have "(z = y \<or> y \<noteq> x) \<and> (z = x \<or> y \<noteq> x) \<or> P (z \<noteq> x \<and> y = x) = P (z \<noteq> y \<and> y = x)"
+    by blast
+  then show ?thesis
+    by auto
+qed
+
+lemma q24:
+  "(Task \<noteq> x \<and>
+        Project \<noteq> x \<and>
+        Customer \<noteq> x \<and> Employee \<noteq> x \<and> Person = x) = (Person = x)"
+  by auto
+
+lemma q25:
+  "(Task \<noteq> x \<and>
+        Project \<noteq> x \<and>
+        Customer \<noteq> x \<and> Employee \<noteq> x \<and> Person = x \<and> x \<le> Person) = (Person = x)"
+  by auto
+
+lemma q26:
+  "z = (THE x. z \<noteq> x) \<Longrightarrow> False"
+
+lemma q26:
+  "(THE x. z \<noteq> x \<and> P x) = (THE x. P x)"
+
 text \<open>
 \<^verbatim>\<open>context Employee:
 name : String[1]\<close>\<close>
@@ -608,6 +1182,12 @@ lemma
   "\<Gamma>(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
     AttributeCall (Var STR ''self'') DotCall STR ''name'' : String[1]"
   apply (auto simp add: attributes_classes1_def)
+  unfolding Least_def HOL.imp_conv_disj HOL.conj_disj_distribL apply auto
+  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) eq_iff theI)
+  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) eq_iff theI)
+  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) eq_iff theI)
+  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) eq_iff theI)
+  done
 
 text \<open>
 \<^verbatim>\<open>context Employee:
