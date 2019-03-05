@@ -1,24 +1,28 @@
 (*  Title:       Safe OCL
-    Author:      Denis Nikiforov, February 2019
+    Author:      Denis Nikiforov, March 2019
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
 section \<open>Object Model\label{sec:object-model}\<close>
 theory Object_Model
   imports "HOL-Library.Extended_Nat" Finite_Map_Ext
+    OCL_Types (*"HOL-Library.Transitive_Closure_Table"*)
 begin
 
 text \<open>
-  This theory defines a very simplified object model. It does not
-  support attribute and operation redefinition.
-  It does not define any constraints either.\<close>
+  The section defines a very simplified object model.
+  It should define more constraints.\<close>
+
+(*** Preliminaries **********************************************************)
+
+subsection \<open>Preliminaries\<close>
 
 type_synonym attr = String.literal
 type_synonym assoc = String.literal
 type_synonym role = String.literal
 type_synonym oper = String.literal
 type_synonym param = String.literal
-type_synonym enum = String.literal
+(*type_synonym enum = String.literal*)
 type_synonym elit = String.literal
 
 datatype param_dir = In | Out | InOut
@@ -33,14 +37,6 @@ definition "assoc_end_min \<equiv> fst \<circ> snd"
 definition "assoc_end_max \<equiv> fst \<circ> snd \<circ> snd"
 definition "assoc_end_ordered \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
 definition "assoc_end_unique \<equiv> snd \<circ> snd \<circ> snd \<circ> snd"
-
-definition "role_refer_class ends \<C> role \<equiv>
-  assoc_end_class (the (fmlookup ends role)) = \<C>"
-
-definition "assoc_refer_class ends \<C> \<equiv>
-  fBex (fmdom ends) (role_refer_class ends \<C>)"
-
-definition "assoc_refer_role ends role \<equiv> fmlookup ends role \<noteq> None"
 
 definition "oper_name \<equiv> fst"
 definition "oper_context \<equiv> fst \<circ> snd"
@@ -59,25 +55,296 @@ definition "oper_in_params op \<equiv>
 definition "oper_out_params op \<equiv>
   filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op)"
 
-(* We define all functions with (<) or (\<le>) as abbreviations.
-   In other case we will get errors related to code generator *)
-abbreviation "has_matching_signature \<tau> op \<pi> x \<equiv>
-  op = oper_name x \<and> \<tau> \<le> oper_context x \<and>
-  list_all2 (\<lambda>x y. x \<le> y) \<pi> (map param_type (oper_in_params x))"
+
+inductive owned_attribute' where
+ "fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
+  fmlookup attrs\<^sub>\<C> attr = Some \<tau> \<Longrightarrow>
+  owned_attribute' attributes \<C> attr \<tau>"
+
+inductive class_has_attribute' where
+ "owned_attribute' attributes \<C> attr \<tau> \<Longrightarrow>
+  class_has_attribute' attributes \<C> attr"
+
+inductive attribute' where
+ "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> class_has_attribute' attributes \<D> attr) = \<D> \<Longrightarrow>
+  owned_attribute' attributes \<D> attr \<tau> \<Longrightarrow>
+  attribute' attributes \<C> attr \<D> \<tau>"
 
 
+inductive role_refer_class where
+  "role |\<in>| fmdom ends \<Longrightarrow>
+   fmlookup ends role = Some end \<Longrightarrow>
+   assoc_end_class end = \<C> \<Longrightarrow>
+   role_refer_class ends \<C> role"
+
+inductive class_roles where
+  "assoc |\<in>| fmdom associations \<Longrightarrow>
+   fmlookup associations assoc = Some ends \<Longrightarrow>
+   role_refer_class ends \<C> from \<Longrightarrow>
+   role |\<in>| fmdom ends \<Longrightarrow>
+   fmlookup ends role = Some end \<Longrightarrow>
+   role \<noteq> from \<Longrightarrow>
+   class_roles associations \<C> from role end"
+
+inductive owned_association_end' where
+  "class_roles associations \<C> from role end \<Longrightarrow>
+   owned_association_end' associations \<C> None role end"
+| "class_roles associations \<C> from role end \<Longrightarrow>
+   owned_association_end' associations \<C> (Some from) role end"
 
 
+inductive class_is_association_source' where
+  "owned_association_end' associations \<C> from role end \<Longrightarrow>
+   class_is_association_source' associations \<C> from role"
+
+inductive association_end' where
+  "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> class_is_association_source' associations \<D> from role) = \<D> \<Longrightarrow>
+   owned_association_end' associations \<D> from role end \<Longrightarrow>
+   association_end' associations \<C> from role \<D> end"
+
+inductive the_association_end' where
+  "The (\<lambda>(\<D>, end). association_end' associations \<C> from role \<D> end) = (\<D>, end) \<Longrightarrow>
+   the_association_end' associations \<C> from role \<D> end"
 
 
+inductive referred_by_association_class''' where
+  "fmlookup association_classes \<A> = Some assoc \<Longrightarrow>
+   fmlookup associations assoc = Some ends \<Longrightarrow>
+   role_refer_class ends \<C> from \<Longrightarrow>
+   referred_by_association_class''' association_classes associations \<C> from \<A>"
+
+inductive referred_by_association_class'' where
+  "referred_by_association_class''' association_classes associations \<C> from \<A> \<Longrightarrow>
+   referred_by_association_class'' association_classes associations \<C> None \<A>"
+| "referred_by_association_class''' association_classes associations \<C> from \<A> \<Longrightarrow>
+   referred_by_association_class'' association_classes associations \<C> (Some from) \<A>"
+
+inductive referred_by_association_class' where
+  "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> referred_by_association_class''
+      association_classes associations \<D> from \<A>) = \<D> \<Longrightarrow>
+   referred_by_association_class' association_classes associations \<C> from \<A>"
+
+inductive association_class_end' where
+  "fmlookup association_classes \<A> = Some assoc \<Longrightarrow>
+   fmlookup associations assoc = Some ends \<Longrightarrow>
+   fmlookup ends role = Some end \<Longrightarrow>
+   association_class_end' association_classes associations \<A> role end"
+
+inductive the_association_class_end' where
+  "The (\<lambda>end. association_class_end' association_classes associations \<A> role end) = end \<Longrightarrow>
+   the_association_class_end' association_classes associations \<A> role end"
 
 
+inductive any_operation' where
+  "op |\<in>| fset_of_list operations \<Longrightarrow>
+   oper_name op = name \<Longrightarrow>
+   \<tau> \<le> oper_context op \<Longrightarrow>
+   list_all2 (\<lambda>\<sigma> param. \<sigma> \<le> param_type param) \<pi> (oper_in_params op) \<Longrightarrow>
+   any_operation' operations \<tau> name \<pi> op"
+
+inductive operation' where
+  "any_operation' operations \<tau> name \<pi> op \<Longrightarrow>
+   \<not> oper_static op \<Longrightarrow>
+   operation' operations \<tau> name \<pi> op"
+
+inductive static_operation' where
+  "any_operation' operations \<tau> name \<pi> op \<Longrightarrow>
+   oper_static op \<Longrightarrow>
+   static_operation' operations \<tau> name \<pi> op"
+
+inductive the_operation' where
+  "The (\<lambda>oper. operation' operations \<tau> op \<pi> oper) = oper \<Longrightarrow>
+   the_operation' operations \<tau> op \<pi> oper"
+
+inductive the_static_operation' where
+  "The (\<lambda>oper. static_operation' operations \<tau> op \<pi> oper) = oper \<Longrightarrow>
+   the_static_operation' operations \<tau> op \<pi> oper"
 
 
+inductive has_literal' where
+  "fmlookup literals e = Some lits \<Longrightarrow>
+   lit |\<in>| lits \<Longrightarrow>
+   has_literal' literals e lit"
 
+(*** Definition *************************************************************)
 
+subsection \<open>Definition\<close>
+
+locale object_model =
+  fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"
+  and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
+  and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
+  and operations :: "('t, 'e) oper_spec list"
+  and literals :: "'n \<rightharpoonup>\<^sub>f elit fset"
+  assumes assoc_end_min_less_eq_max:
+    "assoc |\<in>| fmdom associations \<Longrightarrow>
+     fmlookup associations assoc = Some ends \<Longrightarrow>
+     role |\<in>| fmdom ends  \<Longrightarrow>
+     fmlookup ends role = Some end \<Longrightarrow>
+     assoc_end_min end \<le> assoc_end_max end"
+  assumes class_roles_unique:
+    "class_roles associations \<C> from role end\<^sub>1 \<Longrightarrow>
+     class_roles associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
+begin
+
+abbreviation "attribute \<equiv> attribute' attributes"
+abbreviation "association_end \<equiv> the_association_end' associations"
+abbreviation "referred_by_association_class \<equiv>
+  referred_by_association_class' association_classes associations"
+abbreviation "association_class_end \<equiv>
+  the_association_class_end' association_classes associations"
+abbreviation "operation \<equiv> the_operation' operations"
+abbreviation "static_operation \<equiv> the_static_operation' operations"
+abbreviation "has_literal \<equiv> has_literal' literals"
+
+lemma owned_attribute'_det:
+  "owned_attribute' attributes \<C> attr \<tau> \<Longrightarrow>
+   owned_attribute' attributes \<C> attr \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  by (elim owned_attribute'.cases; auto)
+
+lemma attribute_det:
+  "attribute' attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   attribute' attributes \<C> attr \<E> \<sigma> \<Longrightarrow> \<D> = \<E> \<and> \<tau> = \<sigma>"
+  by (elim attribute'.cases; auto simp add: owned_attribute'_det)
+
+end
+
+(*** Code Setup *************************************************************)
+
+subsection \<open>Code Setup\<close>
+
+lemma fmember_code_predI [code_pred_intro]:
+  "x |\<in>| xs" if "Predicate_Compile.contains (fset xs) x"
+  using that by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
+
+code_pred fmember
+  by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
+
+code_pred [show_modes] attribute' .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] class_roles .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] owned_association_end' .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] association_end' .
+
+lemma the_association_end'_code_predI [code_pred_intro]:
+  "Predicate.the (association_end'_i_i_i_i_o_o associations \<C> from role) = (\<D>, end) \<Longrightarrow>
+   the_association_end' associations \<C> from role \<D> end"
+  by (simp add: Predicate.the_def the_association_end'.simps
+       association_end'_i_i_i_i_o_o_def)
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] the_association_end'
+  by (metis Predicate.the_def association_end'_i_i_i_i_o_o_def pred.sel the_association_end'.cases)
+
+code_pred [show_modes] referred_by_association_class' .
+
+code_pred [show_modes] association_class_end' .
+
+lemma the_association_class_end'_code_predI [code_pred_intro]:
+  "Predicate.the (association_class_end'_i_i_i_i_o association_classes associations \<A> role) = end \<Longrightarrow>
+   the_association_class_end' association_classes associations \<A> role end"
+  by (simp add: Predicate.the_def the_association_class_end'.simps
+       association_class_end'_i_i_i_i_o_def)
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] the_association_class_end'
+  by (metis the_association_class_end'.cases the_association_class_end'_code_predI)
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] any_operation' .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] operation' .
+
+lemma the_operation'_code_predI [code_pred_intro]:
+  "Predicate.the (operation'_i_i_i_i_o operations \<tau> op \<pi>) = oper \<Longrightarrow>
+   the_operation' operations \<tau> op \<pi> oper"
+  by (simp add: Predicate.the_def the_operation'.simps
+       operation'_i_i_i_i_o_def)
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] the_operation'
+  by (metis the_operation'.cases the_operation'_code_predI)
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] static_operation' .
+
+lemma the_static_operation'_code_predI [code_pred_intro]:
+  "Predicate.the (static_operation'_i_i_i_i_o operations \<tau> op \<pi>) = oper \<Longrightarrow>
+   the_static_operation' operations \<tau> op \<pi> oper"
+  by (simp add: Predicate.the_def the_static_operation'.simps
+       static_operation'_i_i_i_i_o_def)
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] the_static_operation'
+  by (metis the_static_operation'.cases the_static_operation'_code_predI)
+
+code_pred [show_modes] has_literal' .
 
 (*
+(*** Classes ****************************************************************)
+
+section \<open>Classes\<close>
+
 datatype classes1 =
   Object | Person | Employee | Customer | Project | Task | Sprint
 
@@ -89,13 +356,13 @@ inductive subclass1 where
 
 code_pred subclass1 .
 
-notation sup (infixl "\<squnion>" 65)
-
 instantiation classes1 :: semilattice_sup
 begin
 
 definition "(<) \<equiv> subclass1"
 definition "(\<le>) \<equiv> subclass1\<^sup>=\<^sup>="
+
+notation sup (infixl "\<squnion>" 65)
 
 fun sup_classes1 where
   "Object \<squnion> _ = Object"
@@ -180,244 +447,45 @@ instance
 
 end
 
-value "LEAST x. Employee \<le> x"
-value "LEAST x. x \<in> {Person, Project}"
-value "GREATEST x. x \<in> {Person, Project}"
-value "GREATEST x. x \<in> {Person, Employee}"
-value "Sup {Person, Employee}"
-value "GREATEST x. Employee < x"
-term Inf
-term Sup
-value "Inf {A,B}"
-*)
-
-inductive owned_attribute' where
- "fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
-  fmlookup attrs\<^sub>\<C> attr = Some \<tau> \<Longrightarrow>
-  owned_attribute' attributes \<C> attr \<tau>"
-
-inductive class_has_attribute' where
- "owned_attribute' attributes \<C> attr \<tau> \<Longrightarrow>
-  class_has_attribute' attributes \<C> attr"
-
-inductive attribute' where
- "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> class_has_attribute' attributes \<D> attr) = \<D> \<Longrightarrow>
-  owned_attribute' attributes \<D> attr \<tau> \<Longrightarrow>
-  attribute' attributes \<C> attr \<D> \<tau>"
-
-lemma fmember_code_predI [code_pred_intro]:
-  "x |\<in>| xs" if "Predicate_Compile.contains (fset xs) x"
-  using that by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
-
-code_pred fmember
-  by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
+abbreviation "assocs \<equiv> [
+  STR ''ProjectManager'' \<mapsto>\<^sub>f [
+    STR ''projects'' \<mapsto>\<^sub>f (Project, 0::nat, \<infinity>::enat, False, True),
+    STR ''manager'' \<mapsto>\<^sub>f (Employee, 1, 1, False, False)],
+  STR ''ProjectMember'' \<mapsto>\<^sub>f [
+    STR ''member_of'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, False),
+    STR ''members'' \<mapsto>\<^sub>f (Employee, 1, 20, True, True)],
+  STR ''ManagerEmployee'' \<mapsto>\<^sub>f [
+    STR ''line_manager'' \<mapsto>\<^sub>f (Employee, 0::nat, 1, False, False),
+    STR ''project_manager'' \<mapsto>\<^sub>f (Employee, 0::nat, \<infinity>, False, False),
+    STR ''employees'' \<mapsto>\<^sub>f (Employee, 3, 7, False, False)],
+  STR ''ProjectCustomer'' \<mapsto>\<^sub>f [
+    STR ''projects'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, True),
+    STR ''customer'' \<mapsto>\<^sub>f (Customer, 1, 1, False, False)],
+  STR ''ProjectTask'' \<mapsto>\<^sub>f [
+    STR ''project'' \<mapsto>\<^sub>f (Project, 1, 1, False, False),
+    STR ''tasks'' \<mapsto>\<^sub>f (Task, 0, \<infinity>, True, True)],
+  STR ''SprintTaskAssignee'' \<mapsto>\<^sub>f [
+    STR ''sprint'' \<mapsto>\<^sub>f (Sprint, 0, 10, False, True),
+    STR ''tasks'' \<mapsto>\<^sub>f (Task, 0, 5, False, True),
+    STR ''assignee'' \<mapsto>\<^sub>f (Employee, 0, 1, False, False)]]"
 (*
-inductive owned_association_end'' where
- "role \<noteq> from \<Longrightarrow>
-  assoc |\<in>| fmdom associations \<Longrightarrow>
-  fmlookup associations assoc = Some ends \<Longrightarrow>
-  fmlookup ends role = Some end \<Longrightarrow>
-  fmlookup ends from = Some from_end \<Longrightarrow>
-  assoc_end_class from_end = \<C> \<Longrightarrow>
-  owned_association_end'' associations \<C> role from end"
+definition "operations_classes1 \<equiv> [
+  (STR ''membersCount'', Person, [], 1::nat, False, None :: nat option),
+  (STR ''membersByName'', Project, [(STR ''mn'', 1::nat, In)], 1, False, None),
+  (STR ''allProjects'', Project, [], 1, True, None)
+  ]"
 *)
-inductive owned_association_end' where
-  "assoc |\<in>| fmdom associations \<Longrightarrow>
-   fmlookup associations assoc = Some ends \<Longrightarrow>
-   fmlookup ends role = Some end \<Longrightarrow>
-   fmlookup ends from = Some from_end \<Longrightarrow>
-   \<C> = assoc_end_class from_end \<Longrightarrow>
-   from |\<in>| fmdom ends \<Longrightarrow>
-   role \<noteq> from \<Longrightarrow>
-   owned_association_end' associations \<C> role None end"
-| "assoc |\<in>| fmdom associations \<Longrightarrow>
-   fmlookup associations assoc = Some ends \<Longrightarrow>
-   fmlookup ends role = Some end \<Longrightarrow>
-   fmlookup ends from = Some from_end \<Longrightarrow>
-   \<C> = assoc_end_class from_end \<Longrightarrow>
-   role \<noteq> from \<Longrightarrow>
-   owned_association_end' associations \<C> role (Some from) end"
+declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 basic_type"]]
 
-code_pred [show_modes] owned_association_end' .
+definition "operations_classes1 \<equiv> [
+  (STR ''membersCount'', Project[1], [], Integer[1], False, None),
+  (STR ''membersByName'', Project[1], [(STR ''mn'', String[1], In)], Set Employee[1], False, None),
+  (STR ''allProjects'', Project[1], [], Set Project[1], True, None)
+  ] :: (classes1 type, nat) oper_spec list"
 
 
-(*
-lemma owned_association_end'_det:
-  "owned_association_end' assocs \<C> role from end\<^sub>1 \<Longrightarrow>
-   owned_association_end' assocs \<C> role from end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
-  nitpick
-  apply (elim owned_association_end'.cases; auto)
+value "any_operation' operations_classes1 Employee[1] STR ''membersCount'' [] (STR ''membersCount'', Project[1], [], Integer[1], False, None)"
+values "{op. any_operation' operations_classes1 Employee[1] STR ''membersCount'' [] op}"
 *)
-
-inductive class_is_association_source' where
-  "owned_association_end' associations \<C> role from end \<Longrightarrow>
-   class_is_association_source' associations \<C> role from"
-
-code_pred [show_modes] class_is_association_source' .
-
-inductive association_end' where
- "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> class_is_association_source' associations \<D> role from) = \<D> \<Longrightarrow>
-  owned_association_end' associations \<D> role from end \<Longrightarrow>
-  association_end' associations \<C> role from end"
-
-code_pred [show_modes] association_end' .
-
-(*
-definition "role_refer_class ends \<C> role \<equiv>
-  assoc_end_class (the (fmlookup ends role)) = \<C>"
-
-definition "assoc_refer_class ends \<C> \<equiv>
-  fBex (fmdom ends) (role_refer_class ends \<C>)"
-
-definition "assoc_refer_role ends role \<equiv> fmlookup ends role \<noteq> None"
-
-abbreviation "find_associations \<C> role from \<equiv>
-  fmfilter (\<lambda>assoc.
-    case fmlookup associations assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
-      (case from
-        of None \<Rightarrow> assoc_refer_class (fmdrop role ends) \<C>
-         | Some from_role \<Rightarrow> role_refer_class ends \<C> from_role) \<and>
-      assoc_refer_role ends role) associations"
-
-abbreviation "find_owned_association_end \<C> role from \<equiv>
-  let found = fmran (find_associations \<C> role from) in
-  if fcard found = 1 then fmlookup (fthe_elem found) role else None"
-
-abbreviation "find_association_end \<C> role from \<equiv>
-  let found = Option.these {find_owned_association_end \<D> role from | \<D>. \<C> \<le> \<D>} in
-  if card found = 1 then Some (the_elem found) else None"
-*)
-
-
-
-code_pred attribute' .
-
-locale object_model = 
-  fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"
-  and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
-  and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
-  and operations :: "('t, 'e) oper_spec list"
-  and literals :: "'n \<rightharpoonup>\<^sub>f elit fset"
-  assumes owned_association_end_det:
-  "owned_association_end' associations \<C> role from end\<^sub>1 \<Longrightarrow>
-   owned_association_end' associations \<C> role from end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
-begin
-
-abbreviation "attribute \<equiv> attribute' attributes"
-abbreviation "association_end \<equiv> association_end' associations"
-
-(*
-abbreviation "find_owned_attribute \<C> attr \<equiv>
-  map_option (Pair \<C>) (Option.bind (fmlookup attributes \<C>) (\<lambda>attrs\<^sub>\<C>. fmlookup attrs\<^sub>\<C> attr))"
-
-abbreviation "find_attribute \<C> attr \<equiv>
-  let found = {(\<D>, \<tau>). \<C> \<le> \<D> \<and> attribute \<C> attr (\<D>, \<tau>)} in
-  if card found = 1 then Some (the_elem found) else None"
-(*
-abbreviation "find_attribute \<C> attr \<equiv>
-  let found = Option.these {find_owned_attribute \<D> attr | \<D>. \<C> \<le> \<D>} in
-  if card found = 1 then Some (the_elem found) else None"
-*)
-lemma owned_attribute_code [code_abbrev, simp]:
-  "find_owned_attribute \<C> attr = Some (\<C>, \<tau>) \<longleftrightarrow>
-   owned_attribute \<C> attr (\<C>, \<tau>)"
-proof
-  show
-    "find_owned_attribute \<C> attr = Some (\<C>, \<tau>) \<Longrightarrow>
-     owned_attribute \<C> attr (\<C>, \<tau>)"
-    unfolding Option.map_conv_bind_option Option.bind_eq_Some_conv
-    by (auto simp add: owned_attribute.intros)
-  show
-    "owned_attribute \<C> attr (\<C>, \<tau>) \<Longrightarrow>
-     find_owned_attribute \<C> attr = Some (\<C>, \<tau>)"
-    by (erule owned_attribute.cases; simp)
-qed
-
-lemma attribute_code' [code_abbrev, simp]:
-  "Option.these {find_owned_attribute \<D> attr | \<D>. \<C> \<le> \<D>} =
-   {(\<D>, \<tau>). \<C> \<le> \<D> \<and> attribute \<C> attr (\<D>, \<tau>)}"
-proof
-  have "\<And>\<C> \<D> \<D>' \<tau>.
-     Some (\<D>', \<tau>) = find_owned_attribute \<D> attr \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> \<C> \<le> \<D>'"
-    by (metis fst_conv map_option_eq_Some)
-  thus
-    "Option.these {find_owned_attribute \<D> attr |\<D>. \<C> \<le> \<D>} \<subseteq>
-     {(\<D>, \<tau>). \<C> \<le> \<D> \<and> attribute \<C> attr (\<D>, \<tau>)}"
-    apply (auto simp add: in_these_eq)
-    apply (rule attribute.intros, simp)
-    by (metis (mono_tags, lifting) fst_conv
-        map_option_eq_Some owned_attribute_code)
-  show
-    "{(\<D>, \<tau>). \<C> \<le> \<D> \<and> attribute \<C> attr (\<D>, \<tau>)} \<subseteq>
-     Option.these {find_owned_attribute \<D> attr |\<D>. \<C> \<le> \<D>}"
-    apply (auto simp add: in_these_eq)
-    by (metis attribute.cases owned_attribute_code)
-qed
-
-lemma attribute_code'':
-  "{(\<D>, \<tau>). \<C> \<le> \<D> \<and> attribute \<C> attr (\<D>, \<tau>)} =
-   Option.these {find_owned_attribute \<D> attr | \<D>. \<C> \<le> \<D>}"
-  by simp
-
-lemma attribute_code [code_abbrev, simp]:
-  "(find_attribute \<C> attr = Some (\<D>, \<tau>)) =
-   attribute \<C> attr (\<D>, \<tau>)"
-proof
-  show
-    "find_attribute \<C> attr = Some (\<D>, \<tau>) \<Longrightarrow>
-     attribute \<C> attr (\<D>, \<tau>)"
-    apply (auto simp add: Let_def split: if_splits)
-    unfolding attribute_code''
-    apply (auto simp add: Let_def Option.these_def split: if_splits)
-    apply (rule attribute.intros)
-    by (auto simp add: owned_attribute.intros)
-  show
-    "attribute \<C> attr (\<D>, \<tau>) \<Longrightarrow>
-     find_attribute \<C> attr = Some (\<D>, \<tau>)"
-    apply (erule attribute.cases)
-    apply (auto simp add: Let_def split: if_split)
-qed
-*)
-abbreviation "find_associations \<C> role from \<equiv>
-  fmfilter (\<lambda>assoc.
-    case fmlookup associations assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
-      (case from
-        of None \<Rightarrow> assoc_refer_class (fmdrop role ends) \<C>
-         | Some from_role \<Rightarrow> role_refer_class ends \<C> from_role) \<and>
-      assoc_refer_role ends role) associations"
-
-abbreviation "find_owned_association_end \<C> role from \<equiv>
-  let found = fmran (find_associations \<C> role from) in
-  if fcard found = 1 then fmlookup (fthe_elem found) role else None"
-
-abbreviation "find_association_end \<C> role from \<equiv>
-  let found = Option.these {find_owned_association_end \<D> role from | \<D>. \<C> \<le> \<D>} in
-  if card found = 1 then Some (the_elem found) else None"
-
-abbreviation "referred_by_association_class \<C> \<A> from \<equiv>
-  case fmlookup association_classes \<A> of None \<Rightarrow> False | Some assoc \<Rightarrow>
-    (case fmlookup associations assoc of None \<Rightarrow> False | Some ends \<Rightarrow>
-      (\<exists>\<D>. \<C> \<le> \<D> \<and>
-        (case from
-          of None \<Rightarrow> assoc_refer_class ends \<D>
-           | Some from_role \<Rightarrow> role_refer_class ends \<D> from_role)))"
-
-abbreviation "find_association_class_end \<A> role \<equiv>
-  case fmlookup association_classes \<A> of None \<Rightarrow> None | Some assoc \<Rightarrow>
-    (case fmlookup associations assoc of None \<Rightarrow> None | Some ends \<Rightarrow>
-      fmlookup ends role)"
-
-abbreviation "find_operation \<tau> op \<pi> \<equiv>
-  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> \<not> oper_static x) operations"
-
-abbreviation "find_static_operation \<tau> op \<pi> \<equiv>
-  find (\<lambda>x. has_matching_signature \<tau> op \<pi> x \<and> oper_static x) operations"
-
-abbreviation "has_literal e lit \<equiv>
-  (case fmlookup literals e
-    of Some lits \<Rightarrow> lit |\<in>| lits
-     | None \<Rightarrow> False)"
-
-end
 
 end

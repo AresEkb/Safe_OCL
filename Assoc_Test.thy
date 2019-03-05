@@ -79,6 +79,56 @@ code_pred [show_modes] class_roles .
 values "{(x, y, z, a). class_roles associations x y z a}"
 
 
+
+inductive foo where
+  "foo" if 
+  "class_roles associations c assoc1 from role"
+  "class_roles associations c assoc2 from role"
+  "assoc1 \<noteq> assoc2"
+
+term class_roles
+term foo
+
+
+code_pred [show_modes] foo .
+
+thm foo.simps
+
+lemma explode_code':
+  "map String.char_of (String.asciis_of_literal s) = String.explode s"
+  unfolding String.explode_code
+  by auto
+
+thm String.Literal_eq_iff
+(*
+lemma q:
+  "map char_of (String.asciis_of_literal STR ''project'') =
+   map char_of (String.asciis_of_literal STR ''project'')"
+  apply auto
+*)
+value "String.explode STR ''project''"
+value "map char_of (String.asciis_of_literal STR ''project'')"
+value "String.asciis_of_literal STR ''project''"
+
+(*declare [[code add: String.literal_of_asciis String.asciis_of_literal]]*)
+
+thm String.explode_code
+
+lemma class_roles_unique:
+  assumes "class_roles associations c assoc1 from role"
+    and "class_roles associations c assoc2 from role"
+  shows "assoc1 = assoc2"
+proof -
+  have "\<not> foo" apply code_simp
+(*    apply auto*)
+
+(*  with assms show ?thesis by (simp add: foo.simps)*)
+
+qed
+
+
+
+(*
 lemma fmupd_to_rhs:
   "fmupd k x xm = y \<longleftrightarrow> y = fmupd k x xm"
   by auto
@@ -128,5 +178,5 @@ lemma class_roles_unique:
   apply auto[1]
   apply auto[1]
   done
-
+*)
 end

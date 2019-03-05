@@ -1,5 +1,5 @@
 (*  Title:       Safe OCL
-    Author:      Denis Nikiforov, February 2019
+    Author:      Denis Nikiforov, March 2019
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
@@ -131,6 +131,13 @@ lemma preserve_rtranclp':
    (\<And>y. S (f y) (g y)) \<Longrightarrow>
    R\<^sup>*\<^sup>* x y \<Longrightarrow> S\<^sup>*\<^sup>* (f x) (g y)"
   by (metis preserve_rtranclp rtranclp.rtrancl_into_rtrancl)
+
+lemma preserve_rtranclp'':
+  "(\<And>x y. R x y \<Longrightarrow> S (f x) (f y)) \<Longrightarrow>
+   (\<And>y. S (f y) (g y)) \<Longrightarrow>
+   R\<^sup>*\<^sup>* x y \<Longrightarrow> S\<^sup>+\<^sup>+ (f x) (g y)"
+  apply (rule_tac ?b="f y" in rtranclp_into_tranclp1, auto)
+  by (rule preserve_rtranclp, auto)
 
 subsection \<open>Transitive Closure Reflection\<close>
 

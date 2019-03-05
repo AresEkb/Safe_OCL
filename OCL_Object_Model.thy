@@ -1,5 +1,5 @@
 (*  Title:       Safe OCL
-    Author:      Denis Nikiforov, February 2019
+    Author:      Denis Nikiforov, March 2019
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
@@ -42,21 +42,26 @@ class ocl_object_model =
   and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
   and operations :: "('a type, 'a expr) oper_spec list"
   and literals :: "'a enum \<rightharpoonup>\<^sub>f elit fset"
-  assumes owned_association_end_det:
-  "owned_association_end' associations \<C> role from end\<^sub>1 \<Longrightarrow>
-   owned_association_end' associations \<C> role from end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
+  assumes assoc_end_min_less_eq_max:
+    "assoc |\<in>| fmdom associations \<Longrightarrow>
+     fmlookup associations assoc = Some ends \<Longrightarrow>
+     role |\<in>| fmdom ends  \<Longrightarrow>
+     fmlookup ends role = Some end \<Longrightarrow>
+     assoc_end_min end \<le> assoc_end_max end"
+  assumes class_roles_unique:
+    "class_roles associations \<C> from role end\<^sub>1 \<Longrightarrow>
+     class_roles associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
 begin
 
 interpretation base: object_model
-  apply standard
-  by (simp add: local.owned_association_end_det)
+  by standard (simp_all add: local.assoc_end_min_less_eq_max local.class_roles_unique)
 
 abbreviation "attribute \<equiv> base.attribute"
 abbreviation "association_end \<equiv> base.association_end"
 abbreviation "referred_by_association_class \<equiv> base.referred_by_association_class"
-abbreviation "find_association_class_end \<equiv> base.find_association_class_end"
-abbreviation "find_operation \<equiv> base.find_operation"
-abbreviation "find_static_operation \<equiv> base.find_static_operation"
+abbreviation "association_class_end \<equiv> base.association_class_end"
+abbreviation "operation \<equiv> base.operation"
+abbreviation "static_operation \<equiv> base.static_operation"
 abbreviation "has_literal \<equiv> base.has_literal"
 
 end

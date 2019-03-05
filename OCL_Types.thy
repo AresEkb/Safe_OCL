@@ -1,5 +1,5 @@
 (*  Title:       Safe OCL
-    Author:      Denis Nikiforov, February 2019
+    Author:      Denis Nikiforov, March 2019
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
@@ -159,124 +159,137 @@ begin
 definition "(<) \<equiv> subtype\<^sup>+\<^sup>+"
 definition "(\<le>) \<equiv> subtype\<^sup>*\<^sup>*"
 
-(*** Introduction Rules *****************************************************)
+(*** Strict Introduction Rules **********************************************)
 
-subsection \<open>Introduction Rules\<close>
+subsection \<open>Strict Introduction Rules\<close>
 
-lemma type_less_eq_x_Required_intro [intro]:
-  "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[1]"
-  unfolding less_eq_type_def less_eq_basic_type_def
-  by (simp) (rule preserve_rtranclp; auto)
+lemma type_less_x_Required_intro [intro]:
+  "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < \<sigma>[1]"
+  unfolding less_type_def less_basic_type_def
+  by simp (rule preserve_tranclp; auto)
 
-lemma type_less_eq_x_Optional_intro [intro]:
-  "\<tau> \<le> \<sigma>[1] \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
-  "\<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
-  unfolding less_eq_type_def less_eq_basic_type_def
-  apply auto
-  apply (rule rtranclp.rtrancl_into_rtrancl; auto)
-  by (rule preserve_rtranclp[of basic_subtype]; auto)
+lemma type_less_x_Optional_intro [intro]:
+  "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < \<sigma>[?]"
+  "\<tau> = \<rho>[?] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < \<sigma>[?]"
+  unfolding less_type_def less_basic_type_def less_eq_basic_type_def
+  apply simp_all
+  apply (rule preserve_rtranclp''; auto)
+  by (rule preserve_tranclp; auto)
 
-lemma type_less_eq_x_Collection_intro [intro]:
-  "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
-  "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
-  "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
-  "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
-  "\<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
+lemma type_less_x_Collection_intro [intro]:
+  "\<tau> = Collection \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Collection \<sigma>"
+  "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < Collection \<sigma>"
+  "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < Collection \<sigma>"
+  "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < Collection \<sigma>"
+  "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < Collection \<sigma>"
   unfolding less_type_def less_eq_type_def
   apply simp_all
-  apply (rule preserve_rtranclp'; auto)
-  apply (rule preserve_rtranclp'; auto)
-  apply (rule preserve_rtranclp'; auto)
-  apply (rule preserve_rtranclp'; auto)
-  by (rule preserve_rtranclp[of subtype]; auto)
+  apply (rule_tac ?f="Collection" in preserve_tranclp; auto)
+  apply (rule preserve_rtranclp''; auto)
+  apply (rule preserve_rtranclp''; auto)
+  apply (rule preserve_rtranclp''; auto)
+  by (rule preserve_rtranclp''; auto)
 
-lemma type_less_eq_x_Set_intro [intro]:
-  "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Set \<sigma>"
-  unfolding less_eq_type_def
-  by (simp) (rule preserve_rtranclp; auto)
+lemma type_less_x_Set_intro [intro]:
+  "\<tau> = Set \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Set \<sigma>"
+  unfolding less_type_def
+  by simp (rule preserve_tranclp; auto)
 
-lemma type_less_eq_x_OrderedSet_intro [intro]:
-  "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> OrderedSet \<sigma>"
-  unfolding less_eq_type_def
-  by (simp) (rule preserve_rtranclp; auto)
+lemma type_less_x_OrderedSet_intro [intro]:
+  "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < OrderedSet \<sigma>"
+  unfolding less_type_def
+  by simp (rule preserve_tranclp; auto)
 
-lemma type_less_eq_x_Bag_intro [intro]:
-  "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Bag \<sigma>"
-  unfolding less_eq_type_def
-  by (simp) (rule preserve_rtranclp; auto)
+lemma type_less_x_Bag_intro [intro]:
+  "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Bag \<sigma>"
+  unfolding less_type_def
+  by simp (rule preserve_tranclp; auto)
 
-lemma type_less_eq_x_Sequence_intro [intro]:
-  "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Sequence \<sigma>"
-  unfolding less_eq_type_def
-  by (simp) (rule preserve_rtranclp; auto)
+lemma type_less_x_Sequence_intro [intro]:
+  "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Sequence \<sigma>"
+  unfolding less_type_def
+  by simp (rule preserve_tranclp; auto)
 
 lemma fun_or_eq_refl [intro]:
   "reflp (\<lambda>x y. f x y \<or> x = y)"
   by (simp add: reflpI)
 
-lemma type_less_eq_x_Tuple_intro [intro]:
+lemma type_less_x_Tuple_intro [intro]:
   assumes "\<tau> = Tuple \<pi>"
-      and "subtuple (\<le>) \<pi> \<xi>"
-    shows "\<tau> \<le> Tuple \<xi>"
+      and "strict_subtuple (\<le>) \<pi> \<xi>"
+    shows "\<tau> < Tuple \<xi>"
 proof -
   have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>)\<^sup>*\<^sup>* \<pi> \<xi>"
     using assms(2) less_eq_type_def by auto
   hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
     by simp (rule subtuple_to_trancl; auto)
+  hence "(strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
+    by (simp add: tranclp_into_rtranclp)
+  hence "(strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
+    by (meson assms(2) rtranclpD)
   thus ?thesis
-    unfolding less_eq_type_def
+    unfolding less_type_def
     using assms(1) apply simp
-    by (rule preserve_rtranclp[of "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset> \<sigma> \<or> \<tau> = \<sigma>)"]; auto)
+    by (rule preserve_tranclp; auto)
 qed
 
-lemma type_less_eq_x_OclSuper_intro [intro]:
-  "\<tau> \<le> OclSuper"
-  unfolding less_eq_type_def
+lemma type_less_x_OclSuper_intro [intro]:
+  "\<tau> \<noteq> OclSuper \<Longrightarrow> \<tau> < OclSuper"
+  unfolding less_type_def
 proof (induct \<tau>)
   case OclSuper thus ?case by auto
 next
-  case (Required x)
-  have "subtype\<^sup>*\<^sup>* x[1] OclAny[1]" using less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* OclAny[1] OclAny[?]" by auto
-  also have "subtype\<^sup>*\<^sup>* OclAny[?] OclSuper" by auto
+  case (Required \<tau>)
+  have "subtype\<^sup>*\<^sup>* \<tau>[1] OclAny[1]"
+    apply (rule_tac ?f="Required" in preserve_rtranclp[of basic_subtype], auto)
+    by (metis less_eq_basic_type_def type_less_eq_x_OclAny_intro)
+  also have "subtype\<^sup>+\<^sup>+ OclAny[1] OclAny[?]" by auto
+  also have "subtype\<^sup>+\<^sup>+ OclAny[?] OclSuper" by auto
   finally show ?case by auto
 next
-  case (Optional x)
-  have "subtype\<^sup>*\<^sup>* x[?] OclAny[?]" using less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* OclAny[?] OclSuper" by auto
+  case (Optional \<tau>)
+  have "subtype\<^sup>*\<^sup>* \<tau>[?] OclAny[?]"
+    apply (rule_tac ?f="Optional" in preserve_rtranclp[of basic_subtype], auto)
+    by (metis less_eq_basic_type_def type_less_eq_x_OclAny_intro)
+  also have "subtype\<^sup>+\<^sup>+ OclAny[?] OclSuper" by auto
   finally show ?case by auto
 next
   case (Collection \<tau>)
   have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    using Collection.hyps less_eq_type_def by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
+    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
+    using Collection.hyps by force
+  also have "subtype\<^sup>+\<^sup>+ (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (Set \<tau>)
-  have "subtype\<^sup>*\<^sup>* (Set \<tau>) (Collection \<tau>)" by auto
+  have "subtype\<^sup>+\<^sup>+ (Set \<tau>) (Collection \<tau>)" by auto
   also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    using Set.hyps less_eq_type_def by auto
+    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
+    using Set.hyps by force
   also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (OrderedSet \<tau>)
-  have "subtype\<^sup>*\<^sup>* (OrderedSet \<tau>) (Collection \<tau>)" by auto
+  have "subtype\<^sup>+\<^sup>+ (OrderedSet \<tau>) (Collection \<tau>)" by auto
   also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    using OrderedSet.hyps less_eq_type_def by auto
+    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
+    using OrderedSet.hyps by force
   also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (Bag \<tau>)
-  have "subtype\<^sup>*\<^sup>* (Bag \<tau>) (Collection \<tau>)" by auto
+  have "subtype\<^sup>+\<^sup>+ (Bag \<tau>) (Collection \<tau>)" by auto
   also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    using Bag.hyps less_eq_type_def by auto
+    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
+    using Bag.hyps by force
   also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
   case (Sequence \<tau>)
-  have "subtype\<^sup>*\<^sup>* (Sequence \<tau>) (Collection \<tau>)" by auto
+  have "subtype\<^sup>+\<^sup>+ (Sequence \<tau>) (Collection \<tau>)" by auto
   also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    using Sequence.hyps less_eq_type_def by auto
+    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
+    using Sequence.hyps by force
   also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
   finally show ?case by auto
 next
@@ -286,11 +299,6 @@ qed
 (*** Strict Elimination Rules ***********************************************)
 
 subsection \<open>Strict Elimination Rules\<close>
-
-lemma type_less_x_OclVoid [elim!]:
-  "\<tau> < OclVoid \<Longrightarrow> P"
-  unfolding less_type_def
-  using tranclp.cases by fastforce
 
 lemma type_less_x_Required [elim!]:
   assumes "\<tau> < \<sigma>[1]"
@@ -322,7 +330,6 @@ proof -
     unfolding less_type_def less_eq_basic_type_def
     apply (drule tranclpD, auto)
     apply (erule subtype.cases, auto)
-    sorry
   moreover have "\<And>\<tau> \<sigma>. \<tau>[?] < \<sigma>[?] \<Longrightarrow> \<tau> < \<sigma>"
     unfolding less_type_def less_basic_type_def
     by (rule reflect_tranclp; auto)
@@ -343,11 +350,11 @@ lemma type_less_x_Optional [elim!]:
 
 lemma type_less_x_Collection [elim!]:
   "\<tau> < Collection \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = Collection \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
    (\<And>\<rho>. \<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
    (\<And>\<rho>. \<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = Collection \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+   (\<And>\<rho>. \<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def
   apply (induct rule: converse_tranclp_induct)
   apply (metis (mono_tags) Nitpick.rtranclp_unfold
@@ -417,7 +424,7 @@ proof -
 qed
 
 text \<open>
-  We'll be able to remove the acyclicity assumption only after
+  We will be able to remove the acyclicity assumption only after
   we prove that the subtype relation is acyclic.\<close>
 
 lemma type_less_x_Tuple':
@@ -494,10 +501,54 @@ instance
   apply (simp add: less_le_not_le_type)
   apply (simp)
   using order_trans_type apply blast
-  apply (simp add: antisym_type)
-  done
+  by (simp add: antisym_type)
 
 end
+
+(*** Non-strict Introduction Rules ******************************************)
+
+subsection \<open>Non-strict Introduction Rules\<close>
+
+lemma type_less_eq_x_Required_intro [intro]:
+  "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[1]"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Optional_intro [intro]:
+  "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
+  "\<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[?]"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Collection_intro [intro]:
+  "\<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
+  "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
+  "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
+  "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
+  "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Set_intro [intro]:
+  "\<tau> = Set \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Set \<sigma>"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_OrderedSet_intro [intro]:
+  "\<tau> = OrderedSet \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> OrderedSet \<sigma>"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Bag_intro [intro]:
+  "\<tau> = Bag \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Bag \<sigma>"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Sequence_intro [intro]:
+  "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Sequence \<sigma>"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Tuple_intro [intro]:
+  "\<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
+  using dual_order.strict_iff_order by blast
+
+lemma type_less_eq_x_OclSuper_intro [intro]:
+  "\<tau> \<le> OclSuper"
+  unfolding dual_order.order_iff_strict by auto
 
 (*** Non-strict Elimination Rules *******************************************)
 
@@ -616,9 +667,8 @@ lemma sup_ge1_type:
   for \<tau> \<sigma> :: "'a type"
 proof (induct \<tau> arbitrary: \<sigma>)
   case OclSuper show ?case by simp
-  case (Required x) show ?case by (induct \<sigma>; auto simp add:
-        type_less_eq_x_Optional_intro(2) type_less_eq_x_Required_intro)
-  case (Optional x) show ?case by (induct \<sigma>; auto)
+  case (Required \<tau>) show ?case by (induct \<sigma>; auto)
+  case (Optional \<tau>) show ?case by (induct \<sigma>; auto)
   case (Collection \<tau>) thus ?case by (induct \<sigma>; auto)
   case (Set \<tau>) thus ?case by (induct \<sigma>; auto)
   case (OrderedSet \<tau>) thus ?case by (induct \<sigma>; auto)
@@ -663,8 +713,7 @@ next
 next
   case (Optional x) show ?case
     apply (insert Optional)
-    apply (erule type_less_eq_x_Optional; erule type_less_eq_x_Optional; auto)
-    using le_sup_iff by blast
+    by (erule type_less_eq_x_Optional; erule type_less_eq_x_Optional; auto)
 next
   case (Collection \<rho>) show ?case
     apply (insert Collection)
@@ -849,86 +898,73 @@ termination
   by (relation "measure (\<lambda>(xs, ys). size ys)";
       auto simp add: elem_le_ffold' fmran'I)
 
-lemma less_eq_type_code [code_abbrev, simp]:
-  "\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma>"
-proof
-  show "\<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>"
+print_theorems
+
+lemma less_type_code [code]:
+  "(<) = subtype_fun"
+proof (intro ext iffI)
+  fix \<tau> \<sigma> :: "'a type"
+  show "\<tau> < \<sigma> \<Longrightarrow> subtype_fun \<tau> \<sigma>"
+  proof (induct \<tau> arbitrary: \<sigma>)
+    case OclSuper thus ?case by (cases \<sigma>; auto)
+  next
+    case (Required \<tau>) thus ?case by (cases \<sigma>; auto)
+  next
+    case (Optional \<tau>) thus ?case by (cases \<sigma>; auto)
+  next
+    case (Collection \<sigma>) thus ?case by (cases \<sigma>; auto)
+  next
+    case (Set \<sigma>) thus ?case by (cases \<sigma>; auto)
+  next
+    case (OrderedSet \<sigma>) thus ?case by (cases \<sigma>; auto)
+  next
+    case (Bag \<sigma>) thus ?case by (cases \<sigma>; auto)
+  next
+    case (Sequence \<sigma>) thus ?case by (cases \<sigma>; auto)
+  next
+    case (Tuple \<xi>) thus ?case apply (cases \<sigma>; auto)
+      by (smt order.not_eq_order_implies_strict subtuple_mono)
+  qed
+  show "subtype_fun \<tau> \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
   proof (induct \<sigma> arbitrary: \<tau>)
-    case OclSuper thus ?case by auto
+    case OclSuper thus ?case by (cases \<sigma>; auto)
   next
-    case (Required x) thus ?case by (auto) (erule subtype_fun.elims; auto)
+    case (Required \<sigma>) show ?case
+      by (insert Required) (erule subtype_fun.elims; auto)
   next
-    case (Optional x) thus ?case
-      apply (auto)
-      apply (erule subtype_fun.elims, auto)
+    case (Optional \<sigma>) show ?case
+      apply (insert Optional)
+      apply (erule subtype_fun.elims; auto)
       using dual_order.order_iff_strict by auto
   next
-    case (Collection \<sigma>) thus ?case by (auto) (erule subtype_fun.elims;
-       auto simp add: type_less_eq_x_Collection_intro)
-  next
-    case (Set \<sigma>) thus ?case by (auto) (erule subtype_fun.elims; auto)
-  next
-    case (OrderedSet \<sigma>) thus ?case by (auto) (erule subtype_fun.elims; auto)
-  next
-    case (Bag \<sigma>) thus ?case by (auto) (erule subtype_fun.elims; auto)
-  next
-    case (Sequence \<sigma>) thus ?case by (auto) (erule subtype_fun.elims; auto)
-  next
-    case (Tuple x) thus ?case
-      apply (auto)
+    case (Collection \<sigma>) show ?case
+      apply (insert Collection)
       apply (erule subtype_fun.elims; auto)
-      by (metis (mono_tags, lifting) subtuple_mono type_less_eq_x_Tuple_intro)
-  qed
-  show "\<tau> \<le> \<sigma> \<Longrightarrow> \<tau> = \<sigma> \<or> subtype_fun \<tau> \<sigma>"
-  proof (induct \<sigma> arbitrary: \<tau>)
-    case OclSuper thus ?case by (cases \<tau>, auto)
+      using order.strict_implies_order by auto
   next
-    case (Required x) thus ?case
-      apply (insert Required)
-      by (erule type_less_eq_x_Required; auto simp add: dual_order.order_iff_strict)
+    case (Set \<sigma>) show ?case
+      by (insert Set) (erule subtype_fun.elims; auto)
   next
-    case (Optional x) thus ?case
-      apply (insert Optional)
-      by (erule type_less_eq_x_Optional; auto simp add: dual_order.order_iff_strict)
+    case (OrderedSet \<sigma>) show ?case
+      by (insert OrderedSet) (erule subtype_fun.elims; auto)
   next
-    case (Collection \<sigma>) thus ?case
-      by (insert Collection) (erule type_less_eq_x_Collection; auto)
+    case (Bag \<sigma>) show ?case
+      by (insert Bag) (erule subtype_fun.elims; auto)
   next
-    case (Set \<sigma>) thus ?case
-      by (insert Set) (erule type_less_eq_x_Set; auto)
+    case (Sequence \<sigma>) show ?case
+      by (insert Sequence) (erule subtype_fun.elims; auto)
   next
-    case (OrderedSet \<sigma>) thus ?case
-      by (insert OrderedSet) (erule type_less_eq_x_OrderedSet; auto)
-  next
-    case (Bag \<sigma>) thus ?case
-      by (insert Bag) (erule type_less_eq_x_Bag; auto)
-  next
-    case (Sequence \<sigma>) thus ?case
-      by (insert Sequence) (erule type_less_eq_x_Sequence; auto)
-  next
-    case (Tuple \<xi>)
-    have subtuple_simp:
-      "\<And>\<pi>. subtuple (\<le>) \<pi> \<xi> \<longrightarrow> subtuple (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi>"
-      apply (rule subtuple_mono)
-      using Tuple.hyps by auto
-    show ?case
+    case (Tuple \<xi>) show ?case
       apply (insert Tuple)
-      apply (erule type_less_eq_x_Tuple; auto)
-      by (simp add: subtuple_simp)
+      apply (erule subtype_fun.elims; auto)
+      by (smt dual_order.order_iff_strict subtuple_mono type_less_x_Tuple_intro)
   qed
 qed
 
-lemma subtype_fun_irrefl:
-  "\<not> subtype_fun \<tau> \<tau>"
-  by (induct \<tau>, auto)
-
-lemma less_type_code [code_abbrev, simp]:
-  "subtype_fun \<tau> \<sigma> \<longleftrightarrow> \<tau> < \<sigma>"
-  unfolding less_le
-  apply auto
-  using less_eq_type_code apply blast
-  apply (erule subtype_fun.elims; auto simp add: subtype_fun_irrefl)
-  using less_eq_type_code by blast
+lemma less_eq_type_code [code]:
+  "(\<le>) = (\<lambda>x y. subtype_fun x y \<or> x = y)"
+  unfolding dual_order.order_iff_strict less_type_code
+  by auto
 
 code_pred element_type .
 code_pred update_element_type .

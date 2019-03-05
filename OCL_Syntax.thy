@@ -1,5 +1,5 @@
 (*  Title:       Safe OCL
-    Author:      Denis Nikiforov, February 2019
+    Author:      Denis Nikiforov, March 2019
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
@@ -174,8 +174,8 @@ and 'a collection_literal_part_expr =
 and 'a call_expr =
   TypeOperation typeop (type : "'a type")
 | Attribute attr
-| AssociationEnd role (from_role : "role option")
-| AssociationClass 'a (from_role : "role option")
+| AssociationEnd (from_role : "role option") role
+| AssociationClass (from_role : "role option") 'a
 | AssociationClassEnd role
 | Operation op (args : "'a expr list")
 | TupleElement telem
@@ -195,10 +195,10 @@ abbreviation "TypeOperationCall src k op ty \<equiv>
   Call src k (TypeOperation op ty)"
 abbreviation "AttributeCall src k attr \<equiv>
   Call src k (Attribute attr)"
-abbreviation "AssociationEndCall src k role from \<equiv>
-  Call src k (AssociationEnd role from)"
-abbreviation "AssociationClassCall src k cls from \<equiv>
-  Call src k (AssociationClass cls from)"
+abbreviation "AssociationEndCall src k from role \<equiv>
+  Call src k (AssociationEnd from role)"
+abbreviation "AssociationClassCall src k from cls \<equiv>
+  Call src k (AssociationClass from cls)"
 abbreviation "AssociationClassEndCall src k role \<equiv>
   Call src k (AssociationClassEnd role)"
 abbreviation "OperationCall src k op as \<equiv>

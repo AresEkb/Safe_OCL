@@ -1,5 +1,5 @@
 (*  Title:       Safe OCL
-    Author:      Denis Nikiforov, February 2019
+    Author:      Denis Nikiforov, March 2019
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
@@ -259,17 +259,17 @@ inductive collection_unop_type where
 
 | "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
-| "element_type \<tau> \<sigma> \<Longrightarrow> find_operation \<sigma> STR ''max'' [\<sigma>] = Some oper \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''max'' [\<sigma>] oper \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
 
 | "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMinOp \<tau> \<sigma>"
-| "element_type \<tau> \<sigma> \<Longrightarrow> find_operation \<sigma> STR ''min'' [\<sigma>] = Some oper \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''min'' [\<sigma>] oper \<Longrightarrow>
    collection_unop_type CollectionMinOp \<tau> \<sigma>"
 
 | "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type SumOp \<tau> \<sigma>"
-| "element_type \<tau> \<sigma> \<Longrightarrow> find_operation \<sigma> STR ''+'' [\<sigma>] = Some oper \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''+'' [\<sigma>] oper \<Longrightarrow>
    collection_unop_type SumOp \<tau> \<sigma>"
 
 | "element_type \<tau> \<sigma> \<Longrightarrow>
@@ -442,7 +442,7 @@ inductive op_type where
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>"
 | "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>"
-| "find_operation \<tau> op \<pi> = Some oper \<Longrightarrow>
+| "operation \<tau> op \<pi> oper \<Longrightarrow>
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
 (*** Determinism ************************************************************)
@@ -551,6 +551,9 @@ lemma op_type_det:
   apply (erule op_type.cases; simp)
   done
 
+(* TODO: Remove *)
+code_pred [show_modes] op_type .
+
 (*** Expressions Typing *****************************************************)
 
 section \<open>Expressions Typing\<close>
@@ -658,7 +661,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
 |StaticOperationCallT:
   "\<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
-   find_static_operation \<tau> op \<pi> = Some oper \<Longrightarrow>
+   static_operation \<tau> op \<pi> oper \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : oper_type oper"
 
 |TypeOperationCallT:
@@ -672,15 +675,15 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<tau>"
 |AssociationEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   association_end \<C> role from end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall role from : assoc_end_type end"
+   association_end \<C> from role \<D> end \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : assoc_end_type end"
 |AssociationClassCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   referred_by_association_class \<C> \<A> from \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall \<A> from : class_assoc_type \<A>"
+   referred_by_association_class \<C> from \<A> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : class_assoc_type \<A>"
 |AssociationClassEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   find_association_class_end \<A> role = Some end \<Longrightarrow>
+   association_class_end \<A> role end \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : class_assoc_end_type end"
 |OperationCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
@@ -880,21 +883,6 @@ inductive_simps ExprListConsTS [simp]: "\<Gamma> \<turnstile>\<^sub>L x # xs : \
 
 section \<open>Determinism\<close>
 
-lemma owned_attribute'_det:
-  "owned_attribute' attrs \<C> attr \<tau> \<Longrightarrow>
-   owned_attribute' attrs \<C> attr \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  by (elim owned_attribute'.cases; auto)
-
-lemma attribute_det:
-  "attribute \<C> attr \<D> \<tau> \<Longrightarrow>
-   attribute \<C> attr \<E> \<sigma> \<Longrightarrow> \<D> = \<E> \<and> \<tau> = \<sigma>"
-  by (elim attribute'.cases; auto simp add: owned_attribute'_det)
-
-lemma association_end_det:
-  "association_end \<C> role from end\<^sub>1 \<Longrightarrow>
-   association_end \<C> role from end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
-  by (elim association_end'.cases; auto simp add: owned_association_end_det)
-
 lemma
   typing_det:
     "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
@@ -973,12 +961,13 @@ next
   case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
     apply (insert AttributeCallT.prems)
     apply (erule AttributeCallTE)
-    using AttributeCallT.hyps attribute_det by blast
+    using AttributeCallT.hyps attribute_det by fastforce
 next
-  case (AssociationEndCallT \<Gamma> src \<tau> \<C> role "end") show ?case
+  case (AssociationEndCallT \<Gamma> src \<C> "end" "from" role \<D>) show ?case
     apply (insert AssociationEndCallT.prems)
     apply (erule AssociationEndCallTE)
-    using AssociationEndCallT.hyps association_end_det by blast
+    by (metis AssociationEndCallT.hyps(2) AssociationEndCallT.hyps(3)
+        basic_type.inject(1) snd_conv type.inject(1))
 next
   case (AssociationClassCallT \<Gamma> src \<tau> \<C> \<A> "from") thus ?case by blast
 next
@@ -1074,6 +1063,9 @@ qed
 
 section \<open>Code Setup\<close>
 
-code_pred [show_modes] typing .
+code_pred [show_modes] op_type .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] iterator_typing .
 
 end
