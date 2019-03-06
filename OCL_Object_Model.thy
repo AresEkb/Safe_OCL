@@ -37,11 +37,12 @@ definition "oper_type op \<equiv>
       (params @ [(STR ''result'', oper_result op, Out)])))"
 
 class ocl_object_model =
-  fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
-  and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
-  and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
-  and operations :: "('a type, 'a expr) oper_spec list"
-  and literals :: "'a enum \<rightharpoonup>\<^sub>f elit fset"
+  fixes classes :: "'a :: semilattice_sup fset"
+    and attributes :: "'a \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
+    and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
+    and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
+    and operations :: "('a type, 'a expr) oper_spec list"
+    and literals :: "'a enum \<rightharpoonup>\<^sub>f elit fset"
   assumes assoc_end_min_less_eq_max:
     "assoc |\<in>| fmdom associations \<Longrightarrow>
      fmlookup associations assoc = Some ends \<Longrightarrow>
@@ -49,8 +50,8 @@ class ocl_object_model =
      fmlookup ends role = Some end \<Longrightarrow>
      assoc_end_min end \<le> assoc_end_max end"
   assumes class_roles_unique:
-    "class_roles associations \<C> from role end\<^sub>1 \<Longrightarrow>
-     class_roles associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
+    "class_roles classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
+     class_roles classes associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
 begin
 
 interpretation base: object_model

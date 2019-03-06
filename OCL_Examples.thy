@@ -158,6 +158,9 @@ section \<open>Object Model\<close>
 instantiation classes1 :: ocl_object_model
 begin
 
+definition "classes_classes1 \<equiv>
+  {|Object, Person, Employee, Customer, Project, Task, Sprint|}"
+
 definition "attributes_classes1 \<equiv> fmap_of_list [
   (Person, fmap_of_list [
     (STR ''name'', String[1] :: classes1 type)]),
@@ -241,15 +244,15 @@ lemma assoc_end_min_less_eq_max:
 
 inductive class_roles_non_unique where
   "class_roles_non_unique" if 
-  "class_roles assocs \<C> from role end\<^sub>1"
-  "class_roles assocs \<C> from role end\<^sub>2"
+  "class_roles classes assocs \<C> from role end\<^sub>1"
+  "class_roles classes assocs \<C> from role end\<^sub>2"
   "end\<^sub>1 \<noteq> end\<^sub>2"
 
 code_pred class_roles_non_unique .
 
 lemma class_roles_unique:
-  assumes "class_roles assocs \<C> from role end\<^sub>1"
-      and "class_roles assocs \<C> from role end\<^sub>2"
+  assumes "class_roles classes assocs \<C> from role end\<^sub>1"
+      and "class_roles classes assocs \<C> from role end\<^sub>2"
     shows "end\<^sub>1 = end\<^sub>2"
 proof -
   have "\<not> class_roles_non_unique" by eval
@@ -268,209 +271,6 @@ end
 
 
 values "{x. \<Gamma>\<^sub>0 \<turnstile>\<^sub>E EnumLiteral STR ''E1'' STR ''A'' : x}"
-
-thm equal_type_inst.equal_type
-
-term equal_type_inst.equal_type
-value "equal_type_inst.equal_type (Boolean[1] :: classes1 type) Boolean[1]"
-
-
-
-datatype ty = A | B | C
-
-inductive test where
-  "test A B"
-| "test B B"
-| "test B C"
-
-code_pred [show_modes] test .
-
-inductive test_not_uniq where
-  "test x z \<Longrightarrow>
-   y \<noteq> z \<Longrightarrow>
-   test_not_uniq x y"
-
-inductive test_uniq where
-  "test x y \<Longrightarrow>
-   \<not> test_not_uniq x y \<Longrightarrow>
-   test_uniq x y"
-
-code_pred [show_modes] test_uniq .
-
-inductive test_uniq where
-  "test x y \<Longrightarrow>
-   (\<forall>z. test x z \<longrightarrow> y = z) \<Longrightarrow>
-   test_uniq x y"
-
-code_pred [inductify, show_modes] test_uniq .
-
-thm test_uniq_aux.equation
-thm test_uniq.equation
-
-values "{x. test_uniq A x}"
-values "{x. test_uniq B x}"
-values "{x. test_uniq C x}"
-
-values "{x. test B x}"
-value "let ys = Predicate.set_of_pred (test_i_o A) in if card ys = 1 then Some (the_elem ys) else None"
-value "let ys = Predicate.set_of_pred (test_i_o B) in if card ys = 1 then Some (the_elem ys) else None"
-value "let ys = Predicate.set_of_pred (test_i_o B) in if card ys = 1 then the_elem ys else undefined"
-
-lemma test_uniq_code_predI [code_pred_intro]:
-  "(let ys = Predicate.set_of_pred (test_i_o A) in
-   if card ys = 1 then Some (the_elem ys) else None) = Some y \<Longrightarrow>
-   test_uniq x y"
-  apply (rule test_uniq.intros)
-  unfolding Let_def
-  apply (auto simp add: test_i_o_def split: if_splits)
-
-term set_option
-thm test_uniq.equation
-term Predicate.bind
-term Predicate.singleton
-term Predicate.if_pred
-(*
-lemma test_uniq_code_predI [code_pred_intro]:
-  "Predicate.singleton (\<lambda>_. None) (Predicate.map Some (test_i_o x)) = Some y \<Longrightarrow>
-   test_uniq x y"
-  apply (rule test_uniq.intros, auto simp add: test_i_o_def)
-
-lemma test_uniq_code_predI [code_pred_intro]:
-  "Predicate.singleton (\<lambda>_. None) (Predicate.map Some (test_i_o x)) = Some y \<Longrightarrow>
-   test_uniq x y"
-  apply (rule test_uniq.intros, auto simp add: test_i_o_def)
-*)
-term Predicate.eval
-term Predicate.the
-term Predicate.singleton
-term Predicate.map
-term Collect
-term Predicate.set_of_pred
-term Predicate.set_of_seq
-term "test_i_o B"
-
-values "{x. x \<in> Predicate.set_of_pred (test_i_o B)}"
-
-
-inductive test2 where
-  "test_uniq x y \<Longrightarrow>
-   test2 x y"
-
-code_pred [show_modes] test2 .
-
-
-values "{x. test2 A x}"
-values "{x. test2 B x}"
-values "{x. test2 C x}"
-
-lemma test_ex_code [code_pred_intro]:
-  "Predicate.the (test_i_o x) = y \<Longrightarrow>
-   test_ex x y"
-  by (rule test_ex.intros) (simp add: Predicate.the_def test_i_o_def)
-
-code_pred [show_modes] test_ex
-  by (metis test_ex.cases test_ex_code)
-
-inductive test2 where
-  "test_ex x y \<Longrightarrow>
-   test2 x y"
-
-code_pred [show_modes] test2 .
-
-lemma q:
-  "test2 C x \<Longrightarrow> False"
-  apply auto
-  apply (elim test2.cases test_ex.cases)
-  apply auto
-
-
-values "{x. test2 C x}"
-
-
-
-
-
-definition "test_ex x y \<equiv> The (\<lambda>y. test x y) = y"
-
-lemma test_ex_code [code_pred_intro]:
-  "Predicate.the (test_i_o x) = y \<Longrightarrow>
-   test_ex x y"
-  by (simp add: Predicate.the_def test_i_o_def test_ex_def)
-
-inductive test2 where
-  "test_ex x y \<Longrightarrow>
-   test2 x y"
-
-code_pred [show_modes] test2 .
-
-values "{x. test2 A x}"
-
-
-
-inductive test_ex where
-  "The (\<lambda>y. test x y) = y \<Longrightarrow>
-   test_ex x y"
-
-code_pred [show_modes] test .
-
-lemma test_ex_code [code_pred_intro]:
-  "Predicate.the (test_i_o x) = y \<Longrightarrow>
-   test_ex x y"
-  by (rule test_ex.intros) (simp add: Predicate.the_def test_i_o_def)
-
-code_pred [show_modes] test_ex
-  by (metis test_ex.cases test_ex_code)
-
-inductive test2 where
-  "test_ex x y \<Longrightarrow>
-   test2 x y"
-
-code_pred [show_modes] test2 .
-
-values "{x. test2 A x}"
-
-thm test_ex.equation
-
-code_pred [show_modes] test .
-
-term "test_i_o"
-term "Predicate.singleton (\<lambda>_. undefined)"
-term Predicate.the
-
-
-lemma q [code_pred_intro]:
-  "Predicate.the (test_i_o x) = y \<Longrightarrow>
-   The (\<lambda>y. test x y) = y"
-  unfolding Predicate.the_def
-  by (auto simp add: test_i_o_def)
-
-(*
-  HOL.theI': \<exists>!x. ?P x \<Longrightarrow> ?P (THE x. ?P x)
-  Wfrec.theI_unique: \<exists>!x. ?P x \<Longrightarrow> ?P ?x = (?x = The ?P)
-  Predicate.the_eqI: (THE x. pred.eval ?P x) = ?x \<Longrightarrow> Predicate.the ?P = ?x
-*)
-
-thm attribute'.equation
-
-code_pred [show_modes] test2 .
-
-values "{x. test2 A x}"
-
-(*
-Wellsortedness error
-(in code equation test2_i_o ?xa \<equiv>
-                  Predicate.bind (Predicate.single ?xa)
-                   (\<lambda>xa. Predicate.bind (eq_o_i (The (test xa))) Predicate.single),
-*)
-inductive test3 where
-  "test x y \<Longrightarrow>
-   test3 x y"
-
-code_pred [show_modes] test3 .
-
-values "{x. test3 A x}"
-
-
 
 
 subsection \<open>Positive Cases\<close>

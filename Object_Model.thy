@@ -8,6 +8,20 @@ theory Object_Model
   imports "HOL-Library.Extended_Nat" Finite_Map_Ext
 begin
 
+
+
+(* TODO: Remove  *)
+lemma fmember_code_predI [code_pred_intro]:
+  "x |\<in>| xs" if "Predicate_Compile.contains (fset xs) x"
+  using that by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
+
+code_pred fmember
+  by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
+
+
+
+
+
 text \<open>
   The section defines a very simplified object model.
   It should define more constraints.\<close>
@@ -57,18 +71,32 @@ text \<open>
   The following predicates allows one to access class attributes.\<close>
 
 inductive owned_attribute' where
- "fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
+ "\<C> |\<in>| fmdom attributes \<Longrightarrow>
+  fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
   fmlookup attrs\<^sub>\<C> attr = Some \<tau> \<Longrightarrow>
   owned_attribute' attributes \<C> attr \<tau>"
 
-inductive class_has_attribute' where
- "owned_attribute' attributes \<C> attr \<tau> \<Longrightarrow>
-  class_has_attribute' attributes \<C> attr"
+inductive attribute_not_closest where
+  "owned_attribute' attributes \<D>' attr \<tau>' \<Longrightarrow>
+   \<C> \<le> \<D>' \<Longrightarrow>
+   \<D>' < \<D> \<Longrightarrow>
+   attribute_not_closest attributes \<C> attr \<D> \<tau>"
 
-inductive attribute' where
- "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> class_has_attribute' attributes \<D> attr) = \<D> \<Longrightarrow>
-  owned_attribute' attributes \<D> attr \<tau> \<Longrightarrow>
-  attribute' attributes \<C> attr \<D> \<tau>"
+inductive closest_attribute where
+  "owned_attribute' attributes \<D> attr \<tau> \<Longrightarrow>
+   \<C> \<le> \<D> \<Longrightarrow>
+   \<not> attribute_not_closest attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   closest_attribute attributes \<C> attr \<D> \<tau>"
+
+inductive closest_attribute_not_unique where
+  "closest_attribute attributes \<C> attr \<D>' \<tau>' \<Longrightarrow>
+   \<D> \<noteq> \<D>' \<or> \<tau> \<noteq> \<tau>' \<Longrightarrow>
+   closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
+
+inductive unique_closest_attribute where
+  "closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   \<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   unique_closest_attribute attributes \<C> attr \<D> \<tau>"
 
 text \<open>
   The following predicates allows one to access association ends.\<close>
@@ -80,38 +108,42 @@ inductive role_refer_class where
    role_refer_class ends \<C> role"
 
 inductive class_roles where
-  "assoc |\<in>| fmdom associations \<Longrightarrow>
+  "\<C> |\<in>| classes \<Longrightarrow>
+   assoc |\<in>| fmdom associations \<Longrightarrow>
    fmlookup associations assoc = Some ends \<Longrightarrow>
    role_refer_class ends \<C> from \<Longrightarrow>
    role |\<in>| fmdom ends \<Longrightarrow>
    fmlookup ends role = Some end \<Longrightarrow>
    role \<noteq> from \<Longrightarrow>
-   class_roles associations \<C> from role end"
+   class_roles classes associations \<C> from role end"
 
 inductive owned_association_end' where
-  "class_roles associations \<C> from role end \<Longrightarrow>
-   owned_association_end' associations \<C> None role end"
-| "class_roles associations \<C> from role end \<Longrightarrow>
-   owned_association_end' associations \<C> (Some from) role end"
+  "class_roles classes associations \<C> from role end \<Longrightarrow>
+   owned_association_end' classes associations \<C> None role end"
+| "class_roles classes associations \<C> from role end \<Longrightarrow>
+   owned_association_end' classes associations \<C> (Some from) role end"
 
-inductive class_is_association_source' where
-  "owned_association_end' associations \<C> from role end \<Longrightarrow>
-   class_is_association_source' associations \<C> from role"
+inductive association_end_not_closest where
+  "owned_association_end' classes associations \<D>' from role end' \<Longrightarrow>
+   \<C> \<le> \<D>' \<Longrightarrow>
+   \<D>' < \<D> \<Longrightarrow>
+   association_end_not_closest classes associations \<C> from role \<D> end"
 
-inductive association_end' where
-  "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> class_is_association_source' associations \<D> from role) = \<D> \<Longrightarrow>
-   owned_association_end' associations \<D> from role end \<Longrightarrow>
-   association_end' associations \<C> from role \<D> end"
+inductive closest_association_end where
+  "owned_association_end' classes associations \<D> from role end \<Longrightarrow>
+   \<C> \<le> \<D> \<Longrightarrow>
+   \<not> association_end_not_closest classes associations \<C> from role \<D> end \<Longrightarrow>
+   closest_association_end classes associations \<C> from role \<D> end"
 
-inductive association_end_not_unique where
-  "association_end' associations \<C> from role \<D>' end' \<Longrightarrow>
+inductive closest_association_end_not_unique where
+  "closest_association_end classes associations \<C> from role \<D>' end' \<Longrightarrow>
    \<D> \<noteq> \<D>' \<or> end \<noteq> end' \<Longrightarrow>
-   association_end_not_unique associations \<C> from role \<D> end"
+   closest_association_end_not_unique classes associations \<C> from role \<D> end"
 
-inductive unique_association_end where
-  "association_end' associations \<C> from role \<D> end \<Longrightarrow>
-   \<not> association_end_not_unique associations \<C> from role \<D> end \<Longrightarrow>
-   unique_association_end associations \<C> from role \<D> end"
+inductive unique_closest_association_end where
+  "closest_association_end classes associations \<C> from role \<D> end \<Longrightarrow>
+   \<not> closest_association_end_not_unique classes associations \<C> from role \<D> end \<Longrightarrow>
+   unique_closest_association_end classes associations \<C> from role \<D> end"
 
 text \<open>
   The following predicates allows one to access association classes.\<close>
@@ -127,11 +159,34 @@ inductive referred_by_association_class'' where
    referred_by_association_class'' association_classes associations \<C> None \<A>"
 | "referred_by_association_class''' association_classes associations \<C> from \<A> \<Longrightarrow>
    referred_by_association_class'' association_classes associations \<C> (Some from) \<A>"
-
+(*
 inductive referred_by_association_class' where
   "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> referred_by_association_class''
       association_classes associations \<D> from \<A>) = \<D> \<Longrightarrow>
    referred_by_association_class' association_classes associations \<C> from \<A>"
+*)
+
+inductive association_class_not_closest where
+  "owned_association_class' classes associations \<D>' from role end' \<Longrightarrow>
+   \<C> \<le> \<D>' \<Longrightarrow>
+   \<D>' < \<D> \<Longrightarrow>
+   association_class_not_closest classes associations \<C> from role \<D> end"
+
+inductive closest_association_class where
+  "owned_association_class' classes associations \<D> from role end \<Longrightarrow>
+   \<C> \<le> \<D> \<Longrightarrow>
+   \<not> association_class_not_closest classes associations \<C> from role \<D> end \<Longrightarrow>
+   closest_association_class classes associations \<C> from role \<D> end"
+
+inductive closest_association_class_not_unique where
+  "closest_association_class classes associations \<C> from role \<D>' end' \<Longrightarrow>
+   \<D> \<noteq> \<D>' \<or> end \<noteq> end' \<Longrightarrow>
+   closest_association_class_not_unique classes associations \<C> from role \<D> end"
+
+inductive unique_closest_association_class where
+  "closest_association_class classes associations \<C> from role \<D> end \<Longrightarrow>
+   \<not> closest_association_class_not_unique classes associations \<C> from role \<D> end \<Longrightarrow>
+   unique_closest_association_class classes associations \<C> from role \<D> end"
 
 text \<open>
   The following predicates allows one to access ends of association classes.\<close>
@@ -205,7 +260,8 @@ inductive has_literal' where
 subsection \<open>Definition\<close>
 
 locale object_model =
-  fixes attributes :: "'a :: semilattice_sup \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"
+  fixes classes :: "'a :: semilattice_sup fset"
+    and attributes :: "'a \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 't :: order"
     and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
     and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
     and operations :: "('t, 'e) oper_spec list"
@@ -217,12 +273,12 @@ locale object_model =
      fmlookup ends role = Some end \<Longrightarrow>
      assoc_end_min end \<le> assoc_end_max end"
   assumes class_roles_unique:
-    "class_roles associations \<C> from role end\<^sub>1 \<Longrightarrow>
-     class_roles associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
+    "class_roles classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
+     class_roles classes associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
 begin
 
-abbreviation "attribute \<equiv> attribute' attributes"
-abbreviation "association_end \<equiv> unique_association_end associations"
+abbreviation "attribute \<equiv> unique_closest_attribute attributes"
+abbreviation "association_end \<equiv> unique_closest_association_end classes associations"
 abbreviation "referred_by_association_class \<equiv>
   referred_by_association_class' association_classes associations"
 abbreviation "association_class_end \<equiv>
@@ -245,12 +301,12 @@ lemma owned_attribute'_det:
 lemma (in object_model) attribute_det:
   "attribute \<C> attr \<D> \<tau> \<Longrightarrow>
    attribute \<C> attr \<E> \<sigma> \<Longrightarrow> \<D> = \<E> \<and> \<tau> = \<sigma>"
-  by (elim attribute'.cases; auto simp add: owned_attribute'_det)
+  by (meson closest_attribute_not_unique.intros unique_closest_attribute.cases)
 
 lemma (in object_model) association_end_det:
   "association_end \<C> from role \<D>\<^sub>1 end\<^sub>1 \<Longrightarrow>
    association_end \<C> from role \<D>\<^sub>2 end\<^sub>2 \<Longrightarrow> \<D>\<^sub>1 = \<D>\<^sub>2 \<and> end\<^sub>1 = end\<^sub>2"
-  by (meson association_end_not_unique.intros unique_association_end.cases)
+  by (meson closest_association_end_not_unique.intros unique_closest_association_end.cases)
 
 lemma (in object_model) association_class_end_det:
   "association_class_end \<A> role end\<^sub>1 \<Longrightarrow>
@@ -278,43 +334,61 @@ lemma fmember_code_predI [code_pred_intro]:
 code_pred fmember
   by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
 
-code_pred [show_modes] attribute' .
+code_pred [show_modes] unique_closest_attribute .
 
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] class_roles .
 
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] owned_association_end' .
+(*
+
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool 
+
+Inferred modes:
+Object_Model.closest_association_end_not_unique:  
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool is not a valid mode for 'a fset
+      \<Rightarrow> 'b \<rightharpoonup>\<^sub>f 'c \<rightharpoonup>\<^sub>f ('a \<times> 'd)
+         \<Rightarrow> 'a \<Rightarrow> 'c option
+                  \<Rightarrow> 'c \<Rightarrow> 'a \<Rightarrow> 'a \<times> 'd \<Rightarrow> bool at predicate Object_Model.unique_closest_association_end
+
+Object_Model.closest_association_end:
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool
+
+Object_Model.closest_association_end_not_unique:
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool 
+
+*)
+
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
@@ -332,16 +406,55 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] association_end' .
-
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool) [show_modes] association_end_not_unique .
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] class_roles .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_association_end .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] owned_association_end' .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] closest_association_end .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool ) [show_modes] closest_association_end_not_unique .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_closest_association_end .
 
 code_pred [show_modes] referred_by_association_class' .
 
