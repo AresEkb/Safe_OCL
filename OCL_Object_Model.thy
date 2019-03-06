@@ -64,6 +64,12 @@ abbreviation "operation \<equiv> base.operation"
 abbreviation "static_operation \<equiv> base.static_operation"
 abbreviation "has_literal \<equiv> base.has_literal"
 
+lemmas attribute_det = base.attribute_det
+lemmas association_end_det = base.association_end_det
+lemmas association_class_end_det = base.association_class_end_det
+lemmas operation_det = base.operation_det
+lemmas static_operation_det = base.static_operation_det
+
 end
 
 end

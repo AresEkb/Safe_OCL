@@ -445,6 +445,34 @@ inductive op_type where
 | "operation \<tau> op \<pi> oper \<Longrightarrow>
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
+(*** Simplification Rules ***************************************************)
+
+subsection \<open>Simplification Rules\<close>
+
+inductive_simps op_type_alt_simps:
+"mataop_type \<tau> op \<sigma>"
+"typeop_type k op \<tau> \<sigma> \<rho>"
+
+"op_type op k \<tau> \<pi> \<sigma>"
+"unop_type op k \<tau> \<sigma>"
+"binop_type op k \<tau> \<sigma> \<rho>"
+"ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>"
+
+"any_unop_type op \<tau> \<sigma>"
+"boolean_unop_type op \<tau> \<sigma>"
+"numeric_unop_type op \<tau> \<sigma>"
+"string_unop_type op \<tau> \<sigma>"
+"collection_unop_type op \<tau> \<sigma>"
+
+"super_binop_type op \<tau> \<sigma> \<rho>"
+"boolean_binop_type op \<tau> \<sigma> \<rho>"
+"numeric_binop_type op \<tau> \<sigma> \<rho>"
+"string_binop_type op \<tau> \<sigma> \<rho>"
+"collection_binop_type op \<tau> \<sigma> \<rho>"
+
+"string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>"
+"collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>"
+
 (*** Determinism ************************************************************)
 
 subsection \<open>Determinism\<close>
@@ -548,11 +576,7 @@ lemma op_type_det:
   apply (erule op_type.cases; simp add: unop_type_det)
   apply (erule op_type.cases; simp add: binop_type_det)
   apply (erule op_type.cases; simp add: ternop_type_det)
-  apply (erule op_type.cases; simp)
-  done
-
-(* TODO: Remove *)
-code_pred [show_modes] op_type .
+  by (erule op_type.cases; simp; metis operation_det)
 
 (*** Expressions Typing *****************************************************)
 
@@ -827,58 +851,59 @@ inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>P Collect
 inductive_cases ExprListTE [elim]: "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi>"
 
 (*** Simplification Rules ***************************************************)
-(*
+
 section \<open>Simplification Rules\<close>
 
-inductive_simps NullLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E NullLiteral : \<tau>"
-inductive_simps BooleanLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : \<tau>"
-inductive_simps RealLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E RealLiteral c : \<tau>"
-inductive_simps UnlimitedNaturalLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E UnlimitedNaturalLiteral c : \<tau>"
-inductive_simps IntegerLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : \<tau>"
-inductive_simps StringLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
-inductive_simps EnumLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
-inductive_simps CollectionLiteralTS [simp]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
-inductive_simps TupleLiteralNilTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
-inductive_simps TupleLiteralConsTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
+inductive_simps typing_alt_simps: 
+"\<Gamma> \<turnstile>\<^sub>E NullLiteral : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E RealLiteral c : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E UnlimitedNaturalLiteral c : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
 
-inductive_simps LetTS [simp]: "\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
-inductive_simps VarTS [simp]: "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
-inductive_simps IfTS [simp]: "\<Gamma> \<turnstile>\<^sub>E If a b c : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
+"\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E If a b c : \<tau>"
 
-inductive_simps MetaOperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
-inductive_simps StaticOperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op as : \<sigma>"
+"\<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
+"\<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op as : \<sigma>"
 
-inductive_simps TypeOperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<tau>"
-inductive_simps AttributeCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AttributeCall src k prop : \<tau>"
-inductive_simps AssociationEndCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src k role from : \<tau>"
-inductive_simps AssociationClassCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src k a from : \<tau>"
-inductive_simps AssociationClassEndCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src k role : \<tau>"
-inductive_simps OperationCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
-inductive_simps TupleElementCallTS [simp]: "\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AttributeCall src k prop : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src k role from : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src k a from : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src k role : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
 
-inductive_simps IteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
-inductive_simps IterateTS [simp]: "\<Gamma> \<turnstile>\<^sub>E IterateCall src k its its_ty res res_t res_init body : \<tau>"
-inductive_simps AnyIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src k its its_ty body : \<tau>"
-inductive_simps ClosureIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src k its its_ty body : \<tau>"
-inductive_simps CollectIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src k its its_ty body : \<tau>"
-inductive_simps CollectNestedIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src k its its_ty body : \<tau>"
-inductive_simps ExistsIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src k its its_ty body : \<tau>"
-inductive_simps ForAllIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src k its its_ty body : \<tau>"
-inductive_simps OneIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E OneIteratorCall src k its its_ty body : \<tau>"
-inductive_simps IsUniqueIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src k its its_ty body : \<tau>"
-inductive_simps SelectIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src k its its_ty body : \<tau>"
-inductive_simps RejectIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
-inductive_simps SortedByIteratorTS [simp]: "\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
+"\<Gamma> \<turnstile>\<^sub>E IterateCall src k its its_ty res res_t res_init body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E OneIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
 
-inductive_simps CollectionPartsNilTS [simp]: "\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
-inductive_simps CollectionPartsItemTS [simp]: "\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
 
-inductive_simps CollectionItemTS [simp]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
-inductive_simps CollectionRangeTS [simp]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
 
-inductive_simps ExprListNilTS [simp]: "\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
-inductive_simps ExprListConsTS [simp]: "\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
-*)
+"\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
+"\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
+
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
@@ -953,7 +978,7 @@ next
   case (StaticOperationCallT \<tau> op \<pi> oper \<Gamma> as) thus ?case
     apply (insert StaticOperationCallT.prems)
     apply (erule StaticOperationCallTE)
-    using StaticOperationCallT.hyps by auto
+    using StaticOperationCallT.hyps static_operation_det by blast
 next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCallTE typeop_type_det)
@@ -961,20 +986,19 @@ next
   case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
     apply (insert AttributeCallT.prems)
     apply (erule AttributeCallTE)
-    using AttributeCallT.hyps attribute_det by fastforce
+    using AttributeCallT.hyps attribute_det by blast
 next
-  case (AssociationEndCallT \<Gamma> src \<C> "end" "from" role \<D>) show ?case
+  case (AssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end") show ?case
     apply (insert AssociationEndCallT.prems)
     apply (erule AssociationEndCallTE)
-    by (metis AssociationEndCallT.hyps(2) AssociationEndCallT.hyps(3)
-        basic_type.inject(1) snd_conv type.inject(1))
+    using AssociationEndCallT.hyps association_end_det by blast
 next
-  case (AssociationClassCallT \<Gamma> src \<tau> \<C> \<A> "from") thus ?case by blast
+  case (AssociationClassCallT \<Gamma> src \<C> "from" \<A>) thus ?case by blast
 next
   case (AssociationClassEndCallT \<Gamma> src \<tau> \<A> role "end") show ?case
     apply (insert AssociationClassEndCallT.prems)
     apply (erule AssociationClassEndCallTE)
-    using AssociationClassEndCallT.hyps by fastforce
+    using AssociationClassEndCallT.hyps association_class_end_det by blast
 next
   case (OperationCallT \<Gamma> src \<tau> params \<pi> op k) show ?case
     apply (insert OperationCallT.prems)

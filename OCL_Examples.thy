@@ -162,6 +162,7 @@ definition "attributes_classes1 \<equiv> fmap_of_list [
   (Person, fmap_of_list [
     (STR ''name'', String[1] :: classes1 type)]),
   (Employee, fmap_of_list [
+    (STR ''name'', String[1]),
     (STR ''position'', String[1])]),
   (Customer, fmap_of_list [
     (STR ''vip'', Boolean[1])]),
@@ -284,6 +285,111 @@ inductive test where
 
 code_pred [show_modes] test .
 
+inductive test_not_uniq where
+  "test x z \<Longrightarrow>
+   y \<noteq> z \<Longrightarrow>
+   test_not_uniq x y"
+
+inductive test_uniq where
+  "test x y \<Longrightarrow>
+   \<not> test_not_uniq x y \<Longrightarrow>
+   test_uniq x y"
+
+code_pred [show_modes] test_uniq .
+
+inductive test_uniq where
+  "test x y \<Longrightarrow>
+   (\<forall>z. test x z \<longrightarrow> y = z) \<Longrightarrow>
+   test_uniq x y"
+
+code_pred [inductify, show_modes] test_uniq .
+
+thm test_uniq_aux.equation
+thm test_uniq.equation
+
+values "{x. test_uniq A x}"
+values "{x. test_uniq B x}"
+values "{x. test_uniq C x}"
+
+values "{x. test B x}"
+value "let ys = Predicate.set_of_pred (test_i_o A) in if card ys = 1 then Some (the_elem ys) else None"
+value "let ys = Predicate.set_of_pred (test_i_o B) in if card ys = 1 then Some (the_elem ys) else None"
+value "let ys = Predicate.set_of_pred (test_i_o B) in if card ys = 1 then the_elem ys else undefined"
+
+lemma test_uniq_code_predI [code_pred_intro]:
+  "(let ys = Predicate.set_of_pred (test_i_o A) in
+   if card ys = 1 then Some (the_elem ys) else None) = Some y \<Longrightarrow>
+   test_uniq x y"
+  apply (rule test_uniq.intros)
+  unfolding Let_def
+  apply (auto simp add: test_i_o_def split: if_splits)
+
+term set_option
+thm test_uniq.equation
+term Predicate.bind
+term Predicate.singleton
+term Predicate.if_pred
+(*
+lemma test_uniq_code_predI [code_pred_intro]:
+  "Predicate.singleton (\<lambda>_. None) (Predicate.map Some (test_i_o x)) = Some y \<Longrightarrow>
+   test_uniq x y"
+  apply (rule test_uniq.intros, auto simp add: test_i_o_def)
+
+lemma test_uniq_code_predI [code_pred_intro]:
+  "Predicate.singleton (\<lambda>_. None) (Predicate.map Some (test_i_o x)) = Some y \<Longrightarrow>
+   test_uniq x y"
+  apply (rule test_uniq.intros, auto simp add: test_i_o_def)
+*)
+term Predicate.eval
+term Predicate.the
+term Predicate.singleton
+term Predicate.map
+term Collect
+term Predicate.set_of_pred
+term Predicate.set_of_seq
+term "test_i_o B"
+
+values "{x. x \<in> Predicate.set_of_pred (test_i_o B)}"
+
+
+inductive test2 where
+  "test_uniq x y \<Longrightarrow>
+   test2 x y"
+
+code_pred [show_modes] test2 .
+
+
+values "{x. test2 A x}"
+values "{x. test2 B x}"
+values "{x. test2 C x}"
+
+lemma test_ex_code [code_pred_intro]:
+  "Predicate.the (test_i_o x) = y \<Longrightarrow>
+   test_ex x y"
+  by (rule test_ex.intros) (simp add: Predicate.the_def test_i_o_def)
+
+code_pred [show_modes] test_ex
+  by (metis test_ex.cases test_ex_code)
+
+inductive test2 where
+  "test_ex x y \<Longrightarrow>
+   test2 x y"
+
+code_pred [show_modes] test2 .
+
+lemma q:
+  "test2 C x \<Longrightarrow> False"
+  apply auto
+  apply (elim test2.cases test_ex.cases)
+  apply auto
+
+
+values "{x. test2 C x}"
+
+
+
+
+
 definition "test_ex x y \<equiv> The (\<lambda>y. test x y) = y"
 
 lemma test_ex_code [code_pred_intro]:
@@ -369,9 +475,18 @@ values "{x. test3 A x}"
 
 subsection \<open>Positive Cases\<close>
 
+values "{(\<D>, \<tau>). attribute Person STR ''name'' \<D> \<tau>}"
 values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
+values "{(\<D>, \<tau>). attribute Employee STR ''name2'' \<D> \<tau>}"
 values "{(\<D>, \<tau>). attribute Employee STR ''position'' \<D> \<tau>}"
 values "{(\<D>, end). association_end Employee None STR ''projects'' \<D> end}"
+(* Тут нужен комментарий, что возвращается два одинаковых типа и это норм.
+ Главное, что они совпадают. Хотя нет, это ошибка.
+ В рантайме мы не сможем получить список объектов.
+ Хотя с другой стороны, мы можем возвращать все объекты,
+ а from использовать для фильтрации. Это выглядит полезным *)
+values "{(\<D>, end). association_end Employee None STR ''employees'' \<D> end}"
+values "{(\<D>, end). association_end Employee (Some STR ''project_manager'') STR ''employees'' \<D> end}"
 values "{op. operation Project[1] STR ''membersCount'' [] op}"
 values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
 value "has_literal STR ''E1'' STR ''A''"
@@ -416,203 +531,6 @@ section \<open>Typing\<close>
 subsection \<open>Positive Cases\<close>
 
 
-(*declare normalize_normalize_call_normalize_expr_list.intros [intro!]*)
-(*declare nf_typing.intros [intro!]*)
-
-
-(*
-inductive_simps q52 [simp]: "\<Gamma> \<turnstile> expr : \<tau>"
-inductive_simps q57 [simp]: "\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : \<tau>"
-inductive_simps q58 [simp]: "\<Gamma> \<turnstile>\<^sub>E NullLiteral : \<tau>"
-inductive_simps q59 [simp]: "\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : \<tau>"
-inductive_simps q60 [simp]: "\<Gamma> \<turnstile> Var v \<Rrightarrow> expr"
-inductive_simps q61 [simp]: "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
-inductive_simps q62 [simp]: "\<Gamma> \<turnstile>\<^sub>E Let v ty init body : \<tau>"
-inductive_simps q63 [simp]: "\<Gamma> \<turnstile> Let v ty init body \<Rrightarrow> expr"
-*)
-
-(*** Simplification Rules ***************************************************)
-
-section \<open>Simplification Rules\<close>
-(*
-inductive_simps op_type_simp [simp]: "op_type op k \<tau> \<pi> \<sigma>"
-
-inductive_simps unop_type_simp [simp]: "unop_type op k \<tau> \<sigma>"
-inductive_simps binop_type_simp [simp]: "binop_type op k \<tau> \<sigma> \<rho>"
-inductive_simps ternop_type_simp [simp]: "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>"
-
-inductive_simps any_unop_type_simp [simp]: "any_unop_type op \<tau> \<sigma>"
-inductive_simps boolean_unop_type_simp [simp]: "boolean_unop_type op \<tau> \<sigma>"
-inductive_simps numeric_unop_type_simp [simp]: "numeric_unop_type op \<tau> \<sigma>"
-inductive_simps string_unop_type_simp [simp]: "string_unop_type op \<tau> \<sigma>"
-inductive_simps collection_unop_type_simp [simp]: "collection_unop_type op \<tau> \<sigma>"
-
-inductive_simps super_binop_type_simp [simp]: "super_binop_type op \<tau> \<sigma> \<rho>"
-inductive_simps boolean_binop_type_simp [simp]: "boolean_binop_type op \<tau> \<sigma> \<rho>"
-inductive_simps numeric_binop_type_simp [simp]: "numeric_binop_type op \<tau> \<sigma> \<rho>"
-inductive_simps string_binop_type_simp [simp]: "string_binop_type op \<tau> \<sigma> \<rho>"
-inductive_simps collection_binop_type_simp [simp]: "collection_binop_type op \<tau> \<sigma> \<rho>"
-
-inductive_simps string_ternop_type_simp [simp]: "string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>"
-inductive_simps collection_ternop_type_simp [simp]: "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>"
-*)
-
-inductive_simps op_type_alt_simps:
-"mataop_type \<tau> op \<sigma>"
-"typeop_type k op \<tau> \<sigma> \<rho>"
-
-"op_type op k \<tau> \<pi> \<sigma>"
-"unop_type op k \<tau> \<sigma>"
-"binop_type op k \<tau> \<sigma> \<rho>"
-"ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>"
-
-"any_unop_type op \<tau> \<sigma>"
-"boolean_unop_type op \<tau> \<sigma>"
-"numeric_unop_type op \<tau> \<sigma>"
-"string_unop_type op \<tau> \<sigma>"
-"collection_unop_type op \<tau> \<sigma>"
-
-"super_binop_type op \<tau> \<sigma> \<rho>"
-"boolean_binop_type op \<tau> \<sigma> \<rho>"
-"numeric_binop_type op \<tau> \<sigma> \<rho>"
-"string_binop_type op \<tau> \<sigma> \<rho>"
-"collection_binop_type op \<tau> \<sigma> \<rho>"
-
-"string_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>"
-"collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>"
-
-
-(*
-declare boolean_unop_type.intros [intro!]
-declare numeric_unop_type.intros [intro!]
-declare string_unop_type.intros [intro!]
-declare collection_unop_type.intros [intro!]
-
-declare op_type.intros [intro!]
-
-declare unop_type.intros [intro!]
-declare binop_type.intros [intro!]
-declare ternop_type.intros [intro!]
-
-declare any_unop_type.intros [intro!]
-declare boolean_unop_type.intros [intro!]
-declare numeric_unop_type.intros [intro!]
-declare string_unop_type.intros [intro!]
-declare collection_unop_type.intros [intro!]
-
-declare super_binop_type.intros [intro!]
-declare boolean_binop_type.intros [intro!]
-declare numeric_binop_type.intros [intro!]
-declare string_binop_type.intros [intro!]
-declare collection_binop_type.intros [intro!]
-
-declare string_ternop_type.intros [intro!]
-declare collection_ternop_type.intros [intro!]
-*)
-
-
-
-print_theorems
-(*
-inductive_simps q64 [simp]: "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
-inductive_simps q65 [simp]: "\<Gamma> \<turnstile>\<^sub>L [] : \<tau>"
-inductive_simps q66 [simp]: "\<Gamma> \<turnstile>\<^sub>L x # xs : \<tau>"
-inductive_simps q70 [simp]: "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
-inductive_simps q71 [simp]: "\<Gamma> \<turnstile>\<^sub>E Let v ty init body : \<tau>"
-inductive_simps q72 [simp]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
-inductive_simps q73 [simp]: "\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
-inductive_simps q74 [simp]: "\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
-inductive_simps q75 [simp]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
-inductive_simps q76 [simp]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
-*)
-(*
-inductive_simps q54 [simp]: "\<Gamma> \<turnstile>\<^sub>C Operation op params \<Rrightarrow> expr"
-inductive_simps q55 [simp]: "\<Gamma> \<turnstile>\<^sub>L [] \<Rrightarrow> expr"
-inductive_simps q56 [simp]: "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> expr"
-
-inductive_simps q50 [simp]: "\<Gamma> \<turnstile> OperationCall src k op params \<Rrightarrow> \<tau>"
-inductive_simps q53 [simp]: "\<Gamma> \<turnstile> Literal c \<Rrightarrow> expr"
-inductive_simps q68 [simp]: "\<Gamma> \<turnstile> Let v ty init body \<Rrightarrow> expr"
-inductive_simps q69 [simp]: "\<Gamma> \<turnstile> Var v \<Rrightarrow> expr"
-*)
-(*
-inductive_simps q51 [simp]: "element_type \<tau> \<sigma>"
-inductive_simps q67 [simp]: "\<Gamma> \<turnstile> expr : \<tau>"
-*)
-inductive_simps typing_alt_simps: 
-"\<Gamma> \<turnstile>\<^sub>E NullLiteral : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E BooleanLiteral c : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E RealLiteral c : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E UnlimitedNaturalLiteral c : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
-
-"\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
-"\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E If a b c : \<tau>"
-
-"\<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
-"\<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op as : \<sigma>"
-
-"\<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AttributeCall src k prop : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src k role from : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src k a from : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src k role : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
-
-"\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
-"\<Gamma> \<turnstile>\<^sub>E IterateCall src k its its_ty res res_t res_init body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E OneIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
-
-"\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
-"\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
-
-inductive_simps normalize_alt_simps:
-"\<Gamma> \<turnstile> Literal a \<Rrightarrow> b"
-"\<Gamma> \<turnstile> Let v t init body \<Rrightarrow> b"
-"\<Gamma> \<turnstile> Var v \<Rrightarrow> b"
-"\<Gamma> \<turnstile> If a b c \<Rrightarrow> d"
-
-"\<Gamma> \<turnstile> MetaOperationCall \<tau> op \<Rrightarrow> b"
-"\<Gamma> \<turnstile> StaticOperationCall \<tau> op as \<Rrightarrow> b"
-"\<Gamma> \<turnstile> Call src DotCall call \<Rrightarrow> b"
-"\<Gamma> \<turnstile> Call src SafeDotCall call \<Rrightarrow> b"
-"\<Gamma> \<turnstile> Call src ArrowCall call \<Rrightarrow> b"
-"\<Gamma> \<turnstile> Call src SafeArrowCall call \<Rrightarrow> b"
-
-"(\<Gamma>, \<tau>) \<turnstile>\<^sub>C call \<Rrightarrow> b"
-"(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> call"
-"(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
-"(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
-
-"\<Gamma> \<turnstile>\<^sub>L [] \<Rrightarrow> ys"
-"\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> ys"
-
-(*
-declare op_type.intros [intro!]
-declare binop_type.intros [intro!]
-declare boolean_binop_type.intros [intro!]
-*)
 print_theorems
 
 declare nf_typing.simps [simp]
