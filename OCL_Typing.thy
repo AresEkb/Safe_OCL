@@ -703,7 +703,7 @@ inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<R
    \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : assoc_end_type end"
 |AssociationClassCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   referred_by_association_class \<C> from \<A> \<Longrightarrow>
+   referred_by_association_class \<C> from \<A> \<D> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : class_assoc_type \<A>"
 |AssociationClassEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>

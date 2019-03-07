@@ -308,16 +308,19 @@ lemma subclass1_Employee_x [simp]:
   unfolding dual_order.order_iff_strict less_classes1_def
   by (auto simp: subclass1.simps subclass1.intros)
 
-declare attribute'.simps [simp]
-declare class_has_attribute'.simps [simp]
-declare owned_attribute'.simps [simp]
+declare unique_closest_attribute.simps [simp]
+declare closest_attribute.simps [simp]
+declare attribute_not_closest.simps [simp]
+declare closest_attribute_not_unique.simps [simp]
+declare owned_attribute'.simps []
+
 declare attributes_classes1_def [simp]
 declare Least_def [simp]
 declare has_literal'.simps [simp]
 
 lemma
-  "attribute Employee STR ''name'' Person String[1]"
-  by auto
+  "attribute Customer STR ''name'' Person String[1]"
+  by eval
 
 lemma
   "association_end Employee None STR ''projects'' Employee (Project, 0, \<infinity>, False, True)"
@@ -576,14 +579,7 @@ name : String[1]\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
     AttributeCall (Var STR ''self'') DotCall STR ''name'' : String[1]"
-(*  apply eval*)
-  apply (auto)
-  unfolding Least_def HOL.imp_conv_disj HOL.conj_disj_distribL apply auto
-  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) theI)
-  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) theI)
-  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) theI)
-  apply (metis (mono_tags, lifting) classes1.distinct(15) classes1.distinct(17) classes1.simps(14) classes1.simps(20) theI)
-  done
+  by eval
 
 text \<open>
 \<^verbatim>\<open>context Employee:
@@ -591,7 +587,7 @@ projects : Set(Project[1])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
     AssociationEndCall (Var STR ''self'') DotCall None STR ''projects'' : Set Project[1]"
-  apply eval
+  by eval
 
 text \<open>
 \<^verbatim>\<open>context Employee:
@@ -599,9 +595,9 @@ projects.members : Bag(Employee[1])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
   AssociationEndCall (AssociationEndCall (Var STR ''self'')
-      DotCall STR ''projects'' None)
-    DotCall STR ''members'' None : Bag Employee[1]"
-  apply simp
+      DotCall None STR ''projects'')
+    DotCall None STR ''members'' : Bag Employee[1]"
+  by eval
 
 text \<open>
 \<^verbatim>\<open>Project[?].allInstances() : Set(Project[?])\<close>\<close>
@@ -615,22 +611,11 @@ lemma q11:
   "x = The P \<longleftrightarrow> The P = x"
   by auto
 
-values "{x. \<Gamma>\<^sub>0 \<turnstile> StaticOperationCall Project[1] STR ''allProjects'' [] : x}"
-
 text \<open>
 \<^verbatim>\<open>Project[1]::allProjects() : Set(Project[1])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> StaticOperationCall Project[1] STR ''allProjects'' [] : Set Project[1]"
-
-  apply auto
-  unfolding oper_type_def
-  apply (auto simp add: Let_def split: if_splits)
-  unfolding oper_result_def oper_out_params_def oper_params_def param_dir_def
-  apply (auto)
-  apply (intro exI conjI impI)
-  unfolding q11
-   apply (intro HOL.the1_equality)
-  apply auto
+  by eval
 
 thm HOL.theI' HOL.the1_equality HOL.theI
   thm static_operation'.simps
@@ -672,5 +657,6 @@ lemma
                  CollectionItem NullLiteral])
         ArrowCall CollectionMaxOp [] : \<tau>"
   apply auto
+  apply eval
 
 end

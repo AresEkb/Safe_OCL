@@ -8,20 +8,6 @@ theory Object_Model
   imports "HOL-Library.Extended_Nat" Finite_Map_Ext
 begin
 
-
-
-(* TODO: Remove  *)
-lemma fmember_code_predI [code_pred_intro]:
-  "x |\<in>| xs" if "Predicate_Compile.contains (fset xs) x"
-  using that by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
-
-code_pred fmember
-  by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
-
-
-
-
-
 text \<open>
   The section defines a very simplified object model.
   It should define more constraints.\<close>
@@ -71,10 +57,10 @@ text \<open>
   The following predicates allows one to access class attributes.\<close>
 
 inductive owned_attribute' where
- "\<C> |\<in>| fmdom attributes \<Longrightarrow>
-  fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
-  fmlookup attrs\<^sub>\<C> attr = Some \<tau> \<Longrightarrow>
-  owned_attribute' attributes \<C> attr \<tau>"
+  "\<C> |\<in>| fmdom attributes \<Longrightarrow>
+   fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
+   fmlookup attrs\<^sub>\<C> attr = Some \<tau> \<Longrightarrow>
+   owned_attribute' attributes \<C> attr \<tau>"
 
 inductive attribute_not_closest where
   "owned_attribute' attributes \<D>' attr \<tau>' \<Longrightarrow>
@@ -159,34 +145,28 @@ inductive referred_by_association_class'' where
    referred_by_association_class'' association_classes associations \<C> None \<A>"
 | "referred_by_association_class''' association_classes associations \<C> from \<A> \<Longrightarrow>
    referred_by_association_class'' association_classes associations \<C> (Some from) \<A>"
-(*
-inductive referred_by_association_class' where
-  "Least (\<lambda>\<D>. \<C> \<le> \<D> \<and> referred_by_association_class''
-      association_classes associations \<D> from \<A>) = \<D> \<Longrightarrow>
-   referred_by_association_class' association_classes associations \<C> from \<A>"
-*)
 
 inductive association_class_not_closest where
-  "owned_association_class' classes associations \<D>' from role end' \<Longrightarrow>
+  "referred_by_association_class'' association_classes associations \<D>' from \<A> \<Longrightarrow>
    \<C> \<le> \<D>' \<Longrightarrow>
    \<D>' < \<D> \<Longrightarrow>
-   association_class_not_closest classes associations \<C> from role \<D> end"
+   association_class_not_closest association_classes associations \<C> from \<A> \<D>"
 
 inductive closest_association_class where
-  "owned_association_class' classes associations \<D> from role end \<Longrightarrow>
+  "referred_by_association_class'' association_classes associations \<D> from \<A> \<Longrightarrow>
    \<C> \<le> \<D> \<Longrightarrow>
-   \<not> association_class_not_closest classes associations \<C> from role \<D> end \<Longrightarrow>
-   closest_association_class classes associations \<C> from role \<D> end"
+   \<not> association_class_not_closest association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
+   closest_association_class association_classes associations \<C> from \<A> \<D>"
 
 inductive closest_association_class_not_unique where
-  "closest_association_class classes associations \<C> from role \<D>' end' \<Longrightarrow>
-   \<D> \<noteq> \<D>' \<or> end \<noteq> end' \<Longrightarrow>
-   closest_association_class_not_unique classes associations \<C> from role \<D> end"
+  "closest_association_class association_classes associations \<C> from \<A> \<D>' \<Longrightarrow>
+   \<D> \<noteq> \<D>' \<Longrightarrow>
+   closest_association_class_not_unique association_classes associations \<C> from \<A> \<D>"
 
 inductive unique_closest_association_class where
-  "closest_association_class classes associations \<C> from role \<D> end \<Longrightarrow>
-   \<not> closest_association_class_not_unique classes associations \<C> from role \<D> end \<Longrightarrow>
-   unique_closest_association_class classes associations \<C> from role \<D> end"
+  "closest_association_class association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
+   \<not> closest_association_class_not_unique association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
+   unique_closest_association_class association_classes associations \<C> from \<A> \<D>"
 
 text \<open>
   The following predicates allows one to access ends of association classes.\<close>
@@ -255,6 +235,45 @@ inductive has_literal' where
    lit |\<in>| lits \<Longrightarrow>
    has_literal' literals e lit"
 
+(*** Elimination Rules ******************************************************)
+
+subsection \<open>Elimination Rules\<close>
+(*
+inductive_cases owned_attribute'E [elim!]: "owned_attribute' attributes \<C> attr \<tau>"
+inductive_cases attribute_not_closestE [elim!]: "attribute_not_closest attributes \<C> attr \<D> \<tau>"
+inductive_cases closest_attributeE [elim!]: "closest_attribute attributes \<C> attr \<D> \<tau>"
+inductive_cases closest_attribute_not_uniqueE [elim!]: "closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
+inductive_cases unique_closest_attributeE [elim!]: "unique_closest_attribute attributes \<C> attr \<D> \<tau>"
+
+inductive_cases role_refer_classE [elim!]: "role_refer_class ends \<C> role"
+inductive_cases class_rolesE [elim!]: "class_roles classes associations \<C> from role end"
+inductive_cases owned_association_end'E [elim!]: "owned_association_end' classes associations \<C> (Some from) role end"
+inductive_cases association_end_not_closestE [elim!]: "association_end_not_closest classes associations \<C> from role \<D> end"
+inductive_cases closest_association_endE [elim!]: "closest_association_end classes associations \<C> from role \<D> end"
+inductive_cases closest_association_end_not_uniqueE [elim!]: "closest_association_end_not_unique classes associations \<C> from role \<D> end"
+inductive_cases unique_closest_association_endE [elim!]: "unique_closest_association_end classes associations \<C> from role \<D> end"
+
+inductive_cases referred_by_association_class'''E [elim!]: "referred_by_association_class''' association_classes associations \<C> from \<A>"
+inductive_cases referred_by_association_class''E [elim!]: "referred_by_association_class'' association_classes associations \<C> (Some from) \<A>"
+inductive_cases association_class_not_closestE [elim!]: "association_class_not_closest association_classes associations \<C> from \<A> \<D>"
+inductive_cases closest_association_classE [elim!]: "closest_association_class association_classes associations \<C> from \<A> \<D>"
+inductive_cases closest_association_class_not_uniqueE [elim!]: "closest_association_class_not_unique association_classes associations \<C> from \<A> \<D>"
+inductive_cases unique_closest_association_classE [elim!]: "unique_closest_association_class association_classes associations \<C> from \<A> \<D>"
+
+inductive_cases association_class_end'E [elim!]: "association_class_end' association_classes associations \<A> role end"
+inductive_cases association_class_end_not_uniqueE [elim!]: "association_class_end_not_unique association_classes associations \<A> role end"
+inductive_cases unique_association_class_endE [elim!]: "unique_association_class_end association_classes associations \<A> role end"
+
+inductive_cases any_operation'E [elim!]: "any_operation' operations \<tau> name \<pi> op"
+inductive_cases operation'E [elim!]: "operation' operations \<tau> name \<pi> op"
+inductive_cases operation_not_uniqueE [elim!]: "operation_not_unique operations \<tau> name \<pi> oper"
+inductive_cases unique_operationE [elim!]: "unique_operation operations \<tau> name \<pi> oper"
+inductive_cases static_operation'E [elim!]: "static_operation' operations \<tau> name \<pi> op"
+inductive_cases static_operation_not_uniqueE [elim!]: "static_operation_not_unique operations \<tau> name \<pi> oper"
+inductive_cases unique_static_operationE [elim!]: "unique_static_operation operations \<tau> name \<pi> oper"
+
+inductive_cases has_literal'E [elim!]: "has_literal' literals e lit"
+*)
 (*** Definition *************************************************************)
 
 subsection \<open>Definition\<close>
@@ -277,21 +296,35 @@ locale object_model =
      class_roles classes associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
 begin
 
-abbreviation "attribute \<equiv> unique_closest_attribute attributes"
-abbreviation "association_end \<equiv> unique_closest_association_end classes associations"
+abbreviation "owned_attribute \<equiv>
+  owned_attribute' attributes"
+
+abbreviation "attribute \<equiv>
+  unique_closest_attribute attributes"
+
+abbreviation "association_end \<equiv>
+  unique_closest_association_end classes associations"
+
 abbreviation "referred_by_association_class \<equiv>
-  referred_by_association_class' association_classes associations"
+  unique_closest_association_class association_classes associations"
+
 abbreviation "association_class_end \<equiv>
   unique_association_class_end association_classes associations"
-abbreviation "operation \<equiv> unique_operation operations"
-abbreviation "static_operation \<equiv> unique_static_operation operations"
-abbreviation "has_literal \<equiv> has_literal' literals"
+
+abbreviation "operation \<equiv>
+  unique_operation operations"
+
+abbreviation "static_operation \<equiv>
+  unique_static_operation operations"
+
+abbreviation "has_literal \<equiv>
+  has_literal' literals"
 
 end
 
-(*** Determinism ************************************************************)
+(*** Properties *************************************************************)
 
-subsection \<open>Determinism\<close>
+subsection \<open>Properties\<close>
 
 lemma owned_attribute'_det:
   "owned_attribute' attributes \<C> attr \<tau> \<Longrightarrow>
@@ -303,10 +336,154 @@ lemma (in object_model) attribute_det:
    attribute \<C> attr \<E> \<sigma> \<Longrightarrow> \<D> = \<E> \<and> \<tau> = \<sigma>"
   by (meson closest_attribute_not_unique.intros unique_closest_attribute.cases)
 
+lemma (in object_model) attribute_self_or_inherited:
+  "attribute \<C> attr \<D> \<tau> \<Longrightarrow> \<C> \<le> \<D>"
+  by auto
+
+thm ccontr
+
+lemma q:
+  "\<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+  closest_attribute attributes \<C> attr \<D>' \<tau>' \<Longrightarrow>
+   \<D> \<noteq> \<D>' \<or> \<tau> \<noteq> \<tau>'"
+
+thm attribute_not_closest.simps
+thm closest_attribute.simps
+thm closest_attributeE
+thm closest_attribute_not_unique.simps
+thm closest_attribute_not_uniqueE
+(*
+  HOL.all_not_ex: (\<forall>x. ?P x) = (\<nexists>x. \<not> ?P x)
+  HOL.not_all: (\<not> (\<forall>x. ?P x)) = (\<exists>x. \<not> ?P x)
+  HOL.not_ex: (\<nexists>x. ?P x) = (\<forall>x. \<not> ?P x)
+*)
+
+thm allE
+
+lemma q11:
+  "closest_attribute attributes \<C> attr \<D>'' \<tau> \<Longrightarrow>
+       \<forall>y y'.
+          closest_attribute attributes \<C> attr y \<tau> \<and>
+          closest_attribute attributes \<C> attr y' \<tau> \<longrightarrow>
+          y = y' \<Longrightarrow>
+       closest_attribute attributes \<C> attr \<D>' \<tau>"
+  apply (erule_tac ?x="\<D>''" in allE)
+  apply (erule_tac ?x="\<D>'" in allE)
+  apply (auto)
+
+lemma q11:
+  "\<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   unique_closest_attribute attributes \<C> attr \<D> \<tau>"
+  by (metis closest_attribute.cases closest_attribute_not_unique.cases owned_attribute'_det unique_closest_attribute.intros)
+
+lemma q12:
+  "unique_closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   \<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau>"
+  by (metis closest_attribute_not_unique.intros unique_closest_attribute.cases)
+
+lemma q13:
+  "unique_closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   \<exists>!\<D>'. \<exists>!\<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<and> \<D> = \<D>' \<and> \<tau> = \<tau>'"
+  by (metis unique_closest_attribute.cases)
+
+lemma q14:
+  "\<exists>!\<D>'. \<exists>!\<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<and> \<D> = \<D>' \<and> \<tau> = \<tau>' \<Longrightarrow>
+   unique_closest_attribute attributes \<C> attr \<D> \<tau>"
+  apply (rule unique_closest_attribute.intros)
+  apply auto[1]
+  apply auto[1]
+  apply (erule closest_attribute_not_unique.cases)
+  apply auto[1]
+  apply (elim allE impE)
+  apply (intro conjI ex1I)
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+  apply auto[1]
+
+lemma q13:
+  "unique_closest_attribute attributes \<C> attr \<D> \<tau> =
+   closest_attribute attributes \<C> attr \<D> \<tau> \<and>
+   (\<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau>)"
+  using q11 q12
+
+lemma q12:
+  "\<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   \<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
+  apply (rule unique_closest_attribute.intros)
+  apply (unfold HOL.Ex1_def)
+  apply (elim exE conjE allE impE)
+  apply auto[1]
+  apply (intro exI conjI)
+  apply auto[1]
+  apply (meson closest_attribute.cases owned_attribute'_det)
+  apply simp
+
+(*
+inductive closest_attribute_not_unique where
+  "closest_attribute attributes \<C> attr \<D>' \<tau>' \<Longrightarrow>
+   \<D> \<noteq> \<D>' \<or> \<tau> \<noteq> \<tau>' \<Longrightarrow>
+   closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
+
+inductive unique_closest_attribute where
+  "closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   \<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   unique_closest_attribute attributes \<C> attr \<D> \<tau>"
+
+inductive attribute_not_closest where
+  "owned_attribute' attributes \<D>' attr \<tau>' \<Longrightarrow>
+   \<C> \<le> \<D>' \<Longrightarrow>
+   \<D>' < \<D> \<Longrightarrow>
+   attribute_not_closest attributes \<C> attr \<D> \<tau>"
+
+inductive closest_attribute where
+  "owned_attribute' attributes \<D> attr \<tau> \<Longrightarrow>
+   \<C> \<le> \<D> \<Longrightarrow>
+   \<not> attribute_not_closest attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   closest_attribute attributes \<C> attr \<D> \<tau>"
+*)
+
+lemma q:
+  assumes "\<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
+  shows "closest_attribute attributes \<C> attr \<D> \<tau>"
+proof -
+  assume "\<not> closest_attribute attributes \<C> attr \<D> \<tau>"
+  then have "False"
+
+lemma q:
+  "\<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
+   closest_attribute attributes \<C> attr \<D> \<tau> \<and>
+   (\<forall>\<D>' \<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<longrightarrow> \<D> = \<D>' \<and> \<tau> = \<tau>')"
+  apply auto
+proof -
+  assume "closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
+  apply (erule notE)
+  apply auto
+
+lemma (in object_model) attribute_closest:
+  "attribute \<C> attr \<D> \<tau> \<Longrightarrow>
+   owned_attribute \<D>' attr \<tau> \<Longrightarrow>
+   \<C> \<le> \<D>' \<Longrightarrow> \<D> \<le> \<D>'"
+  apply auto
+  apply (erule notE)
+  unfolding attribute_not_closest.simps owned_attribute'.simps
+  apply auto
+
+
 lemma (in object_model) association_end_det:
   "association_end \<C> from role \<D>\<^sub>1 end\<^sub>1 \<Longrightarrow>
    association_end \<C> from role \<D>\<^sub>2 end\<^sub>2 \<Longrightarrow> \<D>\<^sub>1 = \<D>\<^sub>2 \<and> end\<^sub>1 = end\<^sub>2"
   by (meson closest_association_end_not_unique.intros unique_closest_association_end.cases)
+
+lemma (in object_model) association_end_self_or_inherited:
+  "association_end \<C> from role \<D> end \<Longrightarrow> \<C> \<le> \<D>"
+  by auto
 
 lemma (in object_model) association_class_end_det:
   "association_class_end \<A> role end\<^sub>1 \<Longrightarrow>
@@ -335,60 +512,6 @@ code_pred fmember
   by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
 
 code_pred [show_modes] unique_closest_attribute .
-
-
-(*
-
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool 
-
-Inferred modes:
-Object_Model.closest_association_end_not_unique:  
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool is not a valid mode for 'a fset
-      \<Rightarrow> 'b \<rightharpoonup>\<^sub>f 'c \<rightharpoonup>\<^sub>f ('a \<times> 'd)
-         \<Rightarrow> 'a \<Rightarrow> 'c option
-                  \<Rightarrow> 'c \<Rightarrow> 'a \<Rightarrow> 'a \<times> 'd \<Rightarrow> bool at predicate Object_Model.unique_closest_association_end
-
-Object_Model.closest_association_end:
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool
-
-Object_Model.closest_association_end_not_unique:
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool 
-
-*)
-
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
@@ -456,7 +579,7 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_closest_association_end .
 
-code_pred [show_modes] referred_by_association_class' .
+code_pred [show_modes] unique_closest_association_class .
 
 code_pred [show_modes] association_class_end' .
 
