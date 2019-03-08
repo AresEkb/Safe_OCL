@@ -310,6 +310,22 @@ instance
 
 end
 
+(*** Simplification Rules ***************************************************)
+
+section \<open>Simplification Rules\<close>
+
+lemma basic_type_less_eq_simps [simp]:
+  "\<tau> \<le> OclAny"
+  "OclVoid \<le> \<sigma>"
+  "\<tau> \<le> OclVoid = (\<tau> = OclVoid)"
+  "Integer \<le> Real"
+  "UnlimitedNatural \<le> Real"
+  "UnlimitedNatural \<le> Integer"
+  "Real \<le> Integer = False"
+  "Real \<le> UnlimitedNatural = False"
+  "Integer \<le> UnlimitedNatural = False"
+  by auto
+
 (*** Upper Semilattice of Basic Types ***************************************)
 
 section \<open>Upper Semilattice of Basic Types\<close>
@@ -378,7 +394,8 @@ proof
     by (cases \<sigma>; auto; erule basic_subtype_fun.elims; auto)
   show "\<tau> \<le> \<sigma> \<Longrightarrow> \<tau> = \<sigma> \<or> basic_subtype_fun \<tau> \<sigma>"
     apply (cases \<sigma>; auto)
-    using le_neq_trans by fastforce
+    using basic_subtype_fun.elims(3) apply force
+    by (simp add: dual_order.order_iff_strict)
 qed
 
 lemma less_basic_type_code [code_abbrev, simp]:

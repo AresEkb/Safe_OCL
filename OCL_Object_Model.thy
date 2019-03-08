@@ -16,14 +16,19 @@ text \<open>
 definition
   "assoc_end_type end \<equiv>
     let \<C> = assoc_end_class end in
-    if assoc_end_max end \<le> 1 then
-      if assoc_end_min end = 0 then \<langle>\<C>\<rangle>\<^sub>\<T>[?] else \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+    if assoc_end_max end \<le> (1 :: nat) then
+      if assoc_end_min end = (0 :: nat)
+      then \<langle>\<C>\<rangle>\<^sub>\<T>[?]
+      else \<langle>\<C>\<rangle>\<^sub>\<T>[1]
     else
-      (case (assoc_end_unique end, assoc_end_ordered end)
-        of (True,  False) \<Rightarrow> Set \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-         | (True,  True)  \<Rightarrow> OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-         | (False, False) \<Rightarrow> Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-         | (False, True)  \<Rightarrow> Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1])"
+      if assoc_end_unique end then
+        if assoc_end_ordered end
+        then OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+        else Set \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+      else
+        if assoc_end_ordered end
+        then Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+        else Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1]"
 
 definition "class_assoc_type \<A> \<equiv> Set \<langle>\<A>\<rangle>\<^sub>\<T>[1]"
 

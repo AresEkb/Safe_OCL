@@ -8,6 +8,17 @@ theory OCL_Examples
   imports OCL_Normalization
 begin
 
+lemma logic_simps [simp]:
+  "\<exists>a. a"
+  "\<exists>a. \<not> a"
+  "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
+  "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
+  by auto
+
+
+
+
+
 (*** Classes ****************************************************************)
 
 section \<open>Classes\<close>
@@ -270,6 +281,41 @@ end
 
 
 
+lemma attribute_Employee_name [simp]:
+  "attribute Employee STR ''name'' \<D> \<tau> =
+   (\<D> = Employee \<and> \<tau> = String[1])"
+proof -
+  have "attribute Employee STR ''name'' Employee String[1]"
+    by eval
+  thus ?thesis
+    using attribute_det by blast
+qed
+
+lemma association_end_Project_members [simp]:
+  "association_end Project None STR ''members'' \<D> \<tau> =
+   (\<D> = Project \<and> \<tau> = (Employee, 1, 20, True, True))"
+proof -
+  have "association_end Project None STR ''members''
+          Project (Employee, 1, 20, True, True)"
+    by eval
+  thus ?thesis
+    using association_end_det by blast
+qed
+
+lemma association_end_Employee_projects_simp [simp]:
+  "association_end Employee None STR ''projects'' \<D> \<tau> =
+   (\<D> = Employee \<and> \<tau> = (Project, 0, \<infinity>, False, True))"
+proof -
+  have "association_end Employee None STR ''projects''
+          Employee (Project, 0, \<infinity>, False, True)"
+    by eval
+  thus ?thesis
+    using association_end_det by blast
+qed
+
+
+
+
 values "{x. \<Gamma>\<^sub>0 \<turnstile>\<^sub>E EnumLiteral STR ''E1'' STR ''A'' : x}"
 
 
@@ -307,15 +353,15 @@ lemma subclass1_Employee_x [simp]:
   "Employee \<le> \<tau> = (\<tau> = Employee \<or> \<tau> = Person \<or> \<tau> = Object)"
   unfolding dual_order.order_iff_strict less_classes1_def
   by (auto simp: subclass1.simps subclass1.intros)
-
+(*
 declare unique_closest_attribute.simps [simp]
 declare closest_attribute.simps [simp]
 declare attribute_not_closest.simps [simp]
 declare closest_attribute_not_unique.simps [simp]
 declare owned_attribute'.simps []
-
-declare attributes_classes1_def [simp]
-declare Least_def [simp]
+*)
+(*declare attributes_classes1_def [simp]*)
+(*declare Least_def [simp]*)
 declare has_literal'.simps [simp]
 
 lemma
@@ -358,33 +404,29 @@ lemma
 text \<open>
 \<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    OperationCall (BooleanLiteral True) DotCall OrOp
-      [BooleanLiteral False] : Boolean[1]"
-  by auto
+  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (BooleanLiteral True) DotCall OrOp
+    [BooleanLiteral False] : Boolean[1]"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>null and true : Boolean[?]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    OperationCall (NullLiteral) DotCall AndOp
-      [BooleanLiteral True] : Boolean[?]"
-  by auto
+  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (NullLiteral) DotCall AndOp
+    [BooleanLiteral True] : Boolean[?]"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>let x : Real[1] = 5 in x + 7 : Real[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    Let (STR ''x'') (Some Real[1]) (IntegerLiteral 5)
+  "\<Gamma>\<^sub>0 \<turnstile> Let (STR ''x'') (Some Real[1]) (IntegerLiteral 5)
     (OperationCall (Var STR ''x'') DotCall PlusOp [IntegerLiteral 7]) : Real[1]"
-  by auto
+  by simp
 
 text \<open>
 \<^verbatim>\<open>null.oclIsUndefined() : Boolean[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    OperationCall (NullLiteral) DotCall OclIsUndefinedOp [] : Boolean[1]"
-  by auto
+  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (NullLiteral) DotCall OclIsUndefinedOp [] : Boolean[1]"
+  by simp
 
 (*
 declare element_type.intros [intro!]
@@ -392,182 +434,76 @@ declare to_nonunique_collection.intros [intro!]
 declare update_element_type.intros [intro!]
 *)
 
-lemma q81 [simp]:
-  "Sequence \<tau> \<le> OclAny[?] = False"
-  by auto
-
-lemma q82 [simp]:
-  "Sequence \<tau> \<le> Tuple \<pi> = False"
-  by auto
-
 text \<open>
 \<^verbatim>\<open>Sequence{1..5, null}.oclIsUndefined() : Sequence(Boolean[1])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    OperationCall (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-               CollectionItem NullLiteral])
+  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
+    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+      CollectionItem NullLiteral])
     DotCall OclIsUndefinedOp [] : Sequence Boolean[1]"
-  by auto
+  by simp
 
 text \<open>
 \<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
   : Set(Tuple(first: Integer[1], second: String[1]))\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    OperationCall (CollectionLiteral SequenceKind
-      [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-      ArrowCall ProductOp
-      [CollectionLiteral SetKind
-        [CollectionItem (StringLiteral ''a''),
-         CollectionItem (StringLiteral ''b'')]] :
-    Set (Tuple (fmap_of_list [(STR ''first'', Integer[1]), (STR ''second'', String[1])]))"
-  by auto
+  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
+    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
+    ArrowCall ProductOp
+    [CollectionLiteral SetKind
+      [CollectionItem (StringLiteral ''a''),
+      CollectionItem (StringLiteral ''b'')]] :
+    Set (Tuple (fmap_of_list [
+      (STR ''first'', Integer[1]), (STR ''second'', String[1])]))"
+  by simp
 
-(*
-lemma q83 [simp]:
-  "\<tau>[1] < \<tau>[?]"
-  "\<tau>[1] \<le> \<tau>[?]"
-  apply auto
-  by (simp add: less_type_def subtype.intros(3) tranclp.r_into_trancl)
-*)
-(*
-declare update_element_type.intros [intro]
-declare update_element_type.simps [simp]
-*)
 text \<open>
 \<^verbatim>\<open>Sequence{1..5, null}?->iterate(x, acc : Real[1] = 0 | acc + x)
   : Real[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    IterateCall (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-               CollectionItem NullLiteral]) SafeArrowCall
-      [STR ''x''] None
-      (STR ''acc'') (Some Real[1]) (IntegerLiteral 0)
+  "\<Gamma>\<^sub>0 \<turnstile> IterateCall (CollectionLiteral SequenceKind
+    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+        CollectionItem NullLiteral]) SafeArrowCall
+    [STR ''x''] None
+    (STR ''acc'') (Some Real[1]) (IntegerLiteral 0)
     (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : Real[1]"
-  by auto
+  by simp
 
 text \<open>
 \<^verbatim>\<open>Sequence{1..5, null}?->max() : Integer[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-    OperationCall (CollectionLiteral SequenceKind
-              [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-               CollectionItem NullLiteral])
-      SafeArrowCall CollectionMaxOp [] : Integer[1]"
-  by auto
+  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
+    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+        CollectionItem NullLiteral])
+    SafeArrowCall CollectionMaxOp [] : Integer[1]"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
 x->any(it | it = 'test') : String[?]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-  Let (STR ''x'') (Some (Sequence String[?])) (CollectionLiteral SequenceKind
-    [CollectionItem (StringLiteral ''abc''),
-     CollectionItem (StringLiteral ''zxc'')])
-  (AnyIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] (Some String[?])
-    (OperationCall (Var STR ''it'') DotCall EqualOp [StringLiteral ''test''])) : String[?]"
-  by auto
+  "\<Gamma>\<^sub>0 \<turnstile> Let (STR ''x'') (Some (Sequence String[?]))
+    (CollectionLiteral SequenceKind
+      [CollectionItem (StringLiteral ''abc''),
+       CollectionItem (StringLiteral ''zxc'')])
+    (AnyIteratorCall (Var STR ''x'') ArrowCall
+      [STR ''it''] (Some String[?])
+      (OperationCall (Var STR ''it'') DotCall EqualOp
+        [StringLiteral ''test''])) : String[?]"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
 x?->closure(it | it) : OrderedSet(String[1])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile>
-  Let STR ''x'' (Some (Sequence String[?])) (CollectionLiteral SequenceKind
-    [CollectionItem (StringLiteral ''abc''),
-     CollectionItem (StringLiteral ''zxc'')])
-  (ClosureIteratorCall (Var STR ''x'') SafeArrowCall [STR ''it''] None
-    (Var STR ''it'')) : OrderedSet String[1]"
-  by auto
-
-inductive_simps attribute'_alt_simps[simp]: "attribute' attrs \<C> attr \<D> \<tau>"
-inductive_simps owned_attribute'_alt_simps[simp]: "owned_attribute' attrs \<C> attr \<tau>"
-inductive_simps class_has_attribute'_alt_simps[simp]: "class_has_attribute' attrs \<C> attr"
-
-print_theorems
-
-(*declare classes1.simps [simp]*)
-(*
-lemma q11:
-  "owned_attribute' attributes Person STR ''name'' \<tau> = (\<tau> = String[1])"
-  by (auto simp add: attributes_classes1_def owned_attribute'_alt_simps)
-
-inductive_simps q12[simp]: "owned_attribute' attributes Employee STR ''position'' String[1]"
-inductive_simps q13[simp]: "owned_attribute' attributes Customer STR ''vip'' Boolean[1]"
-inductive_simps q14[simp]: "owned_attribute' attributes Project STR ''name'' String[1]"
-inductive_simps q15[simp]: "owned_attribute' attributes Project STR ''cost'' Real[?]"
-inductive_simps q16[simp]: "owned_attribute' attributes Task STR ''description'' String[1]"
-*)
-(*
-definition "attributes_classes1 \<equiv> fmap_of_list [
-  (Person, fmap_of_list [
-    (STR ''name'', String[1] :: classes1 type)]),
-  (Employee, fmap_of_list [
-    (STR ''position'', String[1])]),
-  (Customer, fmap_of_list [
-    (STR ''vip'', Boolean[1])]),
-  (Project, fmap_of_list [
-    (STR ''name'', String[1]),
-    (STR ''cost'', Real[?])]),
-  (Task, fmap_of_list [
-    (STR ''description'', String[1])])]"
-*)
-
-print_theorems
-
-(*
-  HOL.conj_disj_distribL: (?P \<and> (?Q \<or> ?R)) = (?P \<and> ?Q \<or> ?P \<and> ?R)
-  HOL.conj_disj_distribR: ((?P \<or> ?Q) \<and> ?R) = (?P \<and> ?R \<or> ?Q \<and> ?R)
-  Groebner_Basis.dnf(2): ((?Q \<or> ?R) \<and> ?P) = (?Q \<and> ?P \<or> ?R \<and> ?P)
-  HOL.disj_conj_distribL: (?P \<or> ?Q \<and> ?R) = ((?P \<or> ?Q) \<and> (?P \<or> ?R))
-  HOL.disj_conj_distribR: (?P \<and> ?Q \<or> ?R) = ((?P \<or> ?R) \<and> (?Q \<or> ?R))
-*)
-
-lemma q21:
-  "y \<noteq> z \<Longrightarrow> (z \<noteq> x \<and> y = x) = (y = x)"
-  by auto
-
-lemma q22:
-  "(z \<noteq> x \<and> y = x) = (z \<noteq> y \<and> y = x)"
-  by auto
-
-lemma q23:
-  "P (z \<noteq> x \<and> y = x) = P (z \<noteq> y \<and> y = x)"
-proof -
-  have "(z = y \<or> y \<noteq> x) \<and> (z = x \<or> y \<noteq> x) \<or> P (z \<noteq> x \<and> y = x) = P (z \<noteq> y \<and> y = x)"
-    by blast
-  then show ?thesis
-    by auto
-qed
-
-lemma q24:
-  "(Task \<noteq> x \<and>
-        Project \<noteq> x \<and>
-        Customer \<noteq> x \<and> Employee \<noteq> x \<and> Person = x) = (Person = x)"
-  by auto
-
-lemma q25:
-  "(Task \<noteq> x \<and>
-        Project \<noteq> x \<and>
-        Customer \<noteq> x \<and> Employee \<noteq> x \<and> Person = x \<and> x \<le> Person) = (Person = x)"
-  by auto
-
-lemma q26:
-  "z = (THE x. z \<noteq> x) \<Longrightarrow> False"
-
-lemma q26:
-  "(THE x. z \<noteq> x \<and> P x) = (THE x. P x)"
-
-values "{x. \<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
-    AttributeCall (Var STR ''self'') DotCall STR ''name'' : x}"
-
-
-
-
-
-
+  "\<Gamma>\<^sub>0 \<turnstile> Let STR ''x'' (Some (Sequence String[?]))
+    (CollectionLiteral SequenceKind
+      [CollectionItem (StringLiteral ''abc''),
+       CollectionItem (StringLiteral ''zxc'')])
+    (ClosureIteratorCall (Var STR ''x'') SafeArrowCall
+      [STR ''it''] None
+      (Var STR ''it'')) : OrderedSet String[1]"
+  by simp
 
 
 
@@ -579,44 +515,58 @@ name : String[1]\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
     AttributeCall (Var STR ''self'') DotCall STR ''name'' : String[1]"
+  by simp
+(*
+lemma association_end_Employee_projects [intro]:
+  "association_end Employee None STR ''projects'' Employee (Project, 0, \<infinity>, False, True)"
   by eval
+*)
+
+declare assoc_end_type_def [simp]
+
+declare assoc_end_class_def [simp]
+declare assoc_end_min_def [simp]
+declare assoc_end_max_def [simp]
+declare assoc_end_ordered_def [simp]
+declare assoc_end_unique_def [simp]
 
 text \<open>
 \<^verbatim>\<open>context Employee:
 projects : Set(Project[1])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
-    AssociationEndCall (Var STR ''self'') DotCall None STR ''projects'' : Set Project[1]"
-  by eval
+    AssociationEndCall (Var STR ''self'') DotCall None
+      STR ''projects'' : Set Project[1]"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>context Employee:
 projects.members : Bag(Employee[1])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
-  AssociationEndCall (AssociationEndCall (Var STR ''self'')
-      DotCall None STR ''projects'')
-    DotCall None STR ''members'' : Bag Employee[1]"
-  by eval
+    AssociationEndCall (AssociationEndCall (Var STR ''self'')
+        DotCall None STR ''projects'')
+      DotCall None STR ''members'' : Bag Employee[1]"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>Project[?].allInstances() : Set(Project[?])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> MetaOperationCall Project[?] AllInstancesOp : Set Project[?]"
-  by auto
+  by simp
 
+(*
 declare static_operation'.simps [simp]
-
-lemma q11:
-  "x = The P \<longleftrightarrow> The P = x"
-  by auto
+*)
 
 text \<open>
 \<^verbatim>\<open>Project[1]::allProjects() : Set(Project[1])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> StaticOperationCall Project[1] STR ''allProjects'' [] : Set Project[1]"
+  apply auto
+(*
   by eval
-
+*)
 thm HOL.theI' HOL.the1_equality HOL.theI
   thm static_operation'.simps
 
@@ -628,13 +578,26 @@ lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (BooleanLiteral True) DotCall EqualOp [NullLiteral] : \<tau>"
   by auto
 
+lemma basic_type_less_eq_simps [simp]:
+  "(\<tau> :: ('a :: order) basic_type) \<le> \<sigma> = (\<tau> = \<sigma> \<or> \<tau> < \<sigma>)"
+  "\<tau> \<le> Boolean = (\<tau> = OclVoid \<or> \<tau> = Boolean)"
+  "\<tau> < Boolean = (\<tau> = OclVoid)"
+  "\<tau> \<le> String = (\<tau> = OclVoid \<or> \<tau> = String)"
+  "\<tau> < String = (\<tau> = OclVoid)"
+  "\<tau> < OclVoid = False"
+  "OclVoid < \<sigma> = (\<sigma> \<noteq> OclVoid)"
+  using dual_order.order_iff_strict apply blast
+  apply auto
+  using basic_subtype_fun.simps(2) by auto
+
+
 text \<open>
 \<^verbatim>\<open>let x : Boolean[1] = 5 in x and true\<close>\<close>
 lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile>
     Let STR ''x'' (Some Boolean[1]) (IntegerLiteral 5)
       (OperationCall (Var STR ''x'') DotCall AndOp [BooleanLiteral True]) : \<tau>"
-  by auto
+  by simp
 
 text \<open>
 \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
@@ -646,7 +609,7 @@ lemma
        CollectionItem (StringLiteral ''zxc'')])
     (ClosureIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] None
       (IntegerLiteral 1)) : \<tau>"
-  by auto
+  by simp
 
 text \<open>
 \<^verbatim>\<open>Sequence{1..5, null}->max()\<close>\<close>

@@ -30,22 +30,22 @@ type_synonym 't param_spec = "param \<times> 't \<times> param_dir"
 type_synonym ('t, 'e) oper_spec =
   "oper \<times> 't \<times> 't param_spec list \<times> 't \<times> bool \<times> 'e option"
 
-definition "assoc_end_class \<equiv> fst"
-definition "assoc_end_min \<equiv> fst \<circ> snd"
-definition "assoc_end_max \<equiv> fst \<circ> snd \<circ> snd"
-definition "assoc_end_ordered \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
-definition "assoc_end_unique \<equiv> snd \<circ> snd \<circ> snd \<circ> snd"
+definition "assoc_end_class :: 'c assoc_end \<Rightarrow> 'c \<equiv> fst"
+definition "assoc_end_min :: 'c assoc_end \<Rightarrow> nat \<equiv> fst \<circ> snd"
+definition "assoc_end_max :: 'c assoc_end \<Rightarrow> enat \<equiv> fst \<circ> snd \<circ> snd"
+definition "assoc_end_ordered :: 'c assoc_end \<Rightarrow> bool \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
+definition "assoc_end_unique :: 'c assoc_end \<Rightarrow> bool \<equiv> snd \<circ> snd \<circ> snd \<circ> snd"
 
-definition "oper_name \<equiv> fst"
-definition "oper_context \<equiv> fst \<circ> snd"
-definition "oper_params \<equiv> fst \<circ> snd \<circ> snd"
-definition "oper_result \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
-definition "oper_static \<equiv> fst \<circ> snd \<circ> snd \<circ> snd \<circ> snd"
-definition "oper_body \<equiv> snd \<circ> snd \<circ> snd \<circ> snd \<circ> snd"
+definition "oper_name :: ('t, 'e) oper_spec \<Rightarrow> oper \<equiv> fst"
+definition "oper_context :: ('t, 'e) oper_spec \<Rightarrow> 't \<equiv> fst \<circ> snd"
+definition "oper_params :: ('t, 'e) oper_spec \<Rightarrow> 't param_spec list \<equiv> fst \<circ> snd \<circ> snd"
+definition "oper_result :: ('t, 'e) oper_spec \<Rightarrow> 't \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
+definition "oper_static :: ('t, 'e) oper_spec \<Rightarrow> bool \<equiv> fst \<circ> snd \<circ> snd \<circ> snd \<circ> snd"
+definition "oper_body :: ('t, 'e) oper_spec \<Rightarrow> 'e option \<equiv> snd \<circ> snd \<circ> snd \<circ> snd \<circ> snd"
 
-definition "param_name \<equiv> fst"
-definition "param_type \<equiv> fst \<circ> snd"
-definition "param_dir \<equiv> snd \<circ> snd"
+definition "param_name ::'t param_spec \<Rightarrow> param \<equiv> fst"
+definition "param_type ::'t param_spec \<Rightarrow> 't \<equiv> fst \<circ> snd"
+definition "param_dir ::'t param_spec \<Rightarrow> param_dir \<equiv> snd \<circ> snd"
 
 definition "oper_in_params op \<equiv>
   filter (\<lambda>p. param_dir p = In \<or> param_dir p = InOut) (oper_params op)"
@@ -83,7 +83,20 @@ inductive unique_closest_attribute where
   "closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
    \<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
    unique_closest_attribute attributes \<C> attr \<D> \<tau>"
+(*
+lemma closest_attribute_alt_simp:
+  "closest_attribute attributes \<C> attr \<D> \<tau> =
+   (owned_attribute' attributes \<D> attr \<tau> \<and>
+    \<C> \<le> \<D> \<and>
+    (\<forall>\<D>' \<tau>'. owned_attribute' attributes \<D>' attr \<tau>' \<longrightarrow> \<C> \<le> \<D>' \<longrightarrow> \<not> \<D>' < \<D>))"
+  by (auto simp add: attribute_not_closest.simps closest_attribute.simps)
 
+lemma unique_closest_attribute_alt_simp:
+  "unique_closest_attribute attributes \<C> attr \<D> \<tau> =
+   (closest_attribute attributes \<C> attr \<D> \<tau> \<and>
+    (\<forall>\<D>' \<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<longrightarrow> \<D> = \<D>' \<and> \<tau> = \<tau>'))"
+  by (simp add: closest_attribute_not_unique.simps unique_closest_attribute.simps)
+*)
 text \<open>
   The following predicates allows one to access association ends.\<close>
 
@@ -302,6 +315,9 @@ abbreviation "owned_attribute \<equiv>
 abbreviation "attribute \<equiv>
   unique_closest_attribute attributes"
 
+abbreviation "owned_association_end \<equiv>
+  owned_association_end' classes associations"
+
 abbreviation "association_end \<equiv>
   unique_closest_association_end classes associations"
 
@@ -326,11 +342,6 @@ end
 
 subsection \<open>Properties\<close>
 
-lemma owned_attribute'_det:
-  "owned_attribute' attributes \<C> attr \<tau> \<Longrightarrow>
-   owned_attribute' attributes \<C> attr \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
-  by (elim owned_attribute'.cases; auto)
-
 lemma (in object_model) attribute_det:
   "attribute \<C> attr \<D> \<tau> \<Longrightarrow>
    attribute \<C> attr \<E> \<sigma> \<Longrightarrow> \<D> = \<E> \<and> \<tau> = \<sigma>"
@@ -338,157 +349,39 @@ lemma (in object_model) attribute_det:
 
 lemma (in object_model) attribute_self_or_inherited:
   "attribute \<C> attr \<D> \<tau> \<Longrightarrow> \<C> \<le> \<D>"
-  by auto
-
-thm ccontr
-
-lemma q:
-  "\<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-  closest_attribute attributes \<C> attr \<D>' \<tau>' \<Longrightarrow>
-   \<D> \<noteq> \<D>' \<or> \<tau> \<noteq> \<tau>'"
-
-thm attribute_not_closest.simps
-thm closest_attribute.simps
-thm closest_attributeE
-thm closest_attribute_not_unique.simps
-thm closest_attribute_not_uniqueE
-(*
-  HOL.all_not_ex: (\<forall>x. ?P x) = (\<nexists>x. \<not> ?P x)
-  HOL.not_all: (\<not> (\<forall>x. ?P x)) = (\<exists>x. \<not> ?P x)
-  HOL.not_ex: (\<nexists>x. ?P x) = (\<forall>x. \<not> ?P x)
-*)
-
-thm allE
-
-lemma q11:
-  "closest_attribute attributes \<C> attr \<D>'' \<tau> \<Longrightarrow>
-       \<forall>y y'.
-          closest_attribute attributes \<C> attr y \<tau> \<and>
-          closest_attribute attributes \<C> attr y' \<tau> \<longrightarrow>
-          y = y' \<Longrightarrow>
-       closest_attribute attributes \<C> attr \<D>' \<tau>"
-  apply (erule_tac ?x="\<D>''" in allE)
-  apply (erule_tac ?x="\<D>'" in allE)
-  apply (auto)
-
-lemma q11:
-  "\<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   unique_closest_attribute attributes \<C> attr \<D> \<tau>"
-  by (metis closest_attribute.cases closest_attribute_not_unique.cases owned_attribute'_det unique_closest_attribute.intros)
-
-lemma q12:
-  "unique_closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   \<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau>"
-  by (metis closest_attribute_not_unique.intros unique_closest_attribute.cases)
-
-lemma q13:
-  "unique_closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   \<exists>!\<D>'. \<exists>!\<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<and> \<D> = \<D>' \<and> \<tau> = \<tau>'"
-  by (metis unique_closest_attribute.cases)
-
-lemma q14:
-  "\<exists>!\<D>'. \<exists>!\<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<and> \<D> = \<D>' \<and> \<tau> = \<tau>' \<Longrightarrow>
-   unique_closest_attribute attributes \<C> attr \<D> \<tau>"
-  apply (rule unique_closest_attribute.intros)
-  apply auto[1]
-  apply auto[1]
-  apply (erule closest_attribute_not_unique.cases)
-  apply auto[1]
-  apply (elim allE impE)
-  apply (intro conjI ex1I)
-  apply auto[1]
-  apply auto[1]
-  apply auto[1]
-  apply auto[1]
-  apply auto[1]
-  apply auto[1]
-  apply auto[1]
-  apply auto[1]
-  apply auto[1]
-
-lemma q13:
-  "unique_closest_attribute attributes \<C> attr \<D> \<tau> =
-   closest_attribute attributes \<C> attr \<D> \<tau> \<and>
-   (\<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau>)"
-  using q11 q12
-
-lemma q12:
-  "\<exists>!\<D>. \<exists>!\<tau>. closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   \<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
-  apply (rule unique_closest_attribute.intros)
-  apply (unfold HOL.Ex1_def)
-  apply (elim exE conjE allE impE)
-  apply auto[1]
-  apply (intro exI conjI)
-  apply auto[1]
-  apply (meson closest_attribute.cases owned_attribute'_det)
-  apply simp
-
-(*
-inductive closest_attribute_not_unique where
-  "closest_attribute attributes \<C> attr \<D>' \<tau>' \<Longrightarrow>
-   \<D> \<noteq> \<D>' \<or> \<tau> \<noteq> \<tau>' \<Longrightarrow>
-   closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
-
-inductive unique_closest_attribute where
-  "closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   \<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   unique_closest_attribute attributes \<C> attr \<D> \<tau>"
-
-inductive attribute_not_closest where
-  "owned_attribute' attributes \<D>' attr \<tau>' \<Longrightarrow>
-   \<C> \<le> \<D>' \<Longrightarrow>
-   \<D>' < \<D> \<Longrightarrow>
-   attribute_not_closest attributes \<C> attr \<D> \<tau>"
-
-inductive closest_attribute where
-  "owned_attribute' attributes \<D> attr \<tau> \<Longrightarrow>
-   \<C> \<le> \<D> \<Longrightarrow>
-   \<not> attribute_not_closest attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   closest_attribute attributes \<C> attr \<D> \<tau>"
-*)
-
-lemma q:
-  assumes "\<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
-  shows "closest_attribute attributes \<C> attr \<D> \<tau>"
-proof -
-  assume "\<not> closest_attribute attributes \<C> attr \<D> \<tau>"
-  then have "False"
-
-lemma q:
-  "\<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
-   closest_attribute attributes \<C> attr \<D> \<tau> \<and>
-   (\<forall>\<D>' \<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<longrightarrow> \<D> = \<D>' \<and> \<tau> = \<tau>')"
-  apply auto
-proof -
-  assume "closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
-  apply (erule notE)
-  apply auto
+  by (meson closest_attribute.cases unique_closest_attribute.cases)
 
 lemma (in object_model) attribute_closest:
   "attribute \<C> attr \<D> \<tau> \<Longrightarrow>
    owned_attribute \<D>' attr \<tau> \<Longrightarrow>
-   \<C> \<le> \<D>' \<Longrightarrow> \<D> \<le> \<D>'"
-  apply auto
-  apply (erule notE)
-  unfolding attribute_not_closest.simps owned_attribute'.simps
-  apply auto
+   \<C> \<le> \<D>' \<Longrightarrow> \<not> \<D>' < \<D>"
+  by (meson attribute_not_closest.intros closest_attribute.cases
+      unique_closest_attribute.cases)
 
 
 lemma (in object_model) association_end_det:
   "association_end \<C> from role \<D>\<^sub>1 end\<^sub>1 \<Longrightarrow>
    association_end \<C> from role \<D>\<^sub>2 end\<^sub>2 \<Longrightarrow> \<D>\<^sub>1 = \<D>\<^sub>2 \<and> end\<^sub>1 = end\<^sub>2"
-  by (meson closest_association_end_not_unique.intros unique_closest_association_end.cases)
+  by (meson closest_association_end_not_unique.intros
+      unique_closest_association_end.cases)
 
 lemma (in object_model) association_end_self_or_inherited:
   "association_end \<C> from role \<D> end \<Longrightarrow> \<C> \<le> \<D>"
-  by auto
+  by (meson closest_association_end.cases unique_closest_association_end.cases)
+
+lemma (in object_model) association_end_closest:
+  "association_end \<C> from role \<D> end \<Longrightarrow>
+   owned_association_end \<D>' from role end \<Longrightarrow>
+   \<C> \<le> \<D>' \<Longrightarrow> \<not> \<D>' < \<D>"
+  by (meson association_end_not_closest.intros closest_association_end.cases
+      unique_closest_association_end.cases)
+
 
 lemma (in object_model) association_class_end_det:
   "association_class_end \<A> role end\<^sub>1 \<Longrightarrow>
    association_class_end \<A> role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
   by (meson association_class_end_not_unique.intros unique_association_class_end.cases)
+
 
 lemma (in object_model) operation_det:
   "operation \<tau> name \<pi> oper\<^sub>1 \<Longrightarrow>

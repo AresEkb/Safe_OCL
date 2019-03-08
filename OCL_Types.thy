@@ -606,6 +606,33 @@ lemma type_less_eq_x_Tuple [elim!]:
   apply (drule le_imp_less_or_eq, auto)
   by (simp add: fmap.rel_refl fmrel_to_subtuple)
 
+(*** Simplification Rules ***************************************************)
+
+section \<open>Simplification Rules\<close>
+
+lemma type_less_eq_simps [simp]:
+  "Collection \<tau> \<le> \<upsilon>[1] = False"
+  "Collection \<tau> \<le> \<upsilon>[?] = False"
+  "Collection \<tau> \<le> Tuple \<xi> = False"
+  "Set \<tau> \<le> \<upsilon>[1] = False"
+  "Set \<tau> \<le> \<upsilon>[?] = False"
+  "Set \<tau> \<le> Tuple \<xi> = False"
+  "OrderedSet \<tau> \<le> \<upsilon>[1] = False"
+  "OrderedSet \<tau> \<le> \<upsilon>[?] = False"
+  "OrderedSet \<tau> \<le> Tuple \<xi> = False"
+  "Bag \<tau> \<le> \<upsilon>[1] = False"
+  "Bag \<tau> \<le> \<upsilon>[?] = False"
+  "Bag \<tau> \<le> Tuple \<xi> = False"
+  "Sequence \<tau> \<le> \<upsilon>[1] = False"
+  "Sequence \<tau> \<le> \<upsilon>[?] = False"
+  "Sequence \<tau> \<le> Tuple \<xi> = False"
+  "Sequence \<tau> \<le> Sequence \<sigma> = (\<tau> \<le> \<sigma>)"
+  "(\<rho>[1] \<le> \<upsilon>[1]) = (\<rho> \<le> \<upsilon>)"
+  "(\<rho>[1] \<le> \<upsilon>[?]) = (\<rho> \<le> \<upsilon>)"
+  "(\<rho>[?] \<le> \<upsilon>[?]) = (\<rho> \<le> \<upsilon>)"
+  "(\<rho>[1] < \<upsilon>[?]) = (\<rho> \<le> \<upsilon>)"
+  by auto
+
 (*** Upper Semilattice of Types *********************************************)
 
 section \<open>Upper Semilattice of Types\<close>
@@ -934,8 +961,7 @@ proof (intro ext iffI)
   next
     case (Optional \<sigma>) show ?case
       apply (insert Optional)
-      apply (erule subtype_fun.elims; auto)
-      using dual_order.order_iff_strict by auto
+      by (erule subtype_fun.elims; auto)
   next
     case (Collection \<sigma>) show ?case
       apply (insert Collection)
