@@ -15,6 +15,9 @@ lemma logic_simps [simp]:
   "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
   by auto
 
+(*
+lemmas basic_type_le_less [simp] = Orderings.order_le_less for a :: "'a basic_type"
+*)
 
 
 
@@ -401,6 +404,21 @@ lemma
   "\<Gamma>\<^sub>0 \<turnstile> EnumLiteral STR ''E1'' STR ''A'' : (Enum STR ''E1'')[1]"
   by (auto simp add: literals_classes1_def)
 
+(*
+datatype (plugins del: size) 'a type =
+  OclSuper
+| Required "'a basic_type" ("_[1]" [1000] 1000)
+| Optional "'a basic_type" ("_[?]" [1000] 1000)
+| Collection "'a type"
+| Set "'a type"
+| OrderedSet "'a type"
+| Bag "'a type"
+| Sequence "'a type"
+| Tuple "telem \<rightharpoonup>\<^sub>f 'a type"
+*)
+
+lemmas basic_type_le_less [simp] = Orderings.order_class.le_less for x y :: "'a basic_type"
+
 text \<open>
 \<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
 lemma
@@ -547,7 +565,8 @@ lemma
     AssociationEndCall (AssociationEndCall (Var STR ''self'')
         DotCall None STR ''projects'')
       DotCall None STR ''members'' : Bag Employee[1]"
-  by simp
+  apply simp
+  by (metis to_single_type.simps(2) to_single_type.simps(6))
 
 text \<open>
 \<^verbatim>\<open>Project[?].allInstances() : Set(Project[?])\<close>\<close>
@@ -577,18 +596,6 @@ text \<open>
 lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (BooleanLiteral True) DotCall EqualOp [NullLiteral] : \<tau>"
   by auto
-
-lemma basic_type_less_eq_simps [simp]:
-  "(\<tau> :: ('a :: order) basic_type) \<le> \<sigma> = (\<tau> = \<sigma> \<or> \<tau> < \<sigma>)"
-  "\<tau> \<le> Boolean = (\<tau> = OclVoid \<or> \<tau> = Boolean)"
-  "\<tau> < Boolean = (\<tau> = OclVoid)"
-  "\<tau> \<le> String = (\<tau> = OclVoid \<or> \<tau> = String)"
-  "\<tau> < String = (\<tau> = OclVoid)"
-  "\<tau> < OclVoid = False"
-  "OclVoid < \<sigma> = (\<sigma> \<noteq> OclVoid)"
-  using dual_order.order_iff_strict apply blast
-  apply auto
-  using basic_subtype_fun.simps(2) by auto
 
 
 text \<open>

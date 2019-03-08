@@ -3,7 +3,7 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-section \<open>Object Model\label{sec:object-model}\<close>
+section \<open>Object Model\<close>
 theory Object_Model
   imports "HOL-Library.Extended_Nat" Finite_Map_Ext
 begin

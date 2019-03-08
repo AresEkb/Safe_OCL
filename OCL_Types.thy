@@ -10,7 +10,7 @@ begin
 
 (*** Types ******************************************************************)
 
-section \<open>Definition of Types and a Subtype Relation\label{sec:types-def}\<close>
+section \<open>Definition of Types and a Subtype Relation\<close>
 
 text \<open>
   Types are parameterized over classes.\<close>
@@ -610,28 +610,55 @@ lemma type_less_eq_x_Tuple [elim!]:
 
 section \<open>Simplification Rules\<close>
 
-lemma type_less_eq_simps [simp]:
-  "Collection \<tau> \<le> \<upsilon>[1] = False"
-  "Collection \<tau> \<le> \<upsilon>[?] = False"
-  "Collection \<tau> \<le> Tuple \<xi> = False"
-  "Set \<tau> \<le> \<upsilon>[1] = False"
-  "Set \<tau> \<le> \<upsilon>[?] = False"
-  "Set \<tau> \<le> Tuple \<xi> = False"
-  "OrderedSet \<tau> \<le> \<upsilon>[1] = False"
-  "OrderedSet \<tau> \<le> \<upsilon>[?] = False"
-  "OrderedSet \<tau> \<le> Tuple \<xi> = False"
-  "Bag \<tau> \<le> \<upsilon>[1] = False"
-  "Bag \<tau> \<le> \<upsilon>[?] = False"
-  "Bag \<tau> \<le> Tuple \<xi> = False"
-  "Sequence \<tau> \<le> \<upsilon>[1] = False"
-  "Sequence \<tau> \<le> \<upsilon>[?] = False"
-  "Sequence \<tau> \<le> Tuple \<xi> = False"
-  "Sequence \<tau> \<le> Sequence \<sigma> = (\<tau> \<le> \<sigma>)"
-  "(\<rho>[1] \<le> \<upsilon>[1]) = (\<rho> \<le> \<upsilon>)"
-  "(\<rho>[1] \<le> \<upsilon>[?]) = (\<rho> \<le> \<upsilon>)"
-  "(\<rho>[?] \<le> \<upsilon>[?]) = (\<rho> \<le> \<upsilon>)"
-  "(\<rho>[1] < \<upsilon>[?]) = (\<rho> \<le> \<upsilon>)"
+lemma type_less_right_simps [simp]:
+  "\<tau> < OclSuper = (\<tau> \<noteq> OclSuper)"
+  "\<tau> < \<upsilon>[1] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> < \<upsilon>)"
+  "\<tau> < \<upsilon>[?] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = \<rho>[?] \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Collection \<sigma> = (\<exists>\<phi>.
+    \<tau> = Collection \<phi> \<and> \<phi> < \<sigma> \<or>
+    \<tau> = Set \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+    \<tau> = OrderedSet \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+    \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+    \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma>)"
+  "\<tau> < Set \<sigma> = (\<exists>\<phi>. \<tau> = Set \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < OrderedSet \<sigma> = (\<exists>\<phi>. \<tau> = OrderedSet \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
   by auto
+
+lemma type_less_left_simps [simp]:
+  "OclSuper < \<sigma> = False"
+  "\<rho>[1] < \<sigma> = (\<exists>\<upsilon>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = \<upsilon>[1] \<and> \<rho> < \<upsilon> \<or>
+    \<sigma> = \<upsilon>[?] \<and> \<rho> \<le> \<upsilon>)"
+  "\<rho>[?] < \<sigma> = (\<exists>\<upsilon>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = \<upsilon>[?] \<and> \<rho> < \<upsilon>)"
+  "Collection \<tau> < \<sigma> = (\<exists>\<phi>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = Collection \<phi> \<and> \<tau> < \<phi>)"
+  "Set \<tau> < \<sigma> = (\<exists>\<phi>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+    \<sigma> = Set \<phi> \<and> \<tau> < \<phi>)"
+  "OrderedSet \<tau> < \<sigma> = (\<exists>\<phi>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+    \<sigma> = OrderedSet \<phi> \<and> \<tau> < \<phi>)"
+  "Bag \<tau> < \<sigma> = (\<exists>\<phi>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+    \<sigma> = Bag \<phi> \<and> \<tau> < \<phi>)"
+  "Sequence \<tau> < \<sigma> = (\<exists>\<phi>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+    \<sigma> = Sequence \<phi> \<and> \<tau> < \<phi>)"
+  "Tuple \<pi> < \<sigma> = (\<exists>\<xi>.
+    \<sigma> = OclSuper \<or>
+    \<sigma> = Tuple \<xi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
+  by (induct \<sigma>; auto)+
 
 (*** Upper Semilattice of Types *********************************************)
 
@@ -935,9 +962,11 @@ proof (intro ext iffI)
   proof (induct \<tau> arbitrary: \<sigma>)
     case OclSuper thus ?case by (cases \<sigma>; auto)
   next
-    case (Required \<tau>) thus ?case by (cases \<sigma>; auto)
+    case (Required \<tau>) thus ?case
+      by (cases \<sigma>; auto simp: less_basic_type_code less_eq_basic_type_code)
   next
-    case (Optional \<tau>) thus ?case by (cases \<sigma>; auto)
+    case (Optional \<tau>) thus ?case
+      by (cases \<sigma>; auto simp: less_basic_type_code less_eq_basic_type_code)
   next
     case (Collection \<sigma>) thus ?case by (cases \<sigma>; auto)
   next
@@ -957,11 +986,12 @@ proof (intro ext iffI)
     case OclSuper thus ?case by (cases \<sigma>; auto)
   next
     case (Required \<sigma>) show ?case
-      by (insert Required) (erule subtype_fun.elims; auto)
+      by (insert Required) (erule subtype_fun.elims;
+          auto simp: less_basic_type_code less_eq_basic_type_code)
   next
     case (Optional \<sigma>) show ?case
-      apply (insert Optional)
-      by (erule subtype_fun.elims; auto)
+      by (insert Optional) (erule subtype_fun.elims;
+          auto simp: less_basic_type_code less_eq_basic_type_code)
   next
     case (Collection \<sigma>) show ?case
       apply (insert Collection)
