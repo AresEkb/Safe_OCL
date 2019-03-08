@@ -346,7 +346,7 @@ lemma basic_type_less_right_simps [simp]:
   "\<tau> < Enum \<E> = (\<tau> = OclVoid)"
   by auto
 
-lemma basic_type_less_less_simps [simp]:
+lemma basic_type_less_left_simps [simp]:
   "OclAny < \<sigma> = False"
   "OclVoid < \<sigma> = (\<sigma> \<noteq> OclVoid)"
   "Boolean < \<sigma> = (\<sigma> = OclAny)"

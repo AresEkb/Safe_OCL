@@ -8,20 +8,6 @@ theory OCL_Examples
   imports OCL_Normalization
 begin
 
-lemma logic_simps [simp]:
-  "\<exists>a. a"
-  "\<exists>a. \<not> a"
-  "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
-  "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
-  by auto
-
-(*
-lemmas basic_type_le_less [simp] = Orderings.order_le_less for a :: "'a basic_type"
-*)
-
-
-
-
 (*** Classes ****************************************************************)
 
 section \<open>Classes\<close>
@@ -106,24 +92,31 @@ instance
 
 end
 
-instantiation classes1 :: enum
-begin
+fun subclass1_fun where
+  "subclass1_fun Object \<C> = False"
+| "subclass1_fun Person \<C> = (\<C> = Object)"
+| "subclass1_fun Employee \<C> = (\<C> = Object \<or> \<C> = Person)"
+| "subclass1_fun Customer \<C> = (\<C> = Object \<or> \<C> = Person)"
+| "subclass1_fun Project \<C> = (\<C> = Object)"
+| "subclass1_fun Task \<C> = (\<C> = Object)"
+| "subclass1_fun Sprint \<C> = (\<C> = Object)"
 
-definition [simp]: "enum_classes1 \<equiv>
-  [Object, Person, Employee, Customer, Project, Task, Sprint]"
+lemma less_classes1_code [code]:
+  "(<) = subclass1_fun"
+proof (intro ext iffI)
+  fix \<C> \<D> :: "classes1"
+  show "\<C> < \<D> \<Longrightarrow> subclass1_fun \<C> \<D>"
+    unfolding less_classes1_def
+    apply (erule subclass1.cases, auto)
+    using subclass1_fun.elims(3) by blast
+  show "subclass1_fun \<C> \<D> \<Longrightarrow> \<C> < \<D>"
+    by (erule subclass1_fun.elims, auto simp add: less_classes1_def subclass1.intros)
+qed
 
-definition [simp]: "enum_all_classes1 P \<equiv>
-  P Object \<and> P Person \<and> P Employee \<and> P Customer \<and> P Project \<and> P Task \<and> P Sprint"
-
-definition [simp]: "enum_ex_classes1 P \<equiv>
-  P Object \<or> P Person \<or> P Employee \<or> P Customer \<or> P Project \<or> P Task \<or> P Sprint" 
-
-instance
-  apply intro_classes
-  apply auto
-  by (metis classes1.exhaust)+
-
-end
+lemma less_eq_classes1_code [code]:
+  "(\<le>) = (\<lambda>x y. subclass1_fun x y \<or> x = y)"
+  unfolding dual_order.order_iff_strict less_classes1_code
+  by auto
 
 abbreviation "\<Gamma>\<^sub>0 \<equiv> fmempty :: classes1 type env"
 declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum"]]
@@ -254,35 +247,72 @@ lemma assoc_end_min_less_eq_max:
    assoc_end_min end \<le> assoc_end_max end"
   unfolding assoc_end_min_def assoc_end_max_def
   using zero_enat_def one_enat_def numeral_eq_enat apply auto
-  by (metis enat_ord_simps(1) one_enat_def one_le_numeral)
+  by (metis enat_ord_number(1) numeral_One one_le_numeral)
 
-inductive class_roles_non_unique where
-  "class_roles_non_unique" if 
-  "class_roles classes assocs \<C> from role end\<^sub>1"
-  "class_roles classes assocs \<C> from role end\<^sub>2"
-  "end\<^sub>1 \<noteq> end\<^sub>2"
-
-code_pred class_roles_non_unique .
-
-lemma class_roles_unique:
-  assumes "class_roles classes assocs \<C> from role end\<^sub>1"
-      and "class_roles classes assocs \<C> from role end\<^sub>2"
+lemma association_ends_unique:
+  assumes "association_ends' classes assocs \<C> from role end\<^sub>1"
+      and "association_ends' classes assocs \<C> from role end\<^sub>2"
     shows "end\<^sub>1 = end\<^sub>2"
 proof -
-  have "\<not> class_roles_non_unique" by eval
+  have "\<not> association_ends_non_unique' classes assocs" by eval
   with assms show ?thesis
-    using class_roles_non_unique.simps by blast
+    using association_ends_non_unique'.simps by blast
 qed
 
 instance
   apply standard
   unfolding associations_classes1_def
   using assoc_end_min_less_eq_max apply blast
-  using class_roles_unique by blast
+  using association_ends_unique by blast
 
 end
 
+(*** Simplification Rules ***************************************************)
 
+section \<open>Simplification Rules\<close>
+
+lemma ex_alt_simps [simp]:
+  "\<exists>a. a"
+  "\<exists>a. \<not> a"
+  "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
+  "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
+  by auto
+
+declare numeral_eq_enat [simp]
+
+lemmas basic_type_le_less [simp] = Orderings.order_class.le_less for x y :: "'a basic_type"
+
+declare element_type_alt_simps [simp]
+declare update_element_type.simps [simp]
+declare to_unique_collection.simps [simp]
+declare to_nonunique_collection.simps [simp]
+declare to_ordered_collection.simps [simp]
+
+declare assoc_end_class_def [simp]
+declare assoc_end_min_def [simp]
+declare assoc_end_max_def [simp]
+declare assoc_end_ordered_def [simp]
+declare assoc_end_unique_def [simp]
+
+declare oper_name_def [simp]
+declare oper_context_def [simp]
+declare oper_params_def [simp]
+declare oper_result_def [simp]
+declare oper_static_def [simp]
+declare oper_body_def [simp]
+
+declare oper_in_params_def [simp]
+declare oper_out_params_def [simp]
+
+declare assoc_end_type_def [simp]
+declare oper_type_def [simp]
+
+declare op_type_alt_simps [simp]
+declare typing_alt_simps [simp]
+declare normalize_alt_simps [simp]
+declare nf_typing.simps [simp]
+
+declare literals_classes1_def [simp]
 
 lemma attribute_Employee_name [simp]:
   "attribute Employee STR ''name'' \<D> \<tau> =
@@ -316,11 +346,18 @@ proof -
     using association_end_det by blast
 qed
 
-
-
-
-values "{x. \<Gamma>\<^sub>0 \<turnstile>\<^sub>E EnumLiteral STR ''E1'' STR ''A'' : x}"
-
+lemma static_operation_Project_allProjects [simp]:
+  "static_operation \<langle>Project\<rangle>\<^sub>\<T>[1] STR ''allProjects'' [] oper =
+   (oper = (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], Set \<langle>Project\<rangle>\<^sub>\<T>[1], True,
+     Some (MetaOperationCall \<langle>Project\<rangle>\<^sub>\<T>[1] AllInstancesOp)))"
+proof -
+  have "static_operation \<langle>Project\<rangle>\<^sub>\<T>[1] STR ''allProjects'' []
+    (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], Set \<langle>Project\<rangle>\<^sub>\<T>[1], True,
+     Some (MetaOperationCall \<langle>Project\<rangle>\<^sub>\<T>[1] AllInstancesOp))"
+    by eval
+  thus ?thesis
+    using static_operation_det by blast
+qed
 
 subsection \<open>Positive Cases\<close>
 
@@ -347,25 +384,6 @@ subsection \<open>Negative Cases\<close>
 (*values "{end. association_end Person STR ''projects'' None end}"*)
 value "has_literal STR ''E1'' STR ''C''"
 
-lemma subclass1_Person_x [simp]:
-  "Person \<le> \<tau> = (\<tau> = Person \<or> \<tau> = Object)"
-  unfolding dual_order.order_iff_strict less_classes1_def
-  by (auto simp: subclass1.simps subclass1.intros)
-
-lemma subclass1_Employee_x [simp]:
-  "Employee \<le> \<tau> = (\<tau> = Employee \<or> \<tau> = Person \<or> \<tau> = Object)"
-  unfolding dual_order.order_iff_strict less_classes1_def
-  by (auto simp: subclass1.simps subclass1.intros)
-(*
-declare unique_closest_attribute.simps [simp]
-declare closest_attribute.simps [simp]
-declare attribute_not_closest.simps [simp]
-declare closest_attribute_not_unique.simps [simp]
-declare owned_attribute'.simps []
-*)
-(*declare attributes_classes1_def [simp]*)
-(*declare Least_def [simp]*)
-declare has_literal'.simps [simp]
 
 lemma
   "attribute Customer STR ''name'' Person String[1]"
@@ -375,49 +393,17 @@ lemma
   "association_end Employee None STR ''projects'' Employee (Project, 0, \<infinity>, False, True)"
   by eval
 
-
 (*** Typing *****************************************************************)
 
 section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
 
-
-print_theorems
-
-declare nf_typing.simps [simp]
-
-declare op_type_alt_simps [simp]
-declare typing_alt_simps [simp]
-declare normalize_alt_simps [simp]
-
-declare element_type.simps [simp]
-declare update_element_type.simps [simp]
-declare to_unique_collection.simps [simp]
-declare to_nonunique_collection.simps [simp]
-declare to_ordered_collection.simps [simp]
-
-
 text \<open>
 \<^verbatim>\<open>E1::A : E1[1]\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> EnumLiteral STR ''E1'' STR ''A'' : (Enum STR ''E1'')[1]"
-  by (auto simp add: literals_classes1_def)
-
-(*
-datatype (plugins del: size) 'a type =
-  OclSuper
-| Required "'a basic_type" ("_[1]" [1000] 1000)
-| Optional "'a basic_type" ("_[?]" [1000] 1000)
-| Collection "'a type"
-| Set "'a type"
-| OrderedSet "'a type"
-| Bag "'a type"
-| Sequence "'a type"
-| Tuple "telem \<rightharpoonup>\<^sub>f 'a type"
-*)
-
-lemmas basic_type_le_less [simp] = Orderings.order_class.le_less for x y :: "'a basic_type"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
@@ -445,12 +431,6 @@ text \<open>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> OperationCall (NullLiteral) DotCall OclIsUndefinedOp [] : Boolean[1]"
   by simp
-
-(*
-declare element_type.intros [intro!]
-declare to_nonunique_collection.intros [intro!]
-declare update_element_type.intros [intro!]
-*)
 
 text \<open>
 \<^verbatim>\<open>Sequence{1..5, null}.oclIsUndefined() : Sequence(Boolean[1])\<close>\<close>
@@ -523,10 +503,6 @@ lemma
       (Var STR ''it'')) : OrderedSet String[1]"
   by simp
 
-
-
-
-
 text \<open>
 \<^verbatim>\<open>context Employee:
 name : String[1]\<close>\<close>
@@ -534,19 +510,6 @@ lemma
   "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
     AttributeCall (Var STR ''self'') DotCall STR ''name'' : String[1]"
   by simp
-(*
-lemma association_end_Employee_projects [intro]:
-  "association_end Employee None STR ''projects'' Employee (Project, 0, \<infinity>, False, True)"
-  by eval
-*)
-
-declare assoc_end_type_def [simp]
-
-declare assoc_end_class_def [simp]
-declare assoc_end_min_def [simp]
-declare assoc_end_max_def [simp]
-declare assoc_end_ordered_def [simp]
-declare assoc_end_unique_def [simp]
 
 text \<open>
 \<^verbatim>\<open>context Employee:
@@ -565,8 +528,7 @@ lemma
     AssociationEndCall (AssociationEndCall (Var STR ''self'')
         DotCall None STR ''projects'')
       DotCall None STR ''members'' : Bag Employee[1]"
-  apply simp
-  by (metis to_single_type.simps(2) to_single_type.simps(6))
+  by simp
 
 text \<open>
 \<^verbatim>\<open>Project[?].allInstances() : Set(Project[?])\<close>\<close>
@@ -574,44 +536,34 @@ lemma
   "\<Gamma>\<^sub>0 \<turnstile> MetaOperationCall Project[?] AllInstancesOp : Set Project[?]"
   by simp
 
-(*
-declare static_operation'.simps [simp]
-*)
-
 text \<open>
 \<^verbatim>\<open>Project[1]::allProjects() : Set(Project[1])\<close>\<close>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> StaticOperationCall Project[1] STR ''allProjects'' [] : Set Project[1]"
-  apply auto
-(*
-  by eval
-*)
-thm HOL.theI' HOL.the1_equality HOL.theI
-  thm static_operation'.simps
+  by simp
 
 subsection \<open>Negative Cases\<close>
 
 text \<open>
 \<^verbatim>\<open>true = null\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (BooleanLiteral True) DotCall EqualOp [NullLiteral] : \<tau>"
-  by auto
-
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (BooleanLiteral True) DotCall EqualOp
+    [NullLiteral] : \<tau>"
+  by simp
 
 text \<open>
 \<^verbatim>\<open>let x : Boolean[1] = 5 in x and true\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile>
-    Let STR ''x'' (Some Boolean[1]) (IntegerLiteral 5)
-      (OperationCall (Var STR ''x'') DotCall AndOp [BooleanLiteral True]) : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Let STR ''x'' (Some Boolean[1]) (IntegerLiteral 5)
+    (OperationCall (Var STR ''x'') DotCall AndOp [BooleanLiteral True]) : \<tau>"
   by simp
 
 text \<open>
 \<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
 x->closure(it | 1)\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile>
-    Let STR ''x'' (Some (Sequence String[?])) (CollectionLiteral SequenceKind
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Let STR ''x'' (Some (Sequence String[?]))
+    (CollectionLiteral SequenceKind
       [CollectionItem (StringLiteral ''abc''),
        CollectionItem (StringLiteral ''zxc'')])
     (ClosureIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] None
@@ -621,12 +573,14 @@ lemma
 text \<open>
 \<^verbatim>\<open>Sequence{1..5, null}->max()\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile>
-    OperationCall (CollectionLiteral SequenceKind
-                [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-                 CollectionItem NullLiteral])
-        ArrowCall CollectionMaxOp [] : \<tau>"
-  apply auto
-  apply eval
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
+    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+      CollectionItem NullLiteral])
+    ArrowCall CollectionMaxOp [] : \<tau>"
+proof -
+  have "\<not> operation_defined (Integer[?] :: classes1 type) STR ''max'' [Integer[?]]"
+    by eval
+  thus ?thesis by simp
+qed
 
 end

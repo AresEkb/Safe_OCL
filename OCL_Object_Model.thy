@@ -54,24 +54,33 @@ class ocl_object_model =
      role |\<in>| fmdom ends  \<Longrightarrow>
      fmlookup ends role = Some end \<Longrightarrow>
      assoc_end_min end \<le> assoc_end_max end"
-  assumes class_roles_unique:
-    "class_roles classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
-     class_roles classes associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
+  assumes association_ends_unique:
+    "association_ends' classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
+     association_ends' classes associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
 begin
 
 interpretation base: object_model
-  by standard (simp_all add: local.assoc_end_min_less_eq_max local.class_roles_unique)
+  by standard (simp_all add: local.assoc_end_min_less_eq_max local.association_ends_unique)
 
+abbreviation "owned_attribute \<equiv> base.owned_attribute"
 abbreviation "attribute \<equiv> base.attribute"
+abbreviation "association_ends \<equiv> base.association_ends"
+abbreviation "owned_association_end \<equiv> base.owned_association_end"
 abbreviation "association_end \<equiv> base.association_end"
 abbreviation "referred_by_association_class \<equiv> base.referred_by_association_class"
 abbreviation "association_class_end \<equiv> base.association_class_end"
 abbreviation "operation \<equiv> base.operation"
+abbreviation "operation_defined \<equiv> base.operation_defined"
 abbreviation "static_operation \<equiv> base.static_operation"
+abbreviation "static_operation_defined \<equiv> base.static_operation_defined"
 abbreviation "has_literal \<equiv> base.has_literal"
 
 lemmas attribute_det = base.attribute_det
+lemmas attribute_self_or_inherited = base.attribute_self_or_inherited
+lemmas attribute_closest = base.attribute_closest
 lemmas association_end_det = base.association_end_det
+lemmas association_end_self_or_inherited = base.association_end_self_or_inherited
+lemmas association_end_closest = base.association_end_closest
 lemmas association_class_end_det = base.association_class_end_det
 lemmas operation_det = base.operation_det
 lemmas static_operation_det = base.static_operation_det

@@ -56,6 +56,8 @@ definition "oper_out_params op \<equiv>
 text \<open>
   The following predicates allows one to access class attributes.\<close>
 
+subsection \<open>Attributes\<close>
+
 inductive owned_attribute' where
   "\<C> |\<in>| fmdom attributes \<Longrightarrow>
    fmlookup attributes \<C> = Some attrs\<^sub>\<C> \<Longrightarrow>
@@ -83,22 +85,8 @@ inductive unique_closest_attribute where
   "closest_attribute attributes \<C> attr \<D> \<tau> \<Longrightarrow>
    \<not> closest_attribute_not_unique attributes \<C> attr \<D> \<tau> \<Longrightarrow>
    unique_closest_attribute attributes \<C> attr \<D> \<tau>"
-(*
-lemma closest_attribute_alt_simp:
-  "closest_attribute attributes \<C> attr \<D> \<tau> =
-   (owned_attribute' attributes \<D> attr \<tau> \<and>
-    \<C> \<le> \<D> \<and>
-    (\<forall>\<D>' \<tau>'. owned_attribute' attributes \<D>' attr \<tau>' \<longrightarrow> \<C> \<le> \<D>' \<longrightarrow> \<not> \<D>' < \<D>))"
-  by (auto simp add: attribute_not_closest.simps closest_attribute.simps)
 
-lemma unique_closest_attribute_alt_simp:
-  "unique_closest_attribute attributes \<C> attr \<D> \<tau> =
-   (closest_attribute attributes \<C> attr \<D> \<tau> \<and>
-    (\<forall>\<D>' \<tau>'. closest_attribute attributes \<C> attr \<D>' \<tau>' \<longrightarrow> \<D> = \<D>' \<and> \<tau> = \<tau>'))"
-  by (simp add: closest_attribute_not_unique.simps unique_closest_attribute.simps)
-*)
-text \<open>
-  The following predicates allows one to access association ends.\<close>
+subsection \<open>Association Ends\<close>
 
 inductive role_refer_class where
   "role |\<in>| fmdom ends \<Longrightarrow>
@@ -106,7 +94,7 @@ inductive role_refer_class where
    assoc_end_class end = \<C> \<Longrightarrow>
    role_refer_class ends \<C> role"
 
-inductive class_roles where
+inductive association_ends' where
   "\<C> |\<in>| classes \<Longrightarrow>
    assoc |\<in>| fmdom associations \<Longrightarrow>
    fmlookup associations assoc = Some ends \<Longrightarrow>
@@ -114,12 +102,18 @@ inductive class_roles where
    role |\<in>| fmdom ends \<Longrightarrow>
    fmlookup ends role = Some end \<Longrightarrow>
    role \<noteq> from \<Longrightarrow>
-   class_roles classes associations \<C> from role end"
+   association_ends' classes associations \<C> from role end"
+
+inductive association_ends_non_unique' where
+  "association_ends' classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
+   association_ends' classes associations \<C> from role end\<^sub>2 \<Longrightarrow>
+   end\<^sub>1 \<noteq> end\<^sub>2 \<Longrightarrow>
+   association_ends_non_unique' classes associations"
 
 inductive owned_association_end' where
-  "class_roles classes associations \<C> from role end \<Longrightarrow>
+  "association_ends' classes associations \<C> from role end \<Longrightarrow>
    owned_association_end' classes associations \<C> None role end"
-| "class_roles classes associations \<C> from role end \<Longrightarrow>
+| "association_ends' classes associations \<C> from role end \<Longrightarrow>
    owned_association_end' classes associations \<C> (Some from) role end"
 
 inductive association_end_not_closest where
@@ -144,8 +138,7 @@ inductive unique_closest_association_end where
    \<not> closest_association_end_not_unique classes associations \<C> from role \<D> end \<Longrightarrow>
    unique_closest_association_end classes associations \<C> from role \<D> end"
 
-text \<open>
-  The following predicates allows one to access association classes.\<close>
+subsection \<open>Association Classes\<close>
 
 inductive referred_by_association_class''' where
   "fmlookup association_classes \<A> = Some assoc \<Longrightarrow>
@@ -181,8 +174,7 @@ inductive unique_closest_association_class where
    \<not> closest_association_class_not_unique association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
    unique_closest_association_class association_classes associations \<C> from \<A> \<D>"
 
-text \<open>
-  The following predicates allows one to access ends of association classes.\<close>
+subsection \<open>Association Class Ends\<close>
 
 inductive association_class_end' where
   "fmlookup association_classes \<A> = Some assoc \<Longrightarrow>
@@ -200,8 +192,7 @@ inductive unique_association_class_end where
    \<not> association_class_end_not_unique association_classes associations \<A> role end \<Longrightarrow>
    unique_association_class_end association_classes associations \<A> role end"
 
-text \<open>
-  The following predicates allows one to access class operations.\<close>
+subsection \<open>Operations\<close>
 
 inductive any_operation' where
   "op |\<in>| fset_of_list operations \<Longrightarrow>
@@ -225,6 +216,10 @@ inductive unique_operation where
    \<not> operation_not_unique operations \<tau> name \<pi> oper \<Longrightarrow>
    unique_operation operations \<tau> name \<pi> oper"
 
+inductive operation_defined' where
+  "unique_operation operations \<tau> name \<pi> oper \<Longrightarrow>
+   operation_defined' operations \<tau> name \<pi>"
+
 inductive static_operation' where
   "any_operation' operations \<tau> name \<pi> op \<Longrightarrow>
    oper_static op \<Longrightarrow>
@@ -240,53 +235,17 @@ inductive unique_static_operation where
    \<not> static_operation_not_unique operations \<tau> name \<pi> oper \<Longrightarrow>
    unique_static_operation operations \<tau> name \<pi> oper"
 
-text \<open>
-  The following predicate allows one to check an enumeration literal for existence.\<close>
+inductive static_operation_defined' where
+  "unique_static_operation operations \<tau> name \<pi> oper \<Longrightarrow>
+   static_operation_defined' operations \<tau> name \<pi>"
+
+subsection \<open>Literals\<close>
 
 inductive has_literal' where
   "fmlookup literals e = Some lits \<Longrightarrow>
    lit |\<in>| lits \<Longrightarrow>
    has_literal' literals e lit"
 
-(*** Elimination Rules ******************************************************)
-
-subsection \<open>Elimination Rules\<close>
-(*
-inductive_cases owned_attribute'E [elim!]: "owned_attribute' attributes \<C> attr \<tau>"
-inductive_cases attribute_not_closestE [elim!]: "attribute_not_closest attributes \<C> attr \<D> \<tau>"
-inductive_cases closest_attributeE [elim!]: "closest_attribute attributes \<C> attr \<D> \<tau>"
-inductive_cases closest_attribute_not_uniqueE [elim!]: "closest_attribute_not_unique attributes \<C> attr \<D> \<tau>"
-inductive_cases unique_closest_attributeE [elim!]: "unique_closest_attribute attributes \<C> attr \<D> \<tau>"
-
-inductive_cases role_refer_classE [elim!]: "role_refer_class ends \<C> role"
-inductive_cases class_rolesE [elim!]: "class_roles classes associations \<C> from role end"
-inductive_cases owned_association_end'E [elim!]: "owned_association_end' classes associations \<C> (Some from) role end"
-inductive_cases association_end_not_closestE [elim!]: "association_end_not_closest classes associations \<C> from role \<D> end"
-inductive_cases closest_association_endE [elim!]: "closest_association_end classes associations \<C> from role \<D> end"
-inductive_cases closest_association_end_not_uniqueE [elim!]: "closest_association_end_not_unique classes associations \<C> from role \<D> end"
-inductive_cases unique_closest_association_endE [elim!]: "unique_closest_association_end classes associations \<C> from role \<D> end"
-
-inductive_cases referred_by_association_class'''E [elim!]: "referred_by_association_class''' association_classes associations \<C> from \<A>"
-inductive_cases referred_by_association_class''E [elim!]: "referred_by_association_class'' association_classes associations \<C> (Some from) \<A>"
-inductive_cases association_class_not_closestE [elim!]: "association_class_not_closest association_classes associations \<C> from \<A> \<D>"
-inductive_cases closest_association_classE [elim!]: "closest_association_class association_classes associations \<C> from \<A> \<D>"
-inductive_cases closest_association_class_not_uniqueE [elim!]: "closest_association_class_not_unique association_classes associations \<C> from \<A> \<D>"
-inductive_cases unique_closest_association_classE [elim!]: "unique_closest_association_class association_classes associations \<C> from \<A> \<D>"
-
-inductive_cases association_class_end'E [elim!]: "association_class_end' association_classes associations \<A> role end"
-inductive_cases association_class_end_not_uniqueE [elim!]: "association_class_end_not_unique association_classes associations \<A> role end"
-inductive_cases unique_association_class_endE [elim!]: "unique_association_class_end association_classes associations \<A> role end"
-
-inductive_cases any_operation'E [elim!]: "any_operation' operations \<tau> name \<pi> op"
-inductive_cases operation'E [elim!]: "operation' operations \<tau> name \<pi> op"
-inductive_cases operation_not_uniqueE [elim!]: "operation_not_unique operations \<tau> name \<pi> oper"
-inductive_cases unique_operationE [elim!]: "unique_operation operations \<tau> name \<pi> oper"
-inductive_cases static_operation'E [elim!]: "static_operation' operations \<tau> name \<pi> op"
-inductive_cases static_operation_not_uniqueE [elim!]: "static_operation_not_unique operations \<tau> name \<pi> oper"
-inductive_cases unique_static_operationE [elim!]: "unique_static_operation operations \<tau> name \<pi> oper"
-
-inductive_cases has_literal'E [elim!]: "has_literal' literals e lit"
-*)
 (*** Definition *************************************************************)
 
 subsection \<open>Definition\<close>
@@ -304,9 +263,9 @@ locale object_model =
      role |\<in>| fmdom ends  \<Longrightarrow>
      fmlookup ends role = Some end \<Longrightarrow>
      assoc_end_min end \<le> assoc_end_max end"
-  assumes class_roles_unique:
-    "class_roles classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
-     class_roles classes associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
+  assumes association_ends_unique:
+    "association_ends' classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
+     association_ends' classes associations \<C> from role end\<^sub>2 \<Longrightarrow> end\<^sub>1 = end\<^sub>2"
 begin
 
 abbreviation "owned_attribute \<equiv>
@@ -314,6 +273,9 @@ abbreviation "owned_attribute \<equiv>
 
 abbreviation "attribute \<equiv>
   unique_closest_attribute attributes"
+
+abbreviation "association_ends \<equiv>
+  association_ends' classes associations"
 
 abbreviation "owned_association_end \<equiv>
   owned_association_end' classes associations"
@@ -330,13 +292,24 @@ abbreviation "association_class_end \<equiv>
 abbreviation "operation \<equiv>
   unique_operation operations"
 
+abbreviation "operation_defined \<equiv>
+  operation_defined' operations"
+
 abbreviation "static_operation \<equiv>
   unique_static_operation operations"
+
+abbreviation "static_operation_defined \<equiv>
+  static_operation_defined' operations"
 
 abbreviation "has_literal \<equiv>
   has_literal' literals"
 
 end
+
+declare operation_defined'.simps [simp]
+declare static_operation_defined'.simps [simp]
+
+declare has_literal'.simps [simp]
 
 (*** Properties *************************************************************)
 
@@ -422,7 +395,9 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] class_roles .
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] association_ends' .
+
+code_pred [show_modes] association_ends_non_unique' .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
@@ -495,6 +470,8 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_operation .
 
+code_pred [show_modes] operation_defined' .
+
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] static_operation' .
@@ -505,6 +482,8 @@ code_pred (modes:
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_static_operation .
+
+code_pred [show_modes] static_operation_defined' .
 
 code_pred [show_modes] has_literal' .
 
