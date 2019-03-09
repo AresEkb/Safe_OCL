@@ -584,7 +584,7 @@ section \<open>Expressions Typing\<close>
 
 text \<open>
   The following typing rules are preliminary. The final rules are given at
-  the end of the next section.\<close>
+  the end of the next chapter.\<close>
 
 inductive typing :: "('a :: ocl_object_model) type env \<Rightarrow> 'a expr \<Rightarrow> 'a type \<Rightarrow> bool"
        ("(1_/ \<turnstile>\<^sub>E/ (_ :/ _))" [51,51,51] 50)
@@ -1087,9 +1087,9 @@ qed
 
 section \<open>Code Setup\<close>
 
-code_pred [show_modes] op_type .
+code_pred op_type .
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] iterator_typing .
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) iterator_typing .
 
 end

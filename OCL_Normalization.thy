@@ -24,9 +24,9 @@ text \<open>
 
   The following variables are used in the table:
 \begin{itemize}
-\item \<^verbatim>\<open>x\<close> is a non-nullable value.
-\item \<^verbatim>\<open>n\<close> is a nullable value. 
-\item \<^verbatim>\<open>xs\<close> is a collection of non-nullable values.
+\item \<^verbatim>\<open>x\<close> is a non-nullable value,
+\item \<^verbatim>\<open>n\<close> is a nullable value,
+\item \<^verbatim>\<open>xs\<close> is a collection of non-nullable values,
 \item \<^verbatim>\<open>ns\<close> is a collection of nullable values. 
 \end{itemize}
 
@@ -58,6 +58,8 @@ text \<open>
     \end{tabular}
     \begin{tablenotes}
     \item[*] The resulting expression will be ill-typed if the operation is unsafe.
+    An unsafe operation is an operation which is well-typed for
+    a non-nullable source only.
     \item[**] It would be a good idea to prohibit such a transformation
     for safe operations. A safe operation is an operation which is well-typed
     for a nullable source. However, it is hard to define safe operations
@@ -75,8 +77,8 @@ text \<open>
   of a concrete syntax tree to an abstract syntax tree.\<close>
 
 fun string_of_nat :: "nat \<Rightarrow> string" where
-  "string_of_nat n = (if n < 10 then [char_of (48 + n)] else 
-     string_of_nat (n div 10) @ [char_of (48 + (n mod 10))])"
+  "string_of_nat n = (if n < 10 then [char_of (48 + n)]
+      else string_of_nat (n div 10) @ [char_of (48 + (n mod 10))])"
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 

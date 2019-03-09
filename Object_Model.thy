@@ -9,12 +9,11 @@ theory Object_Model
 begin
 
 text \<open>
-  The section defines a very simplified object model.
-  It should define more constraints.\<close>
+  The section defines a generic object model.\<close>
 
-(*** Preliminaries **********************************************************)
+(*** Type Synonyms **********************************************************)
 
-subsection \<open>Preliminaries\<close>
+subsection \<open>Type Synonyms\<close>
 
 type_synonym attr = String.literal
 type_synonym assoc = String.literal
@@ -52,9 +51,6 @@ definition "oper_in_params op \<equiv>
 
 definition "oper_out_params op \<equiv>
   filter (\<lambda>p. param_dir p = Out \<or> param_dir p = InOut) (oper_params op)"
-
-text \<open>
-  The following predicates allows one to access class attributes.\<close>
 
 subsection \<open>Attributes\<close>
 
@@ -104,11 +100,11 @@ inductive association_ends' where
    role \<noteq> from \<Longrightarrow>
    association_ends' classes associations \<C> from role end"
 
-inductive association_ends_non_unique' where
+inductive association_ends_not_unique' where
   "association_ends' classes associations \<C> from role end\<^sub>1 \<Longrightarrow>
    association_ends' classes associations \<C> from role end\<^sub>2 \<Longrightarrow>
    end\<^sub>1 \<noteq> end\<^sub>2 \<Longrightarrow>
-   association_ends_non_unique' classes associations"
+   association_ends_not_unique' classes associations"
 
 inductive owned_association_end' where
   "association_ends' classes associations \<C> from role end \<Longrightarrow>
@@ -140,26 +136,26 @@ inductive unique_closest_association_end where
 
 subsection \<open>Association Classes\<close>
 
-inductive referred_by_association_class''' where
+inductive referred_by_association_class'' where
   "fmlookup association_classes \<A> = Some assoc \<Longrightarrow>
    fmlookup associations assoc = Some ends \<Longrightarrow>
    role_refer_class ends \<C> from \<Longrightarrow>
-   referred_by_association_class''' association_classes associations \<C> from \<A>"
+   referred_by_association_class'' association_classes associations \<C> from \<A>"
 
-inductive referred_by_association_class'' where
-  "referred_by_association_class''' association_classes associations \<C> from \<A> \<Longrightarrow>
-   referred_by_association_class'' association_classes associations \<C> None \<A>"
-| "referred_by_association_class''' association_classes associations \<C> from \<A> \<Longrightarrow>
-   referred_by_association_class'' association_classes associations \<C> (Some from) \<A>"
+inductive referred_by_association_class' where
+  "referred_by_association_class'' association_classes associations \<C> from \<A> \<Longrightarrow>
+   referred_by_association_class' association_classes associations \<C> None \<A>"
+| "referred_by_association_class'' association_classes associations \<C> from \<A> \<Longrightarrow>
+   referred_by_association_class' association_classes associations \<C> (Some from) \<A>"
 
 inductive association_class_not_closest where
-  "referred_by_association_class'' association_classes associations \<D>' from \<A> \<Longrightarrow>
+  "referred_by_association_class' association_classes associations \<D>' from \<A> \<Longrightarrow>
    \<C> \<le> \<D>' \<Longrightarrow>
    \<D>' < \<D> \<Longrightarrow>
    association_class_not_closest association_classes associations \<C> from \<A> \<D>"
 
 inductive closest_association_class where
-  "referred_by_association_class'' association_classes associations \<D> from \<A> \<Longrightarrow>
+  "referred_by_association_class' association_classes associations \<D> from \<A> \<Longrightarrow>
    \<C> \<le> \<D> \<Longrightarrow>
    \<not> association_class_not_closest association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
    closest_association_class association_classes associations \<C> from \<A> \<D>"
@@ -167,11 +163,13 @@ inductive closest_association_class where
 inductive closest_association_class_not_unique where
   "closest_association_class association_classes associations \<C> from \<A> \<D>' \<Longrightarrow>
    \<D> \<noteq> \<D>' \<Longrightarrow>
-   closest_association_class_not_unique association_classes associations \<C> from \<A> \<D>"
+   closest_association_class_not_unique
+        association_classes associations \<C> from \<A> \<D>"
 
 inductive unique_closest_association_class where
   "closest_association_class association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
-   \<not> closest_association_class_not_unique association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
+   \<not> closest_association_class_not_unique
+        association_classes associations \<C> from \<A> \<D> \<Longrightarrow>
    unique_closest_association_class association_classes associations \<C> from \<A> \<D>"
 
 subsection \<open>Association Class Ends\<close>
@@ -189,7 +187,8 @@ inductive association_class_end_not_unique where
 
 inductive unique_association_class_end where
   "association_class_end' association_classes associations \<A> role end \<Longrightarrow>
-   \<not> association_class_end_not_unique association_classes associations \<A> role end \<Longrightarrow>
+   \<not> association_class_end_not_unique
+        association_classes associations \<A> role end \<Longrightarrow>
    unique_association_class_end association_classes associations \<A> role end"
 
 subsection \<open>Operations\<close>
@@ -316,8 +315,8 @@ declare has_literal'.simps [simp]
 subsection \<open>Properties\<close>
 
 lemma (in object_model) attribute_det:
-  "attribute \<C> attr \<D> \<tau> \<Longrightarrow>
-   attribute \<C> attr \<E> \<sigma> \<Longrightarrow> \<D> = \<E> \<and> \<tau> = \<sigma>"
+  "attribute \<C> attr \<D>\<^sub>1 \<tau>\<^sub>1 \<Longrightarrow>
+   attribute \<C> attr \<D>\<^sub>2 \<tau>\<^sub>2 \<Longrightarrow> \<D>\<^sub>1 = \<D>\<^sub>2 \<and> \<tau>\<^sub>1 = \<tau>\<^sub>2"
   by (meson closest_attribute_not_unique.intros unique_closest_attribute.cases)
 
 lemma (in object_model) attribute_self_or_inherited:
@@ -377,7 +376,7 @@ lemma fmember_code_predI [code_pred_intro]:
 code_pred fmember
   by (simp add: Predicate_Compile.contains_def fmember.rep_eq)
 
-code_pred [show_modes] unique_closest_attribute .
+code_pred unique_closest_attribute .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
@@ -395,9 +394,9 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] association_ends' .
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) association_ends' .
 
-code_pred [show_modes] association_ends_non_unique' .
+code_pred association_ends_not_unique' .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
@@ -415,7 +414,7 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] owned_association_end' .
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) owned_association_end' .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
@@ -433,58 +432,58 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] closest_association_end .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) closest_association_end .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool ) [show_modes] closest_association_end_not_unique .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool ) closest_association_end_not_unique .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_closest_association_end .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> o \<Rightarrow> bool) unique_closest_association_end .
 
-code_pred [show_modes] unique_closest_association_class .
+code_pred unique_closest_association_class .
 
-code_pred [show_modes] association_class_end' .
+code_pred association_class_end' .
 
-code_pred [show_modes] association_class_end_not_unique .
+code_pred association_class_end_not_unique .
 
-code_pred  [show_modes] unique_association_class_end .
-
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] any_operation' .
+code_pred unique_association_class_end .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] operation' .
-
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool) [show_modes] operation_not_unique .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) any_operation' .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_operation .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) operation' .
 
-code_pred [show_modes] operation_defined' .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool) operation_not_unique .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] static_operation' .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) unique_operation .
 
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool) [show_modes] static_operation_not_unique .
+code_pred operation_defined' .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] unique_static_operation .
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) static_operation' .
 
-code_pred [show_modes] static_operation_defined' .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool) static_operation_not_unique .
 
-code_pred [show_modes] has_literal' .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) unique_static_operation .
+
+code_pred static_operation_defined' .
+
+code_pred has_literal' .
 
 end

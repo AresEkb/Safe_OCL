@@ -8,9 +8,9 @@ theory OCL_Types
   imports OCL_Basic_Types Errorable Tuple
 begin
 
-(*** Types ******************************************************************)
+(*** Definition *************************************************************)
 
-section \<open>Definition of Types and a Subtype Relation\<close>
+section \<open>Definition\<close>
 
 text \<open>
   Types are parameterized over classes.\<close>
@@ -45,14 +45,14 @@ begin
 
 primrec size_type :: "'a type \<Rightarrow> nat" where
   "size_type OclSuper = 0"
-| "size_type (Required _) = 0"
-| "size_type (Optional _) = 0"
-| "size_type (Collection x) = Suc (size_type x)"
-| "size_type (Set x) = Suc (size_type x)"
-| "size_type (OrderedSet x) = Suc (size_type x)"
-| "size_type (Bag x) = Suc (size_type x)"
-| "size_type (Sequence x) = Suc (size_type x)"
-| "size_type (Tuple xs) = Suc (ffold tcf 0 (fset_of_fmap (fmmap size_type xs)))"
+| "size_type (Required \<tau>) = 0"
+| "size_type (Optional \<tau>) = 0"
+| "size_type (Collection \<tau>) = Suc (size_type \<tau>)"
+| "size_type (Set \<tau>) = Suc (size_type \<tau>)"
+| "size_type (OrderedSet \<tau>) = Suc (size_type \<tau>)"
+| "size_type (Bag \<tau>) = Suc (size_type \<tau>)"
+| "size_type (Sequence \<tau>) = Suc (size_type \<tau>)"
+| "size_type (Tuple \<pi>) = Suc (ffold tcf 0 (fset_of_fmap (fmmap size_type \<pi>)))"
 
 instance ..
 
@@ -505,9 +505,9 @@ instance
 
 end
 
-(*** Non-strict Introduction Rules ******************************************)
+(*** Non-Strict Introduction Rules ******************************************)
 
-subsection \<open>Non-strict Introduction Rules\<close>
+subsection \<open>Non-Strict Introduction Rules\<close>
 
 lemma type_less_eq_x_Required_intro [intro]:
   "\<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> \<sigma>[1]"
@@ -550,9 +550,9 @@ lemma type_less_eq_x_OclSuper_intro [intro]:
   "\<tau> \<le> OclSuper"
   unfolding dual_order.order_iff_strict by auto
 
-(*** Non-strict Elimination Rules *******************************************)
+(*** Non-Strict Elimination Rules *******************************************)
 
-subsection \<open>Non-strict Elimination Rules\<close>
+subsection \<open>Non-Strict Elimination Rules\<close>
 
 lemma type_less_eq_x_Required [elim!]:
   "\<tau> \<le> \<sigma>[1] \<Longrightarrow>
@@ -608,24 +608,7 @@ lemma type_less_eq_x_Tuple [elim!]:
 
 (*** Simplification Rules ***************************************************)
 
-section \<open>Simplification Rules\<close>
-
-lemma type_less_right_simps [simp]:
-  "\<tau> < OclSuper = (\<tau> \<noteq> OclSuper)"
-  "\<tau> < \<upsilon>[1] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> < \<upsilon>)"
-  "\<tau> < \<upsilon>[?] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = \<rho>[?] \<and> \<rho> < \<upsilon>)"
-  "\<tau> < Collection \<sigma> = (\<exists>\<phi>.
-      \<tau> = Collection \<phi> \<and> \<phi> < \<sigma> \<or>
-      \<tau> = Set \<phi> \<and> \<phi> \<le> \<sigma> \<or>
-      \<tau> = OrderedSet \<phi> \<and> \<phi> \<le> \<sigma> \<or>
-      \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or>
-      \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma>)"
-  "\<tau> < Set \<sigma> = (\<exists>\<phi>. \<tau> = Set \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < OrderedSet \<sigma> = (\<exists>\<phi>. \<tau> = OrderedSet \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
-  by auto
+subsection \<open>Simplification Rules\<close>
 
 lemma type_less_left_simps [simp]:
   "OclSuper < \<sigma> = False"
@@ -659,6 +642,23 @@ lemma type_less_left_simps [simp]:
       \<sigma> = OclSuper \<or>
       \<sigma> = Tuple \<xi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
   by (induct \<sigma>; auto)+
+
+lemma type_less_right_simps [simp]:
+  "\<tau> < OclSuper = (\<tau> \<noteq> OclSuper)"
+  "\<tau> < \<upsilon>[1] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> < \<upsilon>)"
+  "\<tau> < \<upsilon>[?] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = \<rho>[?] \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Collection \<sigma> = (\<exists>\<phi>.
+      \<tau> = Collection \<phi> \<and> \<phi> < \<sigma> \<or>
+      \<tau> = Set \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = OrderedSet \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma>)"
+  "\<tau> < Set \<sigma> = (\<exists>\<phi>. \<tau> = Set \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < OrderedSet \<sigma> = (\<exists>\<phi>. \<tau> = OrderedSet \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma>)"
+  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
+  by auto
 
 (*** Upper Semilattice of Types *********************************************)
 
@@ -818,6 +818,15 @@ inductive element_type where
 | "element_type (Bag \<tau>) \<tau>"
 | "element_type (Sequence \<tau>) \<tau>"
 
+lemma element_type_alt_simps:
+  "element_type \<tau> \<sigma> = 
+     (Collection \<sigma> = \<tau> \<or>
+      Set \<sigma> = \<tau> \<or>
+      OrderedSet \<sigma> = \<tau> \<or>
+      Bag \<sigma> = \<tau> \<or>
+      Sequence \<sigma> = \<tau>)"
+  by (auto simp add: element_type.simps)
+
 inductive update_element_type where
   "update_element_type (Collection _) \<tau> (Collection \<tau>)"
 | "update_element_type (Set _) \<tau> (Set \<tau>)"
@@ -872,19 +881,6 @@ fun to_optional_type_nested where
 | "to_optional_type_nested (Bag \<tau>) = Bag (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Sequence \<tau>) = Sequence (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested \<pi>)"
-
-(*** Simplification Rules ***************************************************)
-
-section \<open>Simplification Rules\<close>
-
-lemma element_type_alt_simps:
-  "element_type \<tau> \<sigma> = 
-     (Collection \<sigma> = \<tau> \<or>
-      Set \<sigma> = \<tau> \<or>
-      OrderedSet \<sigma> = \<tau> \<or>
-      Bag \<sigma> = \<tau> \<or>
-      Sequence \<sigma> = \<tau>)"
-  by (auto simp add: element_type.simps)
 
 (*** Determinism ************************************************************)
 
@@ -1026,44 +1022,15 @@ proof (intro ext iffI)
       by (insert Sequence) (erule subtype_fun.elims; auto)
   next
     case (Tuple \<xi>)
-(*    have
-      "\<And>\<pi>. subtuple (\<le>) \<pi> \<xi> \<longrightarrow>
-       subtuple (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi>"
-      apply (rule subtuple_mono; auto simp add: Tuple.hyps)
-    have
-      "\<And>\<pi>. subtuple (\<le>) \<pi> \<xi> \<longrightarrow>
-       subtuple (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi>"
-      apply (rule subtuple_mono, auto)
-      apply (drule Tuple.hyps, auto)
-      thm Tuple.hyps type_less_x_Tuple_intro
-    
     have subtuple_imp_simp:
-      "\<And>\<pi> \<xi>. (\<And>\<tau> \<sigma>. \<tau> \<in> fmran' \<pi> \<Longrightarrow> subtype_fun \<tau> \<sigma> \<Longrightarrow> \<tau> < \<sigma>) \<Longrightarrow>
-       subtuple (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi> \<longrightarrow>
+      "\<And>\<pi>. subtuple (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi> \<longrightarrow>
        subtuple (\<le>) \<pi> \<xi>"
-      by (rule subtuple_mono; auto simp add: order.strict_implies_order)
-    then have
-      "\<And>\<pi> \<xi>. (\<And>\<tau> \<sigma>. \<sigma> \<in> fmran' \<xi> \<Longrightarrow> subtype_fun \<tau> \<sigma> \<Longrightarrow> \<tau> < \<sigma>) \<Longrightarrow>
-       subtuple (\<lambda>\<tau> \<sigma>. subtype_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi> \<Longrightarrow>
-       subtuple (\<le>) \<pi> \<xi>"
-      apply (unfold HOL.atomize_imp)
-      by (smt eq_iff order.strict_implies_order subtuple_mono)
-    then show ?case
+      by (rule subtuple_mono; auto simp add: Tuple.hyps less_imp_le)
+    show ?case
       apply (insert Tuple)
-      apply (erule subtype_fun.elims; auto)
-      apply (erule notE)
-(*      using subtuple_imp_simp apply auto
-      by (smt dual_order.order_iff_strict subtuple_mono type_less_x_Tuple_intro)*)
-*)
-    then show ?case
-      apply (insert Tuple)
-      apply (erule subtype_fun.elims; auto)
-      unfolding dual_order.order_iff_strict
-      by (smt subtuple_mono type_less_x_Tuple_intro)
+      by (erule subtype_fun.elims; auto simp add: subtuple_imp_simp)
   qed
 qed
-
-thm dual_order.order_iff_strict subtuple_mono type_less_x_Tuple_intro
 
 lemma less_eq_type_code [code]:
   "(\<le>) = (\<lambda>x y. subtype_fun x y \<or> x = y)"

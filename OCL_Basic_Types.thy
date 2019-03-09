@@ -8,9 +8,9 @@ theory OCL_Basic_Types
   imports Main "HOL-Library.FSet" "HOL-Library.Phantom_Type"
 begin
 
-(*** Basic Types ************************************************************)
+(*** Definition *************************************************************)
 
-section \<open>Definition of Basic Types and a Subtype Relation\<close>
+section \<open>Definition\<close>
 
 text \<open>
   Basic types are parameterized over classes.\<close>
@@ -217,7 +217,8 @@ lemma less_le_not_le_basic_type:
   for \<tau> \<sigma> :: "'a basic_type"
   unfolding less_basic_type_def less_eq_basic_type_def
   apply (rule iffI; auto)
-  apply (metis (mono_tags) basic_subtype_irrefl less_basic_type_def tranclp_rtranclp_tranclp)
+  apply (metis (mono_tags) basic_subtype_irrefl
+      less_basic_type_def tranclp_rtranclp_tranclp)
   by (drule rtranclpD; auto)
 
 lemma antisym_basic_type:
@@ -238,9 +239,9 @@ instance
 
 end
 
-(*** Non-strict Introduction Rules ******************************************)
+(*** Non-Strict Introduction Rules ******************************************)
 
-subsection \<open>Non-strict Introduction Rules\<close>
+subsection \<open>Non-Strict Introduction Rules\<close>
 
 lemma type_less_eq_x_OclAny_intro [intro]:
   "\<tau> \<le> OclAny"
@@ -263,9 +264,9 @@ lemma type_less_eq_x_ObjectType_intro [intro]:
   "\<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> \<tau> \<le> \<langle>\<D>\<rangle>\<^sub>\<T>"
   using order.order_iff_strict by fastforce
 
-(*** Non-strict Elimination Rules *******************************************)
+(*** Non-Strict Elimination Rules *******************************************)
 
-subsection \<open>Non-strict Elimination Rules\<close>
+subsection \<open>Non-Strict Elimination Rules\<close>
 
 lemma type_less_eq_x_OclAny [elim!]:
   "\<tau> \<le> OclAny \<Longrightarrow>
@@ -332,19 +333,7 @@ lemma type_less_eq_x_Enum [elim!]:
 
 (*** Simplification Rules ***************************************************)
 
-section \<open>Simplification Rules\<close>
-
-lemma basic_type_less_right_simps [simp]:
-  "\<tau> < OclAny = (\<tau> \<noteq> OclAny)"
-  "\<tau> < OclVoid = False"
-  "\<tau> < Boolean = (\<tau> = OclVoid)"
-  "\<tau> < Real = (\<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
-  "\<tau> < Integer = (\<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
-  "\<tau> < UnlimitedNatural = (\<tau> = OclVoid)"
-  "\<tau> < String = (\<tau> = OclVoid)"
-  "\<tau> < ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> < \<D> \<or> \<tau> = OclVoid)"
-  "\<tau> < Enum \<E> = (\<tau> = OclVoid)"
-  by auto
+subsection \<open>Simplification Rules\<close>
 
 lemma basic_type_less_left_simps [simp]:
   "OclAny < \<sigma> = False"
@@ -357,6 +346,18 @@ lemma basic_type_less_left_simps [simp]:
   "ObjectType \<C> < \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> < \<D>)"
   "Enum \<E> < \<sigma> = (\<sigma> = OclAny)"
   by (induct \<sigma>, auto)
+
+lemma basic_type_less_right_simps [simp]:
+  "\<tau> < OclAny = (\<tau> \<noteq> OclAny)"
+  "\<tau> < OclVoid = False"
+  "\<tau> < Boolean = (\<tau> = OclVoid)"
+  "\<tau> < Real = (\<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> < Integer = (\<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> < UnlimitedNatural = (\<tau> = OclVoid)"
+  "\<tau> < String = (\<tau> = OclVoid)"
+  "\<tau> < ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> < \<D> \<or> \<tau> = OclVoid)"
+  "\<tau> < Enum \<E> = (\<tau> = OclVoid)"
+  by auto
 
 (*** Upper Semilattice of Basic Types ***************************************)
 
@@ -408,7 +409,7 @@ section \<open>Code Setup\<close>
 code_pred basic_subtype .
 
 fun basic_subtype_fun :: "'a::order basic_type \<Rightarrow> 'a basic_type \<Rightarrow> bool" where
-  "basic_subtype_fun OclAny _ = False"
+  "basic_subtype_fun OclAny \<sigma> = False"
 | "basic_subtype_fun OclVoid \<sigma> = (\<sigma> \<noteq> OclVoid)"
 | "basic_subtype_fun Boolean \<sigma> = (\<sigma> = OclAny)"
 | "basic_subtype_fun Real \<sigma> = (\<sigma> = OclAny)"

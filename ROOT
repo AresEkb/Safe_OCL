@@ -1,7 +1,7 @@
 chapter AFP
 
 session "Safe_OCL" (AFP) = "HOL-Library" +
-  options [timeout = 900]
+  options [timeout = 600]
   theories
     Errorable
     Transitive_Closure_Ext

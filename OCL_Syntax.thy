@@ -119,7 +119,7 @@ datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
 section \<open>Expressions\<close>
 
 datatype collection_literal_kind =
-  SetKind | OrderedSetKind | BagKind | SequenceKind | CollectionKind
+  CollectionKind | SetKind | OrderedSetKind | BagKind | SequenceKind
 
 text \<open>
   A call kind could be defined as two boolean values (@{text "is_arrow_call"},
@@ -145,8 +145,7 @@ text \<open>
   It differs from the OCL specification, which allows one to specify
   a role of a destination class. However, the latter one does not
   allow one to determine uniquely a set of linked objects, for example,
-  in a ternary self relation.
-\<close>
+  in a ternary self relation.\<close>
 
 datatype 'a expr =
   Literal "'a literal_expr"

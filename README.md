@@ -20,10 +20,9 @@ a total supremum function, so types form an upper semilattice.
 It allows us to define rich expression typing rules in an elegant manner.
 
 The Preliminaries Section of the theory defines a number of
-helper lemmas for transitive closures, tuples and arbitrary
-object models independent from OCL. It allows one to use
-the Safe OCL as a refenerence theory for formalization of
-analogous languages.
+helper lemmas for transitive closures and tuples. It defines also
+a generic object model independent from OCL. It allows one to use
+the theory as a reference for formalization of analogous languages.
 
 [1] Object Management Group, "Object Constraint Language (OCL).
 Version 2.4", Feb. 2014. http://www.omg.org/spec/OCL/2.4/.

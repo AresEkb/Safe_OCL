@@ -37,9 +37,9 @@ definition "class_assoc_end_type end \<equiv> \<langle>assoc_end_class end\<rang
 definition "oper_type op \<equiv>
   let params = oper_out_params op in
   if length params = 0
-    then oper_result op
-    else Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
-      (params @ [(STR ''result'', oper_result op, Out)])))"
+  then oper_result op
+  else Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
+    (params @ [(STR ''result'', oper_result op, Out)])))"
 
 class ocl_object_model =
   fixes classes :: "'a :: semilattice_sup fset"

@@ -21,8 +21,6 @@ inductive subclass1 where
 | "subclass1 Employee Person"
 | "subclass1 Customer Person"
 
-code_pred subclass1 .
-
 instantiation classes1 :: semilattice_sup
 begin
 
@@ -92,6 +90,8 @@ instance
 
 end
 
+code_pred subclass1 .
+
 fun subclass1_fun where
   "subclass1_fun Object \<C> = False"
 | "subclass1_fun Person \<C> = (\<C> = Object)"
@@ -118,49 +118,13 @@ lemma less_eq_classes1_code [code]:
   unfolding dual_order.order_iff_strict less_classes1_code
   by auto
 
-abbreviation "\<Gamma>\<^sub>0 \<equiv> fmempty :: classes1 type env"
-declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum"]]
-declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 basic_type"]]
-
-(*** Basic Types ************************************************************)
-
-section \<open>Basic Types\<close>
-
-subsection \<open>Positive Cases\<close>
-
-value "UnlimitedNatural < (Real :: classes1 basic_type)"
-value "\<langle>Employee\<rangle>\<^sub>\<T> < \<langle>Person\<rangle>\<^sub>\<T>"
-value "\<langle>Person\<rangle>\<^sub>\<T> \<le> OclAny"
-
-subsection \<open>Negative Cases\<close>
-
-value "String \<le> (Boolean :: classes1 basic_type)"
-
-(*** Types ******************************************************************)
-
-section \<open>Types\<close>
-
-subsection \<open>Positive Cases\<close>
-
-value "Integer[?] < (OclSuper :: classes1 type)"
-value "Collection Real[?] < (OclSuper :: classes1 type)"
-value "Set (Collection Boolean[1]) < (OclSuper :: classes1 type)"
-value "Set (Bag Boolean[1]) < Set (Collection Boolean[?] :: classes1 type)"
-value "Tuple (fmap_of_list [(STR ''1'', Boolean[1]), (STR ''2'', Integer[1])]) <
-       Tuple (fmap_of_list [(STR ''1'', Boolean[?] :: classes1 type)])"
-
-value "Integer[1] \<squnion> Real[?] :: classes1 type" \<comment> \<open>@{text "Real[?]"}\<close>
-value "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type)" \<comment> \<open>@{text "Set(Real[1])"}\<close>
-value "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type)" \<comment> \<open>@{text "Collection(OclAny[?])"}\<close>
-value "Set Integer[1] \<squnion> Real[1] :: classes1 type" \<comment> \<open>@{text "OclSuper"}\<close>
-
-subsection \<open>Negative Cases\<close>
-
-value "OrderedSet Boolean[1] < Set (Boolean[1] :: classes1 type)"
-
 (*** Object Model ***********************************************************)
 
 section \<open>Object Model\<close>
+
+abbreviation "\<Gamma>\<^sub>0 \<equiv> fmempty :: classes1 type env"
+declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 basic_type"]]
+declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum"]]
 
 instantiation classes1 :: ocl_object_model
 begin
@@ -190,8 +154,8 @@ abbreviation "assocs \<equiv> [
     STR ''member_of'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, False),
     STR ''members'' \<mapsto>\<^sub>f (Employee, 1, 20, True, True)],
   STR ''ManagerEmployee'' \<mapsto>\<^sub>f [
-    STR ''line_manager'' \<mapsto>\<^sub>f (Employee, 0::nat, 1, False, False),
-    STR ''project_manager'' \<mapsto>\<^sub>f (Employee, 0::nat, \<infinity>, False, False),
+    STR ''line_manager'' \<mapsto>\<^sub>f (Employee, 0, 1, False, False),
+    STR ''project_manager'' \<mapsto>\<^sub>f (Employee, 0, \<infinity>, False, False),
     STR ''employees'' \<mapsto>\<^sub>f (Employee, 3, 7, False, False)],
   STR ''ProjectCustomer'' \<mapsto>\<^sub>f [
     STR ''projects'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, True),
@@ -214,7 +178,8 @@ context Project
 def: membersCount() : Integer[1] = members->size()
 def: membersByName(mn : String[1]) : Set(Employee[1]) =
        members->select(member | member.name = mn)
-static def: allProjects() : Set(Project[1]) = Project[1].allInstances()
+static def: allProjects() : Set(Project[1]) =
+              Project[1].allInstances()
 \end{verbatim}\<close>
 
 definition "operations_classes1 \<equiv> [
@@ -254,9 +219,9 @@ lemma association_ends_unique:
       and "association_ends' classes assocs \<C> from role end\<^sub>2"
     shows "end\<^sub>1 = end\<^sub>2"
 proof -
-  have "\<not> association_ends_non_unique' classes assocs" by eval
+  have "\<not> association_ends_not_unique' classes assocs" by eval
   with assms show ?thesis
-    using association_ends_non_unique'.simps by blast
+    using association_ends_not_unique'.simps by blast
 qed
 
 instance
@@ -280,7 +245,8 @@ lemma ex_alt_simps [simp]:
 
 declare numeral_eq_enat [simp]
 
-lemmas basic_type_le_less [simp] = Orderings.order_class.le_less for x y :: "'a basic_type"
+lemmas basic_type_le_less [simp] = Orderings.order_class.le_less
+  for x y :: "'a basic_type"
 
 declare element_type_alt_simps [simp]
 declare update_element_type.simps [simp]
@@ -311,6 +277,9 @@ declare op_type_alt_simps [simp]
 declare typing_alt_simps [simp]
 declare normalize_alt_simps [simp]
 declare nf_typing.simps [simp]
+
+declare subclass1.intros [intro]
+declare less_classes1_def [simp]
 
 declare literals_classes1_def [simp]
 
@@ -359,39 +328,43 @@ proof -
     using static_operation_det by blast
 qed
 
+(*** Basic Types ************************************************************)
+
+section \<open>Basic Types\<close>
+
 subsection \<open>Positive Cases\<close>
 
-values "{(\<D>, \<tau>). attribute Person STR ''name'' \<D> \<tau>}"
-values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
-values "{(\<D>, \<tau>). attribute Employee STR ''name2'' \<D> \<tau>}"
-values "{(\<D>, \<tau>). attribute Employee STR ''position'' \<D> \<tau>}"
-values "{(\<D>, end). association_end Employee None STR ''projects'' \<D> end}"
-(* Тут нужен комментарий, что возвращается два одинаковых типа и это норм.
- Главное, что они совпадают. Хотя нет, это ошибка.
- В рантайме мы не сможем получить список объектов.
- Хотя с другой стороны, мы можем возвращать все объекты,
- а from использовать для фильтрации. Это выглядит полезным *)
-values "{(\<D>, end). association_end Employee None STR ''employees'' \<D> end}"
-values "{(\<D>, end). association_end Employee (Some STR ''project_manager'') STR ''employees'' \<D> end}"
-values "{op. operation Project[1] STR ''membersCount'' [] op}"
-values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
-value "has_literal STR ''E1'' STR ''A''"
+lemma "UnlimitedNatural < (Real :: classes1 basic_type)" by simp
+lemma "\<langle>Employee\<rangle>\<^sub>\<T> < \<langle>Person\<rangle>\<^sub>\<T>" by auto
+lemma "\<langle>Person\<rangle>\<^sub>\<T> \<le> OclAny" by simp
 
 subsection \<open>Negative Cases\<close>
 
-(* TODO: Implement as lemma *)
-(* TODO: Add a separate section with few examples for a generated code *)
-(*values "{end. association_end Person STR ''projects'' None end}"*)
-value "has_literal STR ''E1'' STR ''C''"
+lemma "\<not> String \<le> (Boolean :: classes1 basic_type)" by simp
 
+(*** Types ******************************************************************)
 
-lemma
-  "attribute Customer STR ''name'' Person String[1]"
-  by eval
+section \<open>Types\<close>
 
-lemma
-  "association_end Employee None STR ''projects'' Employee (Project, 0, \<infinity>, False, True)"
-  by eval
+subsection \<open>Positive Cases\<close>
+
+lemma "Integer[?] < (OclSuper :: classes1 type)" by simp
+lemma "Collection Real[?] < (OclSuper :: classes1 type)" by simp
+lemma "Set (Collection Boolean[1]) < (OclSuper :: classes1 type)" by simp
+lemma "Set (Bag Boolean[1]) < Set (Collection Boolean[?] :: classes1 type)"
+  by simp
+lemma "Tuple (fmap_of_list [(STR ''a'', Boolean[1]), (STR ''b'', Integer[1])]) <
+       Tuple (fmap_of_list [(STR ''a'', Boolean[?] :: classes1 type)])" by code_simp
+
+lemma "Integer[1] \<squnion> (Real[?] :: classes1 type) = Real[?]" by simp
+lemma "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type) = Set Real[1]" by simp
+lemma "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type) = Collection OclAny[?]"
+  by simp
+lemma "Set Integer[1] \<squnion> (Real[1] :: classes1 type) = OclSuper" by simp
+
+subsection \<open>Negative Cases\<close>
+
+lemma "\<not> OrderedSet Boolean[1] < Set (Boolean[1] :: classes1 type)" by simp
 
 (*** Typing *****************************************************************)
 
@@ -437,7 +410,7 @@ text \<open>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
     [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-      CollectionItem NullLiteral])
+     CollectionItem NullLiteral])
     DotCall OclIsUndefinedOp [] : Sequence Boolean[1]"
   by simp
 
@@ -450,7 +423,7 @@ lemma
     ArrowCall ProductOp
     [CollectionLiteral SetKind
       [CollectionItem (StringLiteral ''a''),
-      CollectionItem (StringLiteral ''b'')]] :
+       CollectionItem (StringLiteral ''b'')]] :
     Set (Tuple (fmap_of_list [
       (STR ''first'', Integer[1]), (STR ''second'', String[1])]))"
   by simp
@@ -461,7 +434,7 @@ text \<open>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> IterateCall (CollectionLiteral SequenceKind
     [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-        CollectionItem NullLiteral]) SafeArrowCall
+     CollectionItem NullLiteral]) SafeArrowCall
     [STR ''x''] None
     (STR ''acc'') (Some Real[1]) (IntegerLiteral 0)
     (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : Real[1]"
@@ -472,7 +445,7 @@ text \<open>
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
     [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-        CollectionItem NullLiteral])
+     CollectionItem NullLiteral])
     SafeArrowCall CollectionMaxOp [] : Integer[1]"
   by simp
 
@@ -485,7 +458,7 @@ lemma
       [CollectionItem (StringLiteral ''abc''),
        CollectionItem (StringLiteral ''zxc'')])
     (AnyIteratorCall (Var STR ''x'') ArrowCall
-      [STR ''it''] (Some String[?])
+      [STR ''it''] None
       (OperationCall (Var STR ''it'') DotCall EqualOp
         [StringLiteral ''test''])) : String[?]"
   by simp
@@ -559,7 +532,7 @@ lemma
   by simp
 
 text \<open>
-\<^verbatim>\<open>let x : Sequence String[?] = Sequence{'abc', 'zxc'} in
+\<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
 x->closure(it | 1)\<close>\<close>
 lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Let STR ''x'' (Some (Sequence String[?]))
@@ -575,12 +548,47 @@ text \<open>
 lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
     [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-      CollectionItem NullLiteral])
+     CollectionItem NullLiteral])
     ArrowCall CollectionMaxOp [] : \<tau>"
 proof -
   have "\<not> operation_defined (Integer[?] :: classes1 type) STR ''max'' [Integer[?]]"
     by eval
   thus ?thesis by simp
 qed
+
+(*** Code *******************************************************************)
+
+section \<open>Code\<close>
+
+subsection \<open>Positive Cases\<close>
+
+values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
+values "{(\<D>, end). association_end Employee None STR ''employees'' \<D> end}"
+values "{(\<D>, end). association_end Employee (Some STR ''project_manager'') STR ''employees'' \<D> end}"
+values "{op. operation Project[1] STR ''membersCount'' [] op}"
+values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
+value "has_literal STR ''E1'' STR ''A''"
+
+text \<open>
+\<^verbatim>\<open>context Employee:
+projects.members : Bag(Employee[1])\<close>\<close>
+values
+  "{\<tau>. \<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
+    AssociationEndCall (AssociationEndCall (Var STR ''self'')
+        DotCall None STR ''projects'')
+      DotCall None STR ''members'' : \<tau>}"
+
+subsection \<open>Negative Cases\<close>
+
+values "{(\<D>, \<tau>). attribute Employee STR ''name2'' \<D> \<tau>}"
+value "has_literal STR ''E1'' STR ''C''"
+
+text \<open>
+\<^verbatim>\<open>Sequence{1..5, null}->max()\<close>\<close>
+values
+  "{\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
+    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
+      CollectionItem NullLiteral])
+    ArrowCall CollectionMaxOp [] : \<tau>}"
 
 end
