@@ -358,8 +358,8 @@ lemma "Tuple (fmap_of_list [(STR ''a'', Boolean[1]), (STR ''b'', Integer[1])]) <
 
 lemma "Integer[1] \<squnion> (Real[?] :: classes1 type) = Real[?]" by simp
 lemma "Set Integer[1] \<squnion> Set (Real[1] :: classes1 type) = Set Real[1]" by simp
-lemma "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type) = Collection OclAny[?]"
-  by simp
+lemma "Set Integer[1] \<squnion> Bag (Boolean[?] :: classes1 type) =
+  Collection OclAny[?]" by simp
 lemma "Set Integer[1] \<squnion> (Real[1] :: classes1 type) = OclSuper" by simp
 
 subsection \<open>Negative Cases\<close>
@@ -564,7 +564,8 @@ subsection \<open>Positive Cases\<close>
 
 values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
 values "{(\<D>, end). association_end Employee None STR ''employees'' \<D> end}"
-values "{(\<D>, end). association_end Employee (Some STR ''project_manager'') STR ''employees'' \<D> end}"
+values "{(\<D>, end). association_end Employee (Some STR ''project_manager'')
+  STR ''employees'' \<D> end}"
 values "{op. operation Project[1] STR ''membersCount'' [] op}"
 values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
 value "has_literal STR ''E1'' STR ''A''"

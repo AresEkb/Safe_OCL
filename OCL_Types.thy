@@ -729,12 +729,7 @@ proof (induct \<tau> arbitrary: \<sigma>)
   case (Bag \<tau>) thus ?case by (induct \<sigma>; auto)
   case (Sequence \<tau>) thus ?case by (induct \<sigma>; auto)
 next
-  case (Tuple \<pi>)
-  moreover have Tuple_less_eq_sup:
-    "(\<And>\<tau> \<sigma>. \<tau> \<in> fmran' \<pi> \<Longrightarrow> \<tau> \<le> \<tau> \<squnion> \<sigma>) \<Longrightarrow>
-     Tuple \<pi> \<le> Tuple \<pi> \<squnion> \<sigma>"
-    by (cases \<sigma>, auto)
-  ultimately show ?case by (cases \<sigma>, auto)
+  case (Tuple \<pi>) thus ?case by (cases \<sigma>, auto)
 qed
 
 lemma sup_commut_type:
