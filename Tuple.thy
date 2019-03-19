@@ -230,36 +230,36 @@ lemma trancl_to_strict_subtuple':
   using strict_subtuple_trans''' by blast
 
 lemma subtuple_rtranclp_intro:
-  assumes "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow> subtuple R xm ym"
+  assumes "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow> subtuple S xm ym"
       and "bij_on_trancl R f"
       and "R\<^sup>*\<^sup>* (f xm) (f ym)"
-    shows "subtuple R\<^sup>*\<^sup>* xm ym"
+    shows "subtuple S\<^sup>*\<^sup>* xm ym"
 proof -
   have "(\<lambda>xm ym. R (f xm) (f ym))\<^sup>*\<^sup>* xm ym"
     apply (insert assms(2) assms(3))
     by (rule reflect_rtranclp; auto)
-  with assms(1) have "(subtuple R)\<^sup>*\<^sup>* xm ym"
+  with assms(1) have "(subtuple S)\<^sup>*\<^sup>* xm ym"
     by (metis (mono_tags, lifting) mono_rtranclp)
-  hence "subtuple R\<^sup>*\<^sup>* xm ym"
+  hence "subtuple S\<^sup>*\<^sup>* xm ym"
     by (rule rtrancl_to_subtuple)
   thus ?thesis by simp
 qed
 
 lemma strict_subtuple_rtranclp_intro:
   assumes "\<And>xm ym. R (f xm) (f ym) \<Longrightarrow>
-           strict_subtuple (\<lambda>x y. R x y \<or> x = y) xm ym"
+           strict_subtuple (\<lambda>x y. S x y \<or> x = y) xm ym"
       and "bij_on_trancl R f"
-      and "acyclicP_on (fmran' ym) R"
+      and "acyclicP_on (fmran' ym) S"
       and "R\<^sup>+\<^sup>+ (f xm) (f ym)"
-    shows "strict_subtuple R\<^sup>*\<^sup>* xm ym"
+    shows "strict_subtuple S\<^sup>*\<^sup>* xm ym"
 proof -
   have "(\<lambda>xm ym. R (f xm) (f ym))\<^sup>+\<^sup>+ xm ym"
     apply (insert assms(1) assms(2) assms(4))
     by (rule reflect_tranclp; auto)
-  hence "(strict_subtuple (\<lambda>x y. R x y \<or> x = y))\<^sup>+\<^sup>+ xm ym"
+  hence "(strict_subtuple (\<lambda>x y. S x y \<or> x = y))\<^sup>+\<^sup>+ xm ym"
     by (rule tranclp_trans_induct;
         auto simp add: assms(1) tranclp.r_into_trancl)
-  with assms(3) have "strict_subtuple (\<lambda>x y. R x y \<or> x = y)\<^sup>*\<^sup>* xm ym"
+  with assms(3) have "strict_subtuple (\<lambda>x y. S x y \<or> x = y)\<^sup>*\<^sup>* xm ym"
     by (rule trancl_to_strict_subtuple')
   thus ?thesis by simp
 qed
