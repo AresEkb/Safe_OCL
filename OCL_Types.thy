@@ -49,6 +49,7 @@ and 'a type\<^sub>N\<^sub>E =
   ErrorFree "'a type\<^sub>N"
 | Errorable "'a type\<^sub>N"
 
+print_theorems
 
 abbreviation Required_ErrorFree ("_[1]" [1000] 1000) where
   "Required_ErrorFree \<tau> \<equiv> ErrorFree (Required \<tau>)"
@@ -75,6 +76,57 @@ text \<open>
 
 definition "OclInvalid :: 'a type\<^sub>\<bottom> \<equiv> \<bottom>"
 
+primrec type_size :: "'a type \<Rightarrow> nat"
+    and type_size\<^sub>N :: "'a type\<^sub>N \<Rightarrow> nat"
+    and type_size\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E \<Rightarrow> nat" where
+
+  "type_size OclAny = 0"
+| "type_size OclVoid = 0"
+
+| "type_size Boolean = 0"
+| "type_size Real = 0"
+| "type_size Integer = 0"
+| "type_size UnlimitedNatural = 0"
+| "type_size String = 0"
+
+| "type_size (ObjectType \<C>) = 0"
+| "type_size (Enum \<E>) = 0"
+
+| "type_size (Collection \<tau>) = Suc (type_size\<^sub>N\<^sub>E \<tau>)"
+| "type_size (Set \<tau>) = Suc (type_size\<^sub>N\<^sub>E \<tau>)"
+| "type_size (OrderedSet \<tau>) = Suc (type_size\<^sub>N\<^sub>E \<tau>)"
+| "type_size (Bag \<tau>) = Suc (type_size\<^sub>N\<^sub>E \<tau>)"
+| "type_size (Sequence \<tau>) = Suc (type_size\<^sub>N\<^sub>E \<tau>)"
+
+| "type_size (Tuple \<pi>) = Suc (ffold tcf 0 (fset_of_fmap (fmmap type_size\<^sub>N\<^sub>E \<pi>)))"
+
+| "type_size\<^sub>N (Required \<tau>) = Suc (type_size \<tau>)"
+| "type_size\<^sub>N (Optional \<tau>) = Suc (type_size \<tau>)"
+
+| "type_size\<^sub>N\<^sub>E (ErrorFree \<tau>) = Suc (type_size\<^sub>N \<tau>)"
+| "type_size\<^sub>N\<^sub>E (Errorable \<tau>) = Suc (type_size\<^sub>N \<tau>)"
+
+print_theorems
+
+instantiation type :: (type) size
+begin
+abbreviation "size_type \<equiv> type_size"
+instance ..
+end
+
+instantiation type\<^sub>N :: (type) size
+begin
+abbreviation "size_type\<^sub>N \<equiv> type_size\<^sub>N"
+instance ..
+end
+
+instantiation type\<^sub>N\<^sub>E :: (type) size
+begin
+abbreviation "size_type\<^sub>N\<^sub>E \<equiv> type_size\<^sub>N\<^sub>E"
+instance ..
+end
+
+(*
 instantiation type :: (type) size
 begin
 
@@ -108,9 +160,144 @@ primrec size_type :: "'a type \<Rightarrow> nat"
 | "size_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = Suc (size_type\<^sub>N \<tau>)"
 | "size_type\<^sub>N\<^sub>E (Errorable \<tau>) = Suc (size_type\<^sub>N \<tau>)"
 
+print_theorems
+
 instance ..
 
 end
+*)
+
+function sup_type (infixl "\<squnion>" 65)
+and sup_type\<^sub>N (infixl "\<squnion>\<^sub>N" 65)
+and sup_type\<^sub>N\<^sub>E (infixl "\<squnion>\<^sub>N\<^sub>E" 65) where
+  "OclAny \<squnion> \<sigma> = OclAny"
+| "OclVoid \<squnion> \<sigma> = \<sigma>"
+
+| "Boolean \<squnion> \<sigma> = (case \<sigma>
+    of Boolean \<Rightarrow> Boolean
+     | OclVoid \<Rightarrow> Boolean
+     | _ \<Rightarrow> OclAny)"
+| "Real \<squnion> \<sigma> = (case \<sigma>
+    of Real \<Rightarrow> Real
+     | Integer \<Rightarrow> Real
+     | UnlimitedNatural \<Rightarrow> Real
+     | OclVoid \<Rightarrow> Real
+     | _ \<Rightarrow> OclAny)"
+| "Integer \<squnion> \<sigma> = (case \<sigma>
+    of Integer \<Rightarrow> Integer
+     | UnlimitedNatural \<Rightarrow> Integer
+     | OclVoid \<Rightarrow> Integer
+     | _ \<Rightarrow> OclAny)"
+| "UnlimitedNatural \<squnion> \<sigma> = (case \<sigma>
+    of UnlimitedNatural \<Rightarrow> UnlimitedNatural
+     | OclVoid \<Rightarrow> UnlimitedNatural
+     | _ \<Rightarrow> OclAny)"
+| "String \<squnion> \<sigma> = (case \<sigma>
+    of String \<Rightarrow> String
+     | OclVoid \<Rightarrow> String
+     | _ \<Rightarrow> OclAny)"
+
+| "\<langle>\<C>\<rangle>\<^sub>\<T> \<squnion> \<sigma> = (case \<sigma>
+    of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>sup \<C> \<D>\<rangle>\<^sub>\<T>
+     | OclVoid \<Rightarrow> \<langle>\<C>\<rangle>\<^sub>\<T>
+     | _ \<Rightarrow> OclAny)"
+| "Enum \<E> \<squnion> \<sigma> = (case \<sigma>
+    of OclVoid \<Rightarrow> Enum \<E>
+     | _ \<Rightarrow> OclAny)"
+
+| "Collection \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "Set \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Set (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "OrderedSet \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> OrderedSet (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "Bag \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Bag (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "Sequence \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Sequence (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+
+| "Tuple \<pi> \<squnion> \<sigma> = (case \<sigma>
+    of Tuple \<xi> \<Rightarrow> Tuple (fmmerge_fun (\<squnion>\<^sub>N\<^sub>E) \<pi> \<xi>)
+     | _ \<Rightarrow> OclAny)"
+
+| "Required \<tau> \<squnion>\<^sub>N \<sigma> = (case \<sigma>
+    of Required \<rho> \<Rightarrow> Required (\<tau> \<squnion> \<rho>)
+     | Optional \<rho> \<Rightarrow> Optional (\<tau> \<squnion> \<rho>))"
+| "Optional \<tau> \<squnion>\<^sub>N \<sigma> = (case \<sigma>
+    of Required \<rho> \<Rightarrow> Optional (\<tau> \<squnion> \<rho>)
+     | Optional \<rho> \<Rightarrow> Optional (\<tau> \<squnion> \<rho>))"
+
+| "ErrorFree \<tau> \<squnion>\<^sub>N\<^sub>E \<sigma> = (case \<sigma>
+    of ErrorFree \<rho> \<Rightarrow> ErrorFree (\<tau> \<squnion>\<^sub>N \<rho>)
+     | Errorable \<rho> \<Rightarrow> Errorable (\<tau> \<squnion>\<^sub>N \<rho>))"
+| "Errorable \<tau> \<squnion>\<^sub>N\<^sub>E \<sigma> = (case \<sigma>
+    of ErrorFree \<rho> \<Rightarrow> Errorable (\<tau> \<squnion>\<^sub>N \<rho>)
+     | Errorable \<rho> \<Rightarrow> Errorable (\<tau> \<squnion>\<^sub>N \<rho>))"
+  by pat_completeness auto
+
+fun tMeasure :: "'a type \<times> 'a type + 'a type\<^sub>N \<times> 'a type\<^sub>N + 'a type\<^sub>N\<^sub>E \<times> 'a type\<^sub>N\<^sub>E \<Rightarrow> nat" 
+where
+  "tMeasure v = (case v of Inl (x, y) \<Rightarrow> size y
+                         | Inr x \<Rightarrow> (case x of Inl (y, z) \<Rightarrow> size z
+                                             | Inr (y, z) \<Rightarrow> size z))"
+
+termination sup_type
+  apply (relation "measure tMeasure")
+  apply auto[1]
+  apply auto
+(*
+      auto simp add: elem_le_ffold' fmran'I)
+*)
+  done
+
+value "size Boolean"
+
+lemma q:
+  "size \<tau> < size (Collection \<tau>)"
+
+  apply (induct \<tau>)
+
+term "tMeasure"
+term "measure tMeasure"
+
+termination
+  apply (relation "measure (\<lambda>(xs, ys). size ys)";
+      auto simp add: elem_le_ffold' fmran'I)
+
+
+
+
+
+
+
+
+
+
 
 inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (infix "\<sqsubset>" 65)
       and subtype\<^sub>N :: "'a type\<^sub>N \<Rightarrow> 'a type\<^sub>N \<Rightarrow> bool" (infix "\<sqsubset>\<^sub>N" 65)
@@ -305,143 +492,237 @@ definition "(\<le>) \<equiv> (\<sqsubset>\<^sub>N\<^sub>E)\<^sup>*\<^sup>*"
 instance ..
 end
 
-instantiation type :: (order) order
-begin
-
 (*** Strict Introduction Rules **********************************************)
 
 subsection \<open>Strict Introduction Rules\<close>
-
+(*
 lemma preserve_tranclp':
   "(\<And>x y. R x y \<Longrightarrow> S (f x) (f y)) \<Longrightarrow>
    (\<And>y. S (f y) (g y)) \<Longrightarrow>
    R\<^sup>+\<^sup>+ x y \<Longrightarrow> S\<^sup>+\<^sup>+ (f x) (g y)"
   by (metis preserve_tranclp tranclp.trancl_into_trancl)
+*)
+lemma type_less_x_OclAny_intro [intro]:
+  "\<tau> \<noteq> OclAny \<Longrightarrow> \<tau> < OclAny"
+  "\<tau>\<^sub>N \<noteq> Optional OclAny \<Longrightarrow> \<tau>\<^sub>N < Optional OclAny"
+  "\<tau>\<^sub>N\<^sub>E \<noteq> OclAny[?!] \<Longrightarrow> \<tau>\<^sub>N\<^sub>E < OclAny[?!]"
+  for \<tau> :: "'a :: order type"
+  and \<tau>\<^sub>N :: "'a type\<^sub>N"
+  and \<tau>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E"
+proof (induct \<tau> and \<tau>\<^sub>N and \<tau>\<^sub>N\<^sub>E)
+  case OclAny thus ?case by simp
+next
+  case OclVoid
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid Boolean" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Boolean OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case Boolean show ?case unfolding less_type_def by auto
+next
+  case Real show ?case unfolding less_type_def by auto
+next
+  case Integer
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ Integer Real" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Real OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case UnlimitedNatural
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Integer Real" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Real OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case String show ?case unfolding less_type_def by auto
+next
+  case (ObjectType \<C>) show ?case unfolding less_type_def by auto
+next
+  case (Enum \<E>) show ?case unfolding less_type_def by auto
+next
+  case (Collection \<tau>)
+  from Collection.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?!])"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?!]) OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case (Set \<tau>)
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Set \<tau>) (Collection \<tau>)" by auto
+  also from Set.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?!])"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?!]) OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case (OrderedSet \<tau>)
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (OrderedSet \<tau>) (Collection \<tau>)" by auto
+  also from OrderedSet.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?!])"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?!]) OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case (Bag \<tau>)
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Bag \<tau>) (Collection \<tau>)" by auto
+  also from Bag.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?!])"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?!]) OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case (Sequence \<tau>)
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Sequence \<tau>) (Collection \<tau>)" by auto
+  also from Sequence.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?!])"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?!]) OclAny" by auto
+  finally show ?case unfolding less_type_def by simp
+next
+  case (Tuple \<pi>) show ?case unfolding less_type_def by auto
+next
+  case (Required \<tau>)
+  have "(\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ (Required \<tau>) (Optional \<tau>)" by auto
+  also from Required.hyps
+  have "(\<sqsubset>\<^sub>N)\<^sup>*\<^sup>* (Optional \<tau>) (Optional OclAny)"
+    unfolding less_type_def
+    by (rule_tac ?R="(\<sqsubset>)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  finally show ?case unfolding less_type\<^sub>N_def by simp
+next
+  case (Optional \<tau>) thus ?case
+    unfolding less_type_def less_type\<^sub>N_def
+    by (rule_tac ?R="(\<sqsubset>)" in preserve_tranclp, auto)
+next
+  case (ErrorFree \<tau>)
+  have "(\<sqsubset>\<^sub>N\<^sub>E)\<^sup>+\<^sup>+ (ErrorFree \<tau>) (Errorable \<tau>)" by auto
+  also from ErrorFree.hyps
+  have "(\<sqsubset>\<^sub>N\<^sub>E)\<^sup>*\<^sup>* (Errorable \<tau>) OclAny[?!]"
+    unfolding less_type\<^sub>N_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  finally show ?case unfolding less_type\<^sub>N\<^sub>E_def by simp
+next
+  case (Errorable \<tau>) thus ?case
+    unfolding less_type\<^sub>N_def less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_tranclp, auto)
+qed
 
 lemma type_less_OclVoid_x_intro [intro]:
   "\<tau> \<noteq> OclVoid \<Longrightarrow> OclVoid < \<tau>"
   "\<tau>\<^sub>N \<noteq> Required OclVoid \<Longrightarrow> Required OclVoid < \<tau>\<^sub>N"
   "\<tau>\<^sub>N\<^sub>E \<noteq> OclVoid[1] \<Longrightarrow> OclVoid[1] < \<tau>\<^sub>N\<^sub>E"
-  for \<tau> :: "'a type"
+  for \<tau> :: "'a :: order type"
   and \<tau>\<^sub>N :: "'a type\<^sub>N"
   and \<tau>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E"
 proof (induct \<tau> and \<tau>\<^sub>N and \<tau>\<^sub>N\<^sub>E)
   case OclAny
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid Boolean" by (rule tranclp.r_into_trancl; auto)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Boolean OclAny" by (rule tranclp.r_into_trancl; auto)
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid Boolean" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Boolean OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case OclVoid thus ?case by simp
 next
-  case Boolean show ?case
-    unfolding less_type_def by auto
+  case Boolean show ?case unfolding less_type_def by auto
 next
   case Real
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid UnlimitedNatural" by (rule tranclp.r_into_trancl; auto)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by (rule tranclp.r_into_trancl; auto)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Integer Real" by (rule tranclp.r_into_trancl; auto)
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid UnlimitedNatural" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Integer Real" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case Integer
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid UnlimitedNatural" by (rule tranclp.r_into_trancl; auto)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by (rule tranclp.r_into_trancl; auto)
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid UnlimitedNatural" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by auto
   finally show ?case unfolding less_type_def by simp
 next
-  case UnlimitedNatural show ?case
-    unfolding less_type_def by auto
+  case UnlimitedNatural show ?case unfolding less_type_def by auto
 next
-  case String show ?case
-    unfolding less_type_def by auto
+  case String show ?case unfolding less_type_def by auto
 next
-  case (ObjectType \<C>) show ?case
-    unfolding less_type_def by auto
+  case (ObjectType \<C>) show ?case unfolding less_type_def by auto
 next
-  case (Enum \<E>) show ?case
-    unfolding less_type_def by auto
+  case (Enum \<E>) show ?case unfolding less_type_def by auto
 next
   case (Collection \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[1])"
-    apply (rule tranclp.r_into_trancl)
-    using subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros by auto
-  also have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[1]) (Set \<tau>)"
-    apply (insert Collection.hyps)
-    by (metis Nitpick.rtranclp_unfold less_type\<^sub>N\<^sub>E_def preserve_tranclp
-          subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros(19))
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Set \<tau>) (Collection \<tau>)" by (rule tranclp.r_into_trancl; auto)
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[1])" by auto
+  also from Collection.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[1]) (Set \<tau>)"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Set \<tau>) (Collection \<tau>)" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case (Set \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[1])"
-    apply (rule tranclp.r_into_trancl)
-    using subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros by auto
-  also have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[1]) (Set \<tau>)"
-    apply (insert Set.hyps)
-    by (metis Nitpick.rtranclp_unfold less_type\<^sub>N\<^sub>E_def preserve_tranclp
-          subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros(19))
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[1])" by auto
+  also from Set.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[1]) (Set \<tau>)"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
   case (OrderedSet \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (OrderedSet OclVoid[1])"
-    apply (rule tranclp.r_into_trancl)
-    using subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros by auto
-  also have "(\<sqsubset>)\<^sup>*\<^sup>* (OrderedSet OclVoid[1]) (OrderedSet \<tau>)"
-    apply (insert OrderedSet.hyps)
-    by (metis Nitpick.rtranclp_unfold less_type\<^sub>N\<^sub>E_def preserve_tranclp
-          subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros(20))
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (OrderedSet OclVoid[1])" by auto
+  also from OrderedSet.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (OrderedSet OclVoid[1]) (OrderedSet \<tau>)"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
   case (Bag \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Bag OclVoid[1])"
-    apply (rule tranclp.r_into_trancl)
-    using subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros by auto
-  also have "(\<sqsubset>)\<^sup>*\<^sup>* (Bag OclVoid[1]) (Bag \<tau>)"
-    apply (insert Bag.hyps)
-    by (metis Nitpick.rtranclp_unfold less_type\<^sub>N\<^sub>E_def preserve_tranclp
-          subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros(21))
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Bag OclVoid[1])" by auto
+  also from Bag.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Bag OclVoid[1]) (Bag \<tau>)"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
   case (Sequence \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Sequence OclVoid[1])"
-    apply (rule tranclp.r_into_trancl)
-    using subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros by auto
-  also have "(\<sqsubset>)\<^sup>*\<^sup>* (Sequence OclVoid[1]) (Sequence \<tau>)"
-    apply (insert Sequence.hyps)
-    by (metis Nitpick.rtranclp_unfold less_type\<^sub>N\<^sub>E_def preserve_tranclp
-          subtype_subtype\<^sub>N_subtype\<^sub>N\<^sub>E.intros(22))
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Sequence OclVoid[1])" by auto
+  also from Sequence.hyps
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Sequence OclVoid[1]) (Sequence \<tau>)"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N\<^sub>E)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
-  case (Tuple \<pi>) show ?case
-    unfolding less_type_def by auto
+  case (Tuple \<pi>) show ?case unfolding less_type_def by auto
 next
   case (Required \<tau>) thus ?case
     unfolding less_type\<^sub>N_def less_type_def
     by (rule_tac ?f="Required" in preserve_tranclp; auto)
 next
   case (Optional \<tau>)
-  from Optional.hyps have "(\<sqsubset>)\<^sup>*\<^sup>* OclVoid \<tau>"
-    unfolding less_type_def by force
   hence "(\<sqsubset>\<^sub>N)\<^sup>*\<^sup>* (Required OclVoid) (Required \<tau>)"
-    unfolding less_type\<^sub>N_def less_type_def
-    by (rule_tac ?R="(\<sqsubset>)" in preserve_rtranclp; auto)
-  also have "(\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ (Required \<tau>) (Optional \<tau>)"
-    by (rule tranclp.r_into_trancl; auto)
-  finally show ?case
-    unfolding less_type\<^sub>N_def less_type_def by simp
+    unfolding less_type_def
+    by (rule_tac ?R="(\<sqsubset>)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ (Required \<tau>) (Optional \<tau>)" by auto
+  finally show ?case unfolding less_type\<^sub>N_def by simp
 next
   case (ErrorFree \<tau>) thus ?case
     unfolding less_type\<^sub>N_def less_type\<^sub>N\<^sub>E_def
     by (rule_tac ?f="ErrorFree" in preserve_tranclp; auto)
 next
   case (Errorable \<tau>)
-  from Errorable.hyps have "(\<sqsubset>\<^sub>N)\<^sup>*\<^sup>* (Required OclVoid) \<tau>"
-    unfolding less_type\<^sub>N_def by force
   hence "(\<sqsubset>\<^sub>N\<^sub>E)\<^sup>*\<^sup>* OclVoid[1] (ErrorFree \<tau>)"
-    unfolding less_type\<^sub>N_def less_type_def
-    by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp; auto)
-  also have "(\<sqsubset>\<^sub>N\<^sub>E)\<^sup>+\<^sup>+ (ErrorFree \<tau>) (Errorable \<tau>)"
-    by (rule tranclp.r_into_trancl; auto)
-  finally show ?case
-    unfolding less_type\<^sub>N\<^sub>E_def by simp
+    unfolding less_type\<^sub>N_def
+    by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
+        auto simp add: Nitpick.rtranclp_unfold)
+  also have "(\<sqsubset>\<^sub>N\<^sub>E)\<^sup>+\<^sup>+ (ErrorFree \<tau>) (Errorable \<tau>)" by auto
+  finally show ?case unfolding less_type\<^sub>N\<^sub>E_def by simp
 qed
 
 lemma type_less_x_Real_intro [intro]:
@@ -516,172 +797,6 @@ proof -
     using assms(1) apply simp
     by (rule preserve_tranclp; auto)
 qed
-(*
-lemma type_less_x_OclAny_intro [intro]:
-  "\<tau> \<noteq> OclAny \<Longrightarrow> \<tau> < OclAny"
-  unfolding less_type_def
-proof (cases \<tau>)
-  case OclAny
-  then show ?thesis sorry
-next
-  case OclVoid
-  then show ?thesis sorry
-next
-  case Boolean
-  then show ?thesis sorry
-next
-  case Real
-  then show ?thesis sorry
-next
-  case Integer
-  then show ?thesis sorry
-next
-  case UnlimitedNatural
-  then show ?thesis sorry
-next
-  case String
-  then show ?thesis sorry
-next
-  case (ObjectType x8)
-  then show ?thesis sorry
-next
-  case (Enum x9)
-  then show ?thesis sorry
-next
-  case (Collection x10)
-  then show ?thesis sorry
-next
-  case (Set x11)
-  then show ?thesis sorry
-next
-  case (OrderedSet x12)
-  then show ?thesis sorry
-next
-  case (Bag x13)
-  then show ?thesis sorry
-next
-  case (Sequence x14)
-  then show ?thesis sorry
-next
-  case (Tuple x15)
-  then show ?thesis sorry
-qed
-*)
-(*
-proof (induct \<tau>)
-  case OclAny thus ?case by auto
-next
-  case OclVoid
-  then show ?case sorry
-next
-  case Boolean show ?case by auto
-next
-  case Real show ?case by auto
-next
-  case Integer
-  then show ?case sorry
-next
-  case UnlimitedNatural
-  then show ?case sorry
-next
-  case String show ?case by auto
-next
-  case (ObjectType x) show ?case by auto
-next
-  case (Enum x) show ?case by auto
-next
-  case (Collection x)
-  then show ?case sorry
-next
-  case (Set x)
-  then show ?case sorry
-next
-  case (OrderedSet x)
-  then show ?case sorry
-next
-  case (Bag x)
-  then show ?case sorry
-next
-  case (Sequence x)
-  then show ?case sorry
-next
-  case (Tuple x)
-  then show ?case sorry
-next
-  case (Required \<tau>)
-  then show ?thesis sorry
-next
-  case (Optional \<tau>)
-  then show ?thesis sorry
-next
-  case (ErrorFree x)
-  then show ?thesis sorry
-next
-  case (Errorable x)
-  then show ?thesis sorry
-qed
-*)
-(*
-  
-  case OclAny thus ?case by auto
-next
-  case (Required \<tau>)
-  have "subtype\<^sup>*\<^sup>* \<tau>[1] OclAny[1]"
-    apply (rule_tac ?f="Required" in preserve_rtranclp[of basic_subtype], auto)
-    by (metis less_eq_basic_type_def type_less_eq_x_OclAny_intro)
-  also have "subtype\<^sup>+\<^sup>+ OclAny[1] OclAny[?]" by auto
-  also have "subtype\<^sup>+\<^sup>+ OclAny[?] OclSuper" by auto
-  finally show ?case by auto
-next
-  case (Optional \<tau>)
-  have "subtype\<^sup>*\<^sup>* \<tau>[?] OclAny[?]"
-    apply (rule_tac ?f="Optional" in preserve_rtranclp[of basic_subtype], auto)
-    by (metis less_eq_basic_type_def type_less_eq_x_OclAny_intro)
-  also have "subtype\<^sup>+\<^sup>+ OclAny[?] OclSuper" by auto
-  finally show ?case by auto
-next
-  case (Collection \<tau>)
-  have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
-    using Collection.hyps by force
-  also have "subtype\<^sup>+\<^sup>+ (Collection OclSuper) OclSuper" by auto
-  finally show ?case by auto
-next
-  case (Set \<tau>)
-  have "subtype\<^sup>+\<^sup>+ (Set \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
-    using Set.hyps by force
-  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
-  finally show ?case by auto
-next
-  case (OrderedSet \<tau>)
-  have "subtype\<^sup>+\<^sup>+ (OrderedSet \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
-    using OrderedSet.hyps by force
-  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
-  finally show ?case by auto
-next
-  case (Bag \<tau>)
-  have "subtype\<^sup>+\<^sup>+ (Bag \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
-    using Bag.hyps by force
-  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
-  finally show ?case by auto
-next
-  case (Sequence \<tau>)
-  have "subtype\<^sup>+\<^sup>+ (Sequence \<tau>) (Collection \<tau>)" by auto
-  also have "subtype\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclSuper)"
-    apply (rule_tac ?f="Collection" in preserve_rtranclp[of subtype], auto)
-    using Sequence.hyps by force
-  also have "subtype\<^sup>*\<^sup>* (Collection OclSuper) OclSuper" by auto
-  finally show ?case by auto
-next
-  case (Tuple x) thus ?case by auto
-qed
-*)
 
 lemma type_less_x_Required_intro [intro]:
   "\<tau> = Required \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Required \<sigma>"
@@ -712,6 +827,11 @@ lemma type_less_x_Errorable_intro [intro]:
 (*** Strict Elimination Rules ***********************************************)
 
 subsection \<open>Strict Elimination Rules\<close>
+
+lemma type_less_x_OclAny [elim!]:
+  "\<tau> < OclAny \<Longrightarrow> (\<tau> \<noteq> OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_type_def
+  by (drule tranclpD, auto)
 
 lemma type_less_x_OclVoid [elim!]:
   "\<tau> < OclVoid \<Longrightarrow> P"
@@ -765,82 +885,6 @@ lemma type_less_x_Enum [elim!]:
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def
   by (induct rule: converse_tranclp_induct; auto)
-
-
-lemma type_less_x_Required [elim!]:
-  assumes "\<tau> < Required \<sigma>"
-      and "\<And>\<rho>. \<tau> = Required \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
-    shows "P"
-proof -
-  from assms(1) obtain \<rho> where "\<tau> = Required \<rho>"
-    unfolding less_type\<^sub>N_def
-    by (induct rule: converse_tranclp_induct; auto)
-  moreover have "\<And>\<tau> \<sigma>. Required \<tau> < Required \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
-    unfolding less_type_def less_type\<^sub>N_def
-    by (rule reflect_tranclp; auto)
-  ultimately show ?thesis
-    using assms by auto
-qed
-(*
-lemma type_less_x_Optional [elim!]:
-  assumes "\<tau> < \<sigma>[?]"
-      and "\<tau> = OclVoid \<Longrightarrow> P"
-      and "\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P"
-      and "\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
-    shows "P"
-proof -
-  from assms(1) obtain \<rho> where
-    "\<tau> = OclVoid \<or> \<tau> = \<rho>[1] \<or> \<tau> = \<rho>[?]"
-    unfolding less_type_def
-    by (induct rule: converse_tranclp_induct; auto)
-  moreover have "\<And>\<tau> \<sigma>. \<tau>[1] < \<sigma>[?] \<Longrightarrow> \<tau> \<le> \<sigma>"
-    unfolding less_type_def less_eq_basic_type_def
-    apply (drule tranclpD, auto)
-    apply (erule subtype.cases, auto)
-  moreover have "\<And>\<tau> \<sigma>. \<tau>[?] < \<sigma>[?] \<Longrightarrow> \<tau> < \<sigma>"
-    unfolding less_type_def less_basic_type_def
-    by (rule reflect_tranclp; auto)
-  ultimately show ?thesis
-    using assms by auto
-qed
-*)
-lemma type_less_x_Optional [elim!]:
-  "\<tau> < Optional \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = Optional \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type\<^sub>N_def less_type_def less_eq_type_def
-  apply (induct rule: converse_tranclp_induct)
-  apply auto[1]
-  apply (erule subtype\<^sub>N.cases;
-      auto simp: converse_rtranclp_into_rtranclp tranclp_into_tranclp2)
-  by (meson Nitpick.rtranclp_unfold)
-
-lemma type_less_x_ErrorFree [elim!]:
-  assumes "\<tau> < ErrorFree \<sigma>"
-      and "\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
-    shows "P"
-proof -
-  from assms(1) obtain \<rho> where "\<tau> = ErrorFree \<rho>"
-    unfolding less_type\<^sub>N\<^sub>E_def
-    by (induct rule: converse_tranclp_induct; auto)
-  moreover have "\<And>\<tau> \<sigma>. ErrorFree \<tau> < ErrorFree \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
-    unfolding less_type\<^sub>N_def less_type\<^sub>N\<^sub>E_def
-    by (rule reflect_tranclp; auto)
-  ultimately show ?thesis
-    using assms by auto
-qed
-
-lemma type_less_x_Errorable [elim!]:
-  "\<tau> < Errorable \<sigma> \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
-   (\<And>\<rho>. \<tau> = Errorable \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type\<^sub>N\<^sub>E_def less_type\<^sub>N_def less_eq_type\<^sub>N_def
-  apply (induct rule: converse_tranclp_induct)
-  apply auto[1]
-  apply (erule subtype\<^sub>N\<^sub>E.cases;
-      auto simp: converse_rtranclp_into_rtranclp tranclp_into_tranclp2)
-  by (meson Nitpick.rtranclp_unfold)
-
 
 lemma type_less_x_Collection [elim!]:
   "\<tau> < Collection \<sigma> \<Longrightarrow>
@@ -921,6 +965,81 @@ proof -
     using assms by auto
 qed
 
+lemma type_less_x_Required [elim!]:
+  assumes "\<tau> < Required \<sigma>"
+      and "\<And>\<rho>. \<tau> = Required \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  from assms(1) obtain \<rho> where "\<tau> = Required \<rho>"
+    unfolding less_type\<^sub>N_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. Required \<tau> < Required \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type_def less_type\<^sub>N_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
+(*
+lemma type_less_x_Optional [elim!]:
+  assumes "\<tau> < \<sigma>[?]"
+      and "\<tau> = OclVoid \<Longrightarrow> P"
+      and "\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P"
+      and "\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  from assms(1) obtain \<rho> where
+    "\<tau> = OclVoid \<or> \<tau> = \<rho>[1] \<or> \<tau> = \<rho>[?]"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. \<tau>[1] < \<sigma>[?] \<Longrightarrow> \<tau> \<le> \<sigma>"
+    unfolding less_type_def less_eq_basic_type_def
+    apply (drule tranclpD, auto)
+    apply (erule subtype.cases, auto)
+  moreover have "\<And>\<tau> \<sigma>. \<tau>[?] < \<sigma>[?] \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type_def less_basic_type_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
+*)
+lemma type_less_x_Optional [elim!]:
+  "\<tau> < Optional \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = Optional \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_type\<^sub>N_def less_type_def less_eq_type_def
+  apply (induct rule: converse_tranclp_induct)
+  apply auto[1]
+  apply (erule subtype\<^sub>N.cases;
+      auto simp: converse_rtranclp_into_rtranclp tranclp_into_tranclp2)
+  by (meson Nitpick.rtranclp_unfold)
+
+lemma type_less_x_ErrorFree [elim!]:
+  assumes "\<tau> < ErrorFree \<sigma>"
+      and "\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P"
+    shows "P"
+proof -
+  from assms(1) obtain \<rho> where "\<tau> = ErrorFree \<rho>"
+    unfolding less_type\<^sub>N\<^sub>E_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have "\<And>\<tau> \<sigma>. ErrorFree \<tau> < ErrorFree \<sigma> \<Longrightarrow> \<tau> < \<sigma>"
+    unfolding less_type\<^sub>N_def less_type\<^sub>N\<^sub>E_def
+    by (rule reflect_tranclp; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
+
+lemma type_less_x_Errorable [elim!]:
+  "\<tau> < Errorable \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
+   (\<And>\<rho>. \<tau> = Errorable \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_type\<^sub>N\<^sub>E_def less_type\<^sub>N_def less_eq_type\<^sub>N_def
+  apply (induct rule: converse_tranclp_induct)
+  apply auto[1]
+  apply (erule subtype\<^sub>N\<^sub>E.cases;
+      auto simp: converse_rtranclp_into_rtranclp tranclp_into_tranclp2)
+  by (meson Nitpick.rtranclp_unfold)
+
+
 text \<open>
   We will be able to remove the acyclicity assumption only after
   we prove that the subtype relation is acyclic.\<close>
@@ -943,33 +1062,53 @@ proof -
     using assms by auto
 qed
 
-lemma type_less_x_OclSuper [elim!]:
-  "\<tau> < OclAny \<Longrightarrow> (\<tau> \<noteq> OclAny \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  by (drule tranclpD, auto)
-
 (*** Properties *************************************************************)
 
 subsection \<open>Properties\<close>
 
 lemma
   subtype_irrefl: "\<tau> < \<tau> \<Longrightarrow> False" and
-  subtype_irrefl\<^sub>N: "\<tau>\<^sub>N < \<tau>\<^sub>N \<Longrightarrow> False" and
-  subtype_irrefl\<^sub>N\<^sub>E: "\<tau>\<^sub>N\<^sub>E < \<tau>\<^sub>N\<^sub>E \<Longrightarrow> False"
-  for \<tau> :: "'a type"
+  subtype\<^sub>N_irrefl: "\<tau>\<^sub>N < \<tau>\<^sub>N \<Longrightarrow> False" and
+  subtype\<^sub>N\<^sub>E_irrefl: "\<tau>\<^sub>N\<^sub>E < \<tau>\<^sub>N\<^sub>E \<Longrightarrow> False"
+  for \<tau> :: "'a :: order type"
   and \<tau>\<^sub>N :: "'a type\<^sub>N"
   and \<tau>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E"
   apply (induct \<tau> and \<tau>\<^sub>N and \<tau>\<^sub>N\<^sub>E, auto)
   by (erule type_less_x_Tuple'; auto simp add: less_type\<^sub>N\<^sub>E_def tranclp_unfold)
 
 lemma subtype_acyclic:
-  "acyclicP subtype"
+  "acyclicP (\<sqsubset>)"
 proof -
-  have "\<nexists>x. (\<sqsubset>)\<^sup>+\<^sup>+ x x"
+  have "\<nexists>\<tau>. (\<sqsubset>)\<^sup>+\<^sup>+ \<tau> \<tau>"
     by (metis (mono_tags) less_type_def OCL_Types.subtype_irrefl)
   thus ?thesis
     by (intro acyclicI) (simp add: trancl_def)
 qed
+
+lemma subtype\<^sub>N_acyclic:
+  "acyclicP (\<sqsubset>\<^sub>N)"
+proof -
+  have "\<nexists>\<tau>. (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<tau>"
+    by (metis (mono_tags) less_type\<^sub>N_def OCL_Types.subtype\<^sub>N_irrefl)
+  thus ?thesis
+    by (intro acyclicI) (simp add: trancl_def)
+qed
+
+lemma subtype\<^sub>N\<^sub>E_acyclic:
+  "acyclicP (\<sqsubset>\<^sub>N\<^sub>E)"
+proof -
+  have "\<nexists>\<tau>. (\<sqsubset>\<^sub>N\<^sub>E)\<^sup>+\<^sup>+ \<tau> \<tau>"
+    by (metis (mono_tags) less_type\<^sub>N\<^sub>E_def OCL_Types.subtype\<^sub>N\<^sub>E_irrefl)
+  thus ?thesis
+    by (intro acyclicI) (simp add: trancl_def)
+qed
+
+(*** Partial Order **********************************************************)
+
+subsection \<open>Partial Order\<close>
+
+instantiation type :: (order) order
+begin
 
 lemma less_le_not_le_type:
   "\<tau> < \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma> \<and> \<not> \<sigma> \<le> \<tau>"
@@ -983,7 +1122,7 @@ proof -
     unfolding less_type_def less_eq_type_def by auto
 qed
 
-lemma order_refl_type [iff]:
+lemma order_refl_type:
   "\<tau> \<le> \<tau>"
   for \<tau> :: "'a type"
   unfolding less_eq_type_def by simp
@@ -1003,7 +1142,7 @@ lemma antisym_type:
 instance
   apply intro_classes
   apply (simp add: less_le_not_le_type)
-  apply (simp)
+  apply (simp add: order_refl_type)
   using order_trans_type apply blast
   by (simp add: antisym_type)
 
@@ -1017,14 +1156,14 @@ lemma less_le_not_le_type\<^sub>N:
   for \<tau> \<sigma> :: "'a type\<^sub>N"
 proof -
   have "(\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>*\<^sup>* \<sigma> \<tau> \<Longrightarrow> False"
-    by (metis (mono_tags) subtype_irrefl\<^sub>N less_type\<^sub>N_def tranclp_rtranclp_tranclp)
+    by (metis subtype\<^sub>N_irrefl less_type\<^sub>N_def tranclp_rtranclp_tranclp)
   moreover have "(\<sqsubset>\<^sub>N)\<^sup>*\<^sup>* \<tau> \<sigma> \<Longrightarrow> \<not> (\<sqsubset>\<^sub>N)\<^sup>*\<^sup>* \<sigma> \<tau> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<sigma>"
     by (metis rtranclpD)
   ultimately show ?thesis
     unfolding less_type\<^sub>N_def less_eq_type\<^sub>N_def by auto
 qed
 
-lemma order_refl_type\<^sub>N [iff]:
+lemma order_refl_type\<^sub>N:
   "\<tau> \<le> \<tau>"
   for \<tau> :: "'a type\<^sub>N"
   unfolding less_eq_type\<^sub>N_def by simp
@@ -1044,7 +1183,7 @@ lemma antisym_type\<^sub>N:
 instance
   apply intro_classes
   apply (simp add: less_le_not_le_type\<^sub>N)
-  apply (simp)
+  apply (simp add: order_refl_type\<^sub>N)
   using order_trans_type\<^sub>N apply blast
   by (simp add: antisym_type\<^sub>N)
 
@@ -1058,14 +1197,14 @@ lemma less_le_not_le_type\<^sub>N\<^sub>E:
   for \<tau> \<sigma> :: "'a type\<^sub>N\<^sub>E"
 proof -
   have "(\<sqsubset>\<^sub>N\<^sub>E)\<^sup>+\<^sup>+ \<tau> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N\<^sub>E)\<^sup>*\<^sup>* \<sigma> \<tau> \<Longrightarrow> False"
-    by (metis (mono_tags) subtype_irrefl\<^sub>N\<^sub>E less_type\<^sub>N\<^sub>E_def tranclp_rtranclp_tranclp)
+    by (metis (mono_tags) subtype\<^sub>N\<^sub>E_irrefl less_type\<^sub>N\<^sub>E_def tranclp_rtranclp_tranclp)
   moreover have "(\<sqsubset>\<^sub>N\<^sub>E)\<^sup>*\<^sup>* \<tau> \<sigma> \<Longrightarrow> \<not> (\<sqsubset>\<^sub>N\<^sub>E)\<^sup>*\<^sup>* \<sigma> \<tau> \<Longrightarrow> (\<sqsubset>\<^sub>N\<^sub>E)\<^sup>+\<^sup>+ \<tau> \<sigma>"
     by (metis rtranclpD)
   ultimately show ?thesis
     unfolding less_type\<^sub>N\<^sub>E_def less_eq_type\<^sub>N\<^sub>E_def by auto
 qed
 
-lemma order_refl_type\<^sub>N\<^sub>E [iff]:
+lemma order_refl_type\<^sub>N\<^sub>E:
   "\<tau> \<le> \<tau>"
   for \<tau> :: "'a type\<^sub>N\<^sub>E"
   unfolding less_eq_type\<^sub>N\<^sub>E_def by simp
@@ -1085,7 +1224,7 @@ lemma antisym_type\<^sub>N\<^sub>E:
 instance
   apply intro_classes
   apply (simp add: less_le_not_le_type\<^sub>N\<^sub>E)
-  apply (simp)
+  apply (simp add: order_refl_type\<^sub>N\<^sub>E)
   using order_trans_type\<^sub>N\<^sub>E apply blast
   by (simp add: antisym_type\<^sub>N\<^sub>E)
 
@@ -1095,14 +1234,28 @@ end
 
 subsection \<open>Non-Strict Introduction Rules\<close>
 
-lemma type_less_eq_x_Required_intro [intro]:
-  "\<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Required \<sigma>"
-  unfolding order.order_iff_strict by auto
+lemma type_less_eq_x_OclAny_intro [intro]:
+  "\<tau> \<le> OclAny"
+  unfolding dual_order.order_iff_strict by auto
 
-lemma type_less_eq_x_Optional_intro [intro]:
-  "\<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Optional \<sigma>"
-  "\<tau> = Optional \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Optional \<sigma>"
-  unfolding order.order_iff_strict by auto
+lemma type_less_eq_OclVoid_x_intro [intro]:
+  "OclVoid \<le> \<tau>"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Real_intro [intro]:
+  "\<tau> = Real \<Longrightarrow> \<tau> \<le> Real"
+  "\<tau> = Integer \<Longrightarrow> \<tau> \<le> Real"
+  "\<tau> = UnlimitedNatural \<Longrightarrow> \<tau> \<le> Real"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Integer_intro [intro]:
+  "\<tau> = Integer \<Longrightarrow> \<tau> \<le> Integer"
+  "\<tau> = UnlimitedNatural \<Longrightarrow> \<tau> \<le> Integer"
+  unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_ObjectType_intro [intro]:
+  "\<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> \<tau> \<le> \<langle>\<D>\<rangle>\<^sub>\<T>"
+  unfolding dual_order.order_iff_strict by auto
 
 lemma type_less_eq_x_Collection_intro [intro]:
   "\<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
@@ -1132,24 +1285,27 @@ lemma type_less_eq_x_Tuple_intro [intro]:
   "\<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
   using order.strict_iff_order by blast
 
-lemma type_less_eq_x_OclAny_intro [intro]:
-  "\<tau> \<le> OclAny"
-  unfolding dual_order.order_iff_strict by auto
+lemma type_less_eq_x_Required_intro [intro]:
+  "\<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Required \<sigma>"
+  unfolding order.order_iff_strict by auto
+
+lemma type_less_eq_x_Optional_intro [intro]:
+  "\<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Optional \<sigma>"
+  "\<tau> = Optional \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Optional \<sigma>"
+  unfolding order.order_iff_strict by auto
+
+lemma type_less_eq_x_ErrorFree_intro [intro]:
+  "\<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> ErrorFree \<sigma>"
+  unfolding order.order_iff_strict by auto
+
+lemma type_less_eq_x_Errorable_intro [intro]:
+  "\<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Errorable \<sigma>"
+  "\<tau> = Errorable \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Errorable \<sigma>"
+  unfolding order.order_iff_strict by auto
 
 (*** Non-Strict Elimination Rules *******************************************)
 
 subsection \<open>Non-Strict Elimination Rules\<close>
-
-lemma type_less_eq_x_Required [elim!]:
-  "\<tau> \<le> \<sigma>[1] \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (drule le_imp_less_or_eq; auto)
-
-lemma type_less_eq_x_Optional [elim!]:
-  "\<tau> \<le> \<sigma>[?] \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[1] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho>. \<tau> = \<rho>[?] \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (drule le_imp_less_or_eq, auto)
 
 lemma type_less_eq_x_Collection [elim!]:
   "\<tau> \<le> Collection \<sigma> \<Longrightarrow>
@@ -1190,7 +1346,8 @@ lemma type_less_x_Tuple [elim!]:
    (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   apply (erule type_less_x_Tuple')
-  by (meson acyclic_def subtype_acyclic)
+  apply (meson acyclic_def subtype\<^sub>N\<^sub>E_acyclic)
+  by simp
 
 lemma type_less_eq_x_Tuple [elim!]:
   "\<tau> \<le> Tuple \<xi> \<Longrightarrow>
@@ -1198,6 +1355,28 @@ lemma type_less_eq_x_Tuple [elim!]:
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   apply (drule le_imp_less_or_eq, auto)
   by (simp add: fmap.rel_refl fmrel_to_subtuple)
+
+lemma type_less_eq_x_Required [elim!]:
+  "\<tau> \<le> Required \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Optional [elim!]:
+  "\<tau> \<le> Optional \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = Optional \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_ErrorFree [elim!]:
+  "\<tau> \<le> ErrorFree \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Errorable [elim!]:
+  "\<tau> \<le> Errorable \<sigma> \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau> = Errorable \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
 
 (*** Simplification Rules ***************************************************)
 
@@ -1270,37 +1449,187 @@ lemma type_less_left_simps [simp]:
   "Tuple \<pi> < \<sigma> = (\<exists>\<xi>.
       \<sigma> = OclAny \<or>
       \<sigma> = Tuple \<xi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
+  by (induct \<sigma>; auto)+
 
-  "Required \<rho> < \<sigma>\<^sub>N = (\<exists>\<upsilon>.
-      \<sigma>\<^sub>N = OclAny \<or>
-      \<sigma>\<^sub>N = Required \<upsilon> \<and> \<rho> < \<upsilon> \<or>
-      \<sigma>\<^sub>N = Optional \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
-(*  "Optional \<rho> < \<sigma>\<^sub>N = (\<exists>\<upsilon>.
-      \<sigma>\<^sub>N = OclAny \<or>
-      \<sigma>\<^sub>N = Optional \<upsilon> \<and> \<rho> < \<upsilon>)"
-*)
+lemma type\<^sub>N_less_left_simps [simp]:
+  "Required \<rho> < \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = Required \<upsilon> \<and> \<rho> < \<upsilon> \<or>
+      \<sigma> = Optional \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
+  "Optional \<rho> < \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = Optional \<upsilon> \<and> \<rho> < \<upsilon>)"
+  by (induct \<sigma>; auto)+
+
+lemma type\<^sub>N\<^sub>E_less_left_simps [simp]:
+  "ErrorFree \<rho> < \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = ErrorFree \<upsilon> \<and> \<rho> < \<upsilon> \<or>
+      \<sigma> = Errorable \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
+  "Errorable \<rho> < \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = Errorable \<upsilon> \<and> \<rho> < \<upsilon>)"
   by (induct \<sigma>; auto)+
 
 lemma type_less_right_simps [simp]:
-  "\<tau> < OclSuper = (\<tau> \<noteq> OclSuper)"
-  "\<tau> < \<upsilon>[1] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> < \<upsilon>)"
-  "\<tau> < \<upsilon>[?] = (\<exists>\<rho>. \<tau> = \<rho>[1] \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = \<rho>[?] \<and> \<rho> < \<upsilon>)"
+  "\<tau> < OclAny = (\<tau> \<noteq> OclAny)"
+  "\<tau> < OclVoid = False"
+
+  "\<tau> < Boolean = (\<tau> = OclVoid)"
+  "\<tau> < Real = (\<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> < Integer = (\<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> < UnlimitedNatural = (\<tau> = OclVoid)"
+  "\<tau> < String = (\<tau> = OclVoid)"
+
+  "\<tau> < ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> < \<D> \<or> \<tau> = OclVoid)"
+  "\<tau> < Enum \<E> = (\<tau> = OclVoid)"
+
   "\<tau> < Collection \<sigma> = (\<exists>\<phi>.
       \<tau> = Collection \<phi> \<and> \<phi> < \<sigma> \<or>
       \<tau> = Set \<phi> \<and> \<phi> \<le> \<sigma> \<or>
       \<tau> = OrderedSet \<phi> \<and> \<phi> \<le> \<sigma> \<or>
       \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or>
-      \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma>)"
-  "\<tau> < Set \<sigma> = (\<exists>\<phi>. \<tau> = Set \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < OrderedSet \<sigma> = (\<exists>\<phi>. \<tau> = OrderedSet \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma>)"
-  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
+      \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = OclVoid)"
+  "\<tau> < Set \<sigma> = (\<exists>\<phi>. \<tau> = Set \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
+  "\<tau> < OrderedSet \<sigma> = (\<exists>\<phi>. \<tau> = OrderedSet \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
+  "\<tau> < Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
+  "\<tau> < Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
+
+  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
+  by auto
+
+lemma type\<^sub>N_less_right_simps [simp]:
+  "\<tau> < Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> < \<upsilon>)"
+  by auto
+
+lemma type\<^sub>N\<^sub>E_less_right_simps [simp]:
+  "\<tau> < ErrorFree \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Errorable \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Errorable \<rho> \<and> \<rho> < \<upsilon>)"
   by auto
 
 (*** Upper Semilattice of Types *********************************************)
 
 section \<open>Upper Semilattice of Types\<close>
+(*
+notation sup (infixl "\<squnion>" 65)
+
+instantiation type :: (order) sup
+begin
+*)
+fun sup_type (infixl "\<squnion>" 65)
+and sup_type\<^sub>N (infixl "\<squnion>\<^sub>N" 65)
+and sup_type\<^sub>N\<^sub>E (infixl "\<squnion>\<^sub>N\<^sub>E" 65) where
+  "OclAny \<squnion> \<sigma> = OclAny"
+| "OclVoid \<squnion> \<sigma> = \<sigma>"
+
+| "Boolean \<squnion> \<sigma> = (case \<sigma>
+    of Boolean \<Rightarrow> Boolean
+     | OclVoid \<Rightarrow> Boolean
+     | _ \<Rightarrow> OclAny)"
+| "Real \<squnion> \<sigma> = (case \<sigma>
+    of Real \<Rightarrow> Real
+     | Integer \<Rightarrow> Real
+     | UnlimitedNatural \<Rightarrow> Real
+     | OclVoid \<Rightarrow> Real
+     | _ \<Rightarrow> OclAny)"
+| "Integer \<squnion> \<sigma> = (case \<sigma>
+    of Integer \<Rightarrow> Integer
+     | UnlimitedNatural \<Rightarrow> Integer
+     | OclVoid \<Rightarrow> Integer
+     | _ \<Rightarrow> OclAny)"
+| "UnlimitedNatural \<squnion> \<sigma> = (case \<sigma>
+    of UnlimitedNatural \<Rightarrow> UnlimitedNatural
+     | OclVoid \<Rightarrow> UnlimitedNatural
+     | _ \<Rightarrow> OclAny)"
+| "String \<squnion> \<sigma> = (case \<sigma>
+    of String \<Rightarrow> String
+     | OclVoid \<Rightarrow> String
+     | _ \<Rightarrow> OclAny)"
+
+| "\<langle>\<C>\<rangle>\<^sub>\<T> \<squnion> \<sigma> = (case \<sigma>
+    of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>sup \<C> \<D>\<rangle>\<^sub>\<T>
+     | OclVoid \<Rightarrow> \<langle>\<C>\<rangle>\<^sub>\<T>
+     | _ \<Rightarrow> OclAny)"
+| "Enum \<E> \<squnion> \<sigma> = (case \<sigma>
+    of OclVoid \<Rightarrow> Enum \<E>
+     | _ \<Rightarrow> OclAny)"
+
+| "Collection \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "Set \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Set (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "OrderedSet \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> OrderedSet (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "Bag \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Bag (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+| "Sequence \<tau> \<squnion> \<sigma> = (case \<sigma>
+    of Collection \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Set \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | OrderedSet \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Bag \<rho> \<Rightarrow> Collection (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | Sequence \<rho> \<Rightarrow> Sequence (\<tau> \<squnion>\<^sub>N\<^sub>E \<rho>)
+     | _ \<Rightarrow> OclAny)"
+
+| "Tuple \<pi> \<squnion> \<sigma> = (case \<sigma>
+    of Tuple \<xi> \<Rightarrow> Tuple (fmmerge_fun (\<squnion>\<^sub>N\<^sub>E) \<pi> \<xi>)
+     | _ \<Rightarrow> OclAny)"
+
+| "Required \<tau> \<squnion>\<^sub>N \<sigma> = (case \<sigma>
+    of Required \<rho> \<Rightarrow> Required (\<tau> \<squnion> \<rho>)
+     | Optional \<rho> \<Rightarrow> Optional (\<tau> \<squnion> \<rho>))"
+| "Optional \<tau> \<squnion>\<^sub>N \<sigma> = (case \<sigma>
+    of Required \<rho> \<Rightarrow> Optional (\<tau> \<squnion> \<rho>)
+     | Optional \<rho> \<Rightarrow> Optional (\<tau> \<squnion> \<rho>))"
+
+| "ErrorFree \<tau> \<squnion>\<^sub>N\<^sub>E \<sigma> = (case \<sigma>
+    of ErrorFree \<rho> \<Rightarrow> ErrorFree (\<tau> \<squnion>\<^sub>N \<rho>)
+     | Errorable \<rho> \<Rightarrow> Errorable (\<tau> \<squnion>\<^sub>N \<rho>))"
+| "Errorable \<tau> \<squnion>\<^sub>N\<^sub>E \<sigma> = (case \<sigma>
+    of ErrorFree \<rho> \<Rightarrow> Errorable (\<tau> \<squnion>\<^sub>N \<rho>)
+     | Errorable \<rho> \<Rightarrow> Errorable (\<tau> \<squnion>\<^sub>N \<rho>))"
+  by pat_completeness auto
+termination
+  apply (relation "measure (\<lambda>(xs, ys). size ys)";
+      auto simp add: elem_le_ffold' fmran'I)
+
+(*
+definition "(\<squnion>) \<equiv> (\<sqsubset>)\<^sup>+\<^sup>+"
+definition "(\<le>) \<equiv> (\<sqsubset>)\<^sup>*\<^sup>*"
+instance ..
+end
+*)
+instantiation type\<^sub>N :: (order) ord
+begin
+definition "(<) \<equiv> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+"
+definition "(\<le>) \<equiv> (\<sqsubset>\<^sub>N)\<^sup>*\<^sup>*"
+instance ..
+end
+
+instantiation type\<^sub>N\<^sub>E :: (order) ord
+begin
+definition "(<) \<equiv> (\<sqsubset>\<^sub>N\<^sub>E)\<^sup>+\<^sup>+"
+definition "(\<le>) \<equiv> (\<sqsubset>\<^sub>N\<^sub>E)\<^sup>*\<^sup>*"
+instance ..
+end
+
 
 instantiation type :: (semilattice_sup) semilattice_sup
 begin
