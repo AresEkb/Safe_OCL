@@ -23,14 +23,14 @@ definition
     else
       if assoc_end_unique end then
         if assoc_end_ordered end
-        then OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-        else Set \<langle>\<C>\<rangle>\<^sub>\<T>[1]
+        then (OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]
+        else (Set \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]
       else
         if assoc_end_ordered end
-        then Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1]
-        else Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1]"
+        then (Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]
+        else (Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]"
 
-definition "class_assoc_type \<A> \<equiv> Set \<langle>\<A>\<rangle>\<^sub>\<T>[1]"
+definition "class_assoc_type \<A> \<equiv> (Set \<langle>\<A>\<rangle>\<^sub>\<T>[1])[1]"
 
 definition "class_assoc_end_type end \<equiv> \<langle>assoc_end_class end\<rangle>\<^sub>\<T>[1]"
 
@@ -38,15 +38,15 @@ definition "oper_type op \<equiv>
   let params = oper_out_params op in
   if length params = 0
   then oper_result op
-  else Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
-    (params @ [(STR ''result'', oper_result op, Out)])))"
+  else (Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
+    (params @ [(STR ''result'', oper_result op, Out)]))))[1]"
 
 class ocl_object_model =
   fixes classes :: "'a :: semilattice_sup fset"
-    and attributes :: "'a \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type"
+    and attributes :: "'a \<rightharpoonup>\<^sub>f attr \<rightharpoonup>\<^sub>f 'a type\<^sub>N\<^sub>E"
     and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
     and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
-    and operations :: "('a type, 'a expr) oper_spec list"
+    and operations :: "('a type\<^sub>N\<^sub>E, 'a expr) oper_spec list"
     and literals :: "'a enum \<rightharpoonup>\<^sub>f elit fset"
   assumes assoc_end_min_less_eq_max:
     "assoc |\<in>| fmdom associations \<Longrightarrow>

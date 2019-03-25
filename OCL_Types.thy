@@ -1619,15 +1619,32 @@ notation sup (infixl "\<squnion>" 65)
 
 instantiation type :: (semilattice_sup) semilattice_sup
 begin
-
 definition sup_type where [simp, code]: "sup_type \<equiv> type_sup"
-
 instance
   apply intro_classes
   apply (simp add: sup_ge1_type)
   apply (simp add: sup_commut_type sup_ge1_type)
   by (simp add: sup_least_type)
+end
 
+instantiation type\<^sub>N :: (semilattice_sup) semilattice_sup
+begin
+definition sup_type\<^sub>N where [simp, code]: "sup_type\<^sub>N \<equiv> type_sup\<^sub>N"
+instance
+  apply intro_classes
+  apply (simp add: sup_ge1_type)
+  apply (simp add: sup_commut_type sup_ge1_type)
+  by (simp add: sup_least_type)
+end
+
+instantiation type\<^sub>N\<^sub>E :: (semilattice_sup) semilattice_sup
+begin
+definition sup_type\<^sub>N\<^sub>E where [simp, code]: "sup_type\<^sub>N\<^sub>E \<equiv> type_sup\<^sub>N\<^sub>E"
+instance
+  apply intro_classes
+  apply (simp add: sup_ge1_type)
+  apply (simp add: sup_commut_type sup_ge1_type)
+  by (simp add: sup_least_type)
 end
 
 (*** Helper Relations *******************************************************)
@@ -1637,12 +1654,78 @@ section \<open>Helper Relations\<close>
 abbreviation between ("_/ = _\<midarrow>_"  [51, 51, 51] 50) where
   "x = y\<midarrow>z \<equiv> y \<le> x \<and> x \<le> z"
 
-inductive element_type where
+abbreviation "Collection\<^sub>N\<^sub>E \<tau> opt err \<equiv>
+  if opt then
+    if err
+    then Errorable (Optional (Collection \<tau>))
+    else ErrorFree (Optional (Collection \<tau>))
+  else if err
+    then Errorable (Required (Collection \<tau>))
+    else ErrorFree (Required (Collection \<tau>))"
+
+abbreviation "Set\<^sub>N\<^sub>E \<tau> opt err \<equiv>
+  if opt then
+    if err
+    then Errorable (Optional (Set \<tau>))
+    else ErrorFree (Optional (Set \<tau>))
+  else if err
+    then Errorable (Required (Set \<tau>))
+    else ErrorFree (Required (Set \<tau>))"
+
+abbreviation "OrderedSet\<^sub>N\<^sub>E \<tau> opt err \<equiv>
+  if opt then
+    if err
+    then Errorable (Optional (OrderedSet \<tau>))
+    else ErrorFree (Optional (OrderedSet \<tau>))
+  else if err
+    then Errorable (Required (OrderedSet \<tau>))
+    else ErrorFree (Required (OrderedSet \<tau>))"
+
+abbreviation "Bag\<^sub>N\<^sub>E \<tau> opt err \<equiv>
+  if opt then
+    if err
+    then Errorable (Optional (Bag \<tau>))
+    else ErrorFree (Optional (Bag \<tau>))
+  else if err
+    then Errorable (Required (Bag \<tau>))
+    else ErrorFree (Required (Bag \<tau>))"
+
+abbreviation "Sequence\<^sub>N\<^sub>E \<tau> opt err \<equiv>
+  if opt then
+    if err
+    then Errorable (Optional (Sequence \<tau>))
+    else ErrorFree (Optional (Sequence \<tau>))
+  else if err
+    then Errorable (Required (Sequence \<tau>))
+    else ErrorFree (Required (Sequence \<tau>))"
+
+(*
+inductive element_type :: "'a type \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool"
+      and element_type\<^sub>N :: "'a type\<^sub>N \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool"
+      and element_type\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool" where
   "element_type (Collection \<tau>) \<tau>"
 | "element_type (Set \<tau>) \<tau>"
 | "element_type (OrderedSet \<tau>) \<tau>"
 | "element_type (Bag \<tau>) \<tau>"
 | "element_type (Sequence \<tau>) \<tau>"
+
+| "element_type \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N (Required \<tau>) \<sigma>"
+| "element_type \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N (Optional \<tau>) \<sigma>"
+
+| "element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N\<^sub>E (ErrorFree \<tau>) \<sigma>"
+| "element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N\<^sub>E (Errorable \<tau>) \<sigma>"
+*)
+
+inductive element_type where
+  "element_type (Collection\<^sub>N\<^sub>E \<tau>) \<tau>"
+| "element_type (Set\<^sub>N\<^sub>E \<tau>) \<tau>"
+| "element_type (OrderedSet\<^sub>N\<^sub>E \<tau>) \<tau>"
+| "element_type (Bag\<^sub>N\<^sub>E \<tau>) \<tau>"
+| "element_type (Sequence\<^sub>N\<^sub>E \<tau>) \<tau>"
 
 lemma element_type_alt_simps:
   "element_type \<tau> \<sigma> = 
@@ -1652,7 +1735,7 @@ lemma element_type_alt_simps:
       Bag \<sigma> = \<tau> \<or>
       Sequence \<sigma> = \<tau>)"
   by (auto simp add: element_type.simps)
-
+(*
 inductive update_element_type where
   "update_element_type (Collection _) \<tau> (Collection \<tau>)"
 | "update_element_type (Set _) \<tau> (Set \<tau>)"
@@ -1680,6 +1763,37 @@ inductive to_ordered_collection where
 | "to_ordered_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
 | "to_ordered_collection (Bag \<tau>) (Sequence \<tau>)"
 | "to_ordered_collection (Sequence \<tau>) (Sequence \<tau>)"
+*)
+
+inductive update_element_type where
+  "update_element_type (Collection\<^sub>N\<^sub>E _ opt err) \<tau> (Collection\<^sub>N\<^sub>E \<tau> opt err)"
+| "update_element_type (Set\<^sub>N\<^sub>E _ opt err) \<tau> (Set\<^sub>N\<^sub>E \<tau> opt err)"
+| "update_element_type (OrderedSet\<^sub>N\<^sub>E _ opt err) \<tau> (OrderedSet\<^sub>N\<^sub>E \<tau> opt err)"
+| "update_element_type (Bag\<^sub>N\<^sub>E _ opt err) \<tau> (Bag\<^sub>N\<^sub>E \<tau> opt err)"
+| "update_element_type (Sequence\<^sub>N\<^sub>E _ opt err) \<tau> (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
+
+inductive to_unique_collection where
+  "to_unique_collection (Collection\<^sub>N\<^sub>E \<tau> opt err) (Set\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_unique_collection (Set\<^sub>N\<^sub>E \<tau> opt err) (Set\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_unique_collection (OrderedSet\<^sub>N\<^sub>E \<tau> opt err) (OrderedSet\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_unique_collection (Bag\<^sub>N\<^sub>E \<tau> opt err) (Set\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_unique_collection (Sequence\<^sub>N\<^sub>E \<tau> opt err) (OrderedSet\<^sub>N\<^sub>E \<tau> opt err)"
+
+inductive to_nonunique_collection where
+  "to_nonunique_collection (Collection\<^sub>N\<^sub>E \<tau> opt err) (Bag\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_nonunique_collection (Set\<^sub>N\<^sub>E \<tau> opt err) (Bag\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_nonunique_collection (OrderedSet\<^sub>N\<^sub>E \<tau> opt err) (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_nonunique_collection (Bag\<^sub>N\<^sub>E \<tau> opt err) (Bag\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_nonunique_collection (Sequence\<^sub>N\<^sub>E \<tau> opt err) (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
+
+inductive to_ordered_collection where
+  "to_ordered_collection (Collection\<^sub>N\<^sub>E \<tau> opt err) (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_ordered_collection (Set\<^sub>N\<^sub>E \<tau> opt err) (OrderedSet\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_ordered_collection (OrderedSet\<^sub>N\<^sub>E \<tau> opt err) (OrderedSet\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_ordered_collection (Bag\<^sub>N\<^sub>E \<tau> opt err) (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
+| "to_ordered_collection (Sequence\<^sub>N\<^sub>E \<tau> opt err) (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
+
+
 (*
 fun to_single_type where
   "to_single_type OclSuper = OclSuper"
@@ -1708,6 +1822,73 @@ fun to_optional_type_nested where
 | "to_optional_type_nested (Sequence \<tau>) = Sequence (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested \<pi>)"
 *)
+
+fun to_single_type' :: "'a type \<Rightarrow> 'a type"
+and to_single_type\<^sub>N :: "'a type\<^sub>N \<Rightarrow> 'a type\<^sub>N"
+and to_single_type :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a type\<^sub>N\<^sub>E" where
+  "to_single_type' OclAny = OclAny"
+| "to_single_type' OclVoid = OclVoid"
+
+| "to_single_type' Boolean = Boolean"
+| "to_single_type' Real = Real"
+| "to_single_type' Integer = Integer"
+| "to_single_type' UnlimitedNatural = UnlimitedNatural"
+| "to_single_type' String = String"
+
+| "to_single_type' (ObjectType \<C>) = ObjectType \<C>"
+| "to_single_type' (Enum \<E>) = Enum \<E>"
+
+| "to_single_type' (Collection \<tau>) = to_single_type \<tau>"
+| "to_single_type' (Set \<tau>) = to_single_type \<tau>"
+| "to_single_type' (OrderedSet \<tau>) = to_single_type \<tau>"
+| "to_single_type' (Bag \<tau>) = to_single_type \<tau>"
+| "to_single_type' (Sequence \<tau>) = to_single_type \<tau>"
+
+| "to_single_type' (Tuple \<pi>) = Tuple \<pi>"
+
+| "to_single_type\<^sub>N (Required \<tau>) = Required (to_single_type' \<tau>)"
+| "to_single_type\<^sub>N (Optional \<tau>) = Optional (to_single_type' \<tau>)"
+
+| "to_single_type (ErrorFree \<tau>) = ErrorFree (to_single_type\<^sub>N \<tau>)"
+| "to_single_type (Errorable \<tau>) = Errorable (to_single_type\<^sub>N \<tau>)"
+
+fun to_required_type\<^sub>N
+and to_required_type where
+  "to_required_type\<^sub>N (Required \<tau>) = Required \<tau>"
+| "to_required_type\<^sub>N (Optional \<tau>) = Required \<tau>"
+
+| "to_required_type (ErrorFree \<tau>) = ErrorFree (to_required_type\<^sub>N \<tau>)"
+| "to_required_type (Errorable \<tau>) = Errorable (to_required_type\<^sub>N \<tau>)"
+
+fun to_optional_type_nested'
+and to_optional_type_nested\<^sub>N
+and to_optional_type_nested where
+  "to_optional_type_nested' OclAny = OclAny"
+| "to_optional_type_nested' OclVoid = OclVoid"
+
+| "to_optional_type_nested' Boolean = Boolean"
+| "to_optional_type_nested' Real = Real"
+| "to_optional_type_nested' Integer = Integer"
+| "to_optional_type_nested' UnlimitedNatural = UnlimitedNatural"
+| "to_optional_type_nested' String = String"
+
+| "to_optional_type_nested' (ObjectType \<C>) = ObjectType \<C>"
+| "to_optional_type_nested' (Enum \<E>) = Enum \<E>"
+
+| "to_optional_type_nested' (Collection \<tau>) = Collection (to_optional_type_nested \<tau>)"
+| "to_optional_type_nested' (Set \<tau>) = Set (to_optional_type_nested \<tau>)"
+| "to_optional_type_nested' (OrderedSet \<tau>) = OrderedSet (to_optional_type_nested \<tau>)"
+| "to_optional_type_nested' (Bag \<tau>) = Bag (to_optional_type_nested \<tau>)"
+| "to_optional_type_nested' (Sequence \<tau>) = Sequence (to_optional_type_nested \<tau>)"
+
+| "to_optional_type_nested' (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested \<pi>)"
+
+| "to_optional_type_nested\<^sub>N (Required \<tau>) = Optional (to_optional_type_nested' \<tau>)"
+| "to_optional_type_nested\<^sub>N (Optional \<tau>) = Optional (to_optional_type_nested' \<tau>)"
+
+| "to_optional_type_nested (ErrorFree \<tau>) = ErrorFree (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested (Errorable \<tau>) = Errorable (to_optional_type_nested\<^sub>N \<tau>)"
+
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>

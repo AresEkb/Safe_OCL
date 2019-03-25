@@ -149,12 +149,12 @@ text \<open>
 
 datatype 'a expr =
   Literal "'a literal_expr"
-| Let (var : vname) (var_type : "'a type option") (init_expr : "'a expr")
+| Let (var : vname) (var_type : "'a type\<^sub>N\<^sub>E option") (init_expr : "'a expr")
     (body_expr : "'a expr")
 | Var (var : vname)
 | If (if_expr : "'a expr") (then_expr : "'a expr") (else_expr : "'a expr")
-| MetaOperationCall (type : "'a type") metaop
-| StaticOperationCall (type : "'a type") oper (args : "'a expr list")
+| MetaOperationCall (type : "'a type\<^sub>N\<^sub>E") metaop
+| StaticOperationCall (type : "'a type\<^sub>N\<^sub>E") oper (args : "'a expr list")
 | Call (source : "'a expr") (kind : call_kind) "'a call_expr"
 and 'a literal_expr =
   NullLiteral
@@ -166,22 +166,22 @@ and 'a literal_expr =
 | EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
 | CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
-| TupleLiteral (tuple_elements : "(telem \<times> 'a type option \<times> 'a expr) list")
+| TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N\<^sub>E option \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
 and 'a call_expr =
-  TypeOperation typeop (type : "'a type")
+  TypeOperation typeop (type : "'a type\<^sub>N\<^sub>E")
 | Attribute attr
 | AssociationEnd (from_role : "role option") role
 | AssociationClass (from_role : "role option") 'a
 | AssociationClassEnd role
 | Operation op (args : "'a expr list")
 | TupleElement telem
-| Iterate (iterators : "vname list") (iterators_type : "'a type option")
-    (var : vname) (var_type : "'a type option") (init_expr : "'a expr")
+| Iterate (iterators : "vname list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
+    (var : vname) (var_type : "'a type\<^sub>N\<^sub>E option") (init_expr : "'a expr")
     (body_expr : "'a expr")
-| Iterator iterator (iterators : "vname list") (iterators_type : "'a type option")
+| Iterator iterator (iterators : "vname list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
     (body_expr : "'a expr")
 
 definition "tuple_element_name \<equiv> fst"
