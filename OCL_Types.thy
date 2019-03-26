@@ -1132,6 +1132,56 @@ lemma type_less_eq_x_Errorable_intro [intro]:
 
 subsection \<open>Non-Strict Elimination Rules\<close>
 
+lemma type_less_eq_x_OclVoid [elim!]:
+  "\<tau> \<le> OclVoid \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Boolean [elim!]:
+  "\<tau> \<le> Boolean \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = Boolean \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Real [elim!]:
+  "\<tau> \<le> Real \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = Real \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Integer [elim!]:
+  "\<tau> \<le> Integer \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_UnlimitedNatural [elim!]:
+  "\<tau> \<le> UnlimitedNatural \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_String [elim!]:
+  "\<tau> \<le> String \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = String \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_ObjectType [elim!]:
+  "\<tau> \<le> \<langle>\<D>\<rangle>\<^sub>\<T> \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<C>. \<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
+lemma type_less_eq_x_Enum [elim!]:
+  "\<tau> \<le> Enum \<E> \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = Enum \<E> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
 lemma type_less_eq_x_Collection [elim!]:
   "\<tau> \<le> Collection \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
@@ -1207,36 +1257,10 @@ lemma type_less_eq_x_Errorable [elim!]:
 
 subsection \<open>Simplification Rules\<close>
 
-(*
-  OclAny
-| OclVoid
-
-| Boolean
-| Real
-| Integer
-| UnlimitedNatural
-| String
-
-| ObjectType 'a ("\<langle>_\<rangle>\<^sub>\<T>" [0] 1000)
-| Enum "'a enum"
-
-| Collection "'a type\<^sub>N\<^sub>E"
-| Set "'a type\<^sub>N\<^sub>E"
-| OrderedSet "'a type\<^sub>N\<^sub>E"
-| Bag "'a type\<^sub>N\<^sub>E"
-| Sequence "'a type\<^sub>N\<^sub>E"
-
-| Tuple "telem \<rightharpoonup>\<^sub>f 'a type\<^sub>N\<^sub>E"
-
-and 'a type\<^sub>N =
-  Required "'a type"
-| Optional "'a type"
-
-and 'a type\<^sub>N\<^sub>E =
-  ErrorFree "'a type\<^sub>N"
-| Errorable "'a type\<^sub>N"
-
-*)
+text \<open>
+  We can not declare @{thm Orderings.order_class.le_less} as
+  a simplification theorem for two arbitrary types, because it is too aggressive.
+  So we define a specific simplification rules for @{text "(\<le>)"} operator.}\<close>
 
 lemma type_less_left_simps [simp]:
   "OclAny < \<sigma> = False"
@@ -1276,6 +1300,44 @@ lemma type_less_left_simps [simp]:
       \<sigma> = Tuple \<xi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
   by (induct \<sigma>; auto)+
 
+lemma type_less_eq_left_simps [simp]:
+  "OclAny \<le> \<sigma> = (\<sigma> = OclAny)"
+  "OclVoid \<le> \<sigma> = True"
+
+  "Boolean \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Boolean)"
+  "Real \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real)"
+  "Integer \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real \<or> \<sigma> = Integer)"
+  "UnlimitedNatural \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real \<or> \<sigma> = Integer \<or> \<sigma> = UnlimitedNatural)"
+  "String \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = String)"
+
+  "ObjectType \<C> \<le> \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> \<le> \<D>)"
+  "Enum \<E> \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Enum \<E>)"
+
+  "Collection \<tau> \<le> \<sigma> = (\<exists>\<phi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi>)"
+  "Set \<tau> \<le> \<sigma> = (\<exists>\<phi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+      \<sigma> = Set \<phi> \<and> \<tau> \<le> \<phi>)"
+  "OrderedSet \<tau> \<le> \<sigma> = (\<exists>\<phi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+      \<sigma> = OrderedSet \<phi> \<and> \<tau> \<le> \<phi>)"
+  "Bag \<tau> \<le> \<sigma> = (\<exists>\<phi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+      \<sigma> = Bag \<phi> \<and> \<tau> \<le> \<phi>)"
+  "Sequence \<tau> \<le> \<sigma> = (\<exists>\<phi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
+      \<sigma> = Sequence \<phi> \<and> \<tau> \<le> \<phi>)"
+
+  "Tuple \<pi> \<le> \<sigma> = (\<exists>\<xi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Tuple \<xi> \<and> subtuple (\<le>) \<pi> \<xi>)"
+  by (auto simp: order.order_iff_strict reflpI)
+
 lemma type\<^sub>N_less_left_simps [simp]:
   "Required \<rho> < \<sigma> = (\<exists>\<upsilon>.
       \<sigma> = Required \<upsilon> \<and> \<rho> < \<upsilon> \<or>
@@ -1284,6 +1346,14 @@ lemma type\<^sub>N_less_left_simps [simp]:
       \<sigma> = Optional \<upsilon> \<and> \<rho> < \<upsilon>)"
   by (induct \<sigma>; auto)+
 
+lemma type\<^sub>N_less_eq_left_simps [simp]:
+  "Required \<rho> \<le> \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = Required \<upsilon> \<and> \<rho> \<le> \<upsilon> \<or>
+      \<sigma> = Optional \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
+  "Optional \<rho> \<le> \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = Optional \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
+  by (auto simp: dual_order.order_iff_strict)
+
 lemma type\<^sub>N\<^sub>E_less_left_simps [simp]:
   "ErrorFree \<rho> < \<sigma> = (\<exists>\<upsilon>.
       \<sigma> = ErrorFree \<upsilon> \<and> \<rho> < \<upsilon> \<or>
@@ -1291,6 +1361,14 @@ lemma type\<^sub>N\<^sub>E_less_left_simps [simp]:
   "Errorable \<rho> < \<sigma> = (\<exists>\<upsilon>.
       \<sigma> = Errorable \<upsilon> \<and> \<rho> < \<upsilon>)"
   by (induct \<sigma>; auto)+
+
+lemma type\<^sub>N\<^sub>E_less_eq_left_simps [simp]:
+  "ErrorFree \<rho> \<le> \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = ErrorFree \<upsilon> \<and> \<rho> \<le> \<upsilon> \<or>
+      \<sigma> = Errorable \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
+  "Errorable \<rho> \<le> \<sigma> = (\<exists>\<upsilon>.
+      \<sigma> = Errorable \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
+  by (auto simp: dual_order.order_iff_strict)
 
 lemma type_less_right_simps [simp]:
   "\<tau> < OclAny = (\<tau> \<noteq> OclAny)"
@@ -1320,9 +1398,42 @@ lemma type_less_right_simps [simp]:
   "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
   by auto
 
+lemma type_less_eq_right_simps [simp]:
+  "\<tau> \<le> OclAny = True"
+  "\<tau> \<le> OclVoid = (\<tau> = OclVoid)"
+
+  "\<tau> \<le> Boolean = (\<tau> = Boolean \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Real = (\<tau> = Real \<or> \<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Integer = (\<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> UnlimitedNatural = (\<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> String = (\<tau> = String \<or> \<tau> = OclVoid)"
+
+  "\<tau> \<le> ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> \<le> \<D> \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Enum \<E> = (\<tau> = Enum \<E> \<or> \<tau> = OclVoid)"
+
+  "\<tau> \<le> Collection \<sigma> = (\<exists>\<phi>.
+      \<tau> = Collection \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = Set \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = OrderedSet \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma> \<or>
+      \<tau> = OclVoid)"
+  "\<tau> \<le> Set \<sigma> = (\<exists>\<phi>. \<tau> = Set \<phi> \<and> \<phi> \<le> \<sigma> \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> OrderedSet \<sigma> = (\<exists>\<phi>. \<tau> = OrderedSet \<phi> \<and> \<phi> \<le> \<sigma> \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma> \<or> \<tau> = OclVoid)"
+
+  "\<tau> \<le> Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
+  by (auto simp: order.order_iff_strict reflpI)
+
 lemma type\<^sub>N_less_right_simps [simp]:
   "\<tau> < Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> < \<upsilon>)"
   "\<tau> < Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> < \<upsilon>)"
+  by auto
+
+lemma type\<^sub>N_less_eq_right_simps [simp]:
+  "\<tau> \<le> Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon>)"
+  "\<tau> \<le> Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> \<le> \<upsilon>)"
   by auto
 
 lemma type\<^sub>N\<^sub>E_less_right_simps [simp]:
@@ -1330,7 +1441,10 @@ lemma type\<^sub>N\<^sub>E_less_right_simps [simp]:
   "\<tau> < Errorable \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Errorable \<rho> \<and> \<rho> < \<upsilon>)"
   by auto
 
-(*lemmas type_le_less [simp] = Orderings.order_class.le_less for x y :: "'a type"*)
+lemma type\<^sub>N\<^sub>E_less_eq_right_simps [simp]:
+  "\<tau> \<le> ErrorFree \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon>)"
+  "\<tau> \<le> Errorable \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Errorable \<rho> \<and> \<rho> \<le> \<upsilon>)"
+  by auto
 
 (*** Upper Semilattice of Types *********************************************)
 
@@ -1380,7 +1494,8 @@ and type_sup\<^sub>N\<^sub>E (infixl "\<squnion>\<^sub>N\<^sub>E" 65) where
      | OclVoid \<Rightarrow> \<langle>\<C>\<rangle>\<^sub>\<T>
      | _ \<Rightarrow> OclAny)"
 | "Enum \<E> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
-    of OclVoid \<Rightarrow> Enum \<E>
+    of Enum \<E>' \<Rightarrow> if \<E> = \<E>' then Enum \<E> else OclAny
+     | OclVoid \<Rightarrow> Enum \<E>
      | _ \<Rightarrow> OclAny)"
 
 | "Collection \<tau> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
@@ -1471,25 +1586,26 @@ next
 next
   case (Enum \<E>) show ?case by (cases \<sigma>; auto)
 next
-  case (Collection \<tau>) thus ?case by (cases \<sigma>, auto)
+  case (Collection \<tau>) thus ?case by (cases \<sigma>; auto)
 next
-  case (Set \<tau>) thus ?case by (cases \<sigma>, auto)
+  case (Set \<tau>) thus ?case by (cases \<sigma>; auto)
 next
-  case (OrderedSet \<tau>) thus ?case by (cases \<sigma>, auto)
+  case (OrderedSet \<tau>) thus ?case by (cases \<sigma>; auto)
 next
-  case (Bag \<tau>) thus ?case by (cases \<sigma>, auto)
+  case (Bag \<tau>) thus ?case by (cases \<sigma>; auto)
 next
-  case (Sequence \<tau>) thus ?case by (cases \<sigma>, auto)
+  case (Sequence \<tau>) thus ?case by (cases \<sigma>; auto)
 next
-  case (Tuple \<pi>) thus ?case by (cases \<sigma>, auto)
+  case (Tuple \<pi>) thus ?case by (cases \<sigma>;
+    auto simp del: type_less_eq_left_simps type_less_eq_right_simps)
 next
-  case (Required \<tau>) thus ?case by (cases \<sigma>\<^sub>N, auto)
+  case (Required \<tau>) thus ?case by (cases \<sigma>\<^sub>N; auto)
 next
-  case (Optional \<tau>) thus ?case by (cases \<sigma>\<^sub>N, auto)
+  case (Optional \<tau>) thus ?case by (cases \<sigma>\<^sub>N; auto)
 next
-  case (ErrorFree \<tau>) thus ?case by (cases \<sigma>\<^sub>N\<^sub>E, auto)
+  case (ErrorFree \<tau>) thus ?case by (cases \<sigma>\<^sub>N\<^sub>E; auto)
 next
-  case (Errorable \<tau>) thus ?case by (cases \<sigma>\<^sub>N\<^sub>E, auto)
+  case (Errorable \<tau>) thus ?case by (cases \<sigma>\<^sub>N\<^sub>E; auto)
 qed
 
 lemma sup_commut_type:
@@ -1547,69 +1663,8 @@ lemma sup_least_type:
   for \<tau> \<sigma> \<rho> :: "'a::semilattice_sup type"
   and \<tau>\<^sub>N \<sigma>\<^sub>N \<rho>\<^sub>N :: "'a type\<^sub>N"
   and \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E"
-proof (induct \<rho> and \<rho>\<^sub>N and \<rho>\<^sub>N\<^sub>E arbitrary: \<tau> \<sigma> and \<tau>\<^sub>N \<sigma>\<^sub>N and \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E)
-  case OclAny show ?case by auto
-next
-  case OclVoid thus ?case unfolding le_less by auto
-next
-  case Boolean thus ?case unfolding le_less by auto
-next
-  case Real thus ?case unfolding le_less by auto
-next
-  case Integer thus ?case unfolding le_less by auto
-next
-  case UnlimitedNatural thus ?case unfolding le_less by auto
-next
-  case String thus ?case unfolding le_less by auto
-next
-  case (ObjectType \<C>) thus ?case unfolding le_less apply auto
-    sorry
-next
-  case (Enum \<E>)
-  then show ?case sorry
-next
-  case (Collection \<rho>) show ?case
-    apply (insert Collection)
-    by (erule type_less_eq_x_Collection; erule type_less_eq_x_Collection; auto)
-next
-  case (Set \<rho>) show ?case
-    apply (insert Set)
-    by (erule type_less_eq_x_Set; erule type_less_eq_x_Set; auto)
-next
-  case (OrderedSet \<rho>) show ?case
-    apply (insert OrderedSet)
-    by (erule type_less_eq_x_OrderedSet; erule type_less_eq_x_OrderedSet; auto)
-next
-  case (Bag \<rho>) show ?case
-    apply (insert Bag)
-    by (erule type_less_eq_x_Bag; erule type_less_eq_x_Bag; auto)
-next
-  case (Sequence \<rho>) show ?case
-    apply (insert Sequence)
-    by (erule type_less_eq_x_Sequence; erule type_less_eq_x_Sequence; auto)
-next
-  case (Tuple \<pi>) show ?case
-    apply (insert Tuple)
-    apply (erule type_less_eq_x_Tuple; erule type_less_eq_x_Tuple; auto)
-    by (rule_tac ?\<pi>="(fmmerge (\<squnion>\<^sub>N\<^sub>E) \<pi>' \<pi>'')" in type_less_eq_x_Tuple_intro;
-        simp add: fmrel_on_fset_fmmerge1)
-next
-  case (Required \<rho>) show ?case
-    apply (insert Required)
-    by (erule type_less_eq_x_Required; erule type_less_eq_x_Required; auto)
-next
-  case (Optional \<rho>) show ?case
-    apply (insert Optional)
-    by (erule type_less_eq_x_Optional; erule type_less_eq_x_Optional; auto)
-next
-  case (ErrorFree \<rho>) show ?case
-    apply (insert ErrorFree)
-    by (erule type_less_eq_x_ErrorFree; erule type_less_eq_x_ErrorFree; auto)
-next
-  case (Errorable \<rho>) show ?case
-    apply (insert Errorable)
-    by (erule type_less_eq_x_Errorable; erule type_less_eq_x_Errorable; auto)
-qed
+  by (induct \<rho> and \<rho>\<^sub>N and \<rho>\<^sub>N\<^sub>E arbitrary: \<tau> \<sigma> and \<tau>\<^sub>N \<sigma>\<^sub>N and \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E,
+      auto simp: fmrel_on_fset_fmmerge1)
 
 no_notation type_sup (infixl "\<squnion>" 65)
 no_notation type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65)
@@ -1653,7 +1708,7 @@ section \<open>Helper Relations\<close>
 
 abbreviation between ("_/ = _\<midarrow>_"  [51, 51, 51] 50) where
   "x = y\<midarrow>z \<equiv> y \<le> x \<and> x \<le> z"
-
+(*
 abbreviation "Collection\<^sub>N\<^sub>E \<tau> opt err \<equiv>
   if opt then
     if err
@@ -1698,7 +1753,7 @@ abbreviation "Sequence\<^sub>N\<^sub>E \<tau> opt err \<equiv>
   else if err
     then Errorable (Required (Sequence \<tau>))
     else ErrorFree (Required (Sequence \<tau>))"
-
+*)
 (*
 inductive element_type :: "'a type \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool"
       and element_type\<^sub>N :: "'a type\<^sub>N \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool"
@@ -1719,13 +1774,34 @@ inductive element_type :: "'a type \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Right
 | "element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
    element_type\<^sub>N\<^sub>E (Errorable \<tau>) \<sigma>"
 *)
-
+(*
 inductive element_type where
   "element_type (Collection\<^sub>N\<^sub>E \<tau>) \<tau>"
 | "element_type (Set\<^sub>N\<^sub>E \<tau>) \<tau>"
 | "element_type (OrderedSet\<^sub>N\<^sub>E \<tau>) \<tau>"
 | "element_type (Bag\<^sub>N\<^sub>E \<tau>) \<tau>"
 | "element_type (Sequence\<^sub>N\<^sub>E \<tau>) \<tau>"
+*)
+inductive element_type
+      and element_type\<^sub>N
+      and element_type\<^sub>N\<^sub>E where
+  "element_type (Collection \<tau>) \<tau>"
+| "element_type (Set \<tau>) \<tau>"
+| "element_type (OrderedSet \<tau>) \<tau>"
+| "element_type (Bag \<tau>) \<tau>"
+| "element_type (Sequence \<tau>) \<tau>"
+
+| "element_type \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N (Required \<tau>) \<sigma>"
+| "element_type \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N (Optional \<tau>) \<sigma>"
+
+| "element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N\<^sub>E (ErrorFree \<tau>) \<sigma>"
+| "element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   element_type\<^sub>N\<^sub>E (Errorable \<tau>) \<sigma>"
+
+print_theorems
 
 lemma element_type_alt_simps:
   "element_type \<tau> \<sigma> = 
@@ -1735,6 +1811,150 @@ lemma element_type_alt_simps:
       Bag \<sigma> = \<tau> \<or>
       Sequence \<sigma> = \<tau>)"
   by (auto simp add: element_type.simps)
+
+inductive is_collection\<^sub>N\<^sub>E where
+  "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
+   is_collection\<^sub>N\<^sub>E \<tau>"
+
+inductive to_single_type\<^sub>N\<^sub>E where
+  "\<not> is_collection\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   to_single_type\<^sub>N\<^sub>E \<tau> \<tau>"
+| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> to_single_type\<^sub>N\<^sub>E \<sigma> \<rho> \<Longrightarrow>
+   to_single_type\<^sub>N\<^sub>E \<tau> \<rho>"
+
+inductive inner_element_type\<^sub>N\<^sub>E where
+  "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
+   to_single_type\<^sub>N\<^sub>E \<sigma> \<rho> \<Longrightarrow>
+   inner_element_type\<^sub>N\<^sub>E \<tau> \<rho>"
+
+code_pred [show_modes] inner_element_type\<^sub>N\<^sub>E .
+
+values "{x. inner_element_type\<^sub>N\<^sub>E (Boolean[?] :: nat type\<^sub>N\<^sub>E) x}"
+values "{x. inner_element_type\<^sub>N\<^sub>E (Set (Boolean[?] :: nat type\<^sub>N\<^sub>E))[?!] x}"
+values "{x. inner_element_type\<^sub>N\<^sub>E (Sequence (Set (Integer[1!] :: nat type\<^sub>N\<^sub>E))[?!])[1] x}"
+values "{x. inner_element_type\<^sub>N\<^sub>E (Bag (Sequence (Set (Real[1] :: nat type\<^sub>N\<^sub>E))[?!])[1])[?] x}"
+
+(*
+inductive inner_element_type
+      and inner_element_type\<^sub>N
+      and inner_element_type\<^sub>N\<^sub>E
+      and inner_element_type' where
+  "\<not> element_type \<tau> \<sigma> \<Longrightarrow>
+   inner_element_type' \<tau> \<tau>"
+
+| "inner_element_type (Collection \<tau>) \<tau>"
+| "inner_element_type (Set \<tau>) \<tau>"
+| "inner_element_type (OrderedSet \<tau>) \<tau>"
+| "inner_element_type (Bag \<tau>) \<tau>"
+| "inner_element_type (Sequence \<tau>) \<tau>"
+
+| "inner_element_type \<tau> \<sigma> \<Longrightarrow>
+   inner_element_type\<^sub>N (Required \<tau>) \<sigma>"
+| "inner_element_type \<tau> \<sigma> \<Longrightarrow>
+   inner_element_type\<^sub>N (Optional \<tau>) \<sigma>"
+
+| "inner_element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   inner_element_type\<^sub>N\<^sub>E (ErrorFree \<tau>) \<sigma>"
+| "inner_element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   inner_element_type\<^sub>N\<^sub>E (Errorable \<tau>) \<sigma>"
+*)
+(*
+lemma element_type\<^sub>N\<^sub>E_alt_simps:
+  "element_type\<^sub>N\<^sub>E \<tau> \<sigma> = 
+     (Collection \<sigma> = \<tau> \<or>
+      Set \<sigma> = \<tau> \<or>
+      OrderedSet \<sigma> = \<tau> \<or>
+      Bag \<sigma> = \<tau> \<or>
+      Sequence \<sigma> = \<tau>)"
+  by (auto simp add: element_type.simps)
+*)
+inductive update_element_type
+      and update_element_type\<^sub>N
+      and update_element_type\<^sub>N\<^sub>E where
+  "update_element_type (Collection _) \<tau> (Collection \<tau>)"
+| "update_element_type (Set _) \<tau> (Set \<tau>)"
+| "update_element_type (OrderedSet _) \<tau> (OrderedSet \<tau>)"
+| "update_element_type (Bag _) \<tau> (Bag \<tau>)"
+| "update_element_type (Sequence _) \<tau> (Sequence \<tau>)"
+
+| "update_element_type \<tau> \<sigma> \<rho> \<Longrightarrow>
+   update_element_type\<^sub>N (Required \<tau>) \<sigma> (Required \<rho>)"
+| "update_element_type \<tau> \<sigma> \<rho> \<Longrightarrow>
+   update_element_type\<^sub>N (Optional \<tau>) \<sigma> (Optional \<rho>)"
+
+| "update_element_type\<^sub>N \<tau> \<sigma> \<rho> \<Longrightarrow>
+   update_element_type\<^sub>N\<^sub>E (ErrorFree \<tau>) \<sigma> (ErrorFree \<rho>)"
+| "update_element_type\<^sub>N \<tau> \<sigma> \<rho> \<Longrightarrow>
+   update_element_type\<^sub>N\<^sub>E (Errorable \<tau>) \<sigma> (Errorable \<rho>)"
+
+code_pred [show_modes] update_element_type\<^sub>N\<^sub>E .
+
+values "{x. update_element_type\<^sub>N\<^sub>E (Set Integer[1])[?!] (Boolean[?] :: nat type\<^sub>N\<^sub>E) x}"
+values "{x. update_element_type\<^sub>N\<^sub>E (Sequence (Set Integer[1])[?!])[1] (Boolean[?] :: nat type\<^sub>N\<^sub>E) x}"
+
+inductive to_unique_collection
+      and to_unique_collection\<^sub>N
+      and to_unique_collection\<^sub>N\<^sub>E where
+  "to_unique_collection (Collection \<tau>) (Set \<tau>)"
+| "to_unique_collection (Set \<tau>) (Set \<tau>)"
+| "to_unique_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
+| "to_unique_collection (Bag \<tau>) (Set \<tau>)"
+| "to_unique_collection (Sequence \<tau>) (OrderedSet \<tau>)"
+
+| "to_unique_collection \<tau> \<sigma> \<Longrightarrow>
+   to_unique_collection\<^sub>N (Required \<tau>) (Required \<sigma>)"
+| "to_unique_collection \<tau> \<sigma> \<Longrightarrow>
+   to_unique_collection\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
+
+| "to_unique_collection\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   to_unique_collection\<^sub>N\<^sub>E (ErrorFree \<tau>) (ErrorFree \<sigma>)"
+| "to_unique_collection\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   to_unique_collection\<^sub>N\<^sub>E (Errorable \<tau>) (Errorable \<sigma>)"
+
+inductive to_nonunique_collection
+      and to_nonunique_collection\<^sub>N
+      and to_nonunique_collection\<^sub>N\<^sub>E where
+  "to_nonunique_collection (Collection \<tau>) (Bag \<tau>)"
+| "to_nonunique_collection (Set \<tau>) (Bag \<tau>)"
+| "to_nonunique_collection (OrderedSet \<tau>) (Sequence \<tau>)"
+| "to_nonunique_collection (Bag \<tau>) (Bag \<tau>)"
+| "to_nonunique_collection (Sequence \<tau>) (Sequence \<tau>)"
+
+| "to_nonunique_collection \<tau> \<sigma> \<Longrightarrow>
+   to_nonunique_collection\<^sub>N (Required \<tau>) (Required \<sigma>)"
+| "to_nonunique_collection \<tau> \<sigma> \<Longrightarrow>
+   to_nonunique_collection\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
+
+| "to_nonunique_collection\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   to_nonunique_collection\<^sub>N\<^sub>E (ErrorFree \<tau>) (ErrorFree \<sigma>)"
+| "to_nonunique_collection\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   to_nonunique_collection\<^sub>N\<^sub>E (Errorable \<tau>) (Errorable \<sigma>)"
+
+inductive to_ordered_collection
+      and to_ordered_collection\<^sub>N
+      and to_ordered_collection\<^sub>N\<^sub>E where
+  "to_ordered_collection (Collection \<tau>) (Sequence \<tau>)"
+| "to_ordered_collection (Set \<tau>) (OrderedSet \<tau>)"
+| "to_ordered_collection (OrderedSet \<tau>) (OrderedSet \<tau>)"
+| "to_ordered_collection (Bag \<tau>) (Sequence \<tau>)"
+| "to_ordered_collection (Sequence \<tau>) (Sequence \<tau>)"
+
+| "to_ordered_collection \<tau> \<sigma> \<Longrightarrow>
+   to_ordered_collection\<^sub>N (Required \<tau>) (Required \<sigma>)"
+| "to_ordered_collection \<tau> \<sigma> \<Longrightarrow>
+   to_ordered_collection\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
+
+| "to_ordered_collection\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   to_ordered_collection\<^sub>N\<^sub>E (ErrorFree \<tau>) (ErrorFree \<sigma>)"
+| "to_ordered_collection\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   to_ordered_collection\<^sub>N\<^sub>E (Errorable \<tau>) (Errorable \<sigma>)"
+
+inductive tuple_element\<^sub>N\<^sub>E where
+  "fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
+   tuple_element\<^sub>N\<^sub>E (Tuple \<pi>)[1] elem \<tau>"
+| "fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
+   tuple_element\<^sub>N\<^sub>E (Tuple \<pi>)[1!] elem \<tau>"
+
 (*
 inductive update_element_type where
   "update_element_type (Collection _) \<tau> (Collection \<tau>)"
@@ -1764,7 +1984,7 @@ inductive to_ordered_collection where
 | "to_ordered_collection (Bag \<tau>) (Sequence \<tau>)"
 | "to_ordered_collection (Sequence \<tau>) (Sequence \<tau>)"
 *)
-
+(*
 inductive update_element_type where
   "update_element_type (Collection\<^sub>N\<^sub>E _ opt err) \<tau> (Collection\<^sub>N\<^sub>E \<tau> opt err)"
 | "update_element_type (Set\<^sub>N\<^sub>E _ opt err) \<tau> (Set\<^sub>N\<^sub>E \<tau> opt err)"
@@ -1792,7 +2012,7 @@ inductive to_ordered_collection where
 | "to_ordered_collection (OrderedSet\<^sub>N\<^sub>E \<tau> opt err) (OrderedSet\<^sub>N\<^sub>E \<tau> opt err)"
 | "to_ordered_collection (Bag\<^sub>N\<^sub>E \<tau> opt err) (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
 | "to_ordered_collection (Sequence\<^sub>N\<^sub>E \<tau> opt err) (Sequence\<^sub>N\<^sub>E \<tau> opt err)"
-
+*)
 
 (*
 fun to_single_type where
@@ -1822,77 +2042,83 @@ fun to_optional_type_nested where
 | "to_optional_type_nested (Sequence \<tau>) = Sequence (to_optional_type_nested \<tau>)"
 | "to_optional_type_nested (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested \<pi>)"
 *)
+(*
+fun to_single_type
+and to_single_type\<^sub>N
+and to_single_type\<^sub>N\<^sub>E where
+  "to_single_type OclAny = OclAny"
+| "to_single_type OclVoid = OclVoid"
 
-fun to_single_type' :: "'a type \<Rightarrow> 'a type"
-and to_single_type\<^sub>N :: "'a type\<^sub>N \<Rightarrow> 'a type\<^sub>N"
-and to_single_type :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a type\<^sub>N\<^sub>E" where
-  "to_single_type' OclAny = OclAny"
-| "to_single_type' OclVoid = OclVoid"
+| "to_single_type Boolean = Boolean"
+| "to_single_type Real = Real"
+| "to_single_type Integer = Integer"
+| "to_single_type UnlimitedNatural = UnlimitedNatural"
+| "to_single_type String = String"
 
-| "to_single_type' Boolean = Boolean"
-| "to_single_type' Real = Real"
-| "to_single_type' Integer = Integer"
-| "to_single_type' UnlimitedNatural = UnlimitedNatural"
-| "to_single_type' String = String"
+| "to_single_type (ObjectType \<C>) = ObjectType \<C>"
+| "to_single_type (Enum \<E>) = Enum \<E>"
 
-| "to_single_type' (ObjectType \<C>) = ObjectType \<C>"
-| "to_single_type' (Enum \<E>) = Enum \<E>"
+| "to_single_type (Collection \<tau>) = to_single_type\<^sub>N\<^sub>E \<tau>"
+| "to_single_type (Set \<tau>) = to_single_type\<^sub>N\<^sub>E \<tau>"
+| "to_single_type (OrderedSet \<tau>) = to_single_type\<^sub>N\<^sub>E \<tau>"
+| "to_single_type (Bag \<tau>) = to_single_type\<^sub>N\<^sub>E \<tau>"
+| "to_single_type (Sequence \<tau>) = to_single_type\<^sub>N\<^sub>E \<tau>"
 
-| "to_single_type' (Collection \<tau>) = to_single_type \<tau>"
-| "to_single_type' (Set \<tau>) = to_single_type \<tau>"
-| "to_single_type' (OrderedSet \<tau>) = to_single_type \<tau>"
-| "to_single_type' (Bag \<tau>) = to_single_type \<tau>"
-| "to_single_type' (Sequence \<tau>) = to_single_type \<tau>"
+| "to_single_type (Tuple \<pi>) = Tuple \<pi>"
 
-| "to_single_type' (Tuple \<pi>) = Tuple \<pi>"
+| "to_single_type\<^sub>N (Required \<tau>) = to_single_type \<tau>"
+| "to_single_type\<^sub>N (Optional \<tau>) = to_single_type \<tau>"
 
-| "to_single_type\<^sub>N (Required \<tau>) = Required (to_single_type' \<tau>)"
-| "to_single_type\<^sub>N (Optional \<tau>) = Optional (to_single_type' \<tau>)"
+| "to_single_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = to_single_type\<^sub>N \<tau>"
+| "to_single_type\<^sub>N\<^sub>E (Errorable \<tau>) = to_single_type\<^sub>N \<tau>"
 
-| "to_single_type (ErrorFree \<tau>) = ErrorFree (to_single_type\<^sub>N \<tau>)"
-| "to_single_type (Errorable \<tau>) = Errorable (to_single_type\<^sub>N \<tau>)"
+value "to_single_type\<^sub>N\<^sub>E (Set (Integer[1] :: nat type\<^sub>N\<^sub>E))[?!]"
+value "to_single_type\<^sub>N\<^sub>E (Sequence (Set (Integer[1] :: nat type\<^sub>N\<^sub>E))[?!])[1]"
+*)
+
 
 fun to_required_type\<^sub>N
-and to_required_type where
+and to_required_type\<^sub>N\<^sub>E where
   "to_required_type\<^sub>N (Required \<tau>) = Required \<tau>"
 | "to_required_type\<^sub>N (Optional \<tau>) = Required \<tau>"
 
-| "to_required_type (ErrorFree \<tau>) = ErrorFree (to_required_type\<^sub>N \<tau>)"
-| "to_required_type (Errorable \<tau>) = Errorable (to_required_type\<^sub>N \<tau>)"
+| "to_required_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = ErrorFree (to_required_type\<^sub>N \<tau>)"
+| "to_required_type\<^sub>N\<^sub>E (Errorable \<tau>) = Errorable (to_required_type\<^sub>N \<tau>)"
 
-fun to_optional_type_nested'
+fun to_optional_type_nested
 and to_optional_type_nested\<^sub>N
-and to_optional_type_nested where
-  "to_optional_type_nested' OclAny = OclAny"
-| "to_optional_type_nested' OclVoid = OclVoid"
+and to_optional_type_nested\<^sub>N\<^sub>E where
+  "to_optional_type_nested OclAny = OclAny"
+| "to_optional_type_nested OclVoid = OclVoid"
 
-| "to_optional_type_nested' Boolean = Boolean"
-| "to_optional_type_nested' Real = Real"
-| "to_optional_type_nested' Integer = Integer"
-| "to_optional_type_nested' UnlimitedNatural = UnlimitedNatural"
-| "to_optional_type_nested' String = String"
+| "to_optional_type_nested Boolean = Boolean"
+| "to_optional_type_nested Real = Real"
+| "to_optional_type_nested Integer = Integer"
+| "to_optional_type_nested UnlimitedNatural = UnlimitedNatural"
+| "to_optional_type_nested String = String"
 
-| "to_optional_type_nested' (ObjectType \<C>) = ObjectType \<C>"
-| "to_optional_type_nested' (Enum \<E>) = Enum \<E>"
+| "to_optional_type_nested (ObjectType \<C>) = ObjectType \<C>"
+| "to_optional_type_nested (Enum \<E>) = Enum \<E>"
 
-| "to_optional_type_nested' (Collection \<tau>) = Collection (to_optional_type_nested \<tau>)"
-| "to_optional_type_nested' (Set \<tau>) = Set (to_optional_type_nested \<tau>)"
-| "to_optional_type_nested' (OrderedSet \<tau>) = OrderedSet (to_optional_type_nested \<tau>)"
-| "to_optional_type_nested' (Bag \<tau>) = Bag (to_optional_type_nested \<tau>)"
-| "to_optional_type_nested' (Sequence \<tau>) = Sequence (to_optional_type_nested \<tau>)"
+| "to_optional_type_nested (Collection \<tau>) = Collection (to_optional_type_nested\<^sub>N\<^sub>E \<tau>)"
+| "to_optional_type_nested (Set \<tau>) = Set (to_optional_type_nested\<^sub>N\<^sub>E \<tau>)"
+| "to_optional_type_nested (OrderedSet \<tau>) = OrderedSet (to_optional_type_nested\<^sub>N\<^sub>E \<tau>)"
+| "to_optional_type_nested (Bag \<tau>) = Bag (to_optional_type_nested\<^sub>N\<^sub>E \<tau>)"
+| "to_optional_type_nested (Sequence \<tau>) = Sequence (to_optional_type_nested\<^sub>N\<^sub>E \<tau>)"
 
-| "to_optional_type_nested' (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested \<pi>)"
+| "to_optional_type_nested (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested\<^sub>N\<^sub>E \<pi>)"
 
-| "to_optional_type_nested\<^sub>N (Required \<tau>) = Optional (to_optional_type_nested' \<tau>)"
-| "to_optional_type_nested\<^sub>N (Optional \<tau>) = Optional (to_optional_type_nested' \<tau>)"
+| "to_optional_type_nested\<^sub>N (Required \<tau>) = Optional (to_optional_type_nested \<tau>)"
+| "to_optional_type_nested\<^sub>N (Optional \<tau>) = Optional (to_optional_type_nested \<tau>)"
 
-| "to_optional_type_nested (ErrorFree \<tau>) = ErrorFree (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested (Errorable \<tau>) = Errorable (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>N\<^sub>E (ErrorFree \<tau>) = ErrorFree (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>N\<^sub>E (Errorable \<tau>) = Errorable (to_optional_type_nested\<^sub>N \<tau>)"
 
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
 
+(*
 lemma element_type_det:
   "element_type \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    element_type \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
@@ -1917,6 +2143,102 @@ lemma to_ordered_collection_det:
   "to_ordered_collection \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    to_ordered_collection \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   by (induct rule: to_ordered_collection.induct; simp add: to_ordered_collection.simps)
+*)
+
+lemma
+  element_type_det:
+    "element_type \<tau> \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+     element_type \<tau> \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E" and
+  element_type\<^sub>N_det:
+    "element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+     element_type\<^sub>N \<tau>\<^sub>N \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E" and
+  element_type\<^sub>N\<^sub>E_det:
+    "element_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+     element_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E"
+  by (induct arbitrary: \<rho>\<^sub>N\<^sub>E rule: element_type_element_type\<^sub>N_element_type\<^sub>N\<^sub>E.inducts,
+      simp_all add: element_type.simps element_type\<^sub>N.simps element_type\<^sub>N\<^sub>E.simps)
+
+lemma to_single_type\<^sub>N\<^sub>E_det:
+  "to_single_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+   to_single_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E"
+  apply (induct arbitrary: \<rho>\<^sub>N\<^sub>E rule: to_single_type\<^sub>N\<^sub>E.induct)
+  using is_collection\<^sub>N\<^sub>E.intros to_single_type\<^sub>N\<^sub>E.cases apply blast
+  by (metis element_type\<^sub>N\<^sub>E_det is_collection\<^sub>N\<^sub>E.intros to_single_type\<^sub>N\<^sub>E.cases)
+
+lemma inner_element_type\<^sub>N\<^sub>E_det:
+  "inner_element_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+   inner_element_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E"
+  apply (induct arbitrary: \<rho>\<^sub>N\<^sub>E rule: inner_element_type\<^sub>N\<^sub>E.induct)
+  by (meson inner_element_type\<^sub>N\<^sub>E.cases to_single_type\<^sub>N\<^sub>E.intros(2) to_single_type\<^sub>N\<^sub>E_det)
+
+lemma
+  update_element_type_det:
+    "update_element_type \<tau> \<sigma>\<^sub>N\<^sub>E \<rho> \<Longrightarrow>
+     update_element_type \<tau> \<sigma>\<^sub>N\<^sub>E \<upsilon> \<Longrightarrow> \<rho> = \<upsilon>" and
+  update_element_type\<^sub>N_det:
+    "update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N\<^sub>E \<rho>\<^sub>N \<Longrightarrow>
+     update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N\<^sub>E \<upsilon>\<^sub>N \<Longrightarrow> \<rho>\<^sub>N = \<upsilon>\<^sub>N" and
+  update_element_type\<^sub>N\<^sub>E_det:
+    "update_element_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<Longrightarrow>
+     update_element_type\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<upsilon>\<^sub>N\<^sub>E \<Longrightarrow> \<rho>\<^sub>N\<^sub>E = \<upsilon>\<^sub>N\<^sub>E"
+  for \<tau> :: "'a type" and \<rho> \<upsilon> :: "'b type"
+  and \<tau>\<^sub>N :: "'a type\<^sub>N" and \<rho>\<^sub>N \<upsilon>\<^sub>N :: "'b type\<^sub>N"
+  and \<tau>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E" and \<sigma>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<upsilon>\<^sub>N\<^sub>E :: "'b type\<^sub>N\<^sub>E"
+  by (induct rule: update_element_type_update_element_type\<^sub>N_update_element_type\<^sub>N\<^sub>E.inducts,
+      auto simp: update_element_type.simps update_element_type\<^sub>N.simps update_element_type\<^sub>N\<^sub>E.simps)
+
+lemma
+  to_unique_collection_det:
+    "to_unique_collection \<tau> \<sigma> \<Longrightarrow>
+     to_unique_collection \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>" and
+  to_unique_collection\<^sub>N_det:
+    "to_unique_collection\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<Longrightarrow>
+     to_unique_collection\<^sub>N \<tau>\<^sub>N \<rho>\<^sub>N \<Longrightarrow> \<sigma>\<^sub>N = \<rho>\<^sub>N" and
+  to_unique_collection\<^sub>N\<^sub>E_det:
+    "to_unique_collection\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+     to_unique_collection\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E"
+  for \<tau> \<sigma> :: "'a type"
+  and \<tau>\<^sub>N \<sigma>\<^sub>N :: "'a type\<^sub>N"
+  and \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E"
+  by (induct rule: to_unique_collection_to_unique_collection\<^sub>N_to_unique_collection\<^sub>N\<^sub>E.inducts,
+      auto simp: to_unique_collection.simps to_unique_collection\<^sub>N.simps to_unique_collection\<^sub>N\<^sub>E.simps)
+
+lemma
+  to_nonunique_collection_det:
+    "to_nonunique_collection \<tau> \<sigma> \<Longrightarrow>
+     to_nonunique_collection \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>" and
+  to_nonunique_collection\<^sub>N_det:
+    "to_nonunique_collection\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<Longrightarrow>
+     to_nonunique_collection\<^sub>N \<tau>\<^sub>N \<rho>\<^sub>N \<Longrightarrow> \<sigma>\<^sub>N = \<rho>\<^sub>N" and
+  to_nonunique_collection\<^sub>N\<^sub>E_det:
+    "to_nonunique_collection\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+     to_nonunique_collection\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E"
+  for \<tau> \<sigma> :: "'a type"
+  and \<tau>\<^sub>N \<sigma>\<^sub>N :: "'a type\<^sub>N"
+  and \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E"
+  by (induct rule: to_nonunique_collection_to_nonunique_collection\<^sub>N_to_nonunique_collection\<^sub>N\<^sub>E.inducts,
+      auto simp: to_nonunique_collection.simps to_nonunique_collection\<^sub>N.simps to_nonunique_collection\<^sub>N\<^sub>E.simps)
+
+lemma
+  to_ordered_collection_det:
+    "to_ordered_collection \<tau> \<sigma> \<Longrightarrow>
+     to_ordered_collection \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>" and
+  to_ordered_collection\<^sub>N_det:
+    "to_ordered_collection\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<Longrightarrow>
+     to_ordered_collection\<^sub>N \<tau>\<^sub>N \<rho>\<^sub>N \<Longrightarrow> \<sigma>\<^sub>N = \<rho>\<^sub>N" and
+  to_ordered_collection\<^sub>N\<^sub>E_det:
+    "to_ordered_collection\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E \<Longrightarrow>
+     to_ordered_collection\<^sub>N\<^sub>E \<tau>\<^sub>N\<^sub>E \<rho>\<^sub>N\<^sub>E \<Longrightarrow> \<sigma>\<^sub>N\<^sub>E = \<rho>\<^sub>N\<^sub>E"
+  for \<tau> \<sigma> :: "'a type"
+  and \<tau>\<^sub>N \<sigma>\<^sub>N :: "'a type\<^sub>N"
+  and \<tau>\<^sub>N\<^sub>E \<sigma>\<^sub>N\<^sub>E :: "'a type\<^sub>N\<^sub>E"
+  by (induct rule: to_ordered_collection_to_ordered_collection\<^sub>N_to_ordered_collection\<^sub>N\<^sub>E.inducts,
+      auto simp: to_ordered_collection.simps to_ordered_collection\<^sub>N.simps to_ordered_collection\<^sub>N\<^sub>E.simps)
+
+lemma tuple_element\<^sub>N\<^sub>E_det:
+  "tuple_element\<^sub>N\<^sub>E \<tau> elem \<sigma> \<Longrightarrow>
+   tuple_element\<^sub>N\<^sub>E \<tau> elem \<rho> \<Longrightarrow> \<sigma> = \<rho>"
+  by (induct rule: tuple_element\<^sub>N\<^sub>E.induct; erule tuple_element\<^sub>N\<^sub>E.cases; auto)
 
 (*** Code Setup *************************************************************)
 

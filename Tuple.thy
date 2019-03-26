@@ -38,9 +38,13 @@ lemma subtuple_fmdom:
 
 subsection \<open>Basic Properties\<close>
 
-lemma subtuple_refl:
+lemma subtuple_refl [intro!]:
   "reflp R \<Longrightarrow> subtuple R xm xm"
   by (simp add: fmrel_on_fsetI option.rel_reflp reflpD)
+
+lemma not_subtuple_elim [elim!]:
+  "\<not> subtuple R xm xm \<Longrightarrow> (\<not> reflp R \<Longrightarrow> P) \<Longrightarrow> P"
+  using subtuple_refl by auto
 
 lemma subtuple_mono [mono]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> y \<in> fmran' ym \<Longrightarrow> f x y \<longrightarrow> g x y) \<Longrightarrow>
