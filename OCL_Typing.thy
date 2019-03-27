@@ -8,6 +8,47 @@ theory OCL_Typing
   imports OCL_Object_Model "HOL-Library.Transitive_Closure_Table"
 begin
 
+fun to_error_free where
+  "to_error_free (ErrorFree \<tau>) = (ErrorFree \<tau>)"
+| "to_error_free (Errorable \<tau>) = (ErrorFree \<tau>)"
+
+fun to_errorable where
+  "to_errorable (ErrorFree \<tau>) = (Errorable \<tau>)"
+| "to_errorable (Errorable \<tau>) = (Errorable \<tau>)"
+
+definition "ex_errorable \<equiv> list_ex (\<lambda>\<tau>. \<exists>\<sigma>. \<tau> = Errorable \<sigma>)"
+
+lemma ex_errorable_code [code]:
+  "ex_errorable = list_ex (\<lambda>\<tau>. case \<tau> of Errorable _ \<Rightarrow> True | _ \<Rightarrow> False)"
+  unfolding ex_errorable_def
+  apply (intro ext List.list_ex_cong, simp)
+  apply auto
+proof -
+  fix x :: "'a type\<^sub>N\<^sub>E list"
+  fix xa :: "'a type\<^sub>N\<^sub>E"
+  have "(case xa of ErrorFree type\<^sub>N \<Rightarrow> False
+       | Errorable x \<Rightarrow> True) \<Longrightarrow>
+       \<exists>\<sigma>. xa = Errorable \<sigma>"
+    by (cases xa, auto)
+  thus "xa \<in> set x \<Longrightarrow>
+       (case xa of ErrorFree type\<^sub>N \<Rightarrow> False
+       | Errorable x \<Rightarrow> True) \<Longrightarrow>
+       \<exists>\<sigma>. xa = Errorable \<sigma>" by simp
+qed
+
+inductive non_strict_op :: "op \<Rightarrow> bool" where
+  "non_strict_op OclIsUndefinedOp"
+| "non_strict_op OclIsInvalidOp"
+| "non_strict_op NotOp"
+| "non_strict_op AndOp"
+| "non_strict_op OrOp"
+| "non_strict_op XorOp"
+| "non_strict_op ImpliesOp"
+
+abbreviation "strict_op op \<equiv> \<not> non_strict_op op"
+
+
+
 text \<open>
   The following rules are more restrictive than rules given in
   the OCL specification. This allows one to identify more errors
@@ -31,8 +72,109 @@ text \<open>
 \<^verbatim>\<open>Boolean[1].allInstances() = Set{true, false}
 Boolean[?].allInstances() = Set{true, false, null}\<close>\<close>
 
+lemma Tuple_type_size\<^sub>N\<^sub>E_intro [intro]:
+  "\<tau> |\<in>| fmran \<pi> \<Longrightarrow>
+   type_size\<^sub>N\<^sub>E \<tau> < Suc (ffold tcf 0 (fset_of_fmap (fmmap type_size\<^sub>N\<^sub>E \<pi>)))"
+  using fmran'I by fastforce
+
+fun is_finite_type
+and is_finite_type\<^sub>N
+and is_finite_type\<^sub>N\<^sub>E where
+  "is_finite_type OclAny = False"
+| "is_finite_type OclVoid = True"
+
+| "is_finite_type Boolean = True"
+| "is_finite_type Real = False"
+| "is_finite_type Integer = False"
+| "is_finite_type UnlimitedNatural = False"
+| "is_finite_type String = False"
+
+| "is_finite_type (ObjectType \<C>) = True"
+| "is_finite_type (Enum \<E>) = True"
+
+| "is_finite_type (Collection \<tau>) = False"
+| "is_finite_type (Set \<tau>) = is_finite_type\<^sub>N\<^sub>E \<tau>"
+| "is_finite_type (OrderedSet \<tau>) = is_finite_type\<^sub>N\<^sub>E \<tau>"
+| "is_finite_type (Bag \<tau>) = False"
+| "is_finite_type (Sequence \<tau>) = False"
+
+| "is_finite_type (Tuple \<pi>) = fBall (fmran \<pi>) is_finite_type\<^sub>N\<^sub>E"
+
+| "is_finite_type\<^sub>N (Required \<tau>) = is_finite_type \<tau>"
+| "is_finite_type\<^sub>N (Optional \<tau>) = is_finite_type \<tau>"
+
+| "is_finite_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_finite_type\<^sub>N \<tau>"
+| "is_finite_type\<^sub>N\<^sub>E (Errorable \<tau>) = is_finite_type\<^sub>N \<tau>"
+
+fun is_null_free\<^sub>N
+and is_null_free\<^sub>N\<^sub>E where
+  "is_null_free\<^sub>N (Required \<tau>) = True"
+| "is_null_free\<^sub>N (Optional \<tau>) = False"
+
+| "is_null_free\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_null_free\<^sub>N \<tau>"
+| "is_null_free\<^sub>N\<^sub>E (Errorable \<tau>) = is_null_free\<^sub>N \<tau>"
+
+abbreviation "is_nullable\<^sub>N\<^sub>E \<tau> \<equiv> \<not> is_null_free\<^sub>N\<^sub>E \<tau>"
+
+fun is_error_free\<^sub>N\<^sub>E where
+  "is_error_free\<^sub>N\<^sub>E (ErrorFree \<tau>) = True"
+| "is_error_free\<^sub>N\<^sub>E (Errorable \<tau>) = False"
+
+abbreviation "is_errorable\<^sub>N\<^sub>E \<tau> \<equiv> \<not> is_error_free\<^sub>N\<^sub>E \<tau>"
+
+fun is_error_free_nested
+and is_error_free_nested\<^sub>N
+and is_error_free_nested\<^sub>N\<^sub>E where
+  "is_error_free_nested OclAny = True"
+| "is_error_free_nested OclVoid = True"
+
+| "is_error_free_nested Boolean = True"
+| "is_error_free_nested Real = True"
+| "is_error_free_nested Integer = True"
+| "is_error_free_nested UnlimitedNatural = True"
+| "is_error_free_nested String = True"
+
+| "is_error_free_nested (ObjectType \<C>) = True"
+| "is_error_free_nested (Enum \<E>) = True"
+
+| "is_error_free_nested (Collection \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
+| "is_error_free_nested (Set \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
+| "is_error_free_nested (OrderedSet \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
+| "is_error_free_nested (Bag \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
+| "is_error_free_nested (Sequence \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
+
+| "is_error_free_nested (Tuple \<pi>) = fBall (fmran \<pi>) is_error_free_nested\<^sub>N\<^sub>E"
+
+| "is_error_free_nested\<^sub>N (Required \<tau>) = is_error_free_nested \<tau>"
+| "is_error_free_nested\<^sub>N (Optional \<tau>) = is_error_free_nested \<tau>"
+
+| "is_error_free_nested\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_error_free_nested\<^sub>N \<tau>"
+| "is_error_free_nested\<^sub>N\<^sub>E (Errorable \<tau>) = False"
+
+fun is_allowed_type\<^sub>N
+and is_allowed_type\<^sub>N\<^sub>E where
+  "is_allowed_type\<^sub>N (Required \<tau>) = is_error_free_nested \<tau>"
+| "is_allowed_type\<^sub>N (Optional \<tau>) = is_error_free_nested \<tau>"
+
+| "is_allowed_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_allowed_type\<^sub>N \<tau>"
+| "is_allowed_type\<^sub>N\<^sub>E (Errorable \<tau>) = is_allowed_type\<^sub>N \<tau>"
+
+fun is_object_type
+and is_object_type\<^sub>N
+and is_object_type\<^sub>N\<^sub>E where
+  "is_object_type (ObjectType \<C>) = True"
+| "is_object_type _ = False"
+
+| "is_object_type\<^sub>N (Required \<tau>) = is_object_type \<tau>"
+| "is_object_type\<^sub>N (Optional \<tau>) = is_object_type \<tau>"
+
+| "is_object_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_object_type\<^sub>N \<tau>"
+| "is_object_type\<^sub>N\<^sub>E (Errorable \<tau>) = is_object_type\<^sub>N \<tau>"
+
+
 inductive mataop_type where
-  "mataop_type \<tau> AllInstancesOp (Set \<tau>)[1]"
+  "is_finite_type\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   mataop_type \<tau> AllInstancesOp (Set \<tau>)[1]"
 
 subsection \<open>Type Operations\<close>
 
@@ -72,63 +214,81 @@ text \<open>
 \<^verbatim>\<open>Set{1,2,null,'abc'}->selectByKind(OclAny[?])
 Set{1,2,null,'abc'}->selectByKind(Collection(Boolean[1]))\<close>\<close>
 
+(* TODO: Для коллекций и возможно кортежей ошибка должна подниматься наверх,
+ а внутри исчезать. Нужно доказать, что внутри ошибок быть не может *)
+
 inductive typeop_type where
   "\<sigma> < \<tau> \<or> \<tau> < \<sigma> \<Longrightarrow>
-   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
+   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> (to_errorable \<sigma>)"
 
 | "\<sigma> < \<tau> \<Longrightarrow>
+   is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_error_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
    typeop_type DotCall OclIsTypeOfOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
+   is_nullable\<^sub>N\<^sub>E \<tau> \<or> is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   typeop_type DotCall OclIsTypeOfOp \<tau> \<sigma> Boolean[1!]"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+| "\<sigma> < \<tau> \<Longrightarrow>
+   is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_error_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
+| "\<sigma> < \<tau> \<Longrightarrow>
+   is_nullable\<^sub>N\<^sub>E \<tau> \<or> is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1!]"
+
+| "is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_error_free\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
+   element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
    update_element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByKindOp \<tau> \<sigma> \<upsilon>"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+| "is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_error_free\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
+   element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
    update_element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<upsilon>"
-
-subsection \<open>OclSuper Operations\<close>
-
-text \<open>
-  It makes sense to compare values only with compatible types.\<close>
-
-(* We have to specify the predicate type explicitly to let
-   a generated code work *)
-inductive super_binop_type
-    :: "super_binop \<Rightarrow> ('a :: order) type\<^sub>N\<^sub>E \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool" where
-  "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
-   super_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
-   super_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>OclAny Operations\<close>
 
 text \<open>
   The OCL specification defines @{text "toString()"} operation
   only for boolean and numeric types. However, I guess it is a good
-  idea to define it once for all basic types. Maybe it should be defined
-  for collections as well.\<close>
-
-fun to_required_type where
-  "to_required_type \<tau>[1] = \<tau>[1]"
-| "to_required_type \<tau>[?] = \<tau>[1]"
-| "to_required_type \<tau> = \<tau>"
+  idea to define it once for all types. The OCL specification does not
+  state that the operation can return @{text invalid} for a null
+  boolean value. Let us suppose that it returns a "null" string.
+  However, I guess that the operation should return @{text invalid}
+  for an invalid value.\<close>
 
 inductive any_unop_type where
-  "\<tau> \<le> OclAny[?] \<Longrightarrow>
-   any_unop_type OclAsSetOp \<tau> (Set (to_required_type \<tau>))[1]"
-| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+  "\<not> is_collection\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   any_unop_type OclAsSetOp \<tau> (Set (to_required_type\<^sub>N\<^sub>E \<tau>))[1]"
+
+| "is_object_type\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
    any_unop_type OclIsNewOp \<tau> Boolean[1]"
-| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+
+| "is_nullable\<^sub>N\<^sub>E \<tau> \<or> is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
    any_unop_type OclIsUndefinedOp \<tau> Boolean[1]"
-| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+
+| "is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
    any_unop_type OclIsInvalidOp \<tau> Boolean[1]"
-| "\<tau> \<le> OclAny[?] \<Longrightarrow>
-   any_unop_type OclLocaleOp \<tau> String[1]"
-| "\<tau> \<le> OclAny[?] \<Longrightarrow>
+
+| "is_error_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
    any_unop_type ToStringOp \<tau> String[1]"
+| "is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   any_unop_type ToStringOp \<tau> String[1!]"
+
+text \<open>
+  It makes sense to compare values only with compatible types.\<close>
+
+(* We have to specify the predicate type explicitly to let
+   a generated code work *)
+inductive any_binop_type
+    :: "any_binop \<Rightarrow> ('a :: order) type\<^sub>N\<^sub>E \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool" where
+  "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
+   any_binop_type EqualOp \<tau> \<sigma> Boolean[1]"
+| "\<tau> \<le> \<sigma> \<or> \<sigma> < \<tau> \<Longrightarrow>
+   any_binop_type NotEqualOp \<tau> \<sigma> Boolean[1]"
 
 subsection \<open>Boolean Operations\<close>
 
@@ -141,17 +301,17 @@ true and null : Boolean[?]
 null and null : OclVoid[?]\<close>\<close>
 
 inductive boolean_unop_type where
-  "\<tau> \<le> Boolean[?] \<Longrightarrow>
+  "\<tau> \<le> Boolean[?!] \<Longrightarrow>
    boolean_unop_type NotOp \<tau> \<tau>"
 
 inductive boolean_binop_type where
-  "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?] \<Longrightarrow>
+  "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?!] \<Longrightarrow>
    boolean_binop_type AndOp \<tau> \<sigma> \<rho>"
-| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?] \<Longrightarrow>
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?!] \<Longrightarrow>
    boolean_binop_type OrOp \<tau> \<sigma> \<rho>"
-| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?] \<Longrightarrow>
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?!] \<Longrightarrow>
    boolean_binop_type XorOp \<tau> \<sigma> \<rho>"
-| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?] \<Longrightarrow>
+| "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> \<le> Boolean[?!] \<Longrightarrow>
    boolean_binop_type ImpliesOp \<tau> \<sigma> \<rho>"
 
 subsection \<open>Numeric Operations\<close>
@@ -162,34 +322,30 @@ text \<open>
   This is a significant difference from the OCL specification.\<close>
 
 text \<open>
-  Please take a note that many operations automatically casts
-  unlimited naturals to integers.\<close>
+  Please take a note that @{text "abs()"} is not defined for
+  @{text "UnlimitedNatural"}. @{text "floor()"}, @{text "round()"} are
+  also undefined for @{text "Integer"}. At first glance, this contradicts
+  the fact that types must inherit operations from their super types.
+  However, it makes no sense to apply these operations in this way.
+  The purpose of the type system is to reduce errors in programs.
+  Probably, numeric types should not form such a hierarchy.\<close>
 
 text \<open>
   The difference between @{text "oclAsType(Integer)"} and
   @{text "toInteger()"} for unlimited naturals is unclear.\<close>
 
 inductive numeric_unop_type where
-  "\<tau> = Real[1] \<Longrightarrow>
-   numeric_unop_type UMinusOp \<tau> Real[1]"
-| "\<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   numeric_unop_type UMinusOp \<tau> Integer[1]"
+  "numeric_unop_type UMinusOp Real[1] Real[1]"
+| "numeric_unop_type UMinusOp UnlimitedNatural[1] Integer[1]"
+| "numeric_unop_type UMinusOp Integer[1] Integer[1]"
 
-| "\<tau> = Real[1] \<Longrightarrow>
-   numeric_unop_type AbsOp \<tau> Real[1]"
-(* TODO: Не должно быть определено для UnlimitedNatural,
-   проверить аналогичные операции.
-   Описать это в комментарии *)
-| "\<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   numeric_unop_type AbsOp \<tau> Integer[1]"
+| "numeric_unop_type AbsOp Real[1] Real[1]"
+| "numeric_unop_type AbsOp Integer[1] Integer[1]"
 
-| "\<tau> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
-   numeric_unop_type FloorOp \<tau> Integer[1]"
-| "\<tau> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
-   numeric_unop_type RoundOp \<tau> Integer[1]"
+| "numeric_unop_type FloorOp Real[1] Integer[1]"
+| "numeric_unop_type RoundOp Real[1] Integer[1]"
 
-| "\<tau> = UnlimitedNatural[1] \<Longrightarrow>
-   numeric_unop_type numeric_unop.ToIntegerOp \<tau> Integer[1]"
+| "numeric_unop_type numeric_unop.ToIntegerOp UnlimitedNatural[1] Integer[1]"
 
 inductive numeric_binop_type where
   "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
@@ -207,9 +363,9 @@ inductive numeric_binop_type where
    numeric_binop_type DivideOp \<tau> \<sigma> Real[1!]"
 
 | "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   numeric_binop_type DivOp \<tau> \<sigma> \<rho>"
+   numeric_binop_type DivOp \<tau> \<sigma> (to_errorable \<rho>)"
 | "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   numeric_binop_type ModOp \<tau> \<sigma> \<rho>"
+   numeric_binop_type ModOp \<tau> \<sigma> (to_errorable \<rho>)"
 
 | "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    numeric_binop_type MaxOp \<tau> \<sigma> \<rho>"
@@ -245,12 +401,12 @@ inductive string_binop_type where
 | "string_binop_type GreaterEqOp String[1] String[1] Boolean[1]"
 | "string_binop_type IndexOfOp String[1] String[1] Integer[1]"
 | "\<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   string_binop_type AtOp String[1] \<tau> String[1]"
+   string_binop_type AtOp String[1] \<tau> String[1!]"
 
 inductive string_ternop_type where
   "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   string_ternop_type SubstringOp String[1] \<sigma> \<rho> String[1]"
+   string_ternop_type SubstringOp String[1] \<sigma> \<rho> String[1!]"
 
 subsection \<open>Collection Operations\<close>
 
@@ -427,7 +583,7 @@ inductive unop_type where
    unop_type (Inr (Inr (Inr (Inr op)))) ArrowCall \<tau> \<sigma>"
 
 inductive binop_type where
-  "super_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
+  "any_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
    binop_type (Inl op) DotCall \<tau> \<sigma> \<rho>"
 | "boolean_binop_type op \<tau> \<sigma> \<rho> \<Longrightarrow>
    binop_type (Inr (Inl op)) DotCall \<tau> \<sigma> \<rho>"
@@ -444,54 +600,26 @@ inductive ternop_type where
 | "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    ternop_type (Inr op) ArrowCall \<tau> \<sigma> \<rho> \<upsilon>"
 
-fun to_error_free where
-  "to_error_free (ErrorFree \<tau>) = (ErrorFree \<tau>)"
-| "to_error_free (Errorable \<tau>) = (ErrorFree \<tau>)"
-
-fun to_errorable where
-  "to_errorable (ErrorFree \<tau>) = (Errorable \<tau>)"
-| "to_errorable (Errorable \<tau>) = (Errorable \<tau>)"
-
-definition "ex_errorable \<equiv> list_ex (\<lambda>\<tau>. \<exists>\<sigma>. \<tau> = Errorable \<sigma>)"
-
-lemma ex_errorable_code [code]:
-  "ex_errorable = list_ex (\<lambda>\<tau>. case \<tau> of Errorable _ \<Rightarrow> True | _ \<Rightarrow> False)"
-  unfolding ex_errorable_def
-  apply (intro ext List.list_ex_cong, simp)
-  apply auto
-proof -
-  fix x :: "'a type\<^sub>N\<^sub>E list"
-  fix xa :: "'a type\<^sub>N\<^sub>E"
-  have "(case xa of ErrorFree type\<^sub>N \<Rightarrow> False
-       | Errorable x \<Rightarrow> True) \<Longrightarrow>
-       \<exists>\<sigma>. xa = Errorable \<sigma>"
-    by (cases xa, auto)
-  thus "xa \<in> set x \<Longrightarrow>
-       (case xa of ErrorFree type\<^sub>N \<Rightarrow> False
-       | Errorable x \<Rightarrow> True) \<Longrightarrow>
-       \<exists>\<sigma>. xa = Errorable \<sigma>" by simp
-qed
-
 inductive op_type where
   "unop_type op k (to_error_free \<tau>) \<upsilon> \<Longrightarrow>
-   ex_errorable [\<tau>] \<Longrightarrow>
+   strict_op (Inl op) \<Longrightarrow> ex_errorable [\<tau>] \<Longrightarrow>
    op_type (Inl op) k \<tau> [] (to_errorable \<upsilon>)"
 | "unop_type op k (to_error_free \<tau>) \<upsilon> \<Longrightarrow>
-   \<not> ex_errorable [\<tau>] \<Longrightarrow>
+   non_strict_op (Inl op) \<or> \<not> ex_errorable [\<tau>] \<Longrightarrow>
    op_type (Inl op) k \<tau> [] \<upsilon>"
 
 | "binop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) \<upsilon> \<Longrightarrow>
-   ex_errorable [\<tau>, \<sigma>] \<Longrightarrow>
+   strict_op (Inr (Inl op)) \<Longrightarrow> ex_errorable [\<tau>, \<sigma>] \<Longrightarrow>
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] (to_errorable \<upsilon>)"
 | "binop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) \<upsilon> \<Longrightarrow>
-   \<not> ex_errorable [\<tau>, \<sigma>] \<Longrightarrow>
+   non_strict_op (Inr (Inl op)) \<or> \<not> ex_errorable [\<tau>, \<sigma>] \<Longrightarrow>
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>"
 
 | "ternop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) (to_error_free \<rho>) \<upsilon> \<Longrightarrow>
-   ex_errorable [\<tau>, \<sigma>, \<rho>] \<Longrightarrow>
+   strict_op (Inr (Inr (Inl op))) \<Longrightarrow> ex_errorable [\<tau>, \<sigma>, \<rho>] \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] (to_errorable \<upsilon>)"
 | "ternop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) (to_error_free \<rho>) \<upsilon> \<Longrightarrow>
-   \<not> ex_errorable [\<tau>, \<sigma>, \<rho>] \<Longrightarrow>
+   non_strict_op (Inr (Inr (Inl op))) \<or> \<not> ex_errorable [\<tau>, \<sigma>, \<rho>] \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>"
 
 | "operation \<tau> op \<pi> oper \<Longrightarrow>
@@ -519,7 +647,7 @@ inductive_simps op_type_alt_simps:
 "string_unop_type op \<tau> \<sigma>"
 "collection_unop_type op \<tau> \<sigma>"
 
-"super_binop_type op \<tau> \<sigma> \<rho>"
+"any_binop_type op \<tau> \<sigma> \<rho>"
 "boolean_binop_type op \<tau> \<sigma> \<rho>"
 "numeric_binop_type op \<tau> \<sigma> \<rho>"
 "string_binop_type op \<tau> \<sigma> \<rho>"
@@ -575,10 +703,10 @@ lemma unop_type_det:
                 boolean_unop_type_det numeric_unop_type_det
                 string_unop_type_det collection_unop_type_det)
 
-lemma super_binop_type_det:
-  "super_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
-   super_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  by (induct rule: super_binop_type.induct; auto simp add: super_binop_type.simps)
+lemma any_binop_type_det:
+  "any_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
+   any_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
+  by (induct rule: any_binop_type.induct; auto simp add: any_binop_type.simps)
 
 lemma boolean_binop_type_det:
   "boolean_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
@@ -606,7 +734,7 @@ lemma binop_type_det:
   "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    binop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   by (induct rule: binop_type.induct;
-      simp add: binop_type.simps super_binop_type_det
+      simp add: binop_type.simps any_binop_type_det
                 boolean_binop_type_det numeric_binop_type_det
                 string_binop_type_det collection_binop_type_det)
 
@@ -1146,6 +1274,186 @@ next
     apply (erule ExprListTE)
     by (simp_all add: ExprListConsT.hyps)
 qed
+
+inductive_cases CollectionPartsTE: "\<Gamma> \<turnstile>\<^sub>C prts : \<tau>"
+inductive_cases CollectionPartTE: "\<Gamma> \<turnstile>\<^sub>P prt : \<tau>"
+
+(*
+inductive_cases CollectionItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
+inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
+*)
+
+value "is_allowed_type\<^sub>N\<^sub>E (Boolean)[?!]"
+value "is_error_free_nested\<^sub>N\<^sub>E (Boolean)[?!]"
+
+lemma is_allowed_type_sup [intro]:
+  "is_allowed_type\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_allowed_type\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
+   is_allowed_type\<^sub>N\<^sub>E (\<tau> \<squnion> \<sigma>)"
+  sorry
+
+lemma
+  typing_allowed:
+    "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
+     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
+     is_allowed_type\<^sub>N\<^sub>E \<tau>" and
+  collection_parts_typing_allowed:
+    "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
+     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
+     is_allowed_type\<^sub>N\<^sub>E \<tau>" and
+  collection_part_typing_allowed:
+    "\<Gamma> \<turnstile>\<^sub>P prt : \<tau> \<Longrightarrow>
+     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
+     is_allowed_type\<^sub>N\<^sub>E \<tau>" and
+  iterator_typing_allowed:
+    "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow>
+     xs = (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
+     is_allowed_type\<^sub>N\<^sub>E \<tau> \<and> is_allowed_type\<^sub>N\<^sub>E \<sigma> \<and> is_allowed_type\<^sub>N\<^sub>E \<rho>" and
+  expr_list_typing_allowed:
+    "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
+     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
+     list_all is_allowed_type\<^sub>N\<^sub>E \<pi>"
+proof (induct rule: typing_collection_parts_typing_collection_part_typing_iterator_typing_expr_list_typing.inducts)
+  case (NullLiteralT \<Gamma>) show ?case by simp
+next
+  case (BooleanLiteralT \<Gamma> c) show ?case by simp
+next
+  case (RealLiteralT \<Gamma> c) show ?case by simp
+next
+  case (IntegerLiteralT \<Gamma> c) show ?case by simp
+next
+  case (UnlimitedNaturalLiteralT \<Gamma> c) show ?case by simp
+next
+  case (StringLiteralT \<Gamma> c) show ?case by simp
+next
+  case (EnumLiteralT enum lit \<Gamma>) show ?case by simp
+next
+  case (SetLiteralT \<Gamma> prts \<tau>)
+  then show ?case apply (insert SetLiteralT)
+    apply (erule CollectionPartsTE, auto)
+     apply (erule CollectionPartTE, auto)
+    prefer 2
+     apply (erule CollectionPartTE, auto)
+next
+  case (OrderedSetLiteralT \<Gamma> prts \<tau>)
+  then show ?case sorry
+next
+  case (BagLiteralT \<Gamma> prts \<tau>)
+  then show ?case sorry
+next
+  case (SequenceLiteralT \<Gamma> prts \<tau>)
+then show ?case sorry
+next
+  case (CollectionPartsSingletonT \<Gamma> x \<tau>) thus ?case by simp
+next
+  case (CollectionPartsListT \<Gamma> x \<tau> y xs \<sigma>)
+  then show ?case
+    using is_allowed_type_sup by auto
+next
+  case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by simp
+next
+  case (CollectionPartRangeT \<Gamma> a \<tau> b \<sigma>) thus ?case by simp
+next
+  case (TupleLiteralNilT \<Gamma>) thus ?case by simp
+next
+  case (TupleLiteralConsT \<Gamma> elems \<xi> el \<tau> \<sigma>) thus ?case apply auto
+  then show ?case sorry
+next
+  case (LetT \<Gamma> init \<sigma> \<tau> v body \<rho>)
+  then show ?case apply auto sorry
+next
+  case (VarT \<Gamma> v \<tau>)
+  then show ?case sorry
+next
+  case (IfT \<Gamma> a b \<sigma> c \<rho>)
+  then show ?case sorry
+next
+  case (MetaOperationCallT \<tau> op \<sigma> \<Gamma>)
+  then show ?case sorry
+next
+  case (StaticOperationCallT \<Gamma> params \<pi> \<tau> op oper)
+  then show ?case sorry
+next
+  case (TypeOperationCallT \<Gamma> a \<tau> k op \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (AttributeCallT \<Gamma> src \<C> "prop" \<D> \<tau>)
+  then show ?case sorry
+next
+  case (AssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
+  then show ?case sorry
+next
+  case (AssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
+  then show ?case sorry
+next
+  case (AssociationClassEndCallT \<Gamma> src \<A> role "end")
+  then show ?case sorry
+next
+  case (OperationCallT \<Gamma> src \<tau> params \<pi> op k \<sigma>)
+  then show ?case sorry
+next
+  case (TupleElementCallT \<Gamma> src \<sigma> elem \<tau>)
+  then show ?case sorry
+next
+  case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>)
+  then show ?case sorry
+next
+  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (AnyIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (ClosureIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<rho>' \<upsilon>)
+  then show ?case sorry
+next
+  case (CollectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<rho>' \<phi>)
+  then show ?case sorry
+next
+  case (CollectNestedIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<phi>)
+  then show ?case sorry
+next
+  case (ExistsIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (ForAllIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (OneIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (IsUniqueIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (SelectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (RejectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
+  then show ?case sorry
+next
+  case (SortedByIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>)
+  then show ?case sorry
+next
+  case (ExprListNilT \<Gamma>)
+  then show ?case sorry
+next
+  case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>)
+  then show ?case sorry
+qed
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (*** Code Setup *************************************************************)
 

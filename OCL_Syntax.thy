@@ -42,10 +42,9 @@ datatype metaop = AllInstancesOp
 datatype typeop = OclAsTypeOp | OclIsTypeOfOp | OclIsKindOfOp
 | SelectByKindOp | SelectByTypeOp
 
-datatype super_binop = EqualOp | NotEqualOp
-
 datatype any_unop = OclAsSetOp | OclIsNewOp
-| OclIsUndefinedOp | OclIsInvalidOp | OclLocaleOp | ToStringOp
+| OclIsUndefinedOp | OclIsInvalidOp | ToStringOp
+datatype any_binop = EqualOp | NotEqualOp
 
 datatype boolean_unop = NotOp
 datatype boolean_binop = AndOp | OrOp | XorOp | ImpliesOp
@@ -80,9 +79,9 @@ declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> un
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> unop"]]
 
-type_synonym binop = "super_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
+type_synonym binop = "any_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
 
-declare [[coercion "Inl :: super_binop \<Rightarrow> binop"]]
+declare [[coercion "Inl :: any_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> binop"]]
@@ -101,7 +100,7 @@ declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Ri
 declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> op"]]
 declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> op"]]
 
-declare [[coercion "Inr \<circ> Inl \<circ> Inl :: super_binop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inl \<circ> Inl :: any_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inl :: boolean_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> op"]]
