@@ -43,9 +43,9 @@ and Systems (MoDELS 2015), Ottawa, Canada, September 28, 2015.
 (A. D. Brucker, M. Egea, M. Gogolla, and F. Tuong, eds.), vol. 1512 of
 CEUR Workshop Proceedings, pp. 81-88, CEUR-WS.org, 2015.
 
-# 2. Types
+# Types
 
-## 2.1. Definition
+## Definition
 
 <pre>
 datatype 'a type =
@@ -134,7 +134,7 @@ inductive subtype :: "'a::order type ⇒ 'a type ⇒ bool" (infix "⊏" 65)
 | "Required τ ⊏<sub>N</sub> Optional τ"
 </pre>
 
-## 2.4. Upper Semilattice of Types
+## Upper Semilattice of Types
 
 <pre>
 fun type_sup (infixl "⊔<sub>T</sub>" 65)
@@ -232,9 +232,9 @@ and type_sup<sub>N</sub> (infixl "⊔<sub>N</sub>" 65) where
      | Optional ρ ⇒ Optional (τ ⊔<sub>T</sub> ρ))"
 </pre>
 
-# 3. Erorrable Types
+# Erorrable Types
 
-## 3.1. Generic Errorable Type
+## Generic Errorable Type
 
 <pre>
 datatype 'a errorable_type ("_<sub>E</sub>" [21] 21) =
@@ -262,7 +262,7 @@ fun sup_errorable_type where
      | Errorable ρ ⇒ Errorable (τ ⊔ ρ))"
 </pre>
 
-## 3.2. OCL Errorable Type
+## OCL Errorable Type
 
 | Notation | Meaning                                              |
 |:--------:|------------------------------------------------------|
@@ -277,7 +277,7 @@ Collection and tuple types can have elements only with error-free types.
 
 # Typing
 
-## Operation Typing
+## Operations Typing
 
 Most of the operations are strict. If a source expression or any argument
 of a strict operation is invalid then the operation result is invalid too.
@@ -286,7 +286,8 @@ errorable type then a result type of the opertation is errorable too.
 This rule implicitly applies to all strict operations.
 
 A non-strict operation is an operation which either return a non-invalid
-value for invalid arguments, or is not defined for invalid arguments.
+value for invalid source or arguments, or is not defined for invalid
+source or arguments.
 
 The following operations are non-strict:
 + allInstances()
@@ -306,12 +307,12 @@ explicitly.
 Please take a note that most of the operations are undefined for nullable
 types. This is a significant difference from the current version of
 the OCL specification. The OCL specification allows operation invocation
-with null sources and arguments with *invalid* result.
+with null sources and arguments with `invalid` result. We prohibit it.
 
 ### Metaclass Operations
 
-*allInstances()* is not defined for errorable source types, because
-a resulting collection can not contain *invalid*.
+`allInstances()` is not defined for errorable source types, because
+a resulting collection can not contain `invalid`.
 
 | Operation    | Source Type | Result Type  | Precondition      |
 |--------------|:-----------:|:------------:|:-----------------:|
@@ -320,31 +321,31 @@ a resulting collection can not contain *invalid*.
 
 ### Type Operations
 
-*selectByKind()* and *selectByType()* are not defined for errorable
-argument types, because a source collection can not contain *invalid*.
+`selectByKind()` and `selectByType()` are not defined for errorable
+argument types, because a source collection can not contain `invalid`.
 
 | Operation      | Source Type      | Argument Type | Result Type | Precondition                                                         |
 |:--------------:|:----------------:|:-------------:|:-----------:|:--------------------------------------------------------------------:|
 | oclAsType      | τ                | σ             | σ[!]        | σ < τ                                                                |
-| oclAsType      | τ                | σ             | σ[!]        | τ < σ<br/>is_unsafe_cast τ σ                                         |
-| oclAsType      | τ                | σ             | σ           | τ < σ<br/>¬ is_unsafe_cast τ σ                                       |
+| oclAsType      | τ                | σ             | σ[!]        | τ < σ ∧ <br/>is_unsafe_cast τ σ                                         |
+| oclAsType      | τ                | σ             | σ           | τ < σ ∧ <br/>¬ is_unsafe_cast τ σ                                       |
 | oclIsTypeOf    | τ[1]             | σ             | Boolean[1]  | σ < τ[1]                                                             |
 | oclIsTypeOf    | τ[?]             | σ             | Boolean[1!] | σ < τ[?]                                                             |
 | oclIsKindOf    | τ[1]             | σ             | Boolean[1]  | σ < τ[1]                                                             |
 | oclIsKindOf    | τ[?]             | σ             | Boolean[1!] | σ < τ[?]                                                             |
-| selectByKind   | τ[1]             | σ[1]          | υ           | element_type τ[1] ρ<br/>σ[1] < ρ<br/>update_element_type τ[1] σ[1] υ |
-| selectByKind   | τ[1]             | σ[?]          | υ           | element_type τ[1] ρ<br/>σ[?] < ρ<br/>update_element_type τ[1] σ[?] υ |
-| selectByKind   | τ[1!]            | σ[1]          | υ[!]        | element_type τ[1] ρ<br/>σ[1] < ρ<br/>update_element_type τ[1] σ[1] υ |
-| selectByKind   | τ[1!]            | σ[?]          | υ[!]        | element_type τ[1] ρ<br/>σ[?] < ρ<br/>update_element_type τ[1] σ[?] υ |
-| selectByType   | τ[1]             | σ[1]          | υ           | element_type τ[1] ρ<br/>σ[1] < ρ<br/>update_element_type τ[1] σ[1] υ |
-| selectByType   | τ[1]             | σ[?]          | υ           | element_type τ[1] ρ<br/>σ[?] < ρ<br/>update_element_type τ[1] σ[?] υ |
-| selectByType   | τ[1!]            | σ[1]          | υ[!]        | element_type τ[1] ρ<br/>σ[1] < ρ<br/>update_element_type τ[1] σ[1] υ |
-| selectByType   | τ[1!]            | σ[?]          | υ[!]        | element_type τ[1] ρ<br/>σ[?] < ρ<br/>update_element_type τ[1] σ[?] υ |
+| selectByKind   | τ[1]             | σ[1]          | υ           | element_type τ[1] ρ ∧ <br/>σ[1] < ρ ∧ <br/>update_element_type τ[1] σ[1] υ |
+| selectByKind   | τ[1]             | σ[?]          | υ           | element_type τ[1] ρ ∧ <br/>σ[?] < ρ ∧ <br/>update_element_type τ[1] σ[?] υ |
+| selectByKind   | τ[1!]            | σ[1]          | υ[!]        | element_type τ[1] ρ ∧ <br/>σ[1] < ρ ∧ <br/>update_element_type τ[1] σ[1] υ |
+| selectByKind   | τ[1!]            | σ[?]          | υ[!]        | element_type τ[1] ρ ∧ <br/>σ[?] < ρ ∧ <br/>update_element_type τ[1] σ[?] υ |
+| selectByType   | τ[1]             | σ[1]          | υ           | element_type τ[1] ρ ∧ <br/>σ[1] < ρ ∧ <br/>update_element_type τ[1] σ[1] υ |
+| selectByType   | τ[1]             | σ[?]          | υ           | element_type τ[1] ρ ∧ <br/>σ[?] < ρ ∧ <br/>update_element_type τ[1] σ[?] υ |
+| selectByType   | τ[1!]            | σ[1]          | υ[!]        | element_type τ[1] ρ ∧ <br/>σ[1] < ρ ∧ <br/>update_element_type τ[1] σ[1] υ |
+| selectByType   | τ[1!]            | σ[?]          | υ[!]        | element_type τ[1] ρ ∧ <br/>σ[?] < ρ ∧ <br/>update_element_type τ[1] σ[?] υ |
 
 ### OclAny Operations
 
-*oclAsSet()* is not defined for errorable source types, because
-a resulting collection can not contain *invalid*.
+`oclAsSet()` is not defined for errorable source types, because
+a resulting collection can not contain `invalid`.
 
 | Operation      | Source Type | Result Type  | Precondition              |
 |:--------------:|:-----------:|:------------:|:-------------------------:|
@@ -391,19 +392,19 @@ a resulting collection can not contain *invalid*.
 
 | Operation      | Source Type | Argument Type | Result Type | Precondition                                                                  |
 |:--------------:|:-----------:|:-------------:|:-----------:|:-----------------------------------------------------------------------------:|
-| +              | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| +              | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
 | -              | τ           | σ             | Real[1]     | τ ⊔ σ = Real[1]                                                               |
-| -              | τ           | σ             | Integer[1]  | UnlimitedNatural[1] ≤ τ ≤ Integer[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Integer[1] |
-| *              | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
-| /              | τ           | σ             | Real[1!]    | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
-| div            | τ           | σ             | (τ ⊔ σ)[!]  | UnlimitedNatural[1] ≤ τ ≤ Integer[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Integer[1] |
-| mod            | τ           | σ             | (τ ⊔ σ)[!]  | UnlimitedNatural[1] ≤ τ ≤ Integer[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Integer[1] |
-| max            | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
-| min            | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
-| <              | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
-| <=             | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
-| >              | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
-| >=             | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1]<br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| -              | τ           | σ             | Integer[1]  | UnlimitedNatural[1] ≤ τ ≤ Integer[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Integer[1] |
+| *              | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| /              | τ           | σ             | Real[1!]    | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| div            | τ           | σ             | (τ ⊔ σ)[!]  | UnlimitedNatural[1] ≤ τ ≤ Integer[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Integer[1] |
+| mod            | τ           | σ             | (τ ⊔ σ)[!]  | UnlimitedNatural[1] ≤ τ ≤ Integer[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Integer[1] |
+| max            | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| min            | τ           | σ             | τ ⊔ σ       | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| <              | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| <=             | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| >              | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
+| >=             | τ           | σ             | Boolean[1]  | UnlimitedNatural[1] ≤ τ ≤ Real[1] ∧ <br/>UnlimitedNatural[1] ≤ σ ≤ Real[1]       |
 
 ### String Operations
 
@@ -430,7 +431,7 @@ a resulting collection can not contain *invalid*.
 
 | Operation        | Source Type | Argument Type | 2nd Argument Type | Result Type | Precondition                                                                  |
 |:----------------:|:-----------:|:-------------:|:-----------------:|:-----------:|:-----------------------------------------------------------------------------:|
-| substring        | String[1]   | σ             | ρ                 | String[1!]  | UnlimitedNatural[1] ≤ σ ≤ Integer[1]<br/>UnlimitedNatural[1] ≤ ρ ≤ Integer[1] |
+| substring        | String[1]   | σ             | ρ                 | String[1!]  | UnlimitedNatural[1] ≤ σ ≤ Integer[1] ∧ <br/>UnlimitedNatural[1] ≤ ρ ≤ Integer[1] |
 
 ### Collection Operations
 
@@ -446,7 +447,7 @@ a resulting collection can not contain *invalid*.
 | asOrderedSet   | Collection(τ)[1]    | OrderedSet(τ)[1]       |                                                      |
 | asBag          | Collection(τ)[1]    | Bag(τ)[1]              |                                                      |
 | asSequence     | Collection(τ)[1]    | Sequence(τ)[1]         |                                                      |
-| flatten        | τ[1]                | σ[1]                   | inner_element_type τ ρ<br/>update_element_type τ ρ σ |
+| flatten        | τ[1]                | σ[1]                   | inner_element_type τ ρ ∧ <br/>update_element_type τ ρ σ |
 | first          | OrderdSet(τ)[1]     | τ[1!]                  |                                                      |
 | first          | Sequence(τ)[1]      | τ[1!]                  |                                                      |
 | last           | OrderdSet(τ)[1]     | τ[1!]                  |                                                      |
@@ -472,8 +473,8 @@ a resulting collection can not contain *invalid*.
 | intersection        | Bag(τ)[1]        | Bag(σ)[1]        | Bag(τ ⊔ σ)[1]                         |                                                      |
 | -                   | Set(τ)[1]        | Set(σ)[1]        | Set(τ)[1]                             | τ ≤ σ ∨ σ ≤ τ                                        |
 | symmetricDifference | Set(τ)[1]        | Set(σ)[1]        | Set(τ ⊔ σ)[1]                         |                                                      |
-| including           | τ[1]             | σ                | υ                                     | element_type τ ρ<br/>update_element_type τ (ρ ⊔ σ) υ |
-| excluding           | τ[1]             | σ                | τ[1]                                  | element_type τ ρ<br/>σ ≤ ρ                           |
+| including           | τ[1]             | σ                | υ                                     | element_type τ ρ ∧ <br/>update_element_type τ (ρ ⊔ σ) υ |
+| excluding           | τ[1]             | σ                | τ[1]                                  | element_type τ ρ ∧ <br/>σ ≤ ρ                           |
 | append              | OrderedSet(τ)[1] | σ                | OrderedSet(τ)[1]                      | σ ≤ τ                                                |
 | append              | Sequence(τ)[1]   | σ                | Sequence(τ)[1]                        | σ ≤ τ                                                |
 | prepend             | OrderedSet(τ)[1] | σ                | OrderedSet(τ)[1]                      | σ ≤ τ                                                |
@@ -485,53 +486,53 @@ a resulting collection can not contain *invalid*.
 
 | Operation        | Source Type      | Argument Type | 2nd Argument Type | Result Type       | Precondition                                                                  |
 |:----------------:|:----------------:|:-------------:|:-----------------:|:-----------------:|:-----------------------------------------------------------------------------:|
-| insertAt         | OrderedSet(τ)[1] | σ             | ρ                 | OrderedSet(τ)[1!] | UnlimitedNatural[1] ≤ σ ≤ Integer[1]<br/>ρ ≤ τ                                |
-| insertAt         | Sequence(τ)[1]   | σ             | ρ                 | Sequence(τ)[1!]   | UnlimitedNatural[1] ≤ σ ≤ Integer[1]<br/>ρ ≤ τ                                |
-| subOrderedSet    | OrderedSet(τ)[1] | σ             | ρ                 | OrderedSet(τ)[1!] | UnlimitedNatural[1] ≤ σ ≤ Integer[1]<br/>UnlimitedNatural[1] ≤ ρ ≤ Integer[1] |
-| subSequence      | Sequence(τ)[1]   | σ             | ρ                 | Sequence(τ)[1!]   | UnlimitedNatural[1] ≤ σ ≤ Integer[1]<br/>UnlimitedNatural[1] ≤ ρ ≤ Integer[1] |
+| insertAt         | OrderedSet(τ)[1] | σ             | ρ                 | OrderedSet(τ)[1!] | UnlimitedNatural[1] ≤ σ ≤ Integer[1] ∧ <br/>ρ ≤ τ                                |
+| insertAt         | Sequence(τ)[1]   | σ             | ρ                 | Sequence(τ)[1!]   | UnlimitedNatural[1] ≤ σ ≤ Integer[1] ∧ <br/>ρ ≤ τ                                |
+| subOrderedSet    | OrderedSet(τ)[1] | σ             | ρ                 | OrderedSet(τ)[1!] | UnlimitedNatural[1] ≤ σ ≤ Integer[1] ∧ <br/>UnlimitedNatural[1] ≤ ρ ≤ Integer[1] |
+| subSequence      | Sequence(τ)[1]   | σ             | ρ                 | Sequence(τ)[1!]   | UnlimitedNatural[1] ≤ σ ≤ Integer[1] ∧ <br/>UnlimitedNatural[1] ≤ ρ ≤ Integer[1] |
 
 ## Expressions Typing
 
 <pre>
-inductive typing :: "('a :: ocl_object_model) type⇩N⇩E env ⇒ 'a expr ⇒ 'a type⇩N⇩E ⇒ bool"
-       ("(1_/ ⊢⇩E/ (_ :/ _))" [51,51,51] 50)
-      and collection_parts_typing ("(1_/ ⊢⇩C/ (_ :/ _))" [51,51,51] 50)
-      and collection_part_typing ("(1_/ ⊢⇩P/ (_ :/ _))" [51,51,51] 50)
-      and iterator_typing ("(1_/ ⊢⇩I/ (_ :/ _))" [51,51,51] 50)
-      and expr_list_typing ("(1_/ ⊢⇩L/ (_ :/ _))" [51,51,51] 50) where
+inductive typing :: "('a :: ocl_object_model) type<sub>NE</sub> env ⇒ 'a expr ⇒ 'a type<sub>NE</sub> ⇒ bool"
+       ("(1_/ ⊢<sub>E</sub>/ (_ :/ _))" [51,51,51] 50)
+      and collection_parts_typing ("(1_/ ⊢<sub>C</sub>/ (_ :/ _))" [51,51,51] 50)
+      and collection_part_typing ("(1_/ ⊢<sub>P</sub>/ (_ :/ _))" [51,51,51] 50)
+      and iterator_typing ("(1_/ ⊢<sub>I</sub>/ (_ :/ _))" [51,51,51] 50)
+      and expr_list_typing ("(1_/ ⊢<sub>L</sub>/ (_ :/ _))" [51,51,51] 50) where
 
 ― ‹Primitive Literals›
 
  NullLiteralT:
-  "Γ ⊢⇩E NullLiteral : OclVoid[?]"
+  "Γ ⊢<sub>E</sub> NullLiteral : OclVoid[?]"
 |BooleanLiteralT:
-  "Γ ⊢⇩E BooleanLiteral c : Boolean[1]"
+  "Γ ⊢<sub>E</sub> BooleanLiteral c : Boolean[1]"
 |RealLiteralT:
-  "Γ ⊢⇩E RealLiteral c : Real[1]"
+  "Γ ⊢<sub>E</sub> RealLiteral c : Real[1]"
 |IntegerLiteralT:
-  "Γ ⊢⇩E IntegerLiteral c : Integer[1]"
+  "Γ ⊢<sub>E</sub> IntegerLiteral c : Integer[1]"
 |UnlimitedNaturalLiteralT:
-  "Γ ⊢⇩E UnlimitedNaturalLiteral c : UnlimitedNatural[1]"
+  "Γ ⊢<sub>E</sub> UnlimitedNaturalLiteral c : UnlimitedNatural[1]"
 |StringLiteralT:
-  "Γ ⊢⇩E StringLiteral c : String[1]"
+  "Γ ⊢<sub>E</sub> StringLiteral c : String[1]"
 |EnumLiteralT:
   "has_literal enum lit ⟹
-   Γ ⊢⇩E EnumLiteral enum lit : (Enum enum)[1]"
+   Γ ⊢<sub>E</sub> EnumLiteral enum lit : (Enum enum)[1]"
 
 ― ‹Collection Literals›
 
 |SetLiteralT:
-  "Γ ⊢⇩C prts : (ErrorFree τ) ⟹
-   Γ ⊢⇩E CollectionLiteral SetKind prts : (Set τ)[1]"
+  "Γ ⊢<sub>C</sub> prts : (ErrorFree τ) ⟹
+   Γ ⊢<sub>E</sub> CollectionLiteral SetKind prts : (Set τ)[1]"
 |OrderedSetLiteralT:
-  "Γ ⊢⇩C prts : (ErrorFree τ) ⟹
-   Γ ⊢⇩E CollectionLiteral OrderedSetKind prts : (OrderedSet τ)[1]"
+  "Γ ⊢<sub>C</sub> prts : (ErrorFree τ) ⟹
+   Γ ⊢<sub>E</sub> CollectionLiteral OrderedSetKind prts : (OrderedSet τ)[1]"
 |BagLiteralT:
-  "Γ ⊢⇩C prts : (ErrorFree τ) ⟹
-   Γ ⊢⇩E CollectionLiteral BagKind prts : (Bag τ)[1]"
+  "Γ ⊢<sub>C</sub> prts : (ErrorFree τ) ⟹
+   Γ ⊢<sub>E</sub> CollectionLiteral BagKind prts : (Bag τ)[1]"
 |SequenceLiteralT:
-  "Γ ⊢⇩C prts : (ErrorFree τ) ⟹
-   Γ ⊢⇩E CollectionLiteral SequenceKind prts : (Sequence τ)[1]"
+  "Γ ⊢<sub>C</sub> prts : (ErrorFree τ) ⟹
+   Γ ⊢<sub>E</sub> CollectionLiteral SequenceKind prts : (Sequence τ)[1]"
 
 ― ‹We prohibit empty collection literals, because their type is unclear.
   We could use @{text "OclVoid[1]"} element type for empty collections, but
@@ -539,176 +540,227 @@ inductive typing :: "('a :: ocl_object_model) type⇩N⇩E env ⇒ 'a expr ⇒ '
   for example, @{text "OclVoid[1] ⊔ Set(Integer[1]) = OclSuper"}›
 
 |CollectionPartsSingletonT:
-  "Γ ⊢⇩P x : τ ⟹
-   Γ ⊢⇩C [x] : τ"
+  "Γ ⊢<sub>P</sub> x : τ ⟹
+   Γ ⊢<sub>C</sub> [x] : τ"
 |CollectionPartsListT:
-  "Γ ⊢⇩P x : τ ⟹
-   Γ ⊢⇩C y # xs : σ ⟹
-   Γ ⊢⇩C x # y # xs : τ ⊔ σ"
+  "Γ ⊢<sub>P</sub> x : τ ⟹
+   Γ ⊢<sub>C</sub> y # xs : σ ⟹
+   Γ ⊢<sub>C</sub> x # y # xs : τ ⊔ σ"
 
 |CollectionPartItemT:
-  "Γ ⊢⇩E a : τ ⟹
-   Γ ⊢⇩P CollectionItem a : τ"
+  "Γ ⊢<sub>E</sub> a : τ ⟹
+   Γ ⊢<sub>P</sub> CollectionItem a : τ"
 |CollectionPartRangeT:
-  "Γ ⊢⇩E a : τ ⟹
-   Γ ⊢⇩E b : σ ⟹
+  "Γ ⊢<sub>E</sub> a : τ ⟹
+   Γ ⊢<sub>E</sub> b : σ ⟹
    τ = UnlimitedNatural[1]─Integer[1] ⟹
    σ = UnlimitedNatural[1]─Integer[1] ⟹
-   Γ ⊢⇩P CollectionRange a b : Integer[1]"
+   Γ ⊢<sub>P</sub> CollectionRange a b : Integer[1]"
 
 ― ‹Tuple Literals›
 ― ‹We do not prohibit empty tuples, because it could be useful.
   @{text "Tuple()"} is a supertype of all other tuple types.›
 
 |TupleLiteralNilT:
-  "Γ ⊢⇩E TupleLiteral [] : (Tuple fmempty)[1]"
+  "Γ ⊢<sub>E</sub> TupleLiteral [] : (Tuple fmempty)[1]"
 |TupleLiteralConsT:
-  "Γ ⊢⇩E TupleLiteral elems : (Tuple ξ)[1] ⟹
-   Γ ⊢⇩E tuple_literal_element_expr el : (ErrorFree τ) ⟹
+  "Γ ⊢<sub>E</sub> TupleLiteral elems : (Tuple ξ)[1] ⟹
+   Γ ⊢<sub>E</sub> tuple_literal_element_expr el : (ErrorFree τ) ⟹
    tuple_literal_element_type el = Some σ ⟹
    τ ≤ σ ⟹
-   Γ ⊢⇩E TupleLiteral (el # elems) : (Tuple (ξ(tuple_literal_element_name el ↦⇩f σ)))[1]"
+   Γ ⊢<sub>E</sub> TupleLiteral (el # elems) : (Tuple (ξ(tuple_literal_element_name el ↦⇩f σ)))[1]"
 
 ― ‹Misc Expressions›
 
 |LetT:
-  "Γ ⊢⇩E init : σ ⟹
+  "Γ ⊢<sub>E</sub> init : σ ⟹
    σ ≤ τ ⟹
-   Γ(v ↦⇩f τ) ⊢⇩E body : ρ ⟹
-   Γ ⊢⇩E Let v (Some τ) init body : ρ"
+   Γ(v ↦⇩f τ) ⊢<sub>E</sub> body : ρ ⟹
+   Γ ⊢<sub>E</sub> Let v (Some τ) init body : ρ"
 |VarT:
   "fmlookup Γ v = Some τ ⟹
-   Γ ⊢⇩E Var v : τ"
+   Γ ⊢<sub>E</sub> Var v : τ"
 |IfT:
-  "Γ ⊢⇩E a : Boolean[1] ⟹
-   Γ ⊢⇩E b : σ ⟹
-   Γ ⊢⇩E c : ρ ⟹
-   Γ ⊢⇩E If a b c : σ ⊔ ρ"
+  "Γ ⊢<sub>E</sub> a : Boolean[1] ⟹
+   Γ ⊢<sub>E</sub> b : σ ⟹
+   Γ ⊢<sub>E</sub> c : ρ ⟹
+   Γ ⊢<sub>E</sub> If a b c : σ ⊔ ρ"
 
 ― ‹Call Expressions›
 
 |MetaOperationCallT:
   "mataop_type τ op σ ⟹
-   Γ ⊢⇩E MetaOperationCall τ op : σ"
+   Γ ⊢<sub>E</sub> MetaOperationCall τ op : σ"
 |StaticOperationCallT:
-  "Γ ⊢⇩L params : π ⟹
+  "Γ ⊢<sub>L</sub> params : π ⟹
    static_operation τ op π oper ⟹
-   Γ ⊢⇩E StaticOperationCall τ op params : oper_type oper"
+   Γ ⊢<sub>E</sub> StaticOperationCall τ op params : oper_type oper"
 
 |TypeOperationCallT:
-  "Γ ⊢⇩E a : τ ⟹
+  "Γ ⊢<sub>E</sub> a : τ ⟹
    typeop_type k op τ σ ρ ⟹
-   Γ ⊢⇩E TypeOperationCall a k op σ : ρ"
+   Γ ⊢<sub>E</sub> TypeOperationCall a k op σ : ρ"
 
 |AttributeCallT:
-  "Γ ⊢⇩E src : ⟨𝒞⟩⇩𝒯[1] ⟹
+  "Γ ⊢<sub>E</sub> src : ⟨𝒞⟩<sub>𝒯</sub>[1] ⟹
    attribute 𝒞 prop 𝒟 τ ⟹
-   Γ ⊢⇩E AttributeCall src DotCall prop : τ"
+   Γ ⊢<sub>E</sub> AttributeCall src DotCall prop : τ"
 |AssociationEndCallT:
-  "Γ ⊢⇩E src : ⟨𝒞⟩⇩𝒯[1] ⟹
+  "Γ ⊢<sub>E</sub> src : ⟨𝒞⟩<sub>𝒯</sub>[1] ⟹
    association_end 𝒞 from role 𝒟 end ⟹
-   Γ ⊢⇩E AssociationEndCall src DotCall from role : assoc_end_type end"
+   Γ ⊢<sub>E</sub> AssociationEndCall src DotCall from role : assoc_end_type end"
 |AssociationClassCallT:
-  "Γ ⊢⇩E src : ⟨𝒞⟩⇩𝒯[1] ⟹
+  "Γ ⊢<sub>E</sub> src : ⟨𝒞⟩<sub>𝒯</sub>[1] ⟹
    referred_by_association_class 𝒞 from 𝒜 𝒟 ⟹
-   Γ ⊢⇩E AssociationClassCall src DotCall from 𝒜 : class_assoc_type 𝒜"
+   Γ ⊢<sub>E</sub> AssociationClassCall src DotCall from 𝒜 : class_assoc_type 𝒜"
 |AssociationClassEndCallT:
-  "Γ ⊢⇩E src : ⟨𝒜⟩⇩𝒯[1] ⟹
+  "Γ ⊢<sub>E</sub> src : ⟨𝒜⟩<sub>𝒯</sub>[1] ⟹
    association_class_end 𝒜 role end ⟹
-   Γ ⊢⇩E AssociationClassEndCall src DotCall role : class_assoc_end_type end"
+   Γ ⊢<sub>E</sub> AssociationClassEndCall src DotCall role : class_assoc_end_type end"
 |OperationCallT:
-  "Γ ⊢⇩E src : τ ⟹
-   Γ ⊢⇩L params : π ⟹
+  "Γ ⊢<sub>E</sub> src : τ ⟹
+   Γ ⊢<sub>L</sub> params : π ⟹
    op_type op k τ π σ ⟹
-   Γ ⊢⇩E OperationCall src k op params : σ"
+   Γ ⊢<sub>E</sub> OperationCall src k op params : σ"
 
 |TupleElementCallT:
-  "Γ ⊢⇩E src : σ ⟹
+  "Γ ⊢<sub>E</sub> src : σ ⟹
    tuple_element_type σ elem τ ⟹
-   Γ ⊢⇩E TupleElementCall src DotCall elem : τ"
+   Γ ⊢<sub>E</sub> TupleElementCall src DotCall elem : τ"
 
 ― ‹Iterator Expressions›
 
 |IteratorT:
-  "Γ ⊢⇩E src : τ ⟹
+  "Γ ⊢<sub>E</sub> src : τ ⟹
    element_type τ σ ⟹
    σ ≤ its_ty ⟹
-   Γ ++⇩f fmap_of_list (map (λit. (it, its_ty)) its) ⊢⇩E body : ρ ⟹
-   Γ ⊢⇩I (src, its, (Some its_ty), body) : (τ, σ, ρ)"
+   Γ ++⇩f fmap_of_list (map (λit. (it, its_ty)) its) ⊢<sub>E</sub> body : ρ ⟹
+   Γ ⊢<sub>I</sub> (src, its, (Some its_ty), body) : (τ, σ, ρ)"
 
 |IterateT:
-  "Γ ⊢⇩I (src, its, its_ty, Let res (Some res_t) res_init body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, Let res (Some res_t) res_init body) : (τ, σ, ρ) ⟹
    ρ ≤ res_t ⟹
-   Γ ⊢⇩E IterateCall src ArrowCall its its_ty res (Some res_t) res_init body : ρ"
+   Γ ⊢<sub>E</sub> IterateCall src ArrowCall its its_ty res (Some res_t) res_init body : ρ"
 
 |AnyIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    ρ ≤ Boolean[?] ⟹
-   Γ ⊢⇩E AnyIteratorCall src ArrowCall its its_ty body : σ"
+   Γ ⊢<sub>E</sub> AnyIteratorCall src ArrowCall its its_ty body : σ"
 |ClosureIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    (* По-моему тут ошибка, должен быть просто element_type? *)
    to_single_type ρ ρ' ⟹
    ρ' ≤ σ ⟹
    to_unique_collection_type τ υ ⟹
-   Γ ⊢⇩E ClosureIteratorCall src ArrowCall its its_ty body : υ"
+   Γ ⊢<sub>E</sub> ClosureIteratorCall src ArrowCall its its_ty body : υ"
 |CollectIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    to_nonunique_collection_type τ υ ⟹
    to_single_type ρ ρ' ⟹
    update_element_type υ ρ' φ ⟹
-   Γ ⊢⇩E CollectIteratorCall src ArrowCall its its_ty body : φ"
+   Γ ⊢<sub>E</sub> CollectIteratorCall src ArrowCall its its_ty body : φ"
 |CollectNestedIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    to_nonunique_collection_type τ υ ⟹
    update_element_type υ ρ φ ⟹
-   Γ ⊢⇩E CollectNestedIteratorCall src ArrowCall its its_ty body : φ"
+   Γ ⊢<sub>E</sub> CollectNestedIteratorCall src ArrowCall its its_ty body : φ"
 |ExistsIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    ρ ≤ Boolean[?] ⟹
-   Γ ⊢⇩E ExistsIteratorCall src ArrowCall its its_ty body : ρ"
+   Γ ⊢<sub>E</sub> ExistsIteratorCall src ArrowCall its its_ty body : ρ"
 |ForAllIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    ρ ≤ Boolean[?] ⟹
-   Γ ⊢⇩E ForAllIteratorCall src ArrowCall its its_ty body : ρ"
+   Γ ⊢<sub>E</sub> ForAllIteratorCall src ArrowCall its its_ty body : ρ"
 |OneIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    ρ ≤ Boolean[?] ⟹
-   Γ ⊢⇩E OneIteratorCall src ArrowCall its its_ty body : Boolean[1]"
+   Γ ⊢<sub>E</sub> OneIteratorCall src ArrowCall its its_ty body : Boolean[1]"
 |IsUniqueIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
-   Γ ⊢⇩E IsUniqueIteratorCall src ArrowCall its its_ty body : Boolean[1]"
+   Γ ⊢<sub>E</sub> IsUniqueIteratorCall src ArrowCall its its_ty body : Boolean[1]"
 |SelectIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    ρ ≤ Boolean[?] ⟹
-   Γ ⊢⇩E SelectIteratorCall src ArrowCall its its_ty body : τ"
+   Γ ⊢<sub>E</sub> SelectIteratorCall src ArrowCall its its_ty body : τ"
 |RejectIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    ρ ≤ Boolean[?] ⟹
-   Γ ⊢⇩E RejectIteratorCall src ArrowCall its its_ty body : τ"
+   Γ ⊢<sub>E</sub> RejectIteratorCall src ArrowCall its its_ty body : τ"
 |SortedByIteratorT:
-  "Γ ⊢⇩I (src, its, its_ty, body) : (τ, σ, ρ) ⟹
+  "Γ ⊢<sub>I</sub> (src, its, its_ty, body) : (τ, σ, ρ) ⟹
    length its ≤ 1 ⟹
    to_ordered_collection_type τ υ ⟹
-   Γ ⊢⇩E SortedByIteratorCall src ArrowCall its its_ty body : υ"
+   Γ ⊢<sub>E</sub> SortedByIteratorCall src ArrowCall its its_ty body : υ"
 
 ― ‹Expression Lists›
 
 |ExprListNilT:
-  "Γ ⊢⇩L [] : []"
+  "Γ ⊢<sub>L</sub> [] : []"
 |ExprListConsT:
-  "Γ ⊢⇩E expr : τ ⟹
-   Γ ⊢⇩L exprs : π ⟹
-   Γ ⊢⇩L expr # exprs : τ # π"
+  "Γ ⊢<sub>E</sub> expr : τ ⟹
+   Γ ⊢<sub>L</sub> exprs : π ⟹
+   Γ ⊢<sub>L</sub> expr # exprs : τ # π"
 </pre>
 
 # Normalization
 
+The following variables are used in the table:
++ `x` is a non-nullable single or tuple value,
++ `n` is a nullable single or tuple value,
++ `xs` is a non-nullable collection of non-nullable values,
++ `ns` is a non-nullable collection of nullable values. 
++ `nxs` is a nullable collection of non-nullable values,
++ `nns` is a nullable collection of nullable values. 
+
+The following type variables are used in the table:
++ T[1] is a non-nullable variant of a value's type,
++ S[1] is a non-nullable variant of a collection's type.
+
+| Original Expression | Normalized Expression                                         | Note |
+|:-------------------:|:-------------------------------------------------------------:|:----:|
+| `x.op()`            | `x.op()`                                                      |      |
+| `n.op()`            | `n.op()`                                                      | (1)  |
+| `x?.op()`           | &ndash;                                                       |      |
+| `n?.op()`           | `if n <> null then n.oclAsType(T[1]).op() else null endif`    | (2)  |
+| `x->op()`           | `x.oclAsSet()->op()`                                          |      |
+| `n->op()`           | `n.oclAsSet()->op()`                                          |      |
+| `x?->op()`          | &ndash;                                                       |      |
+| `n?->op()`          | &ndash;                                                       |      |
+|                     |                                                               |      |
+| `xs.op()`           | <code>xs->collect(x &#124; x.op())</code>                     |      |
+| `ns.op()`           | <code>ns->collect(n &#124; n.op())</code>                     | (1)  |
+| `xs?.op()`          | &ndash;                                                       |      |
+| `ns?.op()`          | <code>ns->selectByKind(T[1])->collect(x &#124; x.op())</code> |      |
+| `xs->op()`          | `xs->op()`                                                    |      |
+| `ns->op()`          | `ns->op()`                                                    |      |
+| `xs?->op()`         | &ndash;                                                       |      |
+| `ns?->op()`         | `ns->selectByKind(T[1])->op()`                                |      |
+|                     |                                                               |      |
+| `nxs.op()`          | &ndash;                                                       |      |
+| `nns.op()`          | &ndash;                                                       |      |
+| `nxs?.op()`         | <code>if nxs &lt;> null then nxs.oclAsType(S[1])->collect(x &#124; x.op()) else null endif</code>                     |      |
+| `nns?.op()`         | <code>if nns &lt;> null then nns.oclAsType(S[1])->selectByKind(T[1])->collect(x &#124; x.op()) else null endif</code> |      |
+| `nxs->op()`         | `nxs->op()`                                                   | (1)  |
+| `nns->op()`         | `nns->op()`                                                   | (1)  |
+| `nxs?->op()`        | `if nxs <> null then nxs.oclAsType(S[1])->op() else null endif`            |      |
+| `nns?->op()`        | `if nns <> null then nns.oclAsType(S[1])->selectByKind(T[1])->op() else null endif` |      |
+
+(1) The resulting expression will be ill-typed if the operation is unsafe.
+An unsafe operation is an operation which is not well-typed for a nullable
+source.
+
+(2) It would be a good idea to prohibit such a transformation
+for safe operations. A safe operation is an operation which is well-typed
+for a nullable source. However, it is hard to define safe operations
+formally considering operations overloading, complex relations between
+operation parameters types (please see the typing rules for the equality
+operator), and user-defined operations.
