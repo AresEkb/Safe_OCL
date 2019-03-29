@@ -227,8 +227,8 @@ text \<open>
 
 inductive numeric_unop_type where
   "numeric_unop_type UMinusOp Real[1] Real[1]"
-| "numeric_unop_type UMinusOp UnlimitedNatural[1] Integer[1]"
 | "numeric_unop_type UMinusOp Integer[1] Integer[1]"
+| "numeric_unop_type UMinusOp UnlimitedNatural[1] Integer[1]"
 
 | "numeric_unop_type AbsOp Real[1] Real[1]"
 | "numeric_unop_type AbsOp Integer[1] Integer[1]"
@@ -236,7 +236,7 @@ inductive numeric_unop_type where
 | "numeric_unop_type FloorOp Real[1] Integer[1]"
 | "numeric_unop_type RoundOp Real[1] Integer[1]"
 
-| "numeric_unop_type numeric_unop.ToIntegerOp UnlimitedNatural[1] Integer[1]"
+| "numeric_unop_type numeric_unop.ToIntegerOp UnlimitedNatural[1] Integer[1!]"
 
 inductive numeric_binop_type where
   "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
@@ -279,9 +279,9 @@ inductive string_unop_type where
 | "string_unop_type CharactersOp String[1] (Sequence String[1]\<^sub>N)[1]"
 | "string_unop_type ToUpperCaseOp String[1] String[1]"
 | "string_unop_type ToLowerCaseOp String[1] String[1]"
-| "string_unop_type ToBooleanOp String[1] Boolean[1]"
-| "string_unop_type ToIntegerOp String[1] Integer[1]"
-| "string_unop_type ToRealOp String[1] Real[1]"
+| "string_unop_type ToBooleanOp String[1] Boolean[1!]"
+| "string_unop_type ToRealOp String[1] Real[1!]"
+| "string_unop_type ToIntegerOp String[1] Integer[1!]"
 
 inductive string_binop_type where
   "string_binop_type ConcatOp String[1] String[1] String[1]"
@@ -305,16 +305,19 @@ text \<open>
   Please take a note, that @{text "flatten()"} preserves a collection kind.\<close>
 
 inductive collection_unop_type where
-  "element_type \<tau> _ \<Longrightarrow>
+  "is_collection_type \<tau> \<Longrightarrow>
+   is_required_type \<tau> \<Longrightarrow>
    collection_unop_type CollectionSizeOp \<tau> Integer[1]"
-| "element_type \<tau> _ \<Longrightarrow>
+| "is_collection_type \<tau> \<Longrightarrow>
+   is_required_type \<tau> \<Longrightarrow>
    collection_unop_type IsEmptyOp \<tau> Boolean[1]"
-| "element_type \<tau> _ \<Longrightarrow>
+| "is_collection_type \<tau> \<Longrightarrow>
+   is_required_type \<tau> \<Longrightarrow>
    collection_unop_type NotEmptyOp \<tau> Boolean[1]"
 
-| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> is_required_type \<tau> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
-| "element_type \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''max'' [\<sigma>] oper \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> is_required_type \<tau> \<Longrightarrow> operation \<sigma> STR ''max'' [\<sigma>] oper \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
 
 | "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
@@ -420,7 +423,8 @@ inductive collection_binop_type where
 | "collection_binop_type IntersectionOp (Bag \<tau>)[1] (Set \<sigma>)[1] (Set (\<tau> \<squnion> \<sigma>))[1]"
 | "collection_binop_type IntersectionOp (Bag \<tau>)[1] (Bag \<sigma>)[1] (Bag (\<tau> \<squnion> \<sigma>))[1]"
 
-| "collection_binop_type SetMinusOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set \<tau>)[1]"
+| "\<tau> \<le> \<sigma> \<or> \<sigma> \<le> \<tau> \<Longrightarrow>
+   collection_binop_type SetMinusOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set \<tau>)[1]"
 | "collection_binop_type SymmetricDifferenceOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set (\<tau> \<squnion> \<sigma>))[1]"
 
 | "element_type \<tau> \<rho> \<Longrightarrow> update_element_type \<tau> (\<rho> \<squnion> \<sigma>) \<upsilon> \<Longrightarrow>
@@ -451,15 +455,15 @@ code_pred [show_modes] collection_binop_type .
 
 inductive collection_ternop_type where
   "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
-   collection_ternop_type InsertAtOp (OrderedSet \<tau>)[1] \<sigma> (ErrorFree \<rho>) (OrderedSet \<tau>)[1]"
+   collection_ternop_type InsertAtOp (OrderedSet \<tau>)[1] \<sigma> (ErrorFree \<rho>) (OrderedSet \<tau>)[1!]"
 | "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
-   collection_ternop_type InsertAtOp (Sequence \<tau>)[1] \<sigma> (ErrorFree \<rho>) (Sequence \<tau>)[1]"
+   collection_ternop_type InsertAtOp (Sequence \<tau>)[1] \<sigma> (ErrorFree \<rho>) (Sequence \<tau>)[1!]"
 | "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   collection_ternop_type SubOrderedSetOp (OrderedSet \<tau>)[1] \<sigma> \<rho> (OrderedSet \<tau>)[1]"
+   collection_ternop_type SubOrderedSetOp (OrderedSet \<tau>)[1] \<sigma> \<rho> (OrderedSet \<tau>)[1!]"
 | "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   collection_ternop_type SubSequenceOp (Sequence \<tau>)[1] \<sigma> \<rho> (Sequence \<tau>)[1]"
+   collection_ternop_type SubSequenceOp (Sequence \<tau>)[1] \<sigma> \<rho> (Sequence \<tau>)[1!]"
 
 subsection \<open>Coercions\<close>
 

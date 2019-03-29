@@ -1208,6 +1208,8 @@ lemma type\<^sub>N_less_eq_right_simps [simp]:
 
 section \<open>Upper Semilattice of Types\<close>
 
+notation sup (infixl "\<squnion>" 65)
+
 fun type_sup (infixl "\<squnion>\<^sub>T" 65)
 and type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65) where
   "OclAny \<squnion>\<^sub>T \<sigma> = OclAny"
@@ -1241,7 +1243,7 @@ and type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65) where
      | _ \<Rightarrow> OclAny)"
 
 | "\<langle>\<C>\<rangle>\<^sub>\<T> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
-    of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>sup \<C> \<D>\<rangle>\<^sub>\<T>
+    of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>\<C> \<squnion> \<D>\<rangle>\<^sub>\<T>
      | OclVoid \<Rightarrow> \<langle>\<C>\<rangle>\<^sub>\<T>
      | _ \<Rightarrow> OclAny)"
 | "Enum \<E> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
@@ -1301,8 +1303,6 @@ and type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65) where
 | "Optional \<tau> \<squnion>\<^sub>N \<sigma> = (case \<sigma>
     of Required \<rho> \<Rightarrow> Optional (\<tau> \<squnion>\<^sub>T \<rho>)
      | Optional \<rho> \<Rightarrow> Optional (\<tau> \<squnion>\<^sub>T \<rho>))"
-
-notation sup (infixl "\<squnion>" 65)
 
 lemma sup_ge1_type:
   "\<tau> \<le> \<tau> \<squnion>\<^sub>T \<sigma>"
