@@ -82,13 +82,6 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
-fun is_optional\<^sub>N
-and is_optional\<^sub>N\<^sub>E where
-  "is_optional\<^sub>N (Required \<tau>) = False"
-| "is_optional\<^sub>N (Optional \<tau>) = True"
-| "is_optional\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_optional\<^sub>N \<tau>"
-| "is_optional\<^sub>N\<^sub>E (Errorable \<tau>) = is_optional\<^sub>N \<tau>"
-
 inductive normalize
     :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
     ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50) and
@@ -120,30 +113,27 @@ inductive normalize
   "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> StaticOperationCall \<tau> op params\<^sub>1 \<Rrightarrow> StaticOperationCall \<tau> op params\<^sub>2"
 
-|OclAnyDotCallN:
+|SingleDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   (*\<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow>*)
-   \<not> is_collection\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   \<not> is_collection_type \<tau> \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 DotCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>2 DotCall call\<^sub>2"
-|OclAnySafeDotCallN:
+|SingleSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   (*OclVoid[?] \<le> \<tau> \<Longrightarrow>*)
-   \<not> is_collection\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   is_optional\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   (\<Gamma>, to_required_type\<^sub>N\<^sub>E \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
-   src\<^sub>3 = TypeOperationCall src\<^sub>2 DotCall OclAsTypeOp (to_required_type\<^sub>N\<^sub>E \<tau>) \<Longrightarrow>
+   \<not> is_collection_type \<tau> \<Longrightarrow>
+   is_optional_type \<tau> \<Longrightarrow>
+   (\<Gamma>, to_required_type \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   src\<^sub>3 = TypeOperationCall src\<^sub>2 DotCall OclAsTypeOp (to_required_type \<tau>) \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeDotCall call\<^sub>1 \<Rrightarrow>
        If (OperationCall src\<^sub>2 DotCall NotEqualOp [NullLiteral])
           (Call src\<^sub>3 DotCall call\<^sub>2)
           NullLiteral"
-|OclAnyArrowCallN:
+|SingleArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   (*\<tau> \<le> OclAny[?] \<or> \<tau> \<le> Tuple fmempty \<Longrightarrow>*)
-   \<not> is_collection\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   \<not> is_collection_type \<tau> \<Longrightarrow>
    src\<^sub>3 = OperationCall src\<^sub>2 DotCall OclAsSetOp [] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<sigma> \<Longrightarrow>
    (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
@@ -152,24 +142,23 @@ inductive normalize
 |CollectionArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   element_type\<^sub>N\<^sub>E \<tau> _ \<Longrightarrow>
+   is_collection_type \<tau> \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 ArrowCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>2 ArrowCall call\<^sub>2"
 |CollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
-   (*OclVoid[?] \<le> \<sigma> \<Longrightarrow>*)
-   is_optional\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
+   element_type \<tau> \<sigma> \<Longrightarrow>
+   is_optional_type \<sigma> \<Longrightarrow>
    src\<^sub>3 = TypeOperationCall src\<^sub>2 ArrowCall SelectByKindOp
-              (to_required_type\<^sub>N\<^sub>E \<sigma>) \<Longrightarrow>
+              (to_required_type \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
    (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 SafeArrowCall call\<^sub>1 \<Rrightarrow> Call src\<^sub>3 ArrowCall call\<^sub>2"
 |CollectionDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
+   element_type \<tau> \<sigma> \<Longrightarrow>
    (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> Call src\<^sub>1 DotCall call\<^sub>1 \<Rrightarrow>
@@ -177,10 +166,9 @@ inductive normalize
 |CollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
-   (*OclVoid[?] \<le> \<sigma> \<Longrightarrow>*)
-   is_optional\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
-   \<rho> = to_required_type\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
+   element_type \<tau> \<sigma> \<Longrightarrow>
+   is_optional_type \<sigma> \<Longrightarrow>
+   \<rho> = to_required_type \<sigma> \<Longrightarrow>
    src\<^sub>3 = TypeOperationCall src\<^sub>2 ArrowCall SelectByKindOp \<rho> \<Longrightarrow>
    (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
@@ -210,7 +198,7 @@ inductive normalize
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its (Some \<sigma>) res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow>
       Iterate its (Some \<sigma>) res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2"
 |ImplicitlyTypedIterateN:
-  "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
+  "element_type \<tau> \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile> res_init\<^sub>1 \<Rrightarrow> res_init\<^sub>2 \<Longrightarrow>
    \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its) \<turnstile>
       Let res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow> Let res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2 \<Longrightarrow>
@@ -221,7 +209,7 @@ inductive normalize
   "\<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its) \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2  \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its (Some \<sigma>) body\<^sub>1 \<Rrightarrow> Iterator iter its (Some \<sigma>) body\<^sub>2"
 |ImplicitlyTypedIteratorN:
-  "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
+  "element_type \<tau> \<sigma> \<Longrightarrow>
    \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, \<sigma>)) its) \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2  \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its None body\<^sub>1 \<Rrightarrow> Iterator iter its (Some \<sigma>) body\<^sub>2"
 
@@ -294,12 +282,12 @@ lemma any_has_not_element_type':
 *)
 (*
 lemma collection_has_element_type:
-  "is_collection\<^sub>N\<^sub>E \<tau> = (\<exists>\<sigma>. element_type\<^sub>N\<^sub>E \<tau> \<sigma>)"
-  by (meson is_collection\<^sub>N\<^sub>E.cases is_collection\<^sub>N\<^sub>E.intros)
+  "is_collection_type\<^sub>N\<^sub>E \<tau> = (\<exists>\<sigma>. element_type\<^sub>N\<^sub>E \<tau> \<sigma>)"
+  by (meson is_collection_type\<^sub>N\<^sub>E.cases is_collection_type\<^sub>N\<^sub>E.intros)
 
 lemma collection_has_element_type':
-  "\<not> is_collection\<^sub>N\<^sub>E \<tau> \<Longrightarrow> element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> False"
-  by (meson is_collection\<^sub>N\<^sub>E.cases is_collection\<^sub>N\<^sub>E.intros)
+  "\<not> is_collection_type\<^sub>N\<^sub>E \<tau> \<Longrightarrow> element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> False"
+  by (meson is_collection_type\<^sub>N\<^sub>E.cases is_collection_type\<^sub>N\<^sub>E.intros)
 *)
 
 lemma
@@ -335,33 +323,33 @@ next
 next
   case (StaticOperationCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<tau> op) thus ?case by blast
 next
-  case (OclAnyDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert OclAnyDotCallN.prems)
+  case (SingleDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
+    apply (insert SingleDotCallN.prems)
     apply (erule DotCallNE)
-    using OclAnyDotCallN.hyps typing_det apply metis
-    using OclAnyDotCallN.hyps(2) OclAnyDotCallN.hyps(3)
-      OclAnyDotCallN.hyps(4) is_collection\<^sub>N\<^sub>E.simps typing_det by fastforce
+    using SingleDotCallN.hyps typing_det apply metis
+    using SingleDotCallN.hyps(2) SingleDotCallN.hyps(3)
+      SingleDotCallN.hyps(4) is_collection_type.simps typing_det by fastforce
 next
-  case (OclAnySafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert OclAnySafeDotCallN.prems)
+  case (SingleSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
+    apply (insert SingleSafeDotCallN.prems)
     apply (erule SafeDotCallNE)
-    using OclAnySafeDotCallN.hyps typing_det comp_apply
+    using SingleSafeDotCallN.hyps typing_det comp_apply
     apply (metis (no_types, lifting) list.simps(8) list.simps(9))
-    using OclAnySafeDotCallN.hyps typing_det any_has_not_element_type'
+    using SingleSafeDotCallN.hyps typing_det any_has_not_element_type'
     by metis
 next
-  case (OclAnyArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert OclAnyArrowCallN.prems)
+  case (SingleArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2) show ?case
+    apply (insert SingleArrowCallN.prems)
     apply (erule ArrowCallNE)
-    using OclAnyArrowCallN.hyps typing_det comp_apply apply metis
-    using OclAnyArrowCallN.hyps(2) OclAnyArrowCallN.hyps(3)
-      OclAnyArrowCallN.hyps(4) is_collection\<^sub>N\<^sub>E.intros typing_det by blast
+    using SingleArrowCallN.hyps typing_det comp_apply apply metis
+    using SingleArrowCallN.hyps(2) SingleArrowCallN.hyps(3)
+      SingleArrowCallN.hyps(4) is_collection_type.intros typing_det by blast
 next
   case (CollectionArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> uu call\<^sub>1 call\<^sub>2) show ?case
     apply (insert CollectionArrowCallN.prems)
     apply (erule ArrowCallNE)
     using CollectionArrowCallN.hyps(2) CollectionArrowCallN.hyps(3)
-      CollectionArrowCallN.hyps(4) is_collection\<^sub>N\<^sub>E.simps typing_det apply blast
+      CollectionArrowCallN.hyps(4) is_collection_type.simps typing_det apply blast
     using CollectionArrowCallN.hyps typing_det by metis
 next
   case (CollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2) show ?case
@@ -370,16 +358,16 @@ next
     by (metis CollectionSafeArrowCallN.hyps(2) CollectionSafeArrowCallN.hyps(3)
         CollectionSafeArrowCallN.hyps(4) CollectionSafeArrowCallN.hyps(6)
         CollectionSafeArrowCallN.hyps(7) CollectionSafeArrowCallN.hyps(9)
-        element_type\<^sub>N\<^sub>E_det typing_det)
+        element_type_det typing_det)
 next
   case (CollectionDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> call\<^sub>1 call\<^sub>2 it) show ?case
     apply (insert CollectionDotCallN.prems)
     apply (erule DotCallNE)
     using CollectionDotCallN.hyps(2) CollectionDotCallN.hyps(3)
-      CollectionDotCallN.hyps(4) is_collection\<^sub>N\<^sub>E.simps typing_det apply force
+      CollectionDotCallN.hyps(4) is_collection_type.simps typing_det apply force
     by (metis CollectionDotCallN.hyps(2) CollectionDotCallN.hyps(3)
           CollectionDotCallN.hyps(4) CollectionDotCallN.hyps(6)
-          CollectionDotCallN.hyps(7) element_type\<^sub>N\<^sub>E_det typing_det)
+          CollectionDotCallN.hyps(7) element_type_det typing_det)
 next
   case (CollectionSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 call\<^sub>1 call\<^sub>2 it) show ?case
     apply (insert CollectionSafeDotCallN.prems)
@@ -414,7 +402,7 @@ next
   show ?case
     apply (insert ImplicitlyTypedIterateN.prems)
     apply (erule IterateCallNE)
-    using ImplicitlyTypedIterateN.hyps element_type\<^sub>N\<^sub>E_det by blast+
+    using ImplicitlyTypedIterateN.hyps element_type_det by blast+
 next
   case (ExplicitlyTypedIteratorN \<Gamma> \<sigma> its body\<^sub>1 body\<^sub>2 \<tau> iter)
   show ?case
@@ -426,7 +414,7 @@ next
   show ?case
     apply (insert ImplicitlyTypedIteratorN.prems)
     apply (erule IteratorCallNE)
-    using ImplicitlyTypedIteratorN.hyps element_type\<^sub>N\<^sub>E_det by blast+
+    using ImplicitlyTypedIteratorN.hyps element_type_det by blast+
 next
   case (ExprListNilN \<Gamma>) thus ?case
     using normalize_expr_list.cases by auto
@@ -458,7 +446,7 @@ section \<open>Code Setup\<close>
 code_pred [show_modes] normalize .
 
 code_pred [show_modes] nf_typing .
-
+(*
 definition "check_type \<Gamma> expr \<tau> \<equiv>
   Predicate.eval (nf_typing_i_i_i \<Gamma> expr \<tau>) ()"
 
@@ -470,5 +458,5 @@ text \<open>
   It is the only usage of the @{text OclInvalid} type.
   This type is not required to define typing rules.
   It is only required to make the typing function total.\<close>
-
+*)
 end

@@ -8,38 +8,9 @@ theory OCL_Typing
   imports OCL_Object_Model "HOL-Library.Transitive_Closure_Table"
 begin
 
-fun to_error_free where
-  "to_error_free (ErrorFree \<tau>) = (ErrorFree \<tau>)"
-| "to_error_free (Errorable \<tau>) = (ErrorFree \<tau>)"
-
-fun to_errorable where
-  "to_errorable (ErrorFree \<tau>) = (Errorable \<tau>)"
-| "to_errorable (Errorable \<tau>) = (Errorable \<tau>)"
-
-definition "ex_errorable \<equiv> list_ex (\<lambda>\<tau>. \<exists>\<sigma>. \<tau> = Errorable \<sigma>)"
-
-lemma ex_errorable_code [code]:
-  "ex_errorable = list_ex (\<lambda>\<tau>. case \<tau> of Errorable _ \<Rightarrow> True | _ \<Rightarrow> False)"
-  unfolding ex_errorable_def
-  apply (intro ext List.list_ex_cong, simp)
-  apply auto
-proof -
-  fix x :: "'a type\<^sub>N\<^sub>E list"
-  fix xa :: "'a type\<^sub>N\<^sub>E"
-  have "(case xa of ErrorFree type\<^sub>N \<Rightarrow> False
-       | Errorable x \<Rightarrow> True) \<Longrightarrow>
-       \<exists>\<sigma>. xa = Errorable \<sigma>"
-    by (cases xa, auto)
-  thus "xa \<in> set x \<Longrightarrow>
-       (case xa of ErrorFree type\<^sub>N \<Rightarrow> False
-       | Errorable x \<Rightarrow> True) \<Longrightarrow>
-       \<exists>\<sigma>. xa = Errorable \<sigma>" by simp
-qed
-
 inductive non_strict_op :: "op \<Rightarrow> bool" where
   "non_strict_op OclIsUndefinedOp"
 | "non_strict_op OclIsInvalidOp"
-| "non_strict_op NotOp"
 | "non_strict_op AndOp"
 | "non_strict_op OrOp"
 | "non_strict_op XorOp"
@@ -72,109 +43,9 @@ text \<open>
 \<^verbatim>\<open>Boolean[1].allInstances() = Set{true, false}
 Boolean[?].allInstances() = Set{true, false, null}\<close>\<close>
 
-lemma Tuple_type_size\<^sub>N\<^sub>E_intro [intro]:
-  "\<tau> |\<in>| fmran \<pi> \<Longrightarrow>
-   type_size\<^sub>N\<^sub>E \<tau> < Suc (ffold tcf 0 (fset_of_fmap (fmmap type_size\<^sub>N\<^sub>E \<pi>)))"
-  using fmran'I by fastforce
-
-fun is_finite_type
-and is_finite_type\<^sub>N
-and is_finite_type\<^sub>N\<^sub>E where
-  "is_finite_type OclAny = False"
-| "is_finite_type OclVoid = True"
-
-| "is_finite_type Boolean = True"
-| "is_finite_type Real = False"
-| "is_finite_type Integer = False"
-| "is_finite_type UnlimitedNatural = False"
-| "is_finite_type String = False"
-
-| "is_finite_type (ObjectType \<C>) = True"
-| "is_finite_type (Enum \<E>) = True"
-
-| "is_finite_type (Collection \<tau>) = False"
-| "is_finite_type (Set \<tau>) = is_finite_type\<^sub>N\<^sub>E \<tau>"
-| "is_finite_type (OrderedSet \<tau>) = is_finite_type\<^sub>N\<^sub>E \<tau>"
-| "is_finite_type (Bag \<tau>) = False"
-| "is_finite_type (Sequence \<tau>) = False"
-
-| "is_finite_type (Tuple \<pi>) = fBall (fmran \<pi>) is_finite_type\<^sub>N\<^sub>E"
-
-| "is_finite_type\<^sub>N (Required \<tau>) = is_finite_type \<tau>"
-| "is_finite_type\<^sub>N (Optional \<tau>) = is_finite_type \<tau>"
-
-| "is_finite_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_finite_type\<^sub>N \<tau>"
-| "is_finite_type\<^sub>N\<^sub>E (Errorable \<tau>) = is_finite_type\<^sub>N \<tau>"
-
-fun is_null_free\<^sub>N
-and is_null_free\<^sub>N\<^sub>E where
-  "is_null_free\<^sub>N (Required \<tau>) = True"
-| "is_null_free\<^sub>N (Optional \<tau>) = False"
-
-| "is_null_free\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_null_free\<^sub>N \<tau>"
-| "is_null_free\<^sub>N\<^sub>E (Errorable \<tau>) = is_null_free\<^sub>N \<tau>"
-
-abbreviation "is_nullable\<^sub>N\<^sub>E \<tau> \<equiv> \<not> is_null_free\<^sub>N\<^sub>E \<tau>"
-
-fun is_error_free\<^sub>N\<^sub>E where
-  "is_error_free\<^sub>N\<^sub>E (ErrorFree \<tau>) = True"
-| "is_error_free\<^sub>N\<^sub>E (Errorable \<tau>) = False"
-
-abbreviation "is_errorable\<^sub>N\<^sub>E \<tau> \<equiv> \<not> is_error_free\<^sub>N\<^sub>E \<tau>"
-
-fun is_error_free_nested
-and is_error_free_nested\<^sub>N
-and is_error_free_nested\<^sub>N\<^sub>E where
-  "is_error_free_nested OclAny = True"
-| "is_error_free_nested OclVoid = True"
-
-| "is_error_free_nested Boolean = True"
-| "is_error_free_nested Real = True"
-| "is_error_free_nested Integer = True"
-| "is_error_free_nested UnlimitedNatural = True"
-| "is_error_free_nested String = True"
-
-| "is_error_free_nested (ObjectType \<C>) = True"
-| "is_error_free_nested (Enum \<E>) = True"
-
-| "is_error_free_nested (Collection \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
-| "is_error_free_nested (Set \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
-| "is_error_free_nested (OrderedSet \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
-| "is_error_free_nested (Bag \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
-| "is_error_free_nested (Sequence \<tau>) = is_error_free_nested\<^sub>N\<^sub>E \<tau>"
-
-| "is_error_free_nested (Tuple \<pi>) = fBall (fmran \<pi>) is_error_free_nested\<^sub>N\<^sub>E"
-
-| "is_error_free_nested\<^sub>N (Required \<tau>) = is_error_free_nested \<tau>"
-| "is_error_free_nested\<^sub>N (Optional \<tau>) = is_error_free_nested \<tau>"
-
-| "is_error_free_nested\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_error_free_nested\<^sub>N \<tau>"
-| "is_error_free_nested\<^sub>N\<^sub>E (Errorable \<tau>) = False"
-
-fun is_allowed_type\<^sub>N
-and is_allowed_type\<^sub>N\<^sub>E where
-  "is_allowed_type\<^sub>N (Required \<tau>) = is_error_free_nested \<tau>"
-| "is_allowed_type\<^sub>N (Optional \<tau>) = is_error_free_nested \<tau>"
-
-| "is_allowed_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_allowed_type\<^sub>N \<tau>"
-| "is_allowed_type\<^sub>N\<^sub>E (Errorable \<tau>) = is_allowed_type\<^sub>N \<tau>"
-
-fun is_object_type
-and is_object_type\<^sub>N
-and is_object_type\<^sub>N\<^sub>E where
-  "is_object_type (ObjectType \<C>) = True"
-| "is_object_type _ = False"
-
-| "is_object_type\<^sub>N (Required \<tau>) = is_object_type \<tau>"
-| "is_object_type\<^sub>N (Optional \<tau>) = is_object_type \<tau>"
-
-| "is_object_type\<^sub>N\<^sub>E (ErrorFree \<tau>) = is_object_type\<^sub>N \<tau>"
-| "is_object_type\<^sub>N\<^sub>E (Errorable \<tau>) = is_object_type\<^sub>N \<tau>"
-
-
 inductive mataop_type where
-  "is_finite_type\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   mataop_type \<tau> AllInstancesOp (Set \<tau>)[1]"
+  "is_finite_type\<^sub>N \<tau> \<Longrightarrow>
+   mataop_type (ErrorFree \<tau>) AllInstancesOp (Set \<tau>)[1]"
 
 subsection \<open>Type Operations\<close>
 
@@ -214,39 +85,62 @@ text \<open>
 \<^verbatim>\<open>Set{1,2,null,'abc'}->selectByKind(OclAny[?])
 Set{1,2,null,'abc'}->selectByKind(Collection(Boolean[1]))\<close>\<close>
 
-(* TODO: Для коллекций и возможно кортежей ошибка должна подниматься наверх,
- а внутри исчезать. Нужно доказать, что внутри ошибок быть не может *)
+(* TODO: Для коллекций и возможно кортежей ошибка должна подниматься наверх *)
+
+inductive is_unsafe_cast\<^sub>T where
+  "is_unsafe_cast\<^sub>T UnlimitedNatural Integer"
+| "is_unsafe_cast\<^sub>T UnlimitedNatural Real"
+
+inductive is_unsafe_cast\<^sub>N where
+  "is_unsafe_cast\<^sub>T \<tau> \<sigma> \<Longrightarrow>
+   is_unsafe_cast\<^sub>N (Required \<tau>) (Required \<sigma>)"
+| "is_unsafe_cast\<^sub>T \<tau> \<sigma> \<Longrightarrow>
+   is_unsafe_cast\<^sub>N (Required \<tau>) (Optional \<sigma>)"
+| "is_unsafe_cast\<^sub>T \<tau> \<sigma> \<Longrightarrow>
+   is_unsafe_cast\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
+
+inductive is_unsafe_cast where
+  "is_unsafe_cast\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   is_unsafe_cast (ErrorFree \<tau>) (ErrorFree \<sigma>)"
+| "is_unsafe_cast\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   is_unsafe_cast (ErrorFree \<tau>) (Errorable \<sigma>)"
+| "is_unsafe_cast\<^sub>N \<tau> \<sigma> \<Longrightarrow>
+   is_unsafe_cast (Errorable \<tau>) (Errorable \<sigma>)"
 
 inductive typeop_type where
-  "\<sigma> < \<tau> \<or> \<tau> < \<sigma> \<Longrightarrow>
+  "\<sigma> < \<tau> \<Longrightarrow>
    typeop_type DotCall OclAsTypeOp \<tau> \<sigma> (to_errorable \<sigma>)"
+| "\<tau> < \<sigma> \<Longrightarrow> is_unsafe_cast \<tau> \<sigma> \<Longrightarrow>
+   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> (to_errorable \<sigma>)"
+| "\<tau> < \<sigma> \<Longrightarrow> \<not> is_unsafe_cast \<tau> \<sigma> \<Longrightarrow>
+   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
 
 | "\<sigma> < \<tau> \<Longrightarrow>
-   is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   is_error_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_required_type \<tau> \<Longrightarrow>
+   is_error_free \<tau> \<Longrightarrow>
    typeop_type DotCall OclIsTypeOfOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   is_nullable\<^sub>N\<^sub>E \<tau> \<or> is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_optional_type \<tau> \<or> is_errorable_type \<tau> \<Longrightarrow>
    typeop_type DotCall OclIsTypeOfOp \<tau> \<sigma> Boolean[1!]"
 
 | "\<sigma> < \<tau> \<Longrightarrow>
-   is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   is_error_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_required_type \<tau> \<Longrightarrow>
+   is_error_free \<tau> \<Longrightarrow>
    typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   is_nullable\<^sub>N\<^sub>E \<tau> \<or> is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+   is_optional_type \<tau> \<or> is_errorable_type \<tau> \<Longrightarrow>
    typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1!]"
 
-| "is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   is_error_free\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
-   element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
-   update_element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<upsilon> \<Longrightarrow>
+| "is_required_type \<tau> \<Longrightarrow>
+   is_error_free \<sigma> \<Longrightarrow>
+   element_type \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+   update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByKindOp \<tau> \<sigma> \<upsilon>"
 
-| "is_null_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   is_error_free\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
-   element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
-   update_element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<upsilon> \<Longrightarrow>
+| "is_required_type \<tau> \<Longrightarrow>
+   is_error_free \<sigma> \<Longrightarrow>
+   element_type \<tau> \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+   update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<upsilon>"
 
 subsection \<open>OclAny Operations\<close>
@@ -257,26 +151,23 @@ text \<open>
   idea to define it once for all types. The OCL specification does not
   state that the operation can return @{text invalid} for a null
   boolean value. Let us suppose that it returns a "null" string.
-  However, I guess that the operation should return @{text invalid}
-  for an invalid value.\<close>
+  However, I guess that the operation should be strict and
+  return @{text invalid} for an invalid value.\<close>
 
 inductive any_unop_type where
-  "\<not> is_collection\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   any_unop_type OclAsSetOp \<tau> (Set (to_required_type\<^sub>N\<^sub>E \<tau>))[1]"
+  "\<not> is_collection_type \<tau> \<Longrightarrow>
+   any_unop_type OclAsSetOp \<tau> (map_errorable_type (\<lambda>\<tau>. (Set \<tau>)[1]\<^sub>N) (to_required_type \<tau>))"
 
-| "is_object_type\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+| "is_object_type \<tau> \<Longrightarrow>
    any_unop_type OclIsNewOp \<tau> Boolean[1]"
 
-| "is_nullable\<^sub>N\<^sub>E \<tau> \<or> is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+| "is_optional_type \<tau> \<or> is_errorable_type \<tau> \<Longrightarrow>
    any_unop_type OclIsUndefinedOp \<tau> Boolean[1]"
 
-| "is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
+| "is_errorable_type \<tau> \<Longrightarrow>
    any_unop_type OclIsInvalidOp \<tau> Boolean[1]"
 
-| "is_error_free\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   any_unop_type ToStringOp \<tau> String[1]"
-| "is_errorable\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   any_unop_type ToStringOp \<tau> String[1!]"
+| "any_unop_type ToStringOp \<tau> String[1]"
 
 text \<open>
   It makes sense to compare values only with compatible types.\<close>
@@ -385,7 +276,7 @@ subsection \<open>String Operations\<close>
 
 inductive string_unop_type where
   "string_unop_type SizeOp String[1] Integer[1]"
-| "string_unop_type CharactersOp String[1] (Sequence String[1])[1]"
+| "string_unop_type CharactersOp String[1] (Sequence String[1]\<^sub>N)[1]"
 | "string_unop_type ToUpperCaseOp String[1] String[1]"
 | "string_unop_type ToLowerCaseOp String[1] String[1]"
 | "string_unop_type ToBooleanOp String[1] Boolean[1]"
@@ -414,45 +305,45 @@ text \<open>
   Please take a note, that @{text "flatten()"} preserves a collection kind.\<close>
 
 inductive collection_unop_type where
-  "element_type\<^sub>N\<^sub>E \<tau> _ \<Longrightarrow>
+  "element_type \<tau> _ \<Longrightarrow>
    collection_unop_type CollectionSizeOp \<tau> Integer[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> _ \<Longrightarrow>
+| "element_type \<tau> _ \<Longrightarrow>
    collection_unop_type IsEmptyOp \<tau> Boolean[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> _ \<Longrightarrow>
+| "element_type \<tau> _ \<Longrightarrow>
    collection_unop_type NotEmptyOp \<tau> Boolean[1]"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''max'' [\<sigma>] oper \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''max'' [\<sigma>] oper \<Longrightarrow>
    collection_unop_type CollectionMaxOp \<tau> \<sigma>"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type CollectionMinOp \<tau> \<sigma>"
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''min'' [\<sigma>] oper \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''min'' [\<sigma>] oper \<Longrightarrow>
    collection_unop_type CollectionMinOp \<tau> \<sigma>"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> \<sigma> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    collection_unop_type SumOp \<tau> \<sigma>"
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''+'' [\<sigma>] oper \<Longrightarrow>
+| "element_type \<tau> \<sigma> \<Longrightarrow> operation \<sigma> STR ''+'' [\<sigma>] oper \<Longrightarrow>
    collection_unop_type SumOp \<tau> \<sigma>"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
-   collection_unop_type AsSetOp \<tau> (Set \<sigma>)[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
-   collection_unop_type AsOrderedSetOp \<tau> (OrderedSet \<sigma>)[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
-   collection_unop_type AsBagOp \<tau> (Bag \<sigma>)[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
-   collection_unop_type AsSequenceOp \<tau> (Sequence \<sigma>)[1]"
+| "element_type \<tau>[1] (ErrorFree \<sigma>) \<Longrightarrow>
+   collection_unop_type AsSetOp \<tau>[1] (Set \<sigma>)[1]"
+| "element_type \<tau>[1] (ErrorFree \<sigma>) \<Longrightarrow>
+   collection_unop_type AsOrderedSetOp \<tau>[1] (OrderedSet \<sigma>)[1]"
+| "element_type \<tau>[1] (ErrorFree \<sigma>) \<Longrightarrow>
+   collection_unop_type AsBagOp \<tau>[1] (Bag \<sigma>)[1]"
+| "element_type \<tau>[1] (ErrorFree \<sigma>) \<Longrightarrow>
+   collection_unop_type AsSequenceOp \<tau>[1] (Sequence \<sigma>)[1]"
 
-| "inner_element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow>
-   update_element_type\<^sub>N\<^sub>E \<tau> \<rho> \<sigma> \<Longrightarrow>
+| "inner_element_type \<tau> \<rho> \<Longrightarrow>
+   update_element_type \<tau> \<rho> \<sigma> \<Longrightarrow>
    collection_unop_type FlattenOp \<tau> \<sigma>"
 
-| "collection_unop_type FirstOp (OrderedSet \<tau>)[1] \<tau>"
-| "collection_unop_type FirstOp (Sequence \<tau>)[1] \<tau>"
-| "collection_unop_type LastOp (OrderedSet \<tau>)[1] \<tau>"
-| "collection_unop_type LastOp (Sequence \<tau>)[1] \<tau>"
+| "collection_unop_type FirstOp (OrderedSet \<tau>)[1] (Errorable \<tau>)"
+| "collection_unop_type FirstOp (Sequence \<tau>)[1] (Errorable \<tau>)"
+| "collection_unop_type LastOp (OrderedSet \<tau>)[1] (Errorable \<tau>)"
+| "collection_unop_type LastOp (Sequence \<tau>)[1] (Errorable \<tau>)"
 | "collection_unop_type ReverseOp (OrderedSet \<tau>)[1] (OrderedSet \<tau>)[1]"
 | "collection_unop_type ReverseOp (Sequence \<tau>)[1] (Sequence \<tau>)[1]"
 
@@ -503,21 +394,21 @@ text \<open>
   operation instead.\<close>
 
 inductive collection_binop_type where
-  "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested\<^sub>N\<^sub>E \<rho> \<Longrightarrow>
+  "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type IncludesOp \<tau> \<sigma> Boolean[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested\<^sub>N\<^sub>E \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type ExcludesOp \<tau> \<sigma> Boolean[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested\<^sub>N\<^sub>E \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type CountOp \<tau> \<sigma> Integer[1]"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> element_type\<^sub>N\<^sub>E \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type_nested\<^sub>N\<^sub>E \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type IncludesAllOp \<tau> \<sigma> Boolean[1]"
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> element_type\<^sub>N\<^sub>E \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type_nested\<^sub>N\<^sub>E \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> element_type \<sigma> \<upsilon> \<Longrightarrow> \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    collection_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> element_type\<^sub>N\<^sub>E \<sigma> \<upsilon> \<Longrightarrow>
+| "element_type \<tau> (ErrorFree \<rho>) \<Longrightarrow> element_type \<sigma> (ErrorFree \<upsilon>) \<Longrightarrow>
    collection_binop_type ProductOp \<tau> \<sigma>
-      (Set (Tuple (fmap_of_list [(STR ''first'', \<rho>), (STR ''second'', \<upsilon>)]))[1])[1]"
+      (Set (Tuple (fmap_of_list [(STR ''first'', \<rho>), (STR ''second'', \<upsilon>)]))[1]\<^sub>N)[1]"
 
 | "collection_binop_type UnionOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set (\<tau> \<squnion> \<sigma>))[1]"
 | "collection_binop_type UnionOp (Set \<tau>)[1] (Bag \<sigma>)[1] (Bag (\<tau> \<squnion> \<sigma>))[1]"
@@ -532,35 +423,37 @@ inductive collection_binop_type where
 | "collection_binop_type SetMinusOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set \<tau>)[1]"
 | "collection_binop_type SymmetricDifferenceOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set (\<tau> \<squnion> \<sigma>))[1]"
 
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> update_element_type\<^sub>N\<^sub>E \<tau> (\<rho> \<squnion> \<sigma>) \<upsilon> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> update_element_type \<tau> (\<rho> \<squnion> \<sigma>) \<upsilon> \<Longrightarrow>
    collection_binop_type IncludingOp \<tau> \<sigma> \<upsilon>"
-| "element_type\<^sub>N\<^sub>E \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow>
+| "element_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow>
    collection_binop_type ExcludingOp \<tau> \<sigma> \<tau>"
 
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type AppendOp (OrderedSet \<tau>)[1] \<sigma> (OrderedSet \<tau>)[1]"
+   collection_binop_type AppendOp (OrderedSet \<tau>)[1] (ErrorFree \<sigma>) (OrderedSet \<tau>)[1]"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type AppendOp (Sequence \<tau>)[1] \<sigma> (Sequence \<tau>)[1]"
+   collection_binop_type AppendOp (Sequence \<tau>)[1] (ErrorFree \<sigma>) (Sequence \<tau>)[1]"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type PrependOp (OrderedSet \<tau>)[1] \<sigma> (OrderedSet \<tau>)[1]"
+   collection_binop_type PrependOp (OrderedSet \<tau>)[1] (ErrorFree \<sigma>) (OrderedSet \<tau>)[1]"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type PrependOp (Sequence \<tau>)[1] \<sigma> (Sequence \<tau>)[1]"
+   collection_binop_type PrependOp (Sequence \<tau>)[1] (ErrorFree \<sigma>) (Sequence \<tau>)[1]"
 
 | "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   collection_binop_type CollectionAtOp (OrderedSet \<tau>)[1] \<sigma> \<tau>"
+   collection_binop_type CollectionAtOp (OrderedSet \<tau>)[1] \<sigma> (Errorable \<tau>)"
 | "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   collection_binop_type CollectionAtOp (Sequence \<tau>)[1] \<sigma> \<tau>"
+   collection_binop_type CollectionAtOp (Sequence \<tau>)[1] \<sigma> (Errorable \<tau>)"
 
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type CollectionIndexOfOp (OrderedSet \<tau>)[1] \<sigma> Integer[1]"
+   collection_binop_type CollectionIndexOfOp (OrderedSet \<tau>)[1] (ErrorFree \<sigma>) Integer[1]"
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
-   collection_binop_type CollectionIndexOfOp (Sequence \<tau>)[1] \<sigma> Integer[1]"
+   collection_binop_type CollectionIndexOfOp (Sequence \<tau>)[1] (ErrorFree \<sigma>) Integer[1]"
+
+code_pred [show_modes] collection_binop_type .
 
 inductive collection_ternop_type where
   "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
-   collection_ternop_type InsertAtOp (OrderedSet \<tau>)[1] \<sigma> \<rho> (OrderedSet \<tau>)[1]"
+   collection_ternop_type InsertAtOp (OrderedSet \<tau>)[1] \<sigma> (ErrorFree \<rho>) (OrderedSet \<tau>)[1]"
 | "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
-   collection_ternop_type InsertAtOp (Sequence \<tau>)[1] \<sigma> \<rho> (Sequence \<tau>)[1]"
+   collection_ternop_type InsertAtOp (Sequence \<tau>)[1] \<sigma> (ErrorFree \<rho>) (Sequence \<tau>)[1]"
 | "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    collection_ternop_type SubOrderedSetOp (OrderedSet \<tau>)[1] \<sigma> \<rho> (OrderedSet \<tau>)[1]"
@@ -599,34 +492,42 @@ inductive ternop_type where
    ternop_type (Inl op) DotCall \<tau> \<sigma> \<rho> \<upsilon>"
 | "collection_ternop_type op \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    ternop_type (Inr op) ArrowCall \<tau> \<sigma> \<rho> \<upsilon>"
+(*
+code_pred [show_modes] unop_type .
+code_pred [show_modes] binop_type .
+code_pred [show_modes] ternop_type .
+*)
+
+definition "op_result_type_is_errorable op \<pi> \<equiv>
+  strict_op op \<and> fBex \<pi> is_errorable_type"
 
 inductive op_type where
   "unop_type op k (to_error_free \<tau>) \<upsilon> \<Longrightarrow>
-   strict_op (Inl op) \<Longrightarrow> ex_errorable [\<tau>] \<Longrightarrow>
+   op_result_type_is_errorable (Inl op) {|\<tau>|} \<Longrightarrow>
    op_type (Inl op) k \<tau> [] (to_errorable \<upsilon>)"
 | "unop_type op k (to_error_free \<tau>) \<upsilon> \<Longrightarrow>
-   non_strict_op (Inl op) \<or> \<not> ex_errorable [\<tau>] \<Longrightarrow>
+   \<not> op_result_type_is_errorable (Inl op) {|\<tau>|} \<Longrightarrow>
    op_type (Inl op) k \<tau> [] \<upsilon>"
 
 | "binop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) \<upsilon> \<Longrightarrow>
-   strict_op (Inr (Inl op)) \<Longrightarrow> ex_errorable [\<tau>, \<sigma>] \<Longrightarrow>
+   op_result_type_is_errorable (Inr (Inl op)) {|\<tau>, \<sigma>|} \<Longrightarrow>
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] (to_errorable \<upsilon>)"
 | "binop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) \<upsilon> \<Longrightarrow>
-   non_strict_op (Inr (Inl op)) \<or> \<not> ex_errorable [\<tau>, \<sigma>] \<Longrightarrow>
+   \<not> op_result_type_is_errorable (Inr (Inl op)) {|\<tau>, \<sigma>|} \<Longrightarrow>
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>"
 
 | "ternop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) (to_error_free \<rho>) \<upsilon> \<Longrightarrow>
-   strict_op (Inr (Inr (Inl op))) \<Longrightarrow> ex_errorable [\<tau>, \<sigma>, \<rho>] \<Longrightarrow>
+   op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] (to_errorable \<upsilon>)"
 | "ternop_type op k (to_error_free \<tau>) (to_error_free \<sigma>) (to_error_free \<rho>) \<upsilon> \<Longrightarrow>
-   non_strict_op (Inr (Inr (Inl op))) \<or> \<not> ex_errorable [\<tau>, \<sigma>, \<rho>] \<Longrightarrow>
+   \<not> op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>"
 
 | "operation \<tau> op \<pi> oper \<Longrightarrow>
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
 (* TODO: Remove *)
-(*code_pred [show_modes] op_type .*)
+code_pred [show_modes] op_type .
 
 (*** Simplification Rules ***************************************************)
 
@@ -660,11 +561,16 @@ inductive_simps op_type_alt_simps:
 
 subsection \<open>Determinism\<close>
 
+lemma mataop_type_det:
+  "mataop_type \<tau> op \<sigma> \<Longrightarrow>
+   mataop_type \<tau> op \<rho> \<Longrightarrow> \<sigma> = \<rho>"
+  by (auto simp: mataop_type.simps)
+
 lemma typeop_type_det:
   "typeop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    typeop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   by (induct rule: typeop_type.induct;
-      auto simp add: typeop_type.simps update_element_type\<^sub>N\<^sub>E_det)
+      auto simp add: typeop_type.simps update_element_type_det)
 
 lemma any_unop_type_det:
   "any_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -689,11 +595,9 @@ lemma string_unop_type_det:
 lemma collection_unop_type_det:
   "collection_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    collection_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  apply (induct rule: collection_unop_type.induct)
-  apply (erule collection_unop_type.cases; simp add: element_type\<^sub>N\<^sub>E_det)+
-  using inner_element_type\<^sub>N\<^sub>E_det update_element_type\<^sub>N\<^sub>E_det apply blast
-  apply (erule collection_unop_type.cases; simp)+
-  done
+  apply (simp add: collection_unop_type.simps)
+  using element_type_det apply auto
+  using update_element_type_det inner_element_type_det by blast
 
 lemma unop_type_det:
   "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -728,7 +632,7 @@ lemma collection_binop_type_det:
   "collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    collection_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   apply (induct rule: collection_binop_type.induct; simp add: collection_binop_type.simps)
-  using element_type\<^sub>N\<^sub>E_det update_element_type\<^sub>N\<^sub>E_det by blast+
+  using element_type_det update_element_type_det by blast+
 
 lemma binop_type_det:
   "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
@@ -757,13 +661,9 @@ lemma ternop_type_det:
 lemma op_type_det:
   "op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
    op_type op k \<tau> \<pi> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  apply (induct rule: op_type.induct)
-  apply (erule op_type.cases; simp add: unop_type_det)
-  using unop_type_det apply blast
-  apply (smt Inl_Inr_False Inl_inject list.distinct(1) op_type.simps unop_type_det)
-  apply (erule op_type.cases; simp add: binop_type_det)
-  apply (erule op_type.cases; simp add: ternop_type_det)
-  by (erule op_type.cases; simp; metis operation_det)
+  apply (auto simp add: op_type.simps)
+  using unop_type_det binop_type_det ternop_type_det apply blast+
+  using operation_det by blast
 
 (*** Expressions Typing *****************************************************)
 
@@ -775,10 +675,10 @@ text \<open>
 
 inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightarrow> 'a expr \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool"
        ("(1_/ \<turnstile>\<^sub>E/ (_ :/ _))" [51,51,51] 50)
-    and collection_parts_typing ("(1_/ \<turnstile>\<^sub>C/ (_ :/ _))" [51,51,51] 50)
-    and collection_part_typing ("(1_/ \<turnstile>\<^sub>P/ (_ :/ _))" [51,51,51] 50)
-    and iterator_typing ("(1_/ \<turnstile>\<^sub>I/ (_ :/ _))" [51,51,51] 50)
-    and expr_list_typing ("(1_/ \<turnstile>\<^sub>L/ (_ :/ _))" [51,51,51] 50) where
+      and collection_parts_typing ("(1_/ \<turnstile>\<^sub>C/ (_ :/ _))" [51,51,51] 50)
+      and collection_part_typing ("(1_/ \<turnstile>\<^sub>P/ (_ :/ _))" [51,51,51] 50)
+      and iterator_typing ("(1_/ \<turnstile>\<^sub>I/ (_ :/ _))" [51,51,51] 50)
+      and expr_list_typing ("(1_/ \<turnstile>\<^sub>L/ (_ :/ _))" [51,51,51] 50) where
 
 \<comment> \<open>Primitive Literals\<close>
 
@@ -801,16 +701,16 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 \<comment> \<open>Collection Literals\<close>
 
 |SetLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind prts : (Set \<tau>)[1]"
 |OrderedSetLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral OrderedSetKind prts : (OrderedSet \<tau>)[1]"
 |BagLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral BagKind prts : (Bag \<tau>)[1]"
 |SequenceLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral SequenceKind prts : (Sequence \<tau>)[1]"
 
 \<comment> \<open>We prohibit empty collection literals, because their type is unclear.
@@ -844,10 +744,10 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : (Tuple fmempty)[1]"
 |TupleLiteralConsT:
   "\<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : (Tuple \<xi>)[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E tuple_element_expr el : \<tau> \<Longrightarrow>
-   tuple_element_type el = Some \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E tuple_literal_element_expr el : (ErrorFree \<tau>) \<Longrightarrow>
+   tuple_literal_element_type el = Some \<sigma> \<Longrightarrow>
    \<tau> \<le> \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E TupleLiteral (el # elems) : (Tuple (\<xi>(tuple_element_name el \<mapsto>\<^sub>f \<sigma>)))[1]"
+   \<Gamma> \<turnstile>\<^sub>E TupleLiteral (el # elems) : (Tuple (\<xi>(tuple_literal_element_name el \<mapsto>\<^sub>f \<sigma>)))[1]"
 
 \<comment> \<open>Misc Expressions\<close>
 
@@ -904,14 +804,14 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 
 |TupleElementCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<sigma> \<Longrightarrow>
-   tuple_element\<^sub>N\<^sub>E \<sigma> elem \<tau> \<Longrightarrow>
+   tuple_element_type \<sigma> elem \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<tau>"
 
 \<comment> \<open>Iterator Expressions\<close>
 
 |IteratorT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   element_type\<^sub>N\<^sub>E \<tau> \<sigma> \<Longrightarrow>
+   element_type \<tau> \<sigma> \<Longrightarrow>
    \<sigma> \<le> its_ty \<Longrightarrow>
    \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, its_ty)) its) \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty), body) : (\<tau>, \<sigma>, \<rho>)"
@@ -930,22 +830,22 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    (* По-моему тут ошибка, должен быть просто element_type? *)
-   to_single_type\<^sub>N\<^sub>E \<rho> \<rho>' \<Longrightarrow>
+   to_single_type \<rho> \<rho>' \<Longrightarrow>
    \<rho>' \<le> \<sigma> \<Longrightarrow>
-   to_unique_collection\<^sub>N\<^sub>E \<tau> \<upsilon> \<Longrightarrow>
+   to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src ArrowCall its its_ty body : \<upsilon>"
 |CollectIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   to_nonunique_collection\<^sub>N\<^sub>E \<tau> \<upsilon> \<Longrightarrow>
-   to_single_type\<^sub>N\<^sub>E \<rho> \<rho>' \<Longrightarrow>
-   update_element_type\<^sub>N\<^sub>E \<upsilon> \<rho>' \<phi> \<Longrightarrow>
+   to_nonunique_collection_type \<tau> \<upsilon> \<Longrightarrow>
+   to_single_type \<rho> \<rho>' \<Longrightarrow>
+   update_element_type \<upsilon> \<rho>' \<phi> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src ArrowCall its its_ty body : \<phi>"
 |CollectNestedIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   to_nonunique_collection\<^sub>N\<^sub>E \<tau> \<upsilon> \<Longrightarrow>
-   update_element_type\<^sub>N\<^sub>E \<upsilon> \<rho> \<phi> \<Longrightarrow>
+   to_nonunique_collection_type \<tau> \<upsilon> \<Longrightarrow>
+   update_element_type \<upsilon> \<rho> \<phi> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src ArrowCall its its_ty body : \<phi>"
 |ExistsIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
@@ -977,7 +877,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |SortedByIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   to_ordered_collection\<^sub>N\<^sub>E \<tau> \<upsilon> \<Longrightarrow>
+   to_ordered_collection_type \<tau> \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src ArrowCall its its_ty body : \<upsilon>"
 
 \<comment> \<open>Expression Lists\<close>
@@ -1141,7 +1041,7 @@ next
   case (CollectionPartsSingletonT \<Gamma> x \<tau>) thus ?case by blast
 next
   case (CollectionPartsListT \<Gamma> x \<tau> y xs \<sigma>) thus ?case
-    by (metis CollectionPartsItemTE sup_type\<^sub>N\<^sub>E_def)
+    by (metis CollectionPartsItemTE)
 next
   case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by blast
 next
@@ -1164,7 +1064,7 @@ next
     by (simp add: IfT.hyps)
 next
   case (MetaOperationCallT \<tau> op \<sigma> \<Gamma>) thus ?case
-    by (metis MetaOperationCallTE mataop_type.cases)
+    by (meson MetaOperationCallTE mataop_type_det)
 next
   case (StaticOperationCallT \<tau> op \<pi> oper \<Gamma> as) thus ?case
     apply (insert StaticOperationCallT.prems)
@@ -1200,12 +1100,12 @@ next
     apply (insert TupleElementCallT.prems)
     apply (erule TupleElementCallTE)
     using TupleElementCallT.hyps
-    by (simp add: tuple_element\<^sub>N\<^sub>E_det)
+    by (simp add: tuple_element_type_det)
 next
   case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>) show ?case
     apply (insert IteratorT.prems)
     apply (erule IteratorTE)
-    using IteratorT.hyps element_type\<^sub>N\<^sub>E_det by blast
+    using IteratorT.hyps element_type_det by blast
 next
   case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) show ?case
     apply (insert IterateT.prems)
@@ -1217,19 +1117,19 @@ next
   case (ClosureIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert ClosureIteratorT.prems)
     apply (erule ClosureIteratorTE)
-    using ClosureIteratorT.hyps to_unique_collection\<^sub>N\<^sub>E_det by blast
+    using ClosureIteratorT.hyps to_unique_collection_type_det by blast
 next
   case (CollectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert CollectIteratorT.prems)
     apply (erule CollectIteratorTE)
-    using CollectIteratorT.hyps to_nonunique_collection\<^sub>N\<^sub>E_det
-      update_element_type\<^sub>N\<^sub>E_det Pair_inject to_single_type\<^sub>N\<^sub>E_det by metis
+    using CollectIteratorT.hyps to_nonunique_collection_type_det
+      update_element_type_det Pair_inject to_single_type_det by metis
 next
   case (CollectNestedIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert CollectNestedIteratorT.prems)
     apply (erule CollectNestedIteratorTE)
-    using CollectNestedIteratorT.hyps to_nonunique_collection\<^sub>N\<^sub>E_det
-      update_element_type\<^sub>N\<^sub>E_det Pair_inject by metis
+    using CollectNestedIteratorT.hyps to_nonunique_collection_type_det
+      update_element_type_det Pair_inject by metis
 next
   case (ExistsIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
     apply (insert ExistsIteratorT.prems)
@@ -1264,7 +1164,7 @@ next
   case (SortedByIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
     apply (insert SortedByIteratorT.prems)
     apply (erule SortedByIteratorTE)
-    using SortedByIteratorT.hyps to_ordered_collection\<^sub>N\<^sub>E_det by blast
+    using SortedByIteratorT.hyps to_ordered_collection_type_det by blast
 next
   case (ExprListNilT \<Gamma>) thus ?case
     using expr_list_typing.cases by auto
@@ -1274,186 +1174,6 @@ next
     apply (erule ExprListTE)
     by (simp_all add: ExprListConsT.hyps)
 qed
-
-inductive_cases CollectionPartsTE: "\<Gamma> \<turnstile>\<^sub>C prts : \<tau>"
-inductive_cases CollectionPartTE: "\<Gamma> \<turnstile>\<^sub>P prt : \<tau>"
-
-(*
-inductive_cases CollectionItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
-inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
-*)
-
-value "is_allowed_type\<^sub>N\<^sub>E (Boolean)[?!]"
-value "is_error_free_nested\<^sub>N\<^sub>E (Boolean)[?!]"
-
-lemma is_allowed_type_sup [intro]:
-  "is_allowed_type\<^sub>N\<^sub>E \<tau> \<Longrightarrow>
-   is_allowed_type\<^sub>N\<^sub>E \<sigma> \<Longrightarrow>
-   is_allowed_type\<^sub>N\<^sub>E (\<tau> \<squnion> \<sigma>)"
-  sorry
-
-lemma
-  typing_allowed:
-    "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
-     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
-     is_allowed_type\<^sub>N\<^sub>E \<tau>" and
-  collection_parts_typing_allowed:
-    "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
-     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
-     is_allowed_type\<^sub>N\<^sub>E \<tau>" and
-  collection_part_typing_allowed:
-    "\<Gamma> \<turnstile>\<^sub>P prt : \<tau> \<Longrightarrow>
-     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
-     is_allowed_type\<^sub>N\<^sub>E \<tau>" and
-  iterator_typing_allowed:
-    "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow>
-     xs = (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
-     is_allowed_type\<^sub>N\<^sub>E \<tau> \<and> is_allowed_type\<^sub>N\<^sub>E \<sigma> \<and> is_allowed_type\<^sub>N\<^sub>E \<rho>" and
-  expr_list_typing_allowed:
-    "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
-     fBall (fmran \<Gamma>) is_allowed_type\<^sub>N\<^sub>E \<Longrightarrow>
-     list_all is_allowed_type\<^sub>N\<^sub>E \<pi>"
-proof (induct rule: typing_collection_parts_typing_collection_part_typing_iterator_typing_expr_list_typing.inducts)
-  case (NullLiteralT \<Gamma>) show ?case by simp
-next
-  case (BooleanLiteralT \<Gamma> c) show ?case by simp
-next
-  case (RealLiteralT \<Gamma> c) show ?case by simp
-next
-  case (IntegerLiteralT \<Gamma> c) show ?case by simp
-next
-  case (UnlimitedNaturalLiteralT \<Gamma> c) show ?case by simp
-next
-  case (StringLiteralT \<Gamma> c) show ?case by simp
-next
-  case (EnumLiteralT enum lit \<Gamma>) show ?case by simp
-next
-  case (SetLiteralT \<Gamma> prts \<tau>)
-  then show ?case apply (insert SetLiteralT)
-    apply (erule CollectionPartsTE, auto)
-     apply (erule CollectionPartTE, auto)
-    prefer 2
-     apply (erule CollectionPartTE, auto)
-next
-  case (OrderedSetLiteralT \<Gamma> prts \<tau>)
-  then show ?case sorry
-next
-  case (BagLiteralT \<Gamma> prts \<tau>)
-  then show ?case sorry
-next
-  case (SequenceLiteralT \<Gamma> prts \<tau>)
-then show ?case sorry
-next
-  case (CollectionPartsSingletonT \<Gamma> x \<tau>) thus ?case by simp
-next
-  case (CollectionPartsListT \<Gamma> x \<tau> y xs \<sigma>)
-  then show ?case
-    using is_allowed_type_sup by auto
-next
-  case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by simp
-next
-  case (CollectionPartRangeT \<Gamma> a \<tau> b \<sigma>) thus ?case by simp
-next
-  case (TupleLiteralNilT \<Gamma>) thus ?case by simp
-next
-  case (TupleLiteralConsT \<Gamma> elems \<xi> el \<tau> \<sigma>) thus ?case apply auto
-  then show ?case sorry
-next
-  case (LetT \<Gamma> init \<sigma> \<tau> v body \<rho>)
-  then show ?case apply auto sorry
-next
-  case (VarT \<Gamma> v \<tau>)
-  then show ?case sorry
-next
-  case (IfT \<Gamma> a b \<sigma> c \<rho>)
-  then show ?case sorry
-next
-  case (MetaOperationCallT \<tau> op \<sigma> \<Gamma>)
-  then show ?case sorry
-next
-  case (StaticOperationCallT \<Gamma> params \<pi> \<tau> op oper)
-  then show ?case sorry
-next
-  case (TypeOperationCallT \<Gamma> a \<tau> k op \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (AttributeCallT \<Gamma> src \<C> "prop" \<D> \<tau>)
-  then show ?case sorry
-next
-  case (AssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
-  then show ?case sorry
-next
-  case (AssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
-  then show ?case sorry
-next
-  case (AssociationClassEndCallT \<Gamma> src \<A> role "end")
-  then show ?case sorry
-next
-  case (OperationCallT \<Gamma> src \<tau> params \<pi> op k \<sigma>)
-  then show ?case sorry
-next
-  case (TupleElementCallT \<Gamma> src \<sigma> elem \<tau>)
-  then show ?case sorry
-next
-  case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>)
-  then show ?case sorry
-next
-  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (AnyIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (ClosureIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<rho>' \<upsilon>)
-  then show ?case sorry
-next
-  case (CollectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<rho>' \<phi>)
-  then show ?case sorry
-next
-  case (CollectNestedIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<phi>)
-  then show ?case sorry
-next
-  case (ExistsIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (ForAllIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (OneIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (IsUniqueIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (SelectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (RejectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>)
-  then show ?case sorry
-next
-  case (SortedByIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>)
-  then show ?case sorry
-next
-  case (ExprListNilT \<Gamma>)
-  then show ?case sorry
-next
-  case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>)
-  then show ?case sorry
-qed
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (*** Code Setup *************************************************************)
 

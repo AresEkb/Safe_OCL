@@ -23,14 +23,14 @@ definition
     else
       if assoc_end_unique end then
         if assoc_end_ordered end
-        then (OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]
-        else (Set \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]
+        then (OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]
+        else (Set \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]
       else
         if assoc_end_ordered end
-        then (Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]
-        else (Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1])[1]"
+        then (Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]
+        else (Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]"
 
-definition "class_assoc_type \<A> \<equiv> (Set \<langle>\<A>\<rangle>\<^sub>\<T>[1])[1]"
+definition "class_assoc_type \<A> \<equiv> (Set \<langle>\<A>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]"
 
 definition "class_assoc_end_type end \<equiv> \<langle>assoc_end_class end\<rangle>\<^sub>\<T>[1]"
 
@@ -38,8 +38,12 @@ definition "oper_type op \<equiv>
   let params = oper_out_params op in
   if length params = 0
   then oper_result op
-  else (Tuple (fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
-    (params @ [(STR ''result'', oper_result op, Out)]))))[1]"
+  else
+    let elems = fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
+          (params @ [(STR ''result'', oper_result op, Out)])) in
+    if fBex (fmran elems) is_errorable_type
+    then (Tuple (fmmap unwrap_errorable_type elems))[1!]
+    else (Tuple (fmmap unwrap_errorable_type elems))[1]"
 
 class ocl_object_model =
   fixes classes :: "'a :: semilattice_sup fset"

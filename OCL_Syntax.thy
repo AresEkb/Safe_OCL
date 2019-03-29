@@ -5,7 +5,7 @@
 *)
 chapter \<open>Abstract Syntax\<close>
 theory OCL_Syntax
-  imports Complex_Main Object_Model OCL_Types
+  imports Complex_Main Object_Model OCL_Errorable_Types
 begin
 
 section \<open>Preliminaries\<close>
@@ -165,7 +165,7 @@ and 'a literal_expr =
 | EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
 | CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
-| TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N\<^sub>E option \<times> 'a expr) list")
+| TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N option \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
@@ -183,9 +183,9 @@ and 'a call_expr =
 | Iterator iterator (iterators : "vname list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
     (body_expr : "'a expr")
 
-definition "tuple_element_name \<equiv> fst"
-definition "tuple_element_type \<equiv> fst \<circ> snd"
-definition "tuple_element_expr \<equiv> snd \<circ> snd"
+definition "tuple_literal_element_name \<equiv> fst"
+definition "tuple_literal_element_type \<equiv> fst \<circ> snd"
+definition "tuple_literal_element_expr \<equiv> snd \<circ> snd"
 
 declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 
