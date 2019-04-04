@@ -531,7 +531,7 @@ inductive op_type where
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
 (* TODO: Remove *)
-code_pred [show_modes] op_type .
+(*code_pred [show_modes] op_type .*)
 
 (*** Simplification Rules ***************************************************)
 
@@ -717,18 +717,12 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral SequenceKind prts : (Sequence \<tau>)[1]"
 
-\<comment> \<open>We prohibit empty collection literals, because their type is unclear.
-  We could use @{text "OclVoid[1]"} element type for empty collections, but
-  the typing rules will give wrong types for nested collections, because,
-  for example, @{text "OclVoid[1] \<squnion> Set(Integer[1]) = OclSuper"}\<close>
-
-|CollectionPartsSingletonT:
+|CollectionPartsNilT:
+  "\<Gamma> \<turnstile>\<^sub>C [] : OclVoid[1]"
+|CollectionPartsConsT:
   "\<Gamma> \<turnstile>\<^sub>P x : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
-|CollectionPartsListT:
-  "\<Gamma> \<turnstile>\<^sub>P x : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>C y # xs : \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau> \<squnion> \<sigma>"
+   \<Gamma> \<turnstile>\<^sub>C xs : \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>C x # xs : \<tau> \<squnion> \<sigma>"
 
 |CollectionPartItemT:
   "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
@@ -740,9 +734,25 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
    \<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>P CollectionRange a b : Integer[1]"
 
+\<comment> \<open>Map Literals\<close>
+
+(* Я думаю, стоит доказать, что система типов - это полная решетка.
+   И сказать что-то про наименьшие элементы (вообще, для коллекций, отображений),
+   чтобы показать, что такие правила обоснованы.
+   И про наибольшие написать (вообще, для кортежей, коллекций, ...)
+
+   Возможно стоит доказать, что некоторые правила всегда возвращают нужные типы.
+   Сейчас это не очевидно, там просто задан "начальный" элемент и операция супремума *)
+
+|MapNilT:
+  "\<Gamma> \<turnstile>\<^sub>E MapLiteral [] : (Map OclVoid[1]\<^sub>N OclVoid[1]\<^sub>N)[1]"
+|MapConsT:
+  "\<Gamma> \<turnstile>\<^sub>E map_literal_element_key x : (ErrorFree \<tau>) \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E map_literal_element_value x : (ErrorFree \<sigma>) \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E MapLiteral xs : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E MapLiteral (x # xs) : (Map \<tau> \<sigma>)[1] \<squnion> \<rho>"
+
 \<comment> \<open>Tuple Literals\<close>
-\<comment> \<open>We do not prohibit empty tuples, because it could be useful.
-  @{text "Tuple()"} is a supertype of all other tuple types.\<close>
 
 |TupleLiteralNilT:
   "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : (Tuple fmempty)[1]"
@@ -817,7 +827,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    element_type \<tau> \<sigma> \<Longrightarrow>
    \<sigma> \<le> its_ty \<Longrightarrow>
-   \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (it, its_ty)) its) \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
+   \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (fst it, its_ty)) its) \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty), body) : (\<tau>, \<sigma>, \<rho>)"
 
 |IterateT:
@@ -905,6 +915,7 @@ inductive_cases UnlimitedNaturalLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E
 inductive_cases StringLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
 inductive_cases EnumLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
 inductive_cases CollectionLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
+inductive_cases MapLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E MapLiteral elems : \<tau>"
 inductive_cases TupleLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : \<tau>"
 
 inductive_cases LetTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
@@ -936,9 +947,11 @@ inductive_cases SelectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SelectIt
 inductive_cases RejectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
 inductive_cases SortedByIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
 
-inductive_cases CollectionPartsNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
-inductive_cases CollectionPartsItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
-
+inductive_cases CollectionPartsTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x : \<tau>"
+(*
+inductive_cases CollectionPartsNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x : \<tau>"
+inductive_cases CollectionPartsItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x # xs : \<tau>"
+*)
 inductive_cases CollectionItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
 inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
 
@@ -957,6 +970,7 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
 
@@ -989,8 +1003,8 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
 
-"\<Gamma> \<turnstile>\<^sub>C [x] : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>C x # y # xs : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C [] : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C x # xs : \<tau>"
 
 "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
@@ -1042,14 +1056,18 @@ next
 next
   case (SequenceLiteralT \<Gamma> prts \<tau>) thus ?case by blast
 next
-  case (CollectionPartsSingletonT \<Gamma> x \<tau>) thus ?case by blast
+  case (CollectionPartsNilT \<Gamma>) thus ?case by blast
 next
-  case (CollectionPartsListT \<Gamma> x \<tau> y xs \<sigma>) thus ?case
-    by (metis CollectionPartsItemTE)
+  case (CollectionPartsConsT \<Gamma> x \<tau> xs \<sigma>) thus ?case by blast
 next
   case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by blast
 next
   case (CollectionPartRangeT \<Gamma> a \<tau> b \<sigma>) thus ?case by blast
+next
+  case (MapNilT \<Gamma>) thus ?case by auto
+next
+  case (MapConsT \<Gamma> x \<tau> \<sigma> xs \<rho>) thus ?case
+    sorry
 next
   case (TupleLiteralNilT \<Gamma>) thus ?case by auto
 next
@@ -1178,6 +1196,133 @@ next
     apply (erule ExprListTE)
     by (simp_all add: ExprListConsT.hyps)
 qed
+
+lemma CollectionLiteral_has_NullFree_ErrorFree_type:
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = \<sigma>[1]"
+  by auto
+(*
+lemma q:
+  "(\<tau> \<le> (Collection OclAny[?]\<^sub>N)[1]) \<Longrightarrow> (\<tau> < (Collection OclAny[?]\<^sub>N)[1])"
+  apply (simp only: type\<^sub>N\<^sub>E_less_right_simps type\<^sub>N\<^sub>E_less_eq_right_simps
+          type\<^sub>N_less_right_simps type\<^sub>N_less_eq_right_simps)
+  apply auto
+
+lemma q:
+  "\<tau> = (Set \<tau>')[1] \<Longrightarrow> \<tau> \<le> (Collection OclAny[?]\<^sub>N)[1]"
+  apply (simp only: type\<^sub>N\<^sub>E_less_right_simps type\<^sub>N\<^sub>E_less_eq_right_simps
+          type\<^sub>N_less_right_simps type\<^sub>N_less_eq_right_simps)
+  apply auto
+*)
+schematic_goal q:
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind [CollectionItem (IntegerLiteral 1), CollectionItem NullLiteral] : \<tau> \<Longrightarrow> \<tau> = ?x"
+  apply (erule CollectionLiteralTE)
+  apply (simp only: type\<^sub>N_less_right_simps type\<^sub>N\<^sub>E_less_right_simps)
+  apply auto
+  apply (erule CollectionPartsTE, auto)
+  apply (erule CollectionPartsTE, auto)
+  apply (erule CollectionItemTE)
+  apply (erule CollectionItemTE)
+  apply (erule IntegerLiteralTE)
+  apply (erule NullLiteralTE)
+  apply auto
+
+lemma SetLiteral_has_Set_type:
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Set \<sigma>)[1]"
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral OrderedSetKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (OrderedSet \<sigma>)[1]"
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral BagKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Bag \<sigma>)[1]"
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SequenceKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Sequence \<sigma>)[1]"
+  by (erule CollectionLiteralTE, auto)
+
+lemma q11:
+  "       (\<And>\<tau>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<tau> \<Longrightarrow>
+             \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]) \<Longrightarrow>
+       \<tau> =
+       (case \<rho> of
+        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)
+        | Errorable \<rho> \<Rightarrow>
+            Errorable ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)) \<Longrightarrow>
+       \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<rho> \<Longrightarrow>
+       \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]"
+  apply auto
+
+lemma MapLiteral_has_Map_type:
+  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]"
+  apply (induct prts arbitrary: \<tau>)
+  apply auto[1]
+  apply (erule MapLiteralTE)
+  apply auto[1]
+
+
+(*
+lemma type\<^sub>N_less_right_simps [simp]:
+  "\<tau> < Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> < \<upsilon>)"
+  by auto
+
+lemma type\<^sub>N_less_eq_right_simps [simp]:
+  "\<tau> \<le> Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon>)"
+  "\<tau> \<le> Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> \<le> \<upsilon>)"
+  by auto
+*)
+
+lemma q11:
+  "ErrorFree \<rho> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1] \<Longrightarrow>
+   \<tau> = ErrorFree ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>) \<Longrightarrow>
+   \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]"
+  by (smt less_eq_errorable_type.simps(1) sup.boundedI sup.orderI sup_ge1
+          type.inject(8) type\<^sub>N_less_eq_left_simps(2) type\<^sub>N_less_eq_right_simps(1)
+          type_less_eq_left_simps(1) type_less_eq_x_Map_intro)
+
+lemma q12:
+  "       (\<And>\<tau>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<tau> \<Longrightarrow>
+             \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]) \<Longrightarrow>
+       \<tau> =
+       (case \<rho> of
+        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)
+        | Errorable \<rho> \<Rightarrow>
+            Errorable ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)) \<Longrightarrow>
+       \<Gamma> \<turnstile>\<^sub>E map_literal_element_key x : ErrorFree \<tau>' \<Longrightarrow>
+       \<Gamma> \<turnstile>\<^sub>E map_literal_element_value x : ErrorFree \<sigma> \<Longrightarrow>
+       \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<rho> \<Longrightarrow>
+       \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]"
+  by (metis (no_types, lifting) OCL_Typing.q11 errorable_type.simps(5)
+        type\<^sub>N\<^sub>E_less_eq_right_simps(1))
+
+lemma q13:
+  "a # prts = x # xs \<Longrightarrow> prts = xs"
+  by auto
+
+lemma MapLiteral_has_Map_type:
+  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]"
+  apply (induct prts arbitrary: \<tau>)
+  apply auto[1]
+  apply (erule MapLiteralTE)
+  apply auto[1]
+
+
+lemma TupleLiteral_has_Tuple_type:
+  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral prts : \<tau> \<Longrightarrow> \<tau> \<le> (Tuple fmempty)[1]"
+  apply (erule TupleLiteralTE)
+  apply auto[1]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (*** Code Setup *************************************************************)
 

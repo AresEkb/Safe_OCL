@@ -165,6 +165,7 @@ and 'a literal_expr =
 | EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
 | CollectionLiteral (kind : collection_literal_kind)
     (parts : "'a collection_literal_part_expr list")
+| MapLiteral (map_elements : "('a expr \<times> 'a expr) list")
 | TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N option \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
@@ -177,11 +178,16 @@ and 'a call_expr =
 | AssociationClassEnd role
 | Operation op (args : "'a expr list")
 | TupleElement telem
-| Iterate (iterators : "vname list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
+| Iterate
+    (iterators : "(vname \<times> vname option) list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
     (var : vname) (var_type : "'a type\<^sub>N\<^sub>E option") (init_expr : "'a expr")
     (body_expr : "'a expr")
-| Iterator iterator (iterators : "vname list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
+| Iterator iterator
+    (iterators : "(vname \<times> vname option) list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
     (body_expr : "'a expr")
+
+definition "map_literal_element_key \<equiv> fst"
+definition "map_literal_element_value \<equiv> snd"
 
 definition "tuple_literal_element_name \<equiv> fst"
 definition "tuple_literal_element_type \<equiv> fst \<circ> snd"

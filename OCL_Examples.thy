@@ -191,7 +191,7 @@ definition "operations_classes1 \<equiv> [
     (Set Employee[1]\<^sub>N)[1], False,
    Some (SelectIteratorCall
     (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')
-    ArrowCall [STR ''member''] None
+    ArrowCall [(STR ''member'', None)] None
     (OperationCall
       (AttributeCall (Var STR ''member'') DotCall STR ''name'')
       DotCall EqualOp [Var STR ''mn'']))),
@@ -231,6 +231,14 @@ instance
   using association_ends_unique by blast
 
 end
+
+code_pred [show_modes] non_strict_op .
+
+values "{x. \<Gamma>\<^sub>0(STR ''x'' \<mapsto>\<^sub>f OclAny[?]) \<turnstile>\<^sub>E CollectionLiteral SetKind [
+  CollectionItem (IntegerLiteral 1),
+  CollectionItem NullLiteral,
+  CollectionItem (Var STR ''x'')] : x}"
+
 
 (*** Simplification Rules ***************************************************)
 
