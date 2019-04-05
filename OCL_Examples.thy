@@ -189,7 +189,7 @@ definition "operations_classes1 \<equiv> [
     ArrowCall CollectionSizeOp [])),
   (STR ''membersByName'', Project[1], [(STR ''mn'', String[1], In)],
     (Set Employee[1]\<^sub>N)[1], False,
-   Some (SelectIteratorCall
+   Some (SelectIterationCall
     (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')
     ArrowCall [(STR ''member'', None)] None
     (OperationCall
@@ -465,7 +465,7 @@ lemma
     (CollectionLiteral SequenceKind
       [CollectionItem (StringLiteral ''abc''),
        CollectionItem (StringLiteral ''zxc'')])
-    (AnyIteratorCall (Var STR ''x'') ArrowCall
+    (AnyIterationCall (Var STR ''x'') ArrowCall
       [STR ''it''] None
       (OperationCall (Var STR ''it'') DotCall EqualOp
         [StringLiteral ''test''])) : String[?]"
@@ -479,7 +479,7 @@ lemma
     (CollectionLiteral SequenceKind
       [CollectionItem (StringLiteral ''abc''),
        CollectionItem (StringLiteral ''zxc'')])
-    (ClosureIteratorCall (Var STR ''x'') SafeArrowCall
+    (ClosureIterationCall (Var STR ''x'') SafeArrowCall
       [STR ''it''] None
       (Var STR ''it'')) : (OrderedSet String[1]\<^sub>N)[1]"
   by simp
@@ -547,7 +547,7 @@ lemma
     (CollectionLiteral SequenceKind
       [CollectionItem (StringLiteral ''abc''),
        CollectionItem (StringLiteral ''zxc'')])
-    (ClosureIteratorCall (Var STR ''x'') ArrowCall [STR ''it''] None
+    (ClosureIterationCall (Var STR ''x'') ArrowCall [STR ''it''] None
       (IntegerLiteral 1)) : \<tau>"
   by simp
 

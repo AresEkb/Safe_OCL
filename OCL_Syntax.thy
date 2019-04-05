@@ -111,7 +111,8 @@ declare [[coercion "Inr \<circ> Inr \<circ> Inl \<circ> Inr :: collection_ternop
 
 declare [[coercion "Inr \<circ> Inr \<circ> Inr :: oper \<Rightarrow> op"]]
 
-datatype iterator = AnyIter | ClosureIter | CollectIter | CollectNestedIter
+datatype iteration = AnyIter | ClosureIter
+| CollectIter | CollectByIter | CollectNestedIter
 | ExistsIter | ForAllIter | OneIter | IsUniqueIter
 | SelectIter | RejectIter | SortedByIter
 
@@ -163,10 +164,10 @@ and 'a literal_expr =
 | UnlimitedNaturalLiteral (unlimited_natural_symbol : unat)
 | StringLiteral (string_symbol : string)
 | EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
-| CollectionLiteral (kind : collection_literal_kind)
-    (parts : "'a collection_literal_part_expr list")
+| CollectionLiteral (collection_kind : collection_literal_kind)
+    (collection_parts : "'a collection_literal_part_expr list")
 | MapLiteral (map_elements : "('a expr \<times> 'a expr) list")
-| TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N option \<times> 'a expr) list")
+| TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N\<^sub>E option \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
@@ -179,11 +180,13 @@ and 'a call_expr =
 | Operation op (args : "'a expr list")
 | TupleElement telem
 | Iterate
-    (iterators : "(vname \<times> vname option) list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
+    (iters : "(vname \<times> vname option) list")
+    (iters_type : "'a type\<^sub>N\<^sub>E option \<times> 'a type\<^sub>N\<^sub>E option")
     (var : vname) (var_type : "'a type\<^sub>N\<^sub>E option") (init_expr : "'a expr")
     (body_expr : "'a expr")
-| Iterator iterator
-    (iterators : "(vname \<times> vname option) list") (iterators_type : "'a type\<^sub>N\<^sub>E option")
+| Iterator iteration
+    (iters : "(vname \<times> vname option) list")
+    (iters_type : "'a type\<^sub>N\<^sub>E option \<times> 'a type\<^sub>N\<^sub>E option")
     (body_expr : "'a expr")
 
 definition "map_literal_element_key \<equiv> fst"
@@ -211,27 +214,29 @@ abbreviation "TupleElementCall src k elem \<equiv>
   Call src k (TupleElement elem)"
 abbreviation "IterateCall src k its its_ty v ty init body \<equiv>
   Call src k (Iterate its its_ty v ty init body)"
-abbreviation "AnyIteratorCall src k its its_ty body \<equiv>
+abbreviation "AnyIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator AnyIter its its_ty body)"
-abbreviation "ClosureIteratorCall src k its its_ty body \<equiv>
+abbreviation "ClosureIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator ClosureIter its its_ty body)"
-abbreviation "CollectIteratorCall src k its its_ty body \<equiv>
+abbreviation "CollectIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator CollectIter its its_ty body)"
-abbreviation "CollectNestedIteratorCall src k its its_ty body \<equiv>
+abbreviation "CollectByIterationCall src k its its_ty body \<equiv>
+  Call src k (Iterator CollectByIter its its_ty body)"
+abbreviation "CollectNestedIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator CollectNestedIter its its_ty body)"
-abbreviation "ExistsIteratorCall src k its its_ty body \<equiv>
+abbreviation "ExistsIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator ExistsIter its its_ty body)"
-abbreviation "ForAllIteratorCall src k its its_ty body \<equiv>
+abbreviation "ForAllIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator ForAllIter its its_ty body)"
-abbreviation "OneIteratorCall src k its its_ty body \<equiv>
+abbreviation "OneIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator OneIter its its_ty body)"
-abbreviation "IsUniqueIteratorCall src k its its_ty body \<equiv>
+abbreviation "IsUniqueIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator IsUniqueIter its its_ty body)"
-abbreviation "SelectIteratorCall src k its its_ty body \<equiv>
+abbreviation "SelectIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator SelectIter its its_ty body)"
-abbreviation "RejectIteratorCall src k its its_ty body \<equiv>
+abbreviation "RejectIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator RejectIter its its_ty body)"
-abbreviation "SortedByIteratorCall src k its its_ty body \<equiv>
+abbreviation "SortedByIterationCall src k its its_ty body \<equiv>
   Call src k (Iterator SortedByIter its its_ty body)"
 
 end

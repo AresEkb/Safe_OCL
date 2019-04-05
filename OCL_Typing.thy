@@ -451,7 +451,7 @@ inductive collection_binop_type where
 | "\<sigma> \<le> \<tau> \<Longrightarrow>
    collection_binop_type CollectionIndexOfOp (Sequence \<tau>)[1] (ErrorFree \<sigma>) Integer[1]"
 
-code_pred [show_modes] collection_binop_type .
+(*code_pred [show_modes] collection_binop_type .*)
 
 inductive collection_ternop_type where
   "\<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow> \<rho> \<le> \<tau> \<Longrightarrow>
@@ -531,7 +531,7 @@ inductive op_type where
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
 (* TODO: Remove *)
-(*code_pred [show_modes] op_type .*)
+code_pred [show_modes] op_type .
 
 (*** Simplification Rules ***************************************************)
 
@@ -677,10 +677,130 @@ text \<open>
   The following typing rules are preliminary. The final rules are given at
   the end of the next chapter.\<close>
 
+inductive map_type\<^sub>T where
+  "map_type\<^sub>T (Map \<sigma> \<rho>) \<sigma> \<rho>"
+
+inductive map_type\<^sub>N where
+  "map_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
+   map_type\<^sub>N (Required \<tau>) \<sigma> \<rho> False"
+| "map_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
+   map_type\<^sub>N (Optional \<tau>) \<sigma> \<rho> True"
+
+(* Тут нужен комментарий, почему мы спускаем ошибочность до элементов *)
+
+inductive map_type where
+  "map_type\<^sub>N \<tau> \<sigma> \<rho> nullable \<Longrightarrow>
+   map_type (ErrorFree \<tau>) (ErrorFree \<sigma>) (ErrorFree \<rho>) nullable"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> nullable \<Longrightarrow>
+   map_type (Errorable \<tau>) (Errorable \<sigma>) (Errorable \<rho>) nullable"
+
+inductive map_type' where
+  "map_type\<^sub>N \<tau> \<sigma> \<rho> nullable \<Longrightarrow>
+   map_type' (ErrorFree \<tau>) (ErrorFree \<sigma>) (ErrorFree \<rho>) nullable"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> nullable \<Longrightarrow>
+   map_type' (Errorable \<tau>) (Errorable \<sigma>) (ErrorFree \<rho>) nullable"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> nullable \<Longrightarrow>
+   map_type' (Errorable \<tau>) (ErrorFree \<sigma>) (Errorable \<rho>) nullable"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> nullable \<Longrightarrow>
+   map_type' (Errorable \<tau>) (Errorable \<sigma>) (Errorable \<rho>) nullable"
+
+code_pred [show_modes] map_type .
+code_pred [show_modes] map_type' .
+
+values "{(x, y, n). map_type (Map (Boolean[1]\<^sub>N :: nat type\<^sub>N) Integer[?]\<^sub>N)[1] x y n}"
+values "{(x, y, n). map_type (Map (Boolean[1]\<^sub>N :: nat type\<^sub>N) Integer[?]\<^sub>N)[1!] x y n}"
+values "{(x, y, n). map_type (Map (Boolean[1]\<^sub>N :: nat type\<^sub>N) Integer[?]\<^sub>N)[?] x y n}"
+values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?] False}"
+values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?] True}"
+values "{x. map_type' x (Boolean[1!] :: nat type\<^sub>N\<^sub>E) Integer[?!] True}"
+values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?!] True}"
+
+inductive collection_type\<^sub>T where
+  "collection_type\<^sub>T (Collection \<tau>) CollectionKind \<tau>"
+| "collection_type\<^sub>T (Set \<tau>) SetKind \<tau>"
+| "collection_type\<^sub>T (OrderedSet \<tau>) OrderedSetKind \<tau>"
+| "collection_type\<^sub>T (Bag \<tau>) BagKind \<tau>"
+| "collection_type\<^sub>T (Sequence \<tau>) SequenceKind \<tau>"
+
+inductive collection_type\<^sub>N where
+  "collection_type\<^sub>T \<tau> k \<sigma> \<Longrightarrow>
+   collection_type\<^sub>N (Required \<tau>) k \<sigma> False"
+| "collection_type\<^sub>T \<tau> k \<sigma> \<Longrightarrow>
+   collection_type\<^sub>N (Optional \<tau>) k \<sigma> True"
+
+inductive collection_type where
+  "collection_type\<^sub>N \<tau> k \<sigma> nullable \<Longrightarrow>
+   collection_type (ErrorFree \<tau>) k (ErrorFree \<sigma>) nullable"
+| "collection_type\<^sub>N \<tau> k \<sigma> nullable \<Longrightarrow>
+   collection_type (Errorable \<tau>) k (Errorable \<sigma>) nullable"
+
+code_pred [show_modes] collection_type .
+
+values "{(k, x, n). collection_type (Set (Boolean[1]\<^sub>N :: nat type\<^sub>N))[1] k x n}"
+values "{(k, x, n). collection_type (Set (Boolean[1]\<^sub>N :: nat type\<^sub>N))[?!] k x n}"
+values "{x. collection_type x BagKind (Boolean[?] :: nat type\<^sub>N\<^sub>E) False}"
+values "{x. collection_type x SetKind (Boolean[1!] :: nat type\<^sub>N\<^sub>E) True}"
+
+inductive tuple_type\<^sub>T
+      and tuple_type\<^sub>N where
+  "tuple_type\<^sub>T (Tuple \<pi>) \<pi>"
+
+| "tuple_type\<^sub>T \<tau> \<pi> \<Longrightarrow>
+   tuple_type\<^sub>N (Required \<tau>) \<pi> False"
+| "tuple_type\<^sub>T \<tau> \<pi> \<Longrightarrow>
+   tuple_type\<^sub>N (Optional \<tau>) \<pi> True"
+
+(* Тут нужен комментарий, почему мы спускаем ошибочность до элементов *)
+
+inductive tuple_type where
+  "tuple_type\<^sub>N \<tau> \<pi> nullable \<Longrightarrow>
+   tuple_type (ErrorFree \<tau>) (fmmap ErrorFree \<pi>) nullable"
+| "tuple_type\<^sub>N \<tau> \<pi> nullable \<Longrightarrow>
+   tuple_type (Errorable \<tau>) (fmmap Errorable \<pi>) nullable"
+
+inductive tuple_type' where
+  "tuple_type\<^sub>N \<tau> (fmmap unwrap_errorable_type \<pi>) nullable \<Longrightarrow>
+   \<not> fBex (fmran \<pi>) is_errorable_type \<Longrightarrow>
+   tuple_type' (ErrorFree \<tau>) \<pi> nullable"
+| "tuple_type\<^sub>N \<tau> (fmmap unwrap_errorable_type \<pi>) nullable \<Longrightarrow>
+   fBex (fmran \<pi>) is_errorable_type \<Longrightarrow>
+   tuple_type' (Errorable \<tau>) \<pi> nullable"
+
+(* Доказать эквивалентность предикатов *)
+
+term fBex
+term to_errorable
+term unwrap_errorable_type
+
+code_pred [show_modes] tuple_type .
+code_pred [show_modes] tuple_type' .
+
+values "{x. tuple_type' x (fmempty(STR ''a'' \<mapsto>\<^sub>f Boolean[1] :: nat type\<^sub>N\<^sub>E)
+  (STR ''b'' \<mapsto>\<^sub>f Real[1] :: nat type\<^sub>N\<^sub>E)) False}"
+values "{x. tuple_type' x (fmempty(STR ''a'' \<mapsto>\<^sub>f Boolean[1!] :: nat type\<^sub>N\<^sub>E)
+  (STR ''b'' \<mapsto>\<^sub>f Real[?] :: nat type\<^sub>N\<^sub>E)) False}"
+values "{(x, n). tuple_type (Tuple (fmap_of_list
+  [(STR ''a'', Boolean[1]\<^sub>N :: nat type\<^sub>N), (STR ''b'', Real[1]\<^sub>N)]))[1] x n}"
+values "{(x, n). tuple_type (Tuple (fmap_of_list
+  [(STR ''a'', Boolean[1]\<^sub>N :: nat type\<^sub>N), (STR ''b'', Real[1]\<^sub>N)]))[?!] x n}"
+
+code_pred [show_modes] is_unsafe_cast . 
+code_pred [show_modes] typeop_type . 
+code_pred [show_modes] mataop_type .
+
+term filter
+
+
+abbreviation "iterators its \<tau> \<equiv>
+  fmap_of_list (map (\<lambda>it. (fst it, \<tau>)) its)"
+
+abbreviation "coiterators its \<tau> \<equiv>
+  fmap_of_list (map (\<lambda>it. (the (snd it), \<tau>)) (filter (\<lambda>it. snd it \<noteq> None) its))"
+
+
 inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightarrow> 'a expr \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> bool"
        ("(1_/ \<turnstile>\<^sub>E/ (_ :/ _))" [51,51,51] 50)
-      and collection_parts_typing ("(1_/ \<turnstile>\<^sub>C/ (_ :/ _))" [51,51,51] 50)
-      and collection_part_typing ("(1_/ \<turnstile>\<^sub>P/ (_ :/ _))" [51,51,51] 50)
+      and collection_part_typing ("(1_/ \<turnstile>\<^sub>C/ (_ :/ _))" [51,51,51] 50)
       and iterator_typing ("(1_/ \<turnstile>\<^sub>I/ (_ :/ _))" [51,51,51] 50)
       and expr_list_typing ("(1_/ \<turnstile>\<^sub>L/ (_ :/ _))" [51,51,51] 50) where
 
@@ -704,35 +824,26 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 
 \<comment> \<open>Collection Literals\<close>
 
-|SetLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind prts : (Set \<tau>)[1]"
-|OrderedSetLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral OrderedSetKind prts : (OrderedSet \<tau>)[1]"
-|BagLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral BagKind prts : (Bag \<tau>)[1]"
-|SequenceLiteralT:
-  "\<Gamma> \<turnstile>\<^sub>C prts : (ErrorFree \<tau>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral SequenceKind prts : (Sequence \<tau>)[1]"
-
-|CollectionPartsNilT:
-  "\<Gamma> \<turnstile>\<^sub>C [] : OclVoid[1]"
-|CollectionPartsConsT:
-  "\<Gamma> \<turnstile>\<^sub>P x : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>C xs : \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>C x # xs : \<tau> \<squnion> \<sigma>"
+|CollectionLiteralNilT:
+  "k \<noteq> CollectionKind \<Longrightarrow>
+   collection_type \<sigma> k OclVoid[1] False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral k [] : \<sigma>"
+|CollectionLiteralConsT:
+  "k \<noteq> CollectionKind \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>C x : \<tau> \<Longrightarrow>
+   collection_type \<sigma> k \<tau> False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral k xs : \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E CollectionLiteral k (x # xs) : \<tau> \<squnion> \<sigma>"
 
 |CollectionPartItemT:
   "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
+   \<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
 |CollectionPartRangeT:
   "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E b : \<sigma> \<Longrightarrow>
    \<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
    \<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>P CollectionRange a b : Integer[1]"
+   \<Gamma> \<turnstile>\<^sub>C CollectionRange a b : Integer[1]"
 
 \<comment> \<open>Map Literals\<close>
 
@@ -745,23 +856,26 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
    Сейчас это не очевидно, там просто задан "начальный" элемент и операция супремума *)
 
 |MapNilT:
-  "\<Gamma> \<turnstile>\<^sub>E MapLiteral [] : (Map OclVoid[1]\<^sub>N OclVoid[1]\<^sub>N)[1]"
+  "map_type' \<tau> OclVoid[1] OclVoid[1] False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E MapLiteral [] : \<tau>"
 |MapConsT:
-  "\<Gamma> \<turnstile>\<^sub>E map_literal_element_key x : (ErrorFree \<tau>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E map_literal_element_value x : (ErrorFree \<sigma>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E MapLiteral xs : \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E MapLiteral (x # xs) : (Map \<tau> \<sigma>)[1] \<squnion> \<rho>"
+  "\<Gamma> \<turnstile>\<^sub>E map_literal_element_key x : \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E map_literal_element_value x : \<sigma> \<Longrightarrow>
+   map_type' \<rho> \<tau> \<sigma> False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E MapLiteral xs : \<upsilon> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E MapLiteral (x # xs) : \<rho> \<squnion> \<upsilon>"
 
 \<comment> \<open>Tuple Literals\<close>
 
 |TupleLiteralNilT:
   "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : (Tuple fmempty)[1]"
 |TupleLiteralConsT:
-  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : (Tuple \<xi>)[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E tuple_literal_element_expr el : (ErrorFree \<tau>) \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E tuple_literal_element_expr el : \<tau> \<Longrightarrow>
    tuple_literal_element_type el = Some \<sigma> \<Longrightarrow>
    \<tau> \<le> \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E TupleLiteral (el # elems) : (Tuple (\<xi>(tuple_literal_element_name el \<mapsto>\<^sub>f \<sigma>)))[1]"
+   tuple_type' \<rho> (fmap_of_list [(tuple_literal_element_name el, \<sigma>)]) False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : \<upsilon> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E TupleLiteral (el # elems) : \<rho> \<squnion> \<upsilon>"
 
 \<comment> \<open>Misc Expressions\<close>
 
@@ -818,81 +932,96 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 
 |TupleElementCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<sigma> \<Longrightarrow>
-   tuple_element_type \<sigma> elem \<tau> \<Longrightarrow>
+   tuple_type \<sigma> \<pi> n \<Longrightarrow>
+   fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<tau>"
 
 \<comment> \<open>Iterator Expressions\<close>
 
-|IteratorT:
+|CollectionIterationT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   element_type \<tau> \<sigma> \<Longrightarrow>
+   collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
    \<sigma> \<le> its_ty \<Longrightarrow>
-   \<Gamma> ++\<^sub>f fmap_of_list (map (\<lambda>it. (fst it, its_ty)) its) \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty), body) : (\<tau>, \<sigma>, \<rho>)"
+   list_all (\<lambda>it. snd it = None) its \<Longrightarrow>
+   \<Gamma> ++\<^sub>f iterators its its_ty \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : (\<tau>, \<sigma>, \<rho>)"
+|MapIterationT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
+   map_type \<tau> \<sigma> \<upsilon> _ \<Longrightarrow>
+   \<sigma> \<le> its_key_ty \<Longrightarrow>
+   \<upsilon> \<le> its_val_ty \<Longrightarrow>
+   \<Gamma> ++\<^sub>f iterators its its_key_ty ++\<^sub>f coiterators its its_val_ty \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_key_ty, Some its_val_ty), body) : (\<tau>, \<sigma>, \<rho>)"
 
 |IterateT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, Let res (Some res_t) res_init body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> res_t \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E IterateCall src ArrowCall its its_ty res (Some res_t) res_init body : \<rho>"
 
-|AnyIteratorT:
+|AnyIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src ArrowCall its its_ty body : \<sigma>"
-|ClosureIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E AnyIterationCall src ArrowCall its its_ty body : to_errorable \<sigma>"
+|ClosureIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   (* По-моему тут ошибка, должен быть просто element_type? *)
+   (* По-моему тут ошибка, должен быть просто element_type?
+      Согласно спецификации может быть либо простое значение, либо коллекция *)
    to_single_type \<rho> \<rho>' \<Longrightarrow>
    \<rho>' \<le> \<sigma> \<Longrightarrow>
    to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src ArrowCall its its_ty body : \<upsilon>"
-|CollectIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src ArrowCall its its_ty body : \<upsilon>"
+|CollectIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection_type \<tau> \<upsilon> \<Longrightarrow>
    to_single_type \<rho> \<rho>' \<Longrightarrow>
    update_element_type \<upsilon> \<rho>' \<phi> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src ArrowCall its its_ty body : \<phi>"
-|CollectNestedIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src ArrowCall its its_ty body : \<phi>"
+|CollectByIterationT:
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   map_type' \<upsilon> \<sigma> \<rho> False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src ArrowCall its its_ty body : \<upsilon>"
+|CollectNestedIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection_type \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> \<rho> \<phi> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src ArrowCall its its_ty body : \<phi>"
-|ExistsIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src ArrowCall its its_ty body : \<phi>"
+|ExistsIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src ArrowCall its its_ty body : \<rho>"
-|ForAllIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E ExistsIterationCall src ArrowCall its its_ty body : \<rho>"
+|ForAllIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src ArrowCall its its_ty body : \<rho>"
-|OneIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E ForAllIterationCall src ArrowCall its its_ty body : \<rho>"
+|OneIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E OneIteratorCall src ArrowCall its its_ty body : Boolean[1]"
-|IsUniqueIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E OneIterationCall src ArrowCall its its_ty body : Boolean[1]"
+|IsUniqueIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src ArrowCall its its_ty body : Boolean[1]"
-|SelectIteratorT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src ArrowCall its its_ty body : \<tau>"
-|RejectIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E IsUniqueIterationCall src ArrowCall its its_ty body : Boolean[1]"
+|SelectIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src ArrowCall its its_ty body : \<tau>"
-|SortedByIteratorT:
+   \<Gamma> \<turnstile>\<^sub>E SelectIterationCall src ArrowCall its its_ty body : \<tau>"
+|RejectIterationT:
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E RejectIterationCall src ArrowCall its its_ty body : \<tau>"
+|SortedByIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_ordered_collection_type \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src ArrowCall its its_ty body : \<upsilon>"
+   \<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src ArrowCall its its_ty body : \<upsilon>"
 
 \<comment> \<open>Expression Lists\<close>
 
@@ -933,27 +1062,28 @@ inductive_cases AssociationClassEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E
 inductive_cases OperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
 inductive_cases TupleElementCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
 
-inductive_cases IteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
+inductive_cases IterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
 inductive_cases IterateTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IterateCall src k its its_ty res res_t res_init body : \<tau>"
-inductive_cases AnyIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src k its its_ty body : \<tau>"
-inductive_cases ClosureIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src k its its_ty body : \<tau>"
-inductive_cases CollectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src k its its_ty body : \<tau>"
-inductive_cases CollectNestedIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src k its its_ty body : \<tau>"
-inductive_cases ExistsIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src k its its_ty body : \<tau>"
-inductive_cases ForAllIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src k its its_ty body : \<tau>"
-inductive_cases OneIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E OneIteratorCall src k its its_ty body : \<tau>"
-inductive_cases IsUniqueIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src k its its_ty body : \<tau>"
-inductive_cases SelectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src k its its_ty body : \<tau>"
-inductive_cases RejectIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
-inductive_cases SortedByIteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
+inductive_cases AnyIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AnyIterationCall src k its its_ty body : \<tau>"
+inductive_cases ClosureIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src k its its_ty body : \<tau>"
+inductive_cases CollectIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectIterationCall src k its its_ty body : \<tau>"
+inductive_cases CollectByIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src k its its_ty body : \<tau>"
+inductive_cases CollectNestedIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src k its its_ty body : \<tau>"
+inductive_cases ExistsIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ExistsIterationCall src k its its_ty body : \<tau>"
+inductive_cases ForAllIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ForAllIterationCall src k its its_ty body : \<tau>"
+inductive_cases OneIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E OneIterationCall src k its its_ty body : \<tau>"
+inductive_cases IsUniqueIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IsUniqueIterationCall src k its its_ty body : \<tau>"
+inductive_cases SelectIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SelectIterationCall src k its its_ty body : \<tau>"
+inductive_cases RejectIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E RejectIterationCall src k its its_ty body : \<tau>"
+inductive_cases SortedByIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src k its its_ty body : \<tau>"
 
-inductive_cases CollectionPartsTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x : \<tau>"
+(*inductive_cases CollectionPartsTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x : \<tau>"*)
 (*
 inductive_cases CollectionPartsNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x : \<tau>"
 inductive_cases CollectionPartsItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>C x # xs : \<tau>"
 *)
-inductive_cases CollectionItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
-inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
+inductive_cases CollectionItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
+inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>C CollectionRange a b : \<tau>"
 
 inductive_cases ExprListTE [elim]: "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi>"
 
@@ -991,23 +1121,24 @@ inductive_simps typing_alt_simps:
 
 "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
 "\<Gamma> \<turnstile>\<^sub>E IterateCall src k its its_ty res res_t res_init body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AnyIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E ClosureIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E CollectIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E CollectNestedIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E ExistsIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E ForAllIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E OneIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E IsUniqueIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E SelectIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E RejectIteratorCall src k its its_ty body : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E SortedByIteratorCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AnyIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E ExistsIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E ForAllIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E OneIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E IsUniqueIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E SelectIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E RejectIterationCall src k its its_ty body : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src k its its_ty body : \<tau>"
 
-"\<Gamma> \<turnstile>\<^sub>C [] : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>C x # xs : \<tau>"
+(*"\<Gamma> \<turnstile>\<^sub>C [] : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C x # xs : \<tau>"*)
 
-"\<Gamma> \<turnstile>\<^sub>P CollectionItem a : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>P CollectionRange a b : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C CollectionRange a b : \<tau>"
 
 "\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
 "\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
@@ -1016,16 +1147,83 @@ inductive_simps typing_alt_simps:
 
 section \<open>Determinism\<close>
 
+lemma collection_type\<^sub>T_det:
+  "collection_type\<^sub>T \<tau> k\<^sub>1 \<sigma>\<^sub>N \<Longrightarrow>
+   collection_type\<^sub>T \<tau> k\<^sub>2 \<rho>\<^sub>N \<Longrightarrow> k\<^sub>1 = k\<^sub>2 \<and> \<sigma>\<^sub>N = \<rho>\<^sub>N"
+  "collection_type\<^sub>T \<tau>\<^sub>1 k \<sigma>\<^sub>N \<Longrightarrow>
+   collection_type\<^sub>T \<tau>\<^sub>2 k \<sigma>\<^sub>N \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: collection_type\<^sub>T.simps)
+
+lemma collection_type\<^sub>N_det:
+  "collection_type\<^sub>N \<tau>\<^sub>N k\<^sub>1 \<sigma>\<^sub>N n\<^sub>1 \<Longrightarrow>
+   collection_type\<^sub>N \<tau>\<^sub>N k\<^sub>2 \<rho>\<^sub>N n\<^sub>2 \<Longrightarrow> k\<^sub>1 = k\<^sub>2 \<and> \<sigma>\<^sub>N = \<rho>\<^sub>N \<and> n\<^sub>1 = n\<^sub>2"
+  "collection_type\<^sub>N \<tau>\<^sub>N\<^sub>1 k \<sigma>\<^sub>N n \<Longrightarrow>
+   collection_type\<^sub>N \<tau>\<^sub>N\<^sub>2 k \<sigma>\<^sub>N n \<Longrightarrow> \<tau>\<^sub>N\<^sub>1 = \<tau>\<^sub>N\<^sub>2"
+  by (auto simp add: collection_type\<^sub>N.simps collection_type\<^sub>T_det)
+
+lemma collection_type_det:
+  "collection_type \<tau> k\<^sub>1 \<sigma>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   collection_type \<tau> k\<^sub>2 \<sigma>\<^sub>2 n\<^sub>2 \<Longrightarrow> k\<^sub>1 = k\<^sub>2 \<and> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  "collection_type \<tau>\<^sub>1 k \<sigma> n \<Longrightarrow>
+   collection_type \<tau>\<^sub>2 k \<sigma> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (elim collection_type.cases; simp add: collection_type\<^sub>N_det)+
+
+
+lemma map_type\<^sub>T_det:
+  "map_type\<^sub>T \<tau> \<sigma>\<^sub>N\<^sub>1 \<rho>\<^sub>N\<^sub>1 \<Longrightarrow>
+   map_type\<^sub>T \<tau> \<sigma>\<^sub>N\<^sub>2 \<rho>\<^sub>N\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>N\<^sub>1 = \<sigma>\<^sub>N\<^sub>2 \<and> \<rho>\<^sub>N\<^sub>1 = \<rho>\<^sub>N\<^sub>2"
+  "map_type\<^sub>T \<tau>\<^sub>1 \<sigma>\<^sub>N \<rho>\<^sub>N \<Longrightarrow>
+   map_type\<^sub>T \<tau>\<^sub>2 \<sigma>\<^sub>N \<rho>\<^sub>N \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: map_type\<^sub>T.simps)
+
+lemma map_type\<^sub>N_det:
+  "map_type\<^sub>N \<tau> \<sigma>\<^sub>N\<^sub>1 \<rho>\<^sub>N\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   map_type\<^sub>N \<tau> \<sigma>\<^sub>N\<^sub>2 \<rho>\<^sub>N\<^sub>2 n\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>N\<^sub>1 = \<sigma>\<^sub>N\<^sub>2 \<and> \<rho>\<^sub>N\<^sub>1 = \<rho>\<^sub>N\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  "map_type\<^sub>N \<tau>\<^sub>1 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow>
+   map_type\<^sub>N \<tau>\<^sub>2 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: map_type\<^sub>N.simps map_type\<^sub>T_det)
+
+lemma map_type_det:
+  "map_type \<tau> \<sigma>\<^sub>N\<^sub>1 \<rho>\<^sub>N\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   map_type \<tau> \<sigma>\<^sub>N\<^sub>2 \<rho>\<^sub>N\<^sub>2 n\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>N\<^sub>1 = \<sigma>\<^sub>N\<^sub>2 \<and> \<rho>\<^sub>N\<^sub>1 = \<rho>\<^sub>N\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  "map_type' \<tau>\<^sub>1 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow>
+   map_type' \<tau>\<^sub>2 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  apply (elim map_type.cases; simp add: map_type\<^sub>N_det(1))
+  by (elim map_type'.cases; simp add: map_type\<^sub>N_det(2))
+
+
+lemma tuple_type\<^sub>T_det:
+  "tuple_type\<^sub>T \<tau> \<pi>\<^sub>1 \<Longrightarrow>
+   tuple_type\<^sub>T \<tau> \<pi>\<^sub>2 \<Longrightarrow> \<pi>\<^sub>1 = \<pi>\<^sub>2"
+  "tuple_type\<^sub>T \<tau>\<^sub>1 \<pi> \<Longrightarrow>
+   tuple_type\<^sub>T \<tau>\<^sub>2 \<pi> \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: tuple_type\<^sub>T.simps)
+
+lemma tuple_type\<^sub>N_det:
+  "tuple_type\<^sub>N \<tau> \<pi>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   tuple_type\<^sub>N \<tau> \<pi>\<^sub>2 n\<^sub>2 \<Longrightarrow> \<pi>\<^sub>1 = \<pi>\<^sub>2 \<and>  n\<^sub>1 =  n\<^sub>2"
+  "tuple_type\<^sub>N \<tau>\<^sub>1 \<pi> n \<Longrightarrow>
+   tuple_type\<^sub>N \<tau>\<^sub>2 \<pi> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: tuple_type\<^sub>N.simps tuple_type\<^sub>T_det)
+
+lemma tuple_type_det:
+  "tuple_type \<tau> \<pi>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   tuple_type \<tau> \<pi>\<^sub>2 n\<^sub>2 \<Longrightarrow> \<pi>\<^sub>1 = \<pi>\<^sub>2 \<and>  n\<^sub>1 =  n\<^sub>2"
+  "tuple_type' \<tau>\<^sub>1 \<pi> n \<Longrightarrow>
+   tuple_type' \<tau>\<^sub>2 \<pi> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  apply (elim tuple_type.cases)
+  using tuple_type\<^sub>N_det(1) apply blast+
+  apply (elim tuple_type'.cases)
+  using tuple_type\<^sub>N_det(2) by blast+
+
+
 lemma
   typing_det:
     "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>E expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
-  collection_parts_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>C prts : \<tau> \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>C prts : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   collection_part_typing_det:
-    "\<Gamma> \<turnstile>\<^sub>P prt : \<tau> \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>P prt : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
+  "\<Gamma> \<turnstile>\<^sub>C prt : \<tau> \<Longrightarrow>
+     \<Gamma> \<turnstile>\<^sub>C prt : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   iterator_typing_det:
     "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys \<Longrightarrow> xs = ys" and
@@ -1033,7 +1231,7 @@ lemma
     "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>L exprs : \<xi> \<Longrightarrow> \<pi> = \<xi>"
 proof (induct arbitrary: \<sigma> and \<sigma> and \<sigma> and ys and \<xi>
-       rule: typing_collection_parts_typing_collection_part_typing_iterator_typing_expr_list_typing.inducts)
+       rule: typing_collection_part_typing_iterator_typing_expr_list_typing.inducts)
   case (NullLiteralT \<Gamma>) thus ?case by auto
 next
   case (BooleanLiteralT \<Gamma> c) thus ?case by auto
@@ -1048,33 +1246,30 @@ next
 next
   case (EnumLiteralT \<Gamma> \<tau> lit) thus ?case by auto
 next
-  case (SetLiteralT \<Gamma> prts \<tau>) thus ?case by blast
+  case (CollectionLiteralNilT k \<sigma> \<Gamma>) thus ?case
+    using collection_type_det(2) by blast
 next
-  case (OrderedSetLiteralT \<Gamma> prts \<tau>) thus ?case by blast
-next
-  case (BagLiteralT \<Gamma> prts \<tau>) thus ?case by blast
-next
-  case (SequenceLiteralT \<Gamma> prts \<tau>) thus ?case by blast
-next
-  case (CollectionPartsNilT \<Gamma>) thus ?case by blast
-next
-  case (CollectionPartsConsT \<Gamma> x \<tau> xs \<sigma>) thus ?case by blast
+  case (CollectionLiteralConsT k \<Gamma> x \<tau> \<sigma> xs) thus ?case
+    using collection_type_det(2) by blast
 next
   case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by blast
 next
   case (CollectionPartRangeT \<Gamma> a \<tau> b \<sigma>) thus ?case by blast
 next
-  case (MapNilT \<Gamma>) thus ?case by auto
+  case (MapNilT \<tau> \<Gamma>) thus ?case
+    using map_type_det(2) by blast
 next
-  case (MapConsT \<Gamma> x \<tau> \<sigma> xs \<rho>) thus ?case
-    sorry
+  case (MapConsT \<Gamma> x \<tau> \<sigma> \<rho> xs \<upsilon>) show ?case
+    apply (insert MapConsT.prems)
+    apply (erule MapLiteralTE, simp)
+    using MapConsT.hyps map_type_det(2) by fastforce
 next
   case (TupleLiteralNilT \<Gamma>) thus ?case by auto
 next
-  case (TupleLiteralConsT \<Gamma> elems \<xi> el \<tau>) show ?case
+  case (TupleLiteralConsT \<Gamma> el \<tau> \<sigma> \<rho> elems \<upsilon>) show ?case
     apply (insert TupleLiteralConsT.prems)
     apply (erule TupleLiteralTE, simp)
-    using TupleLiteralConsT.hyps by auto
+    using TupleLiteralConsT.hyps tuple_type_det(2) by fastforce
 next
   case (LetT \<Gamma> \<M> init \<sigma> \<tau> v body \<rho>) thus ?case by blast
 next
@@ -1091,7 +1286,8 @@ next
   case (StaticOperationCallT \<tau> op \<pi> oper \<Gamma> as) thus ?case
     apply (insert StaticOperationCallT.prems)
     apply (erule StaticOperationCallTE)
-    using StaticOperationCallT.hyps static_operation_det by blast
+(*    using StaticOperationCallT.hyps static_operation_det by blast*)
+    sorry
 next
   case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCallTE typeop_type_det)
@@ -1116,77 +1312,99 @@ next
   case (OperationCallT \<Gamma> src \<tau> params \<pi> op k) show ?case
     apply (insert OperationCallT.prems)
     apply (erule OperationCallTE)
-    using OperationCallT.hyps op_type_det by blast
+(*    using OperationCallT.hyps op_type_det by blast*)
+    sorry
 next
   case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>) thus ?case 
     apply (insert TupleElementCallT.prems)
     apply (erule TupleElementCallTE)
-    using TupleElementCallT.hyps
-    by (simp add: tuple_element_type_det)
+    using TupleElementCallT.hyps tuple_type_det(1) by fastforce
 next
-  case (IteratorT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>) show ?case
-    apply (insert IteratorT.prems)
-    apply (erule IteratorTE)
-    using IteratorT.hyps element_type_det by blast
+  case (CollectionIterationT \<Gamma> src \<tau> k \<sigma> n its_ty its body \<rho>) show ?case
+    apply (insert CollectionIterationT.prems)
+    apply (erule IterationTE)
+    using CollectionIterationT.hyps OCL_Typing.collection_type_det(1) apply blast
+    by simp
+next
+  case (MapIterationT \<Gamma> src \<tau> \<sigma> \<upsilon> uu its_key_ty its_val_ty its body \<rho>) show ?case
+    apply (insert MapIterationT.prems)
+    apply (erule IterationTE)
+    apply simp
+    using MapIterationT.hyps map_type_det(1) by fastforce
 next
   case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) show ?case
     apply (insert IterateT.prems)
-    using IterateT.hyps by blast
+(*    using IterateT.hyps by blast*)
+    sorry
 next
-  case (AnyIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
-    by (meson AnyIteratorTE Pair_inject)
+  case (AnyIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+(*    by (meson AnyIterationTE Pair_inject)*)
+    sorry
 next
-  case (ClosureIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert ClosureIteratorT.prems)
-    apply (erule ClosureIteratorTE)
-    using ClosureIteratorT.hyps to_unique_collection_type_det by blast
+  case (ClosureIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
+    apply (insert ClosureIterationT.prems)
+    apply (erule ClosureIterationTE)
+    apply (erule IterationTE)
+(*    using ClosureIterationT.hyps to_unique_collection_type_det by blast*)
+    sorry
 next
-  case (CollectIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert CollectIteratorT.prems)
-    apply (erule CollectIteratorTE)
-    using CollectIteratorT.hyps to_nonunique_collection_type_det
-      update_element_type_det Pair_inject to_single_type_det by metis
+  case (CollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
+    apply (insert CollectIterationT.prems)
+    apply (erule CollectIterationTE)
+    apply (erule IterationTE)
+(*    using CollectIterationT.hyps to_nonunique_collection_type_det
+      update_element_type_det Pair_inject to_single_type_det by metis*)
+    sorry
 next
-  case (CollectNestedIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert CollectNestedIteratorT.prems)
-    apply (erule CollectNestedIteratorTE)
-    using CollectNestedIteratorT.hyps to_nonunique_collection_type_det
-      update_element_type_det Pair_inject by metis
+  case (CollectByIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>)
+    then show ?case sorry
 next
-  case (ExistsIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert ExistsIteratorT.prems)
-    apply (erule ExistsIteratorTE)
-    using ExistsIteratorT.hyps Pair_inject by metis
+  case (CollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
+    apply (insert CollectNestedIterationT.prems)
+    apply (erule CollectNestedIterationTE)
+(*    using CollectNestedIterationT.hyps to_nonunique_collection_type_det
+      update_element_type_det Pair_inject by metis*)
+    sorry
 next
-  case (ForAllIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert ForAllIteratorT.prems)
-    apply (erule ForAllIteratorTE)
-    using ForAllIteratorT.hyps Pair_inject by metis
+  case (ExistsIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
+    apply (insert ExistsIterationT.prems)
+    apply (erule ExistsIterationTE)
+(*    using ExistsIterationT.hyps Pair_inject by metis*)
+    sorry
 next
-  case (OneIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert OneIteratorT.prems)
-    apply (erule OneIteratorTE)
+  case (ForAllIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
+    apply (insert ForAllIterationT.prems)
+    apply (erule ForAllIterationTE)
+(*    using ForAllIterationT.hyps Pair_inject by metis*)
+    sorry
+next
+  case (OneIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
+    apply (insert OneIterationT.prems)
+    apply (erule OneIterationTE)
     by simp
 next
-  case (IsUniqueIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert IsUniqueIteratorT.prems)
-    apply (erule IsUniqueIteratorTE)
+  case (IsUniqueIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
+    apply (insert IsUniqueIterationT.prems)
+    apply (erule IsUniqueIterationTE)
     by simp
 next
-  case (SelectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert SelectIteratorT.prems)
-    apply (erule SelectIteratorTE)
-    using SelectIteratorT.hyps by blast
+  case (SelectIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
+    apply (insert SelectIterationT.prems)
+    apply (erule SelectIterationTE)
+(*    using SelectIterationT.hyps by blast*)
+    sorry
 next
-  case (RejectIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert RejectIteratorT.prems)
-    apply (erule RejectIteratorTE)
-    using RejectIteratorT.hyps by blast
+  case (RejectIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
+    apply (insert RejectIterationT.prems)
+    apply (erule RejectIterationTE)
+(*    using RejectIterationT.hyps by blast*)
+    sorry
 next
-  case (SortedByIteratorT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert SortedByIteratorT.prems)
-    apply (erule SortedByIteratorTE)
-    using SortedByIteratorT.hyps to_ordered_collection_type_det by blast
+  case (SortedByIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
+    apply (insert SortedByIterationT.prems)
+    apply (erule SortedByIterationTE)
+(*    using SortedByIterationT.hyps to_ordered_collection_type_det by blast*)
+    sorry
 next
   case (ExprListNilT \<Gamma>) thus ?case
     using expr_list_typing.cases by auto
@@ -1194,45 +1412,17 @@ next
   case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>) show ?case
     apply (insert ExprListConsT.prems)
     apply (erule ExprListTE)
+    apply simp
     by (simp_all add: ExprListConsT.hyps)
 qed
 
-lemma CollectionLiteral_has_NullFree_ErrorFree_type:
-  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = \<sigma>[1]"
-  by auto
-(*
-lemma q:
-  "(\<tau> \<le> (Collection OclAny[?]\<^sub>N)[1]) \<Longrightarrow> (\<tau> < (Collection OclAny[?]\<^sub>N)[1])"
-  apply (simp only: type\<^sub>N\<^sub>E_less_right_simps type\<^sub>N\<^sub>E_less_eq_right_simps
-          type\<^sub>N_less_right_simps type\<^sub>N_less_eq_right_simps)
-  apply auto
-
-lemma q:
-  "\<tau> = (Set \<tau>')[1] \<Longrightarrow> \<tau> \<le> (Collection OclAny[?]\<^sub>N)[1]"
-  apply (simp only: type\<^sub>N\<^sub>E_less_right_simps type\<^sub>N\<^sub>E_less_eq_right_simps
-          type\<^sub>N_less_right_simps type\<^sub>N_less_eq_right_simps)
-  apply auto
-*)
-schematic_goal q:
-  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind [CollectionItem (IntegerLiteral 1), CollectionItem NullLiteral] : \<tau> \<Longrightarrow> \<tau> = ?x"
-  apply (erule CollectionLiteralTE)
-  apply (simp only: type\<^sub>N_less_right_simps type\<^sub>N\<^sub>E_less_right_simps)
-  apply auto
-  apply (erule CollectionPartsTE, auto)
-  apply (erule CollectionPartsTE, auto)
-  apply (erule CollectionItemTE)
-  apply (erule CollectionItemTE)
-  apply (erule IntegerLiteralTE)
-  apply (erule NullLiteralTE)
-  apply auto
-
-lemma SetLiteral_has_Set_type:
+lemma CollectionLiteral_has_Collection_type:
   "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Set \<sigma>)[1]"
   "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral OrderedSetKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (OrderedSet \<sigma>)[1]"
   "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral BagKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Bag \<sigma>)[1]"
   "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SequenceKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Sequence \<sigma>)[1]"
-  by (erule CollectionLiteralTE, auto)
-
+  by auto
+(*
 lemma q11:
   "       (\<And>\<tau>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<tau> \<Longrightarrow>
              \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]) \<Longrightarrow>
@@ -1252,8 +1442,10 @@ lemma MapLiteral_has_Map_type:
   apply (erule MapLiteralTE)
   apply auto[1]
 
+  thm MapLiteralTE
+  thm TupleLiteralTE
 
-(*
+
 lemma type\<^sub>N_less_right_simps [simp]:
   "\<tau> < Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> < \<upsilon>)"
   "\<tau> < Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> < \<upsilon>)"
@@ -1264,7 +1456,7 @@ lemma type\<^sub>N_less_eq_right_simps [simp]:
   "\<tau> \<le> Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> \<le> \<upsilon>)"
   by auto
 *)
-
+(*
 lemma q11:
   "ErrorFree \<rho> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1] \<Longrightarrow>
    \<tau> = ErrorFree ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>) \<Longrightarrow>
@@ -1298,13 +1490,11 @@ lemma MapLiteral_has_Map_type:
   apply auto[1]
   apply (erule MapLiteralTE)
   apply auto[1]
-
+*)
 
 lemma TupleLiteral_has_Tuple_type:
-  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral prts : \<tau> \<Longrightarrow> \<tau> \<le> (Tuple fmempty)[1]"
-  apply (erule TupleLiteralTE)
-  apply auto[1]
-
+  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral prts : \<tau> \<Longrightarrow> \<exists>\<pi>. \<tau> = (Tuple \<pi>)[1]"
+  by auto
 
 
 
