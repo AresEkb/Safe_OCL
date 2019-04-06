@@ -1571,56 +1571,79 @@ section \<open>Helper Relations\<close>
 abbreviation between ("_/ = _\<midarrow>_"  [51, 51, 51] 50) where
   "x = y\<midarrow>z \<equiv> y \<le> x \<and> x \<le> z"
 
-fun is_finite_type\<^sub>T
-and is_finite_type\<^sub>N where
-  "is_finite_type\<^sub>T OclAny = False"
-| "is_finite_type\<^sub>T OclVoid = True"
+fun finite_type\<^sub>T
+and finite_type\<^sub>N where
+  "finite_type\<^sub>T OclAny = False"
+| "finite_type\<^sub>T OclVoid = True"
 
-| "is_finite_type\<^sub>T Boolean = True"
-| "is_finite_type\<^sub>T Real = False"
-| "is_finite_type\<^sub>T Integer = False"
-| "is_finite_type\<^sub>T UnlimitedNatural = False"
-| "is_finite_type\<^sub>T String = False"
+| "finite_type\<^sub>T Boolean = True"
+| "finite_type\<^sub>T Real = False"
+| "finite_type\<^sub>T Integer = False"
+| "finite_type\<^sub>T UnlimitedNatural = False"
+| "finite_type\<^sub>T String = False"
 
-| "is_finite_type\<^sub>T (ObjectType \<C>) = True"
-| "is_finite_type\<^sub>T (Enum \<E>) = True"
+| "finite_type\<^sub>T (ObjectType \<C>) = True"
+| "finite_type\<^sub>T (Enum \<E>) = True"
 
-| "is_finite_type\<^sub>T (Collection \<tau>) = False"
-| "is_finite_type\<^sub>T (Set \<tau>) = is_finite_type\<^sub>N \<tau>"
-| "is_finite_type\<^sub>T (OrderedSet \<tau>) = is_finite_type\<^sub>N \<tau>"
-| "is_finite_type\<^sub>T (Bag \<tau>) = False"
-| "is_finite_type\<^sub>T (Sequence \<tau>) = False"
+| "finite_type\<^sub>T (Collection \<tau>) = False"
+(* Too many combinations for nested collections? *)
+| "finite_type\<^sub>T (Set \<tau>) = finite_type\<^sub>N \<tau>"
+| "finite_type\<^sub>T (OrderedSet \<tau>) = finite_type\<^sub>N \<tau>"
+| "finite_type\<^sub>T (Bag \<tau>) = False"
+| "finite_type\<^sub>T (Sequence \<tau>) = False"
 
-| "is_finite_type\<^sub>T (Tuple \<pi>) = fBall (fmran \<pi>) is_finite_type\<^sub>N"
+| "finite_type\<^sub>T (Tuple \<pi>) = fBall (fmran \<pi>) finite_type\<^sub>N"
 
-(* Too many combinations *)
-(*| "is_finite_type\<^sub>T (Map \<tau> \<sigma>) = (is_finite_type\<^sub>N \<tau> \<and> is_finite_type\<^sub>N \<sigma>)"*)
-| "is_finite_type\<^sub>T (Map \<tau> \<sigma>) = False"
+(* Too many combinations? *)
+| "finite_type\<^sub>T (Map \<tau> \<sigma>) = (finite_type\<^sub>N \<tau> \<and> finite_type\<^sub>N \<sigma>)"
 
-| "is_finite_type\<^sub>N (Required \<tau>) = is_finite_type\<^sub>T \<tau>"
-| "is_finite_type\<^sub>N (Optional \<tau>) = is_finite_type\<^sub>T \<tau>"
+| "finite_type\<^sub>N (Required \<tau>) = finite_type\<^sub>T \<tau>"
+| "finite_type\<^sub>N (Optional \<tau>) = finite_type\<^sub>T \<tau>"
 
-fun is_object_type\<^sub>T
-and is_object_type\<^sub>N where
-  "is_object_type\<^sub>T (ObjectType \<C>) = True"
-| "is_object_type\<^sub>T _ = False"
+inductive object_type\<^sub>T where
+  "object_type\<^sub>T (ObjectType \<C>) \<C>"
 
-| "is_object_type\<^sub>N (Required \<tau>) = is_object_type\<^sub>T \<tau>"
-| "is_object_type\<^sub>N (Optional \<tau>) = is_object_type\<^sub>T \<tau>"
+inductive object_type\<^sub>N where
+  "object_type\<^sub>T \<tau> \<C> \<Longrightarrow>
+   object_type\<^sub>N (Required \<tau>) \<C> False"
+| "object_type\<^sub>T \<tau> \<C> \<Longrightarrow>
+   object_type\<^sub>N (Optional \<tau>) \<C> True"
 
-inductive element_type\<^sub>T
-      and element_type\<^sub>N where
-  "element_type\<^sub>T (Collection \<tau>) \<tau>"
-| "element_type\<^sub>T (Set \<tau>) \<tau>"
-| "element_type\<^sub>T (OrderedSet \<tau>) \<tau>"
-| "element_type\<^sub>T (Bag \<tau>) \<tau>"
-| "element_type\<^sub>T (Sequence \<tau>) \<tau>"
+datatype collection_kind =
+  CollectionKind | SetKind | OrderedSetKind | BagKind | SequenceKind
 
-| "element_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   element_type\<^sub>N (Required \<tau>) \<sigma>"
-| "element_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   element_type\<^sub>N (Optional \<tau>) \<sigma>"
+inductive collection_type\<^sub>T where
+  "collection_type\<^sub>T (Collection \<tau>) CollectionKind \<tau>"
+| "collection_type\<^sub>T (Set \<tau>) SetKind \<tau>"
+| "collection_type\<^sub>T (OrderedSet \<tau>) OrderedSetKind \<tau>"
+| "collection_type\<^sub>T (Bag \<tau>) BagKind \<tau>"
+| "collection_type\<^sub>T (Sequence \<tau>) SequenceKind \<tau>"
 
+inductive collection_type\<^sub>N where
+  "collection_type\<^sub>T \<tau> k \<sigma> \<Longrightarrow>
+   collection_type\<^sub>N (Required \<tau>) k \<sigma> False"
+| "collection_type\<^sub>T \<tau> k \<sigma> \<Longrightarrow>
+   collection_type\<^sub>N (Optional \<tau>) k \<sigma> True"
+
+inductive map_type\<^sub>T where
+  "map_type\<^sub>T (Map \<sigma> \<rho>) \<sigma> \<rho>"
+
+inductive map_type\<^sub>N where
+  "map_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
+   map_type\<^sub>N (Required \<tau>) \<sigma> \<rho> False"
+| "map_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
+   map_type\<^sub>N (Optional \<tau>) \<sigma> \<rho> True"
+
+inductive tuple_type\<^sub>T where
+  "tuple_type\<^sub>T (Tuple \<pi>) \<pi>"
+
+inductive tuple_type\<^sub>N where
+  "tuple_type\<^sub>T \<tau> \<pi> \<Longrightarrow>
+   tuple_type\<^sub>N (Required \<tau>) \<pi> False"
+| "tuple_type\<^sub>T \<tau> \<pi> \<Longrightarrow>
+   tuple_type\<^sub>N (Optional \<tau>) \<pi> True"
+
+(*
 lemma element_type\<^sub>T_alt_simps:
   "element_type\<^sub>T \<tau> \<sigma> = 
      (Collection \<sigma> = \<tau> \<or>
@@ -1629,16 +1652,16 @@ lemma element_type\<^sub>T_alt_simps:
       Bag \<sigma> = \<tau> \<or>
       Sequence \<sigma> = \<tau>)"
   by (auto simp add: element_type\<^sub>T.simps)
-
-inductive update_element_type\<^sub>T
-      and update_element_type\<^sub>N where
+*)
+inductive update_element_type\<^sub>T where
   "update_element_type\<^sub>T (Collection _) \<tau> (Collection \<tau>)"
 | "update_element_type\<^sub>T (Set _) \<tau> (Set \<tau>)"
 | "update_element_type\<^sub>T (OrderedSet _) \<tau> (OrderedSet \<tau>)"
 | "update_element_type\<^sub>T (Bag _) \<tau> (Bag \<tau>)"
 | "update_element_type\<^sub>T (Sequence _) \<tau> (Sequence \<tau>)"
 
-| "update_element_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
+inductive update_element_type\<^sub>N where
+  "update_element_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
    update_element_type\<^sub>N (Required \<tau>) \<sigma> (Required \<rho>)"
 | "update_element_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
    update_element_type\<^sub>N (Optional \<tau>) \<sigma> (Optional \<rho>)"
@@ -1682,6 +1705,12 @@ inductive to_ordered_collection_type\<^sub>N where
 | "to_ordered_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
    to_ordered_collection_type\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
 
+fun required_type\<^sub>N where
+  "required_type\<^sub>N (Required \<tau>) = True"
+| "required_type\<^sub>N (Optional \<tau>) = False"
+
+abbreviation "optional_type\<^sub>N \<tau> \<equiv> \<not> required_type\<^sub>N \<tau>"
+
 fun to_required_type\<^sub>N where
   "to_required_type\<^sub>N (Required \<tau>) = Required \<tau>"
 | "to_required_type\<^sub>N (Optional \<tau>) = Required \<tau>"
@@ -1718,63 +1747,87 @@ and to_optional_type_nested\<^sub>N where
 
 section \<open>Determinism\<close>
 
-lemma
-  element_type\<^sub>T_det:
-    "element_type\<^sub>T \<tau> \<sigma>\<^sub>N \<Longrightarrow>
-     element_type\<^sub>T \<tau> \<rho>\<^sub>N \<Longrightarrow> \<sigma>\<^sub>N = \<rho>\<^sub>N" and
-  element_type\<^sub>N_det:
-    "element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<Longrightarrow>
-     element_type\<^sub>N \<tau>\<^sub>N \<rho>\<^sub>N \<Longrightarrow> \<sigma>\<^sub>N = \<rho>\<^sub>N"
-  by (induct arbitrary: \<rho>\<^sub>N rule: element_type\<^sub>T_element_type\<^sub>N.inducts,
-      simp_all add: element_type\<^sub>T.simps element_type\<^sub>N.simps)
+lemma collection_type\<^sub>T_det:
+  "collection_type\<^sub>T \<tau> k\<^sub>1 \<sigma>\<^sub>N \<Longrightarrow>
+   collection_type\<^sub>T \<tau> k\<^sub>2 \<rho>\<^sub>N \<Longrightarrow> k\<^sub>1 = k\<^sub>2 \<and> \<sigma>\<^sub>N = \<rho>\<^sub>N"
+  "collection_type\<^sub>T \<tau>\<^sub>1 k \<sigma>\<^sub>N \<Longrightarrow>
+   collection_type\<^sub>T \<tau>\<^sub>2 k \<sigma>\<^sub>N \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: collection_type\<^sub>T.simps)
 
-lemma
-  update_element_type\<^sub>T_det:
-    "update_element_type\<^sub>T \<tau> \<sigma>\<^sub>N \<rho> \<Longrightarrow>
-     update_element_type\<^sub>T \<tau> \<sigma>\<^sub>N \<upsilon> \<Longrightarrow> \<rho> = \<upsilon>" and
-  update_element_type\<^sub>N_det:
-    "update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<rho>\<^sub>N \<Longrightarrow>
-     update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<upsilon>\<^sub>N \<Longrightarrow> \<rho>\<^sub>N = \<upsilon>\<^sub>N"
-  for \<tau> :: "'a type" and \<rho> \<upsilon> :: "'b type"
-  and \<tau>\<^sub>N :: "'a type\<^sub>N" and \<rho>\<^sub>N \<upsilon>\<^sub>N :: "'b type\<^sub>N"
-  by (induct rule: update_element_type\<^sub>T_update_element_type\<^sub>N.inducts,
-      auto simp: update_element_type\<^sub>T.simps update_element_type\<^sub>N.simps)
+lemma collection_type\<^sub>N_det:
+  "collection_type\<^sub>N \<tau>\<^sub>N k\<^sub>1 \<sigma>\<^sub>N n\<^sub>1 \<Longrightarrow>
+   collection_type\<^sub>N \<tau>\<^sub>N k\<^sub>2 \<rho>\<^sub>N n\<^sub>2 \<Longrightarrow> k\<^sub>1 = k\<^sub>2 \<and> \<sigma>\<^sub>N = \<rho>\<^sub>N \<and> n\<^sub>1 = n\<^sub>2"
+  "collection_type\<^sub>N \<tau>\<^sub>N\<^sub>1 k \<sigma>\<^sub>N n \<Longrightarrow>
+   collection_type\<^sub>N \<tau>\<^sub>N\<^sub>2 k \<sigma>\<^sub>N n \<Longrightarrow> \<tau>\<^sub>N\<^sub>1 = \<tau>\<^sub>N\<^sub>2"
+  by (auto simp add: collection_type\<^sub>N.simps collection_type\<^sub>T_det)
+
+lemma map_type\<^sub>T_det:
+  "map_type\<^sub>T \<tau> \<sigma>\<^sub>N\<^sub>1 \<rho>\<^sub>N\<^sub>1 \<Longrightarrow>
+   map_type\<^sub>T \<tau> \<sigma>\<^sub>N\<^sub>2 \<rho>\<^sub>N\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>N\<^sub>1 = \<sigma>\<^sub>N\<^sub>2 \<and> \<rho>\<^sub>N\<^sub>1 = \<rho>\<^sub>N\<^sub>2"
+  "map_type\<^sub>T \<tau>\<^sub>1 \<sigma>\<^sub>N \<rho>\<^sub>N \<Longrightarrow>
+   map_type\<^sub>T \<tau>\<^sub>2 \<sigma>\<^sub>N \<rho>\<^sub>N \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: map_type\<^sub>T.simps)
+
+lemma map_type\<^sub>N_det:
+  "map_type\<^sub>N \<tau> \<sigma>\<^sub>N\<^sub>1 \<rho>\<^sub>N\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   map_type\<^sub>N \<tau> \<sigma>\<^sub>N\<^sub>2 \<rho>\<^sub>N\<^sub>2 n\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>N\<^sub>1 = \<sigma>\<^sub>N\<^sub>2 \<and> \<rho>\<^sub>N\<^sub>1 = \<rho>\<^sub>N\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  "map_type\<^sub>N \<tau>\<^sub>1 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow>
+   map_type\<^sub>N \<tau>\<^sub>2 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: map_type\<^sub>N.simps map_type\<^sub>T_det)
+
+lemma tuple_type\<^sub>T_det:
+  "tuple_type\<^sub>T \<tau> \<pi>\<^sub>1 \<Longrightarrow>
+   tuple_type\<^sub>T \<tau> \<pi>\<^sub>2 \<Longrightarrow> \<pi>\<^sub>1 = \<pi>\<^sub>2"
+  "tuple_type\<^sub>T \<tau>\<^sub>1 \<pi> \<Longrightarrow>
+   tuple_type\<^sub>T \<tau>\<^sub>2 \<pi> \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: tuple_type\<^sub>T.simps)
+
+lemma tuple_type\<^sub>N_det:
+  "tuple_type\<^sub>N \<tau> \<pi>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   tuple_type\<^sub>N \<tau> \<pi>\<^sub>2 n\<^sub>2 \<Longrightarrow> \<pi>\<^sub>1 = \<pi>\<^sub>2 \<and>  n\<^sub>1 =  n\<^sub>2"
+  "tuple_type\<^sub>N \<tau>\<^sub>1 \<pi> n \<Longrightarrow>
+   tuple_type\<^sub>N \<tau>\<^sub>2 \<pi> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (auto simp add: tuple_type\<^sub>N.simps tuple_type\<^sub>T_det)
+
+lemma update_element_type\<^sub>T_det:
+  "update_element_type\<^sub>T \<tau> \<sigma>\<^sub>N \<rho> \<Longrightarrow>
+   update_element_type\<^sub>T \<tau> \<sigma>\<^sub>N \<upsilon> \<Longrightarrow> \<rho> = \<upsilon>"
+  by (auto simp: update_element_type\<^sub>T.simps)
+
+lemma update_element_type\<^sub>N_det:
+  "update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<rho>\<^sub>N \<Longrightarrow>
+   update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<upsilon>\<^sub>N \<Longrightarrow> \<rho>\<^sub>N = \<upsilon>\<^sub>N"
+  by (auto simp: update_element_type\<^sub>N.simps update_element_type\<^sub>T_det)
 
 lemma to_unique_collection_type\<^sub>T_det:
   "to_unique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
    to_unique_collection_type\<^sub>T \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (induct rule: to_unique_collection_type\<^sub>T.inducts,
-      simp_all add: to_unique_collection_type\<^sub>T.simps)
+  by (auto simp: to_unique_collection_type\<^sub>T.simps)
 
 lemma to_unique_collection_type\<^sub>N_det:
   "to_unique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
    to_unique_collection_type\<^sub>N \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (elim to_unique_collection_type\<^sub>N.cases;
-      auto simp: to_unique_collection_type\<^sub>T_det)
+  by (auto simp: to_unique_collection_type\<^sub>N.simps to_unique_collection_type\<^sub>T_det)
 
 lemma to_nonunique_collection_type\<^sub>T_det:
   "to_nonunique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
    to_nonunique_collection_type\<^sub>T \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (induct rule: to_nonunique_collection_type\<^sub>T.inducts,
-      simp_all add: to_nonunique_collection_type\<^sub>T.simps)
+  by (auto simp: to_nonunique_collection_type\<^sub>T.simps)
 
 lemma to_nonunique_collection_type\<^sub>N_det:
   "to_nonunique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
    to_nonunique_collection_type\<^sub>N \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (elim to_nonunique_collection_type\<^sub>N.cases;
-      auto simp: to_nonunique_collection_type\<^sub>T_det)
+  by (auto simp: to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T_det)
 
 lemma to_ordered_collection_type\<^sub>T_det:
   "to_ordered_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
    to_ordered_collection_type\<^sub>T \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (induct rule: to_ordered_collection_type\<^sub>T.inducts,
-      simp_all add: to_ordered_collection_type\<^sub>T.simps)
+  by (auto simp: to_ordered_collection_type\<^sub>T.simps)
 
 lemma to_ordered_collection_type\<^sub>N_det:
   "to_ordered_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
    to_ordered_collection_type\<^sub>N \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (elim to_ordered_collection_type\<^sub>N.cases;
-      auto simp: to_ordered_collection_type\<^sub>T_det)
+  by (auto simp: to_ordered_collection_type\<^sub>N.simps to_ordered_collection_type\<^sub>T_det)
 
 (*** Code Setup *************************************************************)
 
@@ -1950,7 +2003,10 @@ lemma less_eq_type\<^sub>N_code [code]:
   unfolding dual_order.order_iff_strict less_type\<^sub>N_code
   by auto
 
-code_pred [show_modes] element_type\<^sub>N .
+code_pred [show_modes] object_type\<^sub>N .
+code_pred [show_modes] collection_type\<^sub>N .
+code_pred [show_modes] map_type\<^sub>N .
+code_pred [show_modes] tuple_type\<^sub>N .
 code_pred [show_modes] update_element_type\<^sub>N .
 code_pred [show_modes] to_unique_collection_type\<^sub>N .
 code_pred [show_modes] to_nonunique_collection_type\<^sub>N .

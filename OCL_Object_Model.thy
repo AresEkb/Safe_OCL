@@ -41,7 +41,7 @@ definition "oper_type op \<equiv>
   else
     let elems = fmap_of_list (map (\<lambda>p. (param_name p, param_type p))
           (params @ [(STR ''result'', oper_result op, Out)])) in
-    if fBex (fmran elems) is_errorable_type
+    if fBex (fmran elems) errorable_type
     then (Tuple (fmmap unwrap_errorable_type elems))[1!]
     else (Tuple (fmmap unwrap_errorable_type elems))[1]"
 

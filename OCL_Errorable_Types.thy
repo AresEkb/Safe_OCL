@@ -12,7 +12,7 @@ begin
 
 section \<open>Definition\<close>
 
-type_synonym 'a type\<^sub>N\<^sub>E = "'a type\<^sub>N errorable_type"
+type_synonym 'a type\<^sub>N\<^sub>E = "'a type\<^sub>N errorable"
 
 abbreviation Required_ErrorFree ("_[1]" [1000] 1000) where
   "Required_ErrorFree \<tau> \<equiv> ErrorFree (Required \<tau>)"
@@ -27,43 +27,71 @@ abbreviation Optional_Errorable ("_[?!]" [1000] 1000) where
   "Optional_Errorable \<tau> \<equiv> Errorable (Optional \<tau>)"
 
 
-fun is_finite_type where
-  "is_finite_type (ErrorFree \<tau>) = is_finite_type\<^sub>N \<tau>"
-| "is_finite_type (Errorable \<tau>) = is_finite_type\<^sub>N \<tau>"
+fun finite_type where
+  "finite_type (ErrorFree \<tau>) = finite_type\<^sub>N \<tau>"
+| "finite_type (Errorable \<tau>) = finite_type\<^sub>N \<tau>"
 
-fun is_required_type\<^sub>N
-and is_required_type where
-  "is_required_type\<^sub>N (Required \<tau>) = True"
-| "is_required_type\<^sub>N (Optional \<tau>) = False"
+inductive object_type where
+  "object_type\<^sub>N \<tau> \<C> n \<Longrightarrow>
+   object_type (ErrorFree \<tau>) \<C> n"
+| "object_type\<^sub>N \<tau> \<C> n \<Longrightarrow>
+   object_type (Errorable \<tau>) \<C> n"
 
-| "is_required_type (ErrorFree \<tau>) = is_required_type\<^sub>N \<tau>"
-| "is_required_type (Errorable \<tau>) = is_required_type\<^sub>N \<tau>"
+inductive collection_type where
+  "collection_type\<^sub>N \<tau> k \<sigma> n \<Longrightarrow>
+   collection_type (ErrorFree \<tau>) k (ErrorFree \<sigma>) n"
+| "collection_type\<^sub>N \<tau> k \<sigma> n \<Longrightarrow>
+   collection_type (Errorable \<tau>) k (Errorable \<sigma>) n"
 
-abbreviation "is_optional_type \<tau> \<equiv> \<not> is_required_type \<tau>"
+(* Тут нужен комментарий, почему мы спускаем ошибочность до элементов *)
 
-fun is_object_type where
-  "is_object_type (ErrorFree \<tau>) = is_object_type\<^sub>N \<tau>"
-| "is_object_type (Errorable \<tau>) = is_object_type\<^sub>N \<tau>"
+inductive map_type where
+  "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
+   map_type (ErrorFree \<tau>) (ErrorFree \<sigma>) (ErrorFree \<rho>) n"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
+   map_type (Errorable \<tau>) (Errorable \<sigma>) (Errorable \<rho>) n"
 
-inductive element_type where
-  "element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   element_type (ErrorFree \<tau>) (ErrorFree \<sigma>)"
-| "element_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   element_type (Errorable \<tau>) (Errorable \<sigma>)"
+inductive map_type' where
+  "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
+   map_type' (ErrorFree \<tau>) (ErrorFree \<sigma>) (ErrorFree \<rho>) n"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
+   map_type' (Errorable \<tau>) (Errorable \<sigma>) (ErrorFree \<rho>) n"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
+   map_type' (Errorable \<tau>) (ErrorFree \<sigma>) (Errorable \<rho>) n"
+| "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
+   map_type' (Errorable \<tau>) (Errorable \<sigma>) (Errorable \<rho>) n"
+
+(* Тут нужен комментарий, почему мы спускаем ошибочность до элементов *)
+
+inductive tuple_type where
+  "tuple_type\<^sub>N \<tau> \<pi> n \<Longrightarrow>
+   tuple_type (ErrorFree \<tau>) (fmmap ErrorFree \<pi>) n"
+| "tuple_type\<^sub>N \<tau> \<pi> n \<Longrightarrow>
+   tuple_type (Errorable \<tau>) (fmmap Errorable \<pi>) n"
+
+inductive tuple_type' where
+  "tuple_type\<^sub>N \<tau> (fmmap unwrap_errorable_type \<pi>) n \<Longrightarrow>
+   \<not> fBex (fmran \<pi>) errorable_type \<Longrightarrow>
+   tuple_type' (ErrorFree \<tau>) \<pi> n"
+| "tuple_type\<^sub>N \<tau> (fmmap unwrap_errorable_type \<pi>) n \<Longrightarrow>
+   fBex (fmran \<pi>) errorable_type \<Longrightarrow>
+   tuple_type' (Errorable \<tau>) \<pi> n"
+
+(* Доказать эквивалентность предикатов *)
 
 inductive is_collection_type where
-  "element_type \<tau> \<sigma> \<Longrightarrow>
+  "collection_type \<tau> _ _ _ \<Longrightarrow>
    is_collection_type \<tau>"
 
 inductive to_single_type where
   "\<not> is_collection_type \<tau> \<Longrightarrow>
    to_single_type \<tau> \<tau>"
-| "element_type \<tau> \<sigma> \<Longrightarrow>
+| "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
    to_single_type \<sigma> \<rho> \<Longrightarrow>
    to_single_type \<tau> \<rho>"
 
 inductive inner_element_type where
-  "element_type \<tau> \<sigma> \<Longrightarrow>
+  "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
    to_single_type \<sigma> \<rho> \<Longrightarrow>
    inner_element_type \<tau> \<rho>"
 
@@ -94,37 +122,65 @@ inductive to_ordered_collection_type where
    to_ordered_collection_type (ErrorFree \<tau>) (ErrorFree \<sigma>)"
 | "to_ordered_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
    to_ordered_collection_type (Errorable \<tau>) (Errorable \<sigma>)"
-
+(*
 inductive tuple_element_type where
   "fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
    tuple_element_type (Tuple \<pi>)[1] elem (ErrorFree \<tau>)"
 | "fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
    tuple_element_type (Tuple \<pi>)[1!] elem (Errorable \<tau>)"
+*)
 
-abbreviation "to_required_type \<equiv> map_errorable_type to_required_type\<^sub>N"
-abbreviation "to_optional_type_nested \<equiv> map_errorable_type to_optional_type_nested\<^sub>N"
+fun required_type where
+  "required_type (ErrorFree \<tau>) = required_type\<^sub>N \<tau>"
+| "required_type (Errorable \<tau>) = required_type\<^sub>N \<tau>"
+
+abbreviation "optional_type \<tau> \<equiv> \<not> required_type \<tau>"
+
+abbreviation "to_required_type \<equiv> map_errorable to_required_type\<^sub>N"
+abbreviation "to_optional_type_nested \<equiv> map_errorable to_optional_type_nested\<^sub>N"
 
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
 
-lemma element_type_det:
-  "element_type \<tau> \<sigma> \<Longrightarrow>
-   element_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: element_type.simps element_type\<^sub>N_det)
+lemma collection_type_det:
+  "collection_type \<tau> k\<^sub>1 \<sigma>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   collection_type \<tau> k\<^sub>2 \<sigma>\<^sub>2 n\<^sub>2 \<Longrightarrow> k\<^sub>1 = k\<^sub>2 \<and> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  "collection_type \<tau>\<^sub>1 k \<sigma> n \<Longrightarrow>
+   collection_type \<tau>\<^sub>2 k \<sigma> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  apply (elim collection_type.cases; simp add: collection_type\<^sub>N_det(1))
+  by (elim collection_type.cases; simp add: collection_type\<^sub>N_det(2))
+
+lemma map_type_det:
+  "map_type \<tau> \<sigma>\<^sub>N\<^sub>1 \<rho>\<^sub>N\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   map_type \<tau> \<sigma>\<^sub>N\<^sub>2 \<rho>\<^sub>N\<^sub>2 n\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>N\<^sub>1 = \<sigma>\<^sub>N\<^sub>2 \<and> \<rho>\<^sub>N\<^sub>1 = \<rho>\<^sub>N\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  "map_type' \<tau>\<^sub>1 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow>
+   map_type' \<tau>\<^sub>2 \<sigma>\<^sub>N \<rho>\<^sub>N n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  apply (elim map_type.cases; simp add: map_type\<^sub>N_det(1))
+  by (elim map_type'.cases; simp add: map_type\<^sub>N_det(2))
+
+lemma tuple_type_det:
+  "tuple_type \<tau> \<pi>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   tuple_type \<tau> \<pi>\<^sub>2 n\<^sub>2 \<Longrightarrow> \<pi>\<^sub>1 = \<pi>\<^sub>2 \<and>  n\<^sub>1 =  n\<^sub>2"
+  "tuple_type' \<tau>\<^sub>1 \<pi> n \<Longrightarrow>
+   tuple_type' \<tau>\<^sub>2 \<pi> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  apply (elim tuple_type.cases)
+  using tuple_type\<^sub>N_det(1) apply blast+
+  apply (elim tuple_type'.cases)
+  using tuple_type\<^sub>N_det(2) by blast+
 
 lemma to_single_type_det:
   "to_single_type \<tau> \<sigma> \<Longrightarrow>
    to_single_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  apply (induct arbitrary: \<rho> rule: to_single_type.induct)
-  apply (metis is_collection_type.intros to_single_type.cases)
-  by (metis element_type_det is_collection_type.intros to_single_type.cases)
+  apply (induct rule: to_single_type.induct)
+  apply (erule to_single_type.cases; simp add: is_collection_type.intros)
+  using collection_type_det(1) is_collection_type.intros to_single_type.simps by blast
 
 lemma inner_element_type_det:
   "inner_element_type \<tau> \<sigma> \<Longrightarrow>
    inner_element_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  apply (auto simp: inner_element_type.simps)
-  using element_type_det to_single_type_det by blast
+  unfolding inner_element_type.simps
+  using inner_element_type.simps collection_type_det to_single_type_det by blast
 
 lemma update_element_type_det:
   "update_element_type \<tau> \<sigma> \<rho> \<Longrightarrow>
@@ -145,23 +201,50 @@ lemma to_ordered_collection_type_det:
   "to_ordered_collection_type \<tau> \<sigma> \<Longrightarrow>
    to_ordered_collection_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
   by (auto simp: to_ordered_collection_type.simps to_ordered_collection_type\<^sub>N_det)
-
+(*
 lemma tuple_element_type_det:
   "tuple_element_type \<tau> elem \<sigma> \<Longrightarrow>
    tuple_element_type \<tau> elem \<rho> \<Longrightarrow> \<sigma> = \<rho>"
   by (induct rule: tuple_element_type.induct; erule tuple_element_type.cases; auto)
-
+*)
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
 
-code_pred element_type .
+code_pred object_type .
+code_pred collection_type .
+code_pred map_type .
+code_pred map_type' .
+code_pred tuple_type .
+code_pred tuple_type' .
 code_pred is_collection_type .
 code_pred to_single_type .
 code_pred inner_element_type .
+code_pred update_element_type .
 code_pred to_unique_collection_type .
 code_pred to_nonunique_collection_type .
 code_pred to_ordered_collection_type .
-code_pred tuple_element_type .
+
+values "{(x, y, n). map_type (Map (Boolean[1]\<^sub>N :: nat type\<^sub>N) Integer[?]\<^sub>N)[1] x y n}"
+values "{(x, y, n). map_type (Map (Boolean[1]\<^sub>N :: nat type\<^sub>N) Integer[?]\<^sub>N)[1!] x y n}"
+values "{(x, y, n). map_type (Map (Boolean[1]\<^sub>N :: nat type\<^sub>N) Integer[?]\<^sub>N)[?] x y n}"
+values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?] False}"
+values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?] True}"
+values "{x. map_type' x (Boolean[1!] :: nat type\<^sub>N\<^sub>E) Integer[?!] True}"
+values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?!] True}"
+
+values "{(k, x, n). collection_type (Set (Boolean[1]\<^sub>N :: nat type\<^sub>N))[1] k x n}"
+values "{(k, x, n). collection_type (Set (Boolean[1]\<^sub>N :: nat type\<^sub>N))[?!] k x n}"
+values "{x. collection_type x BagKind (Boolean[?] :: nat type\<^sub>N\<^sub>E) False}"
+values "{x. collection_type x SetKind (Boolean[1!] :: nat type\<^sub>N\<^sub>E) True}"
+
+values "{x. tuple_type' x (fmempty(STR ''a'' \<mapsto>\<^sub>f Boolean[1] :: nat type\<^sub>N\<^sub>E)
+  (STR ''b'' \<mapsto>\<^sub>f Real[1] :: nat type\<^sub>N\<^sub>E)) False}"
+values "{x. tuple_type' x (fmempty(STR ''a'' \<mapsto>\<^sub>f Boolean[1!] :: nat type\<^sub>N\<^sub>E)
+  (STR ''b'' \<mapsto>\<^sub>f Real[?] :: nat type\<^sub>N\<^sub>E)) False}"
+values "{(x, n). tuple_type (Tuple (fmap_of_list
+  [(STR ''a'', Boolean[1]\<^sub>N :: nat type\<^sub>N), (STR ''b'', Real[1]\<^sub>N)]))[1] x n}"
+values "{(x, n). tuple_type (Tuple (fmap_of_list
+  [(STR ''a'', Boolean[1]\<^sub>N :: nat type\<^sub>N), (STR ''b'', Real[1]\<^sub>N)]))[?!] x n}"
 
 end

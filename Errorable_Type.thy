@@ -8,51 +8,51 @@ theory Errorable_Type
   imports Main "HOL-Library.FSet"
 begin
 
-datatype 'a errorable_type ("_\<^sub>E" [21] 21) =
+datatype 'a errorable ("_\<^sub>E" [21] 21) =
   ErrorFree 'a
 | Errorable 'a
 
-instantiation errorable_type :: (order) order
+instantiation errorable :: (order) order
 begin
 
-fun less_errorable_type where
+fun less_errorable where
   "ErrorFree \<tau> < ErrorFree \<sigma> = (\<tau> < \<sigma>)"
 | "Errorable \<tau> < ErrorFree \<sigma> = False"
 | "ErrorFree \<tau> < Errorable \<sigma> = (\<tau> \<le> \<sigma>)"
 | "Errorable \<tau> < Errorable \<sigma> = (\<tau> < \<sigma>)"
 
-fun less_eq_errorable_type where
+fun less_eq_errorable where
   "ErrorFree \<tau> \<le> ErrorFree \<sigma> = (\<tau> \<le> \<sigma>)"
 | "Errorable \<tau> \<le> ErrorFree \<sigma> = False"
 | "ErrorFree \<tau> \<le> Errorable \<sigma> = (\<tau> \<le> \<sigma>)"
 | "Errorable \<tau> \<le> Errorable \<sigma> = (\<tau> \<le> \<sigma>)"
 
-lemma less_le_not_le_errorable_type:
+lemma less_le_not_le_errorable:
   "\<tau> < \<sigma> \<longleftrightarrow> \<tau> \<le> \<sigma> \<and> \<not> \<sigma> \<le> \<tau>"
-  for \<tau> \<sigma> :: "'a errorable_type"
+  for \<tau> \<sigma> :: "'a errorable"
   by (cases \<tau>; cases \<sigma>; auto)
 
-lemma order_refl_errorable_type:
+lemma order_refl_errorable:
   "\<tau> \<le> \<tau>"
-  for \<tau> :: "'a errorable_type"
+  for \<tau> :: "'a errorable"
   by (cases \<tau>; auto)
 
-lemma order_trans_errorable_type:
+lemma order_trans_errorable:
   "\<tau> \<le> \<sigma> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow> \<tau> \<le> \<rho>"
-  for \<tau> \<sigma> \<rho> :: "'a errorable_type"
+  for \<tau> \<sigma> \<rho> :: "'a errorable"
   by (cases \<tau>; cases \<sigma>; cases \<rho>; auto)
 
-lemma antisym_errorable_type:
+lemma antisym_errorable:
   "\<tau> \<le> \<sigma> \<Longrightarrow> \<sigma> \<le> \<tau> \<Longrightarrow> \<tau> = \<sigma>"
-  for \<tau> \<sigma> :: "'a errorable_type"
+  for \<tau> \<sigma> :: "'a errorable"
   by (cases \<tau>; cases \<sigma>; auto)
 
 instance
   apply intro_classes
-  apply (simp add: less_le_not_le_errorable_type)
-  apply (simp add: order_refl_errorable_type)
-  using order_trans_errorable_type apply blast
-  by (simp add: antisym_errorable_type)
+  apply (simp add: less_le_not_le_errorable)
+  apply (simp add: order_refl_errorable)
+  using order_trans_errorable apply blast
+  by (simp add: antisym_errorable)
 
 end
 
@@ -77,24 +77,24 @@ lemma type_less_eq_x_Errorable_intro [intro]:
 lemma type_less_x_ErrorFree [elim!]:
   "\<tau> < ErrorFree \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (erule less_errorable_type.elims; auto)
+  by (erule less_errorable.elims; auto)
 
 lemma type_less_eq_x_ErrorFree [elim!]:
   "\<tau> \<le> ErrorFree \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (erule less_eq_errorable_type.elims; auto)
+  by (erule less_eq_errorable.elims; auto)
 
 lemma type_less_x_Errorable [elim!]:
   "\<tau> < Errorable \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
    (\<And>\<rho>. \<tau> = Errorable \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (erule less_errorable_type.elims; auto)
+  by (erule less_errorable.elims; auto)
 
 lemma type_less_eq_x_Errorable [elim!]:
   "\<tau> \<le> Errorable \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = Errorable \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (erule less_eq_errorable_type.elims; auto)
+  by (erule less_eq_errorable.elims; auto)
 
 lemma type\<^sub>N\<^sub>E_less_left_simps [simp]:
   "ErrorFree \<rho> < \<sigma> = (\<exists>\<upsilon>.
@@ -124,10 +124,10 @@ lemma type\<^sub>N\<^sub>E_less_eq_right_simps [simp]:
 
 notation sup (infixl "\<squnion>" 65)
 
-instantiation errorable_type :: (semilattice_sup) semilattice_sup
+instantiation errorable :: (semilattice_sup) semilattice_sup
 begin
 
-fun sup_errorable_type where
+fun sup_errorable where
   "ErrorFree \<tau> \<squnion> \<sigma> = (case \<sigma>
     of ErrorFree \<rho> \<Rightarrow> ErrorFree (\<tau> \<squnion> \<rho>)
      | Errorable \<rho> \<Rightarrow> Errorable (\<tau> \<squnion> \<rho>))"
@@ -135,42 +135,42 @@ fun sup_errorable_type where
     of ErrorFree \<rho> \<Rightarrow> Errorable (\<tau> \<squnion> \<rho>)
      | Errorable \<rho> \<Rightarrow> Errorable (\<tau> \<squnion> \<rho>))"
 
-lemma sup_ge1_errorable_type:
+lemma sup_ge1_errorable:
   "\<tau> \<le> \<tau> \<squnion> \<sigma>"
-  for \<tau> \<sigma> :: "'a errorable_type"
+  for \<tau> \<sigma> :: "'a errorable"
   by (cases \<tau>; cases \<sigma>; simp)
 
-lemma sup_commut_errorable_type:
+lemma sup_commut_errorable:
   "\<tau> \<squnion> \<sigma> = \<sigma> \<squnion> \<tau>"
-  for \<tau> \<sigma> :: "'a errorable_type"
+  for \<tau> \<sigma> :: "'a errorable"
   by (cases \<tau>; cases \<sigma>; simp add: sup.commute)
 
-lemma sup_least_errorable_type:
+lemma sup_least_errorable:
   "\<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<rho> \<Longrightarrow> \<tau> \<squnion> \<sigma> \<le> \<rho>"
-  for \<tau> \<sigma> \<rho> :: "'a errorable_type"
+  for \<tau> \<sigma> \<rho> :: "'a errorable"
   by (cases \<tau>; cases \<sigma>; cases \<rho>; simp)
 
 instance
   apply intro_classes
-  apply (simp add: sup_ge1_errorable_type)
-  apply (simp add: sup_ge1_errorable_type sup_commut_errorable_type)
-  by (simp add: sup_least_errorable_type)
+  apply (simp add: sup_ge1_errorable)
+  apply (simp add: sup_ge1_errorable sup_commut_errorable)
+  by (simp add: sup_least_errorable)
 
 end
 
-fun is_errorable_type where
-  "is_errorable_type (ErrorFree \<tau>) = False"
-| "is_errorable_type (Errorable \<tau>) = True"
+fun errorable_type where
+  "errorable_type (ErrorFree \<tau>) = False"
+| "errorable_type (Errorable \<tau>) = True"
 
-abbreviation "is_error_free \<tau> \<equiv> \<not> is_errorable_type \<tau>"
+abbreviation "error_free_type \<tau> \<equiv> \<not> errorable_type \<tau>"
 
-fun to_error_free where
-  "to_error_free (ErrorFree \<tau>) = (ErrorFree \<tau>)"
-| "to_error_free (Errorable \<tau>) = (ErrorFree \<tau>)"
+fun to_error_free_type where
+  "to_error_free_type (ErrorFree \<tau>) = (ErrorFree \<tau>)"
+| "to_error_free_type (Errorable \<tau>) = (ErrorFree \<tau>)"
 
-fun to_errorable where
-  "to_errorable (ErrorFree \<tau>) = (Errorable \<tau>)"
-| "to_errorable (Errorable \<tau>) = (Errorable \<tau>)"
+fun to_errorable_type where
+  "to_errorable_type (ErrorFree \<tau>) = (Errorable \<tau>)"
+| "to_errorable_type (Errorable \<tau>) = (Errorable \<tau>)"
 
 fun unwrap_errorable_type where
   "unwrap_errorable_type (ErrorFree \<tau>) = \<tau>"

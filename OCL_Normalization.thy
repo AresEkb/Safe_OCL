@@ -82,35 +82,6 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
-syntax
-(*  "_selectByKind" :: "'a expr \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr" ("_->selectByKind'(_')")
-  "_select" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" ("_->select'(_')")*)
-  "_dotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_._")
-  "_safeDotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_?._")
-  "_arrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_->_")
-  "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_?->_")
-  "_selectByKind" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("selectByKind'(_')")
-
-translations
-  "src. call" == "CONST Call src (CONST DotCall) call"
-  "src?.call" == "CONST Call src (CONST SafeDotCall) call"
-  "src->call" == "CONST Call src (CONST ArrowCall) call"
-  "src?->call" == "CONST Call src (CONST SafeArrowCall) call"
-  "selectByKind(\<tau>)" == "CONST TypeOperation (CONST SelectByKindOp) \<tau>"
-(*
-  "src->selectByKind(\<tau>)" == "CONST TypeOperationCall src (CONST ArrowCall) (CONST SelectByKindOp) \<tau>"
-  "src->select(body)" == "CONST TypeOperationCall src (CONST ArrowCall) (CONST SelectByKindOp) \<tau>"*)
-
-term "TypeOperationCall src ArrowCall SelectByKindOp \<tau>"
-term "Call src k (TypeOperation op ty)"
-term "Call src k (Iterator SelectIter its its_ty body)"
-term "src->selectByKind(\<tau>)"
-term "src?.selectByKind(\<tau>)"
-
-
-
-
-
 
 
 inductive normalize
