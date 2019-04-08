@@ -178,6 +178,7 @@ inductive_cases subtype_x_Optional [elim!]: "\<tau> \<sqsubset>\<^sub>N Optional
 
 inductive_cases subtype_OclAny_x [elim!]: "OclAny \<sqsubset> \<sigma>"
 inductive_cases subtype_Collection_x [elim!]: "Collection \<tau> \<sqsubset> \<sigma>"
+inductive_cases subtype_Map_x [elim!]: "Map \<tau> \<sigma> \<sqsubset> \<psi>"
 
 lemma
   subtype_asym: "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> \<sigma> \<sqsubset> \<tau> \<Longrightarrow> False" and
@@ -745,6 +746,242 @@ proof -
   ultimately show ?thesis
     using assms by auto
 qed
+(*
+lemma subtype_tranclp_Map_x:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) \<psi> \<Longrightarrow>
+   (\<And>\<rho>. \<psi> = Map \<rho> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<upsilon>. \<psi> = Map \<tau> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho> \<upsilon>. \<psi> = Map \<rho> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+   (\<psi> = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: tranclp_induct, auto)
+  apply (erule subtype.cases, auto)
+  apply (smt tranclp.r_into_trancl tranclp_trans)
+  by (smt tranclp.r_into_trancl tranclp.trancl_into_trancl)
+*)
+(*
+lemma subtype_tranclp_x_Map:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow>
+   ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+   ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P"
+*)
+(*
+lemma q:
+  "((\<And>\<rho>. \<tau>' = \<rho> \<Longrightarrow> y = \<sigma> \<Longrightarrow> R\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<upsilon>'. \<tau>' = \<tau> \<Longrightarrow> y = \<upsilon>' \<Longrightarrow> R\<^sup>+\<^sup>+ \<upsilon>' \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<rho> \<upsilon>'. \<tau>' = \<rho> \<Longrightarrow> y = \<upsilon>' \<Longrightarrow> R\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> R\<^sup>+\<^sup>+ \<upsilon>' \<sigma> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho>. \<tau>' = \<rho> \<Longrightarrow> x = \<sigma> \<Longrightarrow> R\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<upsilon>. \<tau>' = \<tau> \<Longrightarrow> x = \<upsilon> \<Longrightarrow> R\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho> \<upsilon>. \<tau>' = \<rho> \<Longrightarrow> x = \<upsilon> \<Longrightarrow> R\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> R\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   R\<^sup>+\<^sup>+ x y \<Longrightarrow> P"
+  apply (auto simp: tranclp_trans)
+  done
+*)
+lemma subtype_tranclp_x_Map:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ \<psi> (Map \<tau> \<sigma>) \<Longrightarrow>
+   (\<And>\<rho>. \<psi> = Map \<rho> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<upsilon>. \<psi> = Map \<tau> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho> \<upsilon>. \<psi> = Map \<rho> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   (\<psi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: converse_tranclp_induct, auto)
+  apply (erule subtype.cases, auto)
+  apply (drule_tac ?r="(\<sqsubset>\<^sub>N)" in tranclp.r_into_trancl)
+  apply (smt tranclp.r_into_trancl tranclp_trans)
+  by (smt tranclp.r_into_trancl tranclp_into_tranclp2)
+
+(*
+lemma subtype_tranclp_x_Map:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<tau> \<upsilon>) \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon>"
+*)
+
+lemma type_less_x_Map [elim!]:
+  assumes "\<psi> < Map \<rho> \<upsilon>"
+      and "\<And>\<sigma>. \<psi> = Map \<rho> \<sigma> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
+      and "\<And>\<tau>. \<psi> = Map \<tau> \<upsilon> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> P"
+      and "\<And>\<tau> \<sigma>. \<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
+      and "\<psi> = OclVoid \<Longrightarrow> P"
+    shows "P"
+proof -
+  from assms(1) obtain \<tau> \<sigma> where "\<psi> = Map \<tau> \<sigma> \<or> \<psi> = OclVoid"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover have
+    "Map \<tau> \<sigma> < Map \<rho> \<upsilon> \<Longrightarrow>
+     (\<tau> = \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+     (\<tau> < \<rho> \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+     (\<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P"
+    unfolding less_type_def less_type\<^sub>N_def
+    by (erule subtype_tranclp_x_Map, auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
+
+(*
+lemma Map_bij_on_trancl2 [simp]:
+  "bij_on_trancl (\<sqsubset>) (Map \<tau>)"
+  apply (auto simp add: inj_def)
+  using tranclp.cases apply fastforce
+*)
+(*
+lemma Map_bij_on_trancl1 [simp]:
+  "bij_on_trancl (\<sqsubset>) (\<lambda>\<tau>. Map (fst \<tau>) (snd \<tau>))"
+  apply (auto simp add: inj_def)
+  using tranclp.cases apply fastforce
+
+
+lemma Map_bij_on_trancl [simp]:
+  "bij_on_trancl (\<sqsubset>) (Map \<tau>)"
+  apply (auto simp add: inj_def)
+  using tranclp.cases apply fastforce
+  sorry
+*)
+(*
+lemma q:
+  "acyclicP (\<sqsubset>\<^sub>N) \<Longrightarrow>
+   (\<sqsubset>)\<^sup>+\<^sup>+ (Map x \<upsilon>) (Map x \<sigma>) \<Longrightarrow>
+   (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<upsilon> \<sigma>"
+  apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" in reflect_tranclp, auto)
+  using subtype\<^sub>N_asym apply auto[1]
+  apply (meson injI type.inject(8))
+  apply (metis less_type_def type_less_x_OclVoid)
+
+lemma q:
+  "acyclicP (\<sqsubset>\<^sub>N) \<Longrightarrow>
+   (\<sqsubset>)\<^sup>+\<^sup>+ (Map x \<upsilon>) (Map x \<sigma>) \<Longrightarrow>
+   \<sigma> \<sqsubset>\<^sub>N \<upsilon> \<Longrightarrow> False"
+
+lemma q11:
+  "acyclicP (\<sqsubset>\<^sub>N) \<Longrightarrow> (\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<upsilon>) (Map \<rho> \<upsilon>) \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho>"
+  apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" in reflect_tranclp, auto)
+  using subtype\<^sub>N_asym apply auto[1]
+  apply (meson injI type.inject(8))
+  apply (metis less_type_def type_less_x_OclVoid)
+
+lemma q11:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<upsilon>) (Map \<rho> \<upsilon>) \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho>"
+  apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" in reflect_tranclp, auto)
+  using subtype\<^sub>N_asym apply auto[1]
+  apply (meson injI type.inject(8))
+  apply (metis less_type_def type_less_x_OclVoid)
+  sorry
+
+thm reflect_tranclp preserve_tranclp
+
+
+lemma q:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Set \<tau>) (Set \<tau>') \<Longrightarrow> \<tau>' \<sqsubset>\<^sub>N \<tau> \<Longrightarrow> False"
+
+lemma q:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> x) (Map \<tau>' z) \<Longrightarrow> \<tau>' \<sqsubset>\<^sub>N \<tau> \<Longrightarrow> False"
+  sorry
+
+lemma q12:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<tau> \<upsilon>) \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon>"
+  apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" and ?S="(\<sqsubset>)" and ?f="(\<lambda>\<tau>1. Map \<tau> \<tau>1)" in reflect_tranclp)
+  using subtype\<^sub>N_asym apply auto[1]
+  apply auto[1]
+  apply (meson injI type.inject(8))
+  apply (metis less_type_def type_less_x_OclVoid)
+  using q apply blast
+  apply simp
+  done
+
+lemma q22:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection \<tau>) (Collection \<rho>) \<Longrightarrow> \<tau> \<noteq> \<rho> \<Longrightarrow> \<not> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> False"
+(*  using subtype_tranclp_Collection_x by blast*)
+  by (metis Collection_bij_on_trancl inj_def subtype_tranclp_Collection_x type.distinct(17))
+
+thm subtype_tranclp_Collection_x
+
+lemma q31:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) y \<Longrightarrow>
+           y \<sqsubset> z \<Longrightarrow>
+           ((\<And>\<rho>. y = Map \<rho> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+            (\<And>\<upsilon>. y = Map \<tau> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+            (\<And>\<rho> \<upsilon>. y = Map \<rho> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+            (y = OclAny \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
+           (\<And>\<rho>. z = Map \<rho> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
+           (\<And>\<upsilon>. z = Map \<tau> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+           (\<And>\<rho> \<upsilon>. z = Map \<rho> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+           (z = OclAny \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct z arbitrary: y, auto)
+  apply (smt tranclp.r_into_trancl tranclp_trans)
+  by (smt tranclp.r_into_trancl tranclp.trancl_into_trancl)
+*)
+(*
+  thm subtype_Map_x
+  thm subtype_x_Map
+
+lemma q23:
+  "acyclicP (\<sqsubset>\<^sub>N) \<Longrightarrow> (\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<sigma>) \<Longrightarrow> \<tau> \<noteq> \<rho> \<Longrightarrow> \<not> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> False"
+
+lemma q23:
+  "acyclicP (\<sqsubset>\<^sub>N) \<Longrightarrow> (\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow> \<tau> \<noteq> \<rho> \<Longrightarrow> \<not> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> False"
+
+lemma type_less_x_Map [elim!]:
+  assumes "\<psi> < Map \<rho> \<upsilon>"
+      and "acyclicP_on {\<rho>} (\<sqsubset>\<^sub>N)"
+      and "acyclicP_on {\<upsilon>} (\<sqsubset>\<^sub>N)"
+      and "acyclicP (\<sqsubset>\<^sub>N)"
+      and "\<And>\<sigma>. \<psi> = Map \<rho> \<sigma> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
+      and "\<And>\<tau>. \<psi> = Map \<tau> \<upsilon> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> P"
+      and "\<And>\<tau> \<sigma>. \<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
+      and "\<psi> = OclVoid \<Longrightarrow> P"
+    shows "P"
+proof -
+  from assms(1) obtain \<tau> \<sigma> where "\<psi> = Map \<tau> \<sigma> \<or> \<psi> = OclVoid"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+(*  moreover have
+    "\<And>\<tau> \<sigma> \<rho> \<upsilon>. Map \<tau> \<sigma> < Map \<rho> \<sigma> \<Longrightarrow> \<tau> < \<rho>"
+    sorry
+  moreover have
+    "\<And>\<tau> \<sigma> \<rho> \<upsilon>. Map \<rho> \<sigma> < Map \<rho> \<upsilon> \<Longrightarrow> \<sigma> < \<upsilon>"
+    sorry*)
+  moreover have
+    "\<And>\<tau> \<sigma> \<rho> \<upsilon>. Map \<tau> \<sigma> < Map \<rho> \<upsilon> \<Longrightarrow> \<tau> = \<rho> \<and> \<sigma> < \<upsilon> \<or> \<tau> < \<rho> \<and> \<sigma> = \<upsilon> \<or> \<tau> < \<rho> \<and> \<sigma> < \<upsilon>"
+    unfolding less_type_def less_type\<^sub>N_def
+    apply auto
+     apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" and ?S="(\<sqsubset>)" in reflect_tranclp)
+    sorry
+  ultimately show ?thesis
+(*    using assms(1) assms(2) assms(3) assms(4) assms(5) by blast*)
+(*    using assms(1) assms(2) assms(3) by fastforce*)
+(*    using assms by blast*)
+qed
+*)
+
+(*
+ 1. \<And>x1 x2.
+       (x1 < x1 \<Longrightarrow> False) \<Longrightarrow>
+       (x2 < x2 \<Longrightarrow> False) \<Longrightarrow>
+       Map x1 x2 < Map x1 x2 \<Longrightarrow> False
+ 2. \<And>x. (\<And>xa. xa \<in> fmran' x \<Longrightarrow> xa < xa \<Longrightarrow> False) \<Longrightarrow>
+         Tuple x < Tuple x \<Longrightarrow> False
+*)
+
+text \<open>
+  We will be able to remove the acyclicity assumption only after
+  we prove that the subtype relation is acyclic.\<close>
+
+lemma type_less_x_Tuple':
+  assumes "\<tau> < Tuple \<xi>"
+      and "acyclicP_on (fmran' \<xi>) (\<sqsubset>\<^sub>N)"
+      and "\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P"
+      and "\<tau> = OclVoid \<Longrightarrow> P"
+    shows "P"
+proof -
+  from assms(1) obtain \<pi> where "\<tau> = Tuple \<pi> \<or> \<tau> = OclVoid"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover from assms(2) have
+    "\<And>\<pi>. Tuple \<pi> < Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi>"
+    unfolding less_type_def less_eq_type\<^sub>N_def
+    by (rule_tac ?f="Tuple" in strict_subtuple_rtranclp_intro; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
+
 
 lemma type_less_x_Required [elim!]:
   assumes "\<tau> < Required \<sigma>"
@@ -793,60 +1030,6 @@ lemma type_less_x_Optional [elim!]:
   apply (erule subtype\<^sub>N.cases;
       auto simp: converse_rtranclp_into_rtranclp tranclp_into_tranclp2)
   by (meson Nitpick.rtranclp_unfold)
-
-
-text \<open>
-  We will be able to remove the acyclicity assumption only after
-  we prove that the subtype relation is acyclic.\<close>
-
-lemma type_less_x_Tuple':
-  assumes "\<tau> < Tuple \<xi>"
-      and "acyclicP_on (fmran' \<xi>) (\<sqsubset>\<^sub>N)"
-      and "\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P"
-      and "\<tau> = OclVoid \<Longrightarrow> P"
-    shows "P"
-proof -
-  from assms(1) obtain \<pi> where "\<tau> = Tuple \<pi> \<or> \<tau> = OclVoid"
-    unfolding less_type_def
-    by (induct rule: converse_tranclp_induct; auto)
-  moreover from assms(2) have
-    "\<And>\<pi>. Tuple \<pi> < Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi>"
-    unfolding less_type_def less_eq_type\<^sub>N_def
-    by (rule_tac ?f="Tuple" in strict_subtuple_rtranclp_intro; auto)
-  ultimately show ?thesis
-    using assms by auto
-qed
-
-lemma q11:
-  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<upsilon>) (Map \<rho> \<upsilon>) \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho>"
-  apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" in reflect_tranclp, auto)
-  using subtype\<^sub>N_asym apply auto[1]
-  sorry
-
-lemma q12:
-  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<tau> \<upsilon>) \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon>"
-  apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" in reflect_tranclp, auto)
-  using subtype\<^sub>N_asym apply auto[1]
-  sorry
-
-lemma type_less_x_Map [elim!]:
-  assumes "\<psi> < Map \<rho> \<upsilon>"
-      and "\<And>\<tau> \<sigma>. \<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
-      and "\<psi> = OclVoid \<Longrightarrow> P"
-    shows "P"
-proof -
-  from assms(1) obtain \<tau> \<sigma> where "\<psi> = Map \<tau> \<sigma> \<or> \<psi> = OclVoid"
-    unfolding less_type_def
-    by (induct rule: converse_tranclp_induct; auto)
-  moreover have
-    "\<And>\<tau> \<sigma> \<rho> \<upsilon>. Map \<tau> \<sigma> < Map \<rho> \<upsilon> \<Longrightarrow> \<tau> < \<rho> \<and> \<sigma> < \<upsilon>"
-    unfolding less_type_def less_type\<^sub>N_def
-    apply auto
-     apply (rule_tac ?R="(\<sqsubset>\<^sub>N)" in reflect_tranclp, auto)
-    sorry
-  ultimately show ?thesis
-    using assms by blast
-qed
 
 (*** Properties *************************************************************)
 
@@ -1015,13 +1198,13 @@ lemma type_less_eq_x_Sequence_intro [intro]:
   "\<tau> = Sequence \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Sequence \<sigma>"
   unfolding order.order_iff_strict by auto
 
+lemma type_less_eq_x_Map_intro [intro]:
+  "\<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> \<psi> \<le> Map \<rho> \<upsilon>"
+  by (metis eq_iff le_imp_less_or_eq order.strict_implies_order type_less_x_Map_intro)
+
 lemma type_less_eq_x_Tuple_intro [intro]:
   "\<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
   using order.strict_iff_order by blast
-
-lemma type_less_eq_x_Map_intro [intro]:
-  "\<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> \<psi> \<le> Map \<rho> \<upsilon>"
-  using type_less_x_Map_intro(2) by fastforce
 
 lemma type_less_eq_x_Required_intro [intro]:
   "\<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Required \<sigma>"
@@ -1120,6 +1303,12 @@ lemma type_less_eq_x_Sequence [elim!]:
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
 
+lemma type_less_eq_x_Map [elim!]:
+  "\<psi> \<le> Map \<rho> \<upsilon> \<Longrightarrow>
+   (\<And>\<tau> \<sigma>. \<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+   (\<psi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
 lemma type_less_x_Tuple [elim!]:
   "\<tau> < Tuple \<xi> \<Longrightarrow>
    (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
@@ -1134,12 +1323,6 @@ lemma type_less_eq_x_Tuple [elim!]:
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   apply (drule le_imp_less_or_eq, auto)
   by (simp add: fmap.rel_refl fmrel_to_subtuple)
-
-lemma type_less_eq_x_Map [elim!]:
-  "\<psi> \<le> Map \<rho> \<upsilon> \<Longrightarrow>
-   (\<And>\<tau> \<sigma>. \<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
-   (\<psi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
-  by (drule le_imp_less_or_eq; auto)
 
 lemma type_less_eq_x_Required [elim!]:
   "\<tau> \<le> Required \<sigma> \<Longrightarrow>

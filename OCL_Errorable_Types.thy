@@ -14,6 +14,8 @@ section \<open>Definition\<close>
 
 type_synonym 'a type\<^sub>N\<^sub>E = "'a type\<^sub>N errorable"
 
+notation to_errorable_type ("_[!]" [1000] 1000)
+
 abbreviation Required_ErrorFree ("_[1]" [1000] 1000) where
   "Required_ErrorFree \<tau> \<equiv> ErrorFree (Required \<tau>)"
 

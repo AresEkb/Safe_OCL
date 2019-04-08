@@ -89,7 +89,7 @@ Set{1,2,null,'abc'}->selectByKind(Collection(Boolean[1]))\<close>\<close>
 
 inductive typeop_type where
   "\<sigma> < \<tau> \<Longrightarrow>
-   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> (to_errorable_type \<sigma>)"
+   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>[!]"
 | "\<tau> < \<sigma> \<Longrightarrow>
    typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
 
@@ -226,9 +226,9 @@ inductive numeric_binop_type where
    numeric_binop_type DivideOp \<tau> \<sigma> Real[1!]"
 
 | "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   numeric_binop_type DivOp \<tau> \<sigma> (to_errorable_type \<rho>)"
+   numeric_binop_type DivOp \<tau> \<sigma> \<rho>[!]"
 | "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   numeric_binop_type ModOp \<tau> \<sigma> (to_errorable_type \<rho>)"
+   numeric_binop_type ModOp \<tau> \<sigma> \<rho>[!]"
 
 | "\<tau> \<squnion> \<sigma> = \<rho> \<Longrightarrow> \<rho> = UnlimitedNatural[1]\<midarrow>Real[1] \<Longrightarrow>
    numeric_binop_type MaxOp \<tau> \<sigma> \<rho>"
@@ -482,21 +482,21 @@ definition "op_result_type_is_errorable op \<pi> \<equiv>
 inductive op_type where
   "unop_type op k (to_error_free_type \<tau>) \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inl op) {|\<tau>|} \<Longrightarrow>
-   op_type (Inl op) k \<tau> [] (to_errorable_type \<upsilon>)"
+   op_type (Inl op) k \<tau> [] \<upsilon>[!]"
 | "unop_type op k (to_error_free_type \<tau>) \<upsilon> \<Longrightarrow>
    \<not> op_result_type_is_errorable (Inl op) {|\<tau>|} \<Longrightarrow>
    op_type (Inl op) k \<tau> [] \<upsilon>"
 
 | "binop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inr (Inl op)) {|\<tau>, \<sigma>|} \<Longrightarrow>
-   op_type (Inr (Inl op)) k \<tau> [\<sigma>] (to_errorable_type \<upsilon>)"
+   op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>[!]"
 | "binop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) \<upsilon> \<Longrightarrow>
    \<not> op_result_type_is_errorable (Inr (Inl op)) {|\<tau>, \<sigma>|} \<Longrightarrow>
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>"
 
 | "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
-   op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] (to_errorable_type \<upsilon>)"
+   op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>[!]"
 | "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
    \<not> op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>"
@@ -703,21 +703,19 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
 |CollectionPartRangeT:
-  "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E b : \<sigma> \<Longrightarrow>
-   \<tau> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
-   \<sigma> = UnlimitedNatural[1]\<midarrow>Integer[1] \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E a : Integer[1] \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E b : Integer[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>C CollectionRange a b : Integer[1]"
+|LowerErrorableCollectionPartRangeT:
+  "\<Gamma> \<turnstile>\<^sub>E a : Integer[1!] \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E b : Integer[1] \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>C CollectionRange a b : Integer[1!]"
+|UpperErrorableCollectionPartRangeT:
+  "\<Gamma> \<turnstile>\<^sub>E a : Integer[1] \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E b : Integer[1!] \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>C CollectionRange a b : Integer[1!]"
+|ErrorableCollectionPartRangeT:
+  "\<Gamma> \<turnstile>\<^sub>E a : Integer[1!] \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E b : Integer[1!] \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>C CollectionRange a b : Integer[1!]"
 
 \<comment> \<open>Map Literals\<close>
-
-(* Я думаю, стоит доказать, что система типов - это полная решетка.
-   И сказать что-то про наименьшие элементы (вообще, для коллекций, отображений),
-   чтобы показать, что такие правила обоснованы.
-   И про наибольшие написать (вообще, для кортежей, коллекций, ...)
-
-   Возможно стоит доказать, что некоторые правила всегда возвращают нужные типы.
-   Сейчас это не очевидно, там просто задан "начальный" элемент и операция супремума *)
 
 |MapNilT:
   "map_type' \<tau> OclVoid[1] OclVoid[1] False \<Longrightarrow>
@@ -752,64 +750,99 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "fmlookup \<Gamma> v = Some \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
 |IfT:
-  "\<Gamma> \<turnstile>\<^sub>E a : Boolean[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E b : \<sigma> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E c : \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E If a b c : \<sigma> \<squnion> \<rho>"
+  "\<Gamma> \<turnstile>\<^sub>E cnd : Boolean[1] \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E thn : \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E els : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E If cnd thn els : \<sigma> \<squnion> \<rho>"
+|ErrorableIfT:
+  "\<Gamma> \<turnstile>\<^sub>E cnd : Boolean[1!] \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E thn : \<sigma> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E els : \<rho> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E If cnd thn els : (\<sigma> \<squnion> \<rho>)[!]"
 
 \<comment> \<open>Call Expressions\<close>
 
 |MetaOperationCallT:
   "mataop_type \<tau> op \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E MetaOperationCall \<tau> op : \<sigma>"
+
 |StaticOperationCallT:
   "\<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
    static_operation \<tau> op \<pi> oper \<Longrightarrow>
+   \<not> fBex (fset_of_list \<pi>) errorable_type \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : oper_type oper"
+|ErrorableStaticOperationCallT:
+  "\<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
+   static_operation \<tau> op \<pi> oper \<Longrightarrow>
+   fBex (fset_of_list \<pi>) errorable_type \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : (oper_type oper)[!]"
 
 |TypeOperationCallT:
   "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
    typeop_type k op \<tau> \<sigma> \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<rho>"
 
-|AttributeCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   attribute \<C> prop \<D> \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<tau>"
-|AssociationEndCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   association_end \<C> from role \<D> end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : assoc_end_type end"
-|AssociationClassCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   referred_by_association_class \<C> from \<A> \<D> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : class_assoc_type \<A>"
-|AssociationClassEndCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
-   association_class_end \<A> role end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : class_assoc_end_type end"
 |OperationCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
    op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<sigma>"
 
+|AttributeCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
+   attribute \<C> prop \<D> \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<tau>"
+|ErrorableAttributeCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
+   attribute \<C> prop \<D> \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<tau>[!]"
+
+|AssociationEndCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
+   association_end \<C> from role \<D> end \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : assoc_end_type end"
+|ErrorableAssociationEndCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
+   association_end \<C> from role \<D> end \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : (assoc_end_type end)[!]"
+
+|AssociationClassCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
+   referred_by_association_class \<C> from \<A> \<D> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : class_assoc_type \<A>"
+|ErrorableAssociationClassCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
+   referred_by_association_class \<C> from \<A> \<D> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : (class_assoc_type \<A>)[!]"
+
+|AssociationClassEndCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
+   association_class_end \<A> role end \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : class_assoc_end_type end"
+|ErrorableAssociationClassEndCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
+   association_class_end \<A> role end \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : (class_assoc_end_type end)[!]"
+
 |TupleElementCallT:
-  "\<Gamma> \<turnstile>\<^sub>E src : \<sigma> \<Longrightarrow>
-   tuple_type \<sigma> \<pi> n \<Longrightarrow>
+  "\<Gamma> \<turnstile>\<^sub>E src : (Tuple \<pi>)[1] \<Longrightarrow>
    fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : ErrorFree \<tau>"
+|ErrorableTupleElementCallT:
+  "\<Gamma> \<turnstile>\<^sub>E src : (Tuple \<pi>)[1!] \<Longrightarrow>
+   fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : Errorable \<tau>"
 
 \<comment> \<open>Iterator Expressions\<close>
 
-|CollectionIterationT:
+|CollectionLoopT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
    \<sigma> \<le> its_ty \<Longrightarrow>
    list_all (\<lambda>it. snd it = None) its \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its its_ty \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : (\<tau>, \<sigma>, \<rho>)"
-|MapIterationT:
+|MapLoopT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
    map_type \<tau> \<sigma> \<upsilon> _ \<Longrightarrow>
    \<sigma> \<le> its_key_ty \<Longrightarrow>
@@ -826,7 +859,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AnyIterationCall src its its_ty body : to_errorable_type \<sigma>"
+   \<Gamma> \<turnstile>\<^sub>E AnyIterationCall src its its_ty body : \<sigma>[!]"
 |ClosureIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
@@ -845,7 +878,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    map_type' \<upsilon> \<sigma> \<rho> False \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<upsilon>"
+   \<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src its its_ty body : \<upsilon>"
 |CollectNestedIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
@@ -854,11 +887,11 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
    \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<phi>"
 |ExistsIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   \<rho> \<le> Boolean[?!] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E ExistsIterationCall src its its_ty body : \<rho>"
 |ForAllIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   \<rho> \<le> Boolean[?!] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E ForAllIterationCall src its its_ty body : \<rho>"
 |OneIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
@@ -905,9 +938,12 @@ inductive_cases IntegerLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IntegerL
 inductive_cases UnlimitedNaturalLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E UnlimitedNaturalLiteral c : \<tau>"
 inductive_cases StringLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
 inductive_cases EnumLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
-inductive_cases CollectionLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
-inductive_cases MapLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E MapLiteral elems : \<tau>"
-inductive_cases TupleLiteralTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : \<tau>"
+inductive_cases CollectionLiteralNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k [] : \<tau>"
+inductive_cases CollectionLiteralConsTE [elim]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k (x # xs) : \<tau>"
+inductive_cases MapLiteralNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>E MapLiteral [] : \<tau>"
+inductive_cases MapLiteralConsTE [elim]: "\<Gamma> \<turnstile>\<^sub>E MapLiteral (x # xs) : \<tau>"
+inductive_cases TupleLiteralNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
+inductive_cases TupleLiteralConsTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
 
 inductive_cases LetTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
 inductive_cases VarTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
@@ -924,7 +960,7 @@ inductive_cases AssociationClassEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E
 inductive_cases OperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
 inductive_cases TupleElementCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
 
-inductive_cases IterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
+inductive_cases LoopTE [elim]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
 inductive_cases IterateTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IterateCall src its its_ty res res_t res_init body : \<tau>"
 inductive_cases AnyIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AnyIterationCall src its its_ty body : \<tau>"
 inductive_cases ClosureIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<tau>"
@@ -1003,15 +1039,15 @@ section \<open>Determinism\<close>
 
 lemma collection_and_map_type_distinct:
   "collection_type \<tau> k \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
-  by (auto simp add: collection_type.simps collection_type\<^sub>N.simps collection_type\<^sub>T.simps
-        map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+  by (auto simp add: collection_type.simps collection_type\<^sub>N.simps
+        collection_type\<^sub>T.simps map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
 
 lemma
   typing_det:
     "\<Gamma> \<turnstile>\<^sub>E expr : \<tau> \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>E expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   collection_part_typing_det:
-  "\<Gamma> \<turnstile>\<^sub>C prt : \<tau> \<Longrightarrow>
+    "\<Gamma> \<turnstile>\<^sub>C prt : \<tau> \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>C prt : \<sigma> \<Longrightarrow> \<tau> = \<sigma>" and
   iterator_typing_det:
     "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : xs \<Longrightarrow>
@@ -1019,7 +1055,7 @@ lemma
   expr_list_typing_det:
     "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi> \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>L exprs : \<xi> \<Longrightarrow> \<pi> = \<xi>"
-proof (induct arbitrary: \<sigma> and \<sigma> and \<sigma> and ys and \<xi>
+proof (induct arbitrary: \<sigma> and \<sigma> and ys and \<xi>
        rule: typing_collection_part_typing_iterator_typing_expr_list_typing.inducts)
   case (NullLiteralT \<Gamma>) thus ?case by auto
 next
@@ -1033,182 +1069,193 @@ next
 next
   case (StringLiteralT \<Gamma> c) thus ?case by auto
 next
-  case (EnumLiteralT \<Gamma> \<tau> lit) thus ?case by auto
+  case (EnumLiteralT enum lit \<Gamma>) thus ?case by auto
 next
   case (CollectionLiteralNilT k \<sigma> \<Gamma>) thus ?case
     using collection_type_det(2) by blast
 next
-  case (CollectionLiteralConsT k \<Gamma> x \<tau> \<sigma> xs) thus ?case
-    using collection_type_det(2) by blast
+  case (CollectionLiteralConsT k \<Gamma> x \<tau> \<sigma> xs \<rho>) thus ?case
+    by (metis CollectionLiteralConsTE collection_type_det(2))
 next
   case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by blast
 next
-  case (CollectionPartRangeT \<Gamma> a \<tau> b \<sigma>) thus ?case by blast
+  case (CollectionPartRangeT \<Gamma> a b) thus ?case by blast
+next
+  case (LowerErrorableCollectionPartRangeT \<Gamma> a b) thus ?case by blast
+next
+  case (UpperErrorableCollectionPartRangeT \<Gamma> a b) thus ?case by blast
+next
+  case (ErrorableCollectionPartRangeT \<Gamma> a b) thus ?case by blast
 next
   case (MapNilT \<tau> \<Gamma>) thus ?case
     using map_type_det(2) by blast
 next
-  case (MapConsT \<Gamma> x \<tau> \<sigma> \<rho> xs \<upsilon>) show ?case
-    apply (insert MapConsT.prems)
-    apply (erule MapLiteralTE, simp)
-    using MapConsT.hyps map_type_det(2) by fastforce
+  case (MapConsT \<Gamma> x \<tau> \<sigma> \<rho> xs \<upsilon>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral (x # xs)) : \<sigma> \<Longrightarrow> \<rho> \<squnion> \<upsilon> = \<sigma>"
+    using MapConsT.hyps map_type_det(2) by blast
+  thus ?case by (simp add: MapConsT.prems)
 next
   case (TupleLiteralNilT \<Gamma>) thus ?case by auto
 next
-  case (TupleLiteralConsT \<Gamma> el \<tau> \<sigma> \<rho> elems \<upsilon>) show ?case
-    apply (insert TupleLiteralConsT.prems)
-    apply (erule TupleLiteralTE, simp)
-    using TupleLiteralConsT.hyps tuple_type_det(2) by fastforce
+  case (TupleLiteralConsT \<Gamma> el \<tau> \<sigma> \<rho> elems \<upsilon>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E Literal (TupleLiteral (el # elems)) : \<sigma> \<Longrightarrow> \<rho> \<squnion> \<upsilon> = \<sigma>"
+    using TupleLiteralConsT.hyps(3) TupleLiteralConsT.hyps(5)
+        TupleLiteralConsT.hyps(7) tuple_type_det(2) by fastforce
+  thus ?case by (simp add: TupleLiteralConsT.prems)
 next
-  case (LetT \<Gamma> \<M> init \<sigma> \<tau> v body \<rho>) thus ?case by blast
+  case (LetT \<Gamma> init \<sigma> \<tau> v body \<rho>) thus ?case by blast
 next
-  case (VarT \<Gamma> v \<tau> \<M>) thus ?case by auto
+  case (VarT \<Gamma> v \<tau>) thus ?case by auto
 next
-  case (IfT \<Gamma> a \<tau> b \<sigma> c \<rho>) thus ?case
-    apply (insert IfT.prems)
-    apply (erule IfTE)
-    by (simp add: IfT.hyps)
+  case (IfT \<Gamma> cnd thn \<sigma> els \<rho>) thus ?case by blast
+next
+  case (ErrorableIfT \<Gamma> cnd thn \<sigma> els \<rho>) thus ?case by blast
 next
   case (MetaOperationCallT \<tau> op \<sigma> \<Gamma>) thus ?case
     by (meson MetaOperationCallTE mataop_type_det)
 next
-  case (StaticOperationCallT \<Gamma> params \<pi> \<tau> op oper) thus ?case
-    apply (insert StaticOperationCallT.prems)
+  case (StaticOperationCallT \<Gamma> params \<pi> \<tau> op oper)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : \<sigma> \<Longrightarrow> oper_type oper = \<sigma>"
     apply (erule StaticOperationCallTE)
-(*    using StaticOperationCallT.hyps static_operation_det by blast*)
-    sorry
+    using StaticOperationCallT.hyps static_operation_det by blast+
+  thus ?case by (simp add: StaticOperationCallT.prems)
 next
-  case (TypeOperationCallT \<Gamma> a \<tau> op \<sigma> \<rho>) thus ?case
+  case (ErrorableStaticOperationCallT \<Gamma> params \<pi> \<tau> op oper)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : \<sigma> \<Longrightarrow> (oper_type oper)[!] = \<sigma>"
+    apply (erule StaticOperationCallTE)
+    using ErrorableStaticOperationCallT.hyps static_operation_det by blast+
+  thus ?case by (simp add: ErrorableStaticOperationCallT.prems)
+next
+  case (TypeOperationCallT \<Gamma> a \<tau> k op \<sigma> \<rho>) thus ?case
     by (metis TypeOperationCallTE typeop_type_det)
 next
-  case (AttributeCallT \<Gamma> src \<tau> \<C> "prop" \<D> \<sigma>) show ?case
-    apply (insert AttributeCallT.prems)
+  case (OperationCallT \<Gamma> src \<tau> params \<pi> op k \<sigma>) thus ?case
+    by (metis OperationCallTE op_type_det)
+next
+  case (AttributeCallT \<Gamma> src \<C> "prop" \<D> \<tau>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
     apply (erule AttributeCallTE)
-    using AttributeCallT.hyps attribute_det by blast
+    using AttributeCallT.hyps attribute_det by blast+
+  thus ?case by (simp add: AttributeCallT.prems)
 next
-  case (AssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end") show ?case
-    apply (insert AssociationEndCallT.prems)
+  case (ErrorableAttributeCallT \<Gamma> src \<C> "prop" \<D> \<tau>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<sigma> \<Longrightarrow> \<tau>[!] = \<sigma>"
+    apply (erule AttributeCallTE)
+    using ErrorableAttributeCallT.hyps attribute_det by blast+
+  thus ?case by (simp add: ErrorableAttributeCallT.prems)
+next
+  case (AssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow> assoc_end_type end = \<sigma>"
     apply (erule AssociationEndCallTE)
-    using AssociationEndCallT.hyps association_end_det by blast
+    using AssociationEndCallT.hyps association_end_det by blast+
+  thus ?case by (simp add: AssociationEndCallT.prems)
 next
-  case (AssociationClassCallT \<Gamma> src \<C> "from" \<A>) thus ?case by blast
+  case (ErrorableAssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow> (assoc_end_type end)[!] = \<sigma>"
+    apply (erule AssociationEndCallTE)
+    using ErrorableAssociationEndCallT.hyps association_end_det by blast+
+  thus ?case by (simp add: ErrorableAssociationEndCallT.prems)
 next
-  case (AssociationClassEndCallT \<Gamma> src \<tau> \<A> role "end") show ?case
-    apply (insert AssociationClassEndCallT.prems)
+  case (AssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow> class_assoc_type \<A> = \<sigma>"
+    apply (erule AssociationClassCallTE)
+    using AssociationClassCallT.hyps by blast+
+  thus ?case by (simp add: AssociationClassCallT.prems)
+next
+  case (ErrorableAssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow> (class_assoc_type \<A>)[!] = \<sigma>"
+    apply (erule AssociationClassCallTE)
+    using ErrorableAssociationClassCallT.hyps by blast+
+  thus ?case by (simp add: ErrorableAssociationClassCallT.prems)
+next
+  case (AssociationClassEndCallT \<Gamma> src \<A> role "end")
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow> class_assoc_end_type end = \<sigma>"
     apply (erule AssociationClassEndCallTE)
-    using AssociationClassEndCallT.hyps association_class_end_det by blast
+    using AssociationClassEndCallT.hyps association_class_end_det by blast+
+  thus ?case by (simp add: AssociationClassEndCallT.prems)
 next
-  case (OperationCallT \<Gamma> src \<tau> params \<pi> op k \<sigma>) show ?case
-    apply (insert OperationCallT.prems)
-    apply (erule OperationCallTE)
-(*    using OperationCallT.hyps op_type_det by blast*)
-    sorry
+  case (ErrorableAssociationClassEndCallT \<Gamma> src \<A> role "end")
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow> (class_assoc_end_type end)[!] = \<sigma>"
+    apply (erule AssociationClassEndCallTE)
+    using ErrorableAssociationClassEndCallT.hyps association_class_end_det by blast+
+  thus ?case by (simp add: ErrorableAssociationClassEndCallT.prems)
 next
-  case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>) thus ?case 
-    apply (insert TupleElementCallT.prems)
+  case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<sigma> \<Longrightarrow> ErrorFree \<tau> = \<sigma>"
     apply (erule TupleElementCallTE)
-    using TupleElementCallT.hyps tuple_type_det(1) by fastforce
+    using TupleElementCallT.hyps by force+
+  thus ?case by (simp add: TupleElementCallT.prems)
 next
-  case (CollectionIterationT \<Gamma> src \<tau> k \<sigma> n its_ty its body \<rho>) show ?case
-    apply (insert CollectionIterationT.prems)
-    apply (erule IterationTE)
-    using CollectionIterationT.hyps OCL_Typing.collection_type_det(1) apply blast
-    by simp
+  case (ErrorableTupleElementCallT \<Gamma> src \<pi> elem \<tau>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<sigma> \<Longrightarrow> Errorable \<tau> = \<sigma>"
+    apply (erule TupleElementCallTE)
+    using ErrorableTupleElementCallT.hyps by force+
+  thus ?case by (simp add: ErrorableTupleElementCallT.prems)
 next
-  case (MapIterationT \<Gamma> src \<tau> \<sigma> \<upsilon> uu its_key_ty its_val_ty its body \<rho>) show ?case
-    apply (insert MapIterationT.prems)
-    apply (erule IterationTE)
-    apply simp
-    using MapIterationT.hyps map_type_det(1) by fastforce
+  case (CollectionLoopT \<Gamma> src \<tau> uu \<sigma> uv its_ty its body \<rho>)
+  have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : ys \<Longrightarrow> (\<tau>, \<sigma>, \<rho>) = ys"
+    apply (erule LoopTE, auto simp add: CollectionLoopT.hyps)
+    using CollectionLoopT.hyps(2) CollectionLoopT.hyps(3) collection_type_det(1) by blast
+  thus ?case by (simp add: CollectionLoopT.prems)
 next
-  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert IterateT.prems)
-(*    using IterateT.hyps by blast*)
-    sorry
+  case (MapLoopT \<Gamma> src \<tau> \<sigma> \<upsilon> uw its_key_ty its_val_ty its body \<rho>)
+  have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_key_ty, Some its_val_ty), body) : ys \<Longrightarrow> (\<tau>, \<sigma>, \<rho>) = ys"
+    apply (erule LoopTE, auto simp add: MapLoopT.hyps)
+    using MapLoopT.hyps(2) MapLoopT.hyps(3) map_type_det(1) by blast
+  thus ?case by (simp add: MapLoopT.prems)
 next
-  case (AnyIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
-(*    by (meson AnyIterationTE Pair_inject)*)
-    sorry
+  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) thus ?case by blast
 next
-  case (ClosureIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert ClosureIterationT.prems)
-    apply (erule ClosureIterationTE)
-    apply (erule IterationTE)
-(*    using ClosureIterationT.hyps to_unique_collection_type_det by blast*)
-    sorry
+  case (AnyIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
 next
-  case (CollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert CollectIterationT.prems)
+  case (ClosureIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<rho>' \<upsilon>) thus ?case
+    by (metis ClosureIterationTE Pair_inject to_unique_collection_type_det)
+next
+  case (CollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<rho>' \<phi>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<phi> = \<sigma>"
     apply (erule CollectIterationTE)
-    apply (erule IterationTE)
-(*    using CollectIterationT.hyps to_nonunique_collection_type_det
-      update_element_type_det Pair_inject to_single_type_det by metis*)
-    sorry
+    using CollectIterationT.hyps inner_element_type_det
+        to_nonunique_collection_type_det update_element_type_det by fastforce
+  thus ?case by (simp add: CollectIterationT.prems)
 next
   case (CollectByIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>)
-    then show ?case sorry
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
+    apply (erule CollectByIterationTE)
+    using CollectByIterationT.hyps map_type_det(2) by fastforce
+  thus ?case by (simp add: CollectByIterationT.prems)
 next
-  case (CollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert CollectNestedIterationT.prems)
+  case (CollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<phi>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<phi> = \<sigma>"
     apply (erule CollectNestedIterationTE)
-(*    using CollectNestedIterationT.hyps to_nonunique_collection_type_det
-      update_element_type_det Pair_inject by metis*)
-    sorry
+    using CollectNestedIterationT.hyps to_nonunique_collection_type_det
+        update_element_type_det by fastforce
+  thus ?case by (simp add: CollectNestedIterationT.prems)
 next
-  case (ExistsIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert ExistsIterationT.prems)
-    apply (erule ExistsIterationTE)
-(*    using ExistsIterationT.hyps Pair_inject by metis*)
-    sorry
+  case (ExistsIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+    by (metis ExistsIterationTE snd_conv)
 next
-  case (ForAllIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert ForAllIterationT.prems)
-    apply (erule ForAllIterationTE)
-(*    using ForAllIterationT.hyps Pair_inject by metis*)
-    sorry
+  case (ForAllIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
+    by (metis ForAllIterationTE snd_conv)
 next
-  case (OneIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert OneIterationT.prems)
-    apply (erule OneIterationTE)
-    by simp
+  case (OneIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
 next
-  case (IsUniqueIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert IsUniqueIterationT.prems)
-    apply (erule IsUniqueIterationTE)
-    by simp
+  case (IsUniqueIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
 next
-  case (SelectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert SelectIterationT.prems)
-    apply (erule SelectIterationTE)
-(*    using SelectIterationT.hyps by blast*)
-    sorry
+  case (SelectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
 next
-  case (RejectIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho>) show ?case
-    apply (insert RejectIterationT.prems)
-    apply (erule RejectIterationTE)
-(*    using RejectIterationT.hyps by blast*)
-    sorry
+  case (RejectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
 next
-  case (SortedByIterationT \<Gamma> \<M> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>) show ?case
-    apply (insert SortedByIterationT.prems)
+  case (SortedByIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
     apply (erule SortedByIterationTE)
-(*    using SortedByIterationT.hyps to_ordered_collection_type_det by blast*)
-    sorry
+    using SortedByIterationT.hyps to_ordered_collection_type_det by blast
+  thus ?case by (simp add: SortedByIterationT.prems)
 next
-  case (ExprListNilT \<Gamma>) thus ?case
-    using expr_list_typing.cases by auto
+  case (ExprListNilT \<Gamma>) thus ?case by auto
 next
-  case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>) show ?case
-    apply (insert ExprListConsT.prems)
-    apply (erule ExprListTE)
-    apply simp
-    by (simp_all add: ExprListConsT.hyps)
+  case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>) thus ?case by blast
 qed
 
-inductive_cases CollectionLiteralNilTE [elim!]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k [] : \<tau>"
-inductive_cases CollectionLiteralConsTE [elim!]: "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k (x # xs) : \<tau>"
-
-thm CollectionLiteralNilTE CollectionLiteralConsTE
 (*
 lemma q:
   "\<exists>\<sigma>. \<rho> = (Set \<sigma>)[1] \<Longrightarrow>
@@ -1226,6 +1273,7 @@ declare collection_type\<^sub>T.simps [simp]
 declare collection_type\<^sub>N.simps [simp]
 declare collection_type.simps [simp]
 *)
+(*
 lemma q:
   "collection_type \<tau> SetKind \<sigma> False \<Longrightarrow>
    collection_type \<rho> SetKind \<upsilon> False \<Longrightarrow>
@@ -1248,6 +1296,7 @@ lemma CollectionLiteral_has_Collection_type:
   apply auto[1]
   using collection_type.intros(1) collection_type\<^sub>N.intros(1) collection_type\<^sub>T.intros(2) collection_type_det(2) apply blast
   by auto
+*)
 (*
 lemma q11:
   "       (\<And>\<tau>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<tau> \<Longrightarrow>
@@ -1317,11 +1366,11 @@ lemma MapLiteral_has_Map_type:
   apply (erule MapLiteralTE)
   apply auto[1]
 *)
-
+(*
 lemma TupleLiteral_has_Tuple_type:
   "\<Gamma> \<turnstile>\<^sub>E TupleLiteral prts : \<tau> \<Longrightarrow> \<exists>\<pi>. \<tau> = (Tuple \<pi>)[1]"
   by auto
-
+*)
 
 
 

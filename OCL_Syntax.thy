@@ -242,12 +242,12 @@ subsection \<open>Call Expressions\<close>
 
 syntax
 (*  "_metaOpCall" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> metaop \<Rightarrow> 'a expr" ("_._'(')")*)
-  "_staticOpCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>:\<^bold>:_")
+  "_staticOpCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infix "\<^bold>:\<^bold>:" 100)
 
-  "_dotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>._")
-  "_safeDotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>?\<^bold>._")
-  "_arrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>-\<^bold>>_")
-  "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>?\<^bold>-\<^bold>>_")
+  "_dotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>." 100)
+  "_safeDotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>." 100)
+  "_arrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>-\<^bold>>" 100)
+  "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>-\<^bold>>" 100)
 
 translations
   "src\<^bold>.call" == "CONST Call src (CONST DotCall) call"
