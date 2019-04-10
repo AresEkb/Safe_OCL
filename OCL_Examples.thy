@@ -184,18 +184,16 @@ static def: allProjects() : Set(Project[1]) =
 
 definition "operations_classes1 \<equiv> [
   (STR ''membersCount'', Project[1], [], Integer[1], False,
-   Some (OperationCall
-    (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')
-    ArrowCall CollectionSizeOp [])),
+   Some (
+    (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')\<^bold>-\<^bold>>size())),
   (STR ''membersByName'', Project[1], [(STR ''mn'', String[1], In)],
-    (Set Employee[1]\<^sub>N)[1], False,
-   Some (SelectIterationCall
-    (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')
-    ArrowCall [(STR ''member'', None)] None
-    (OperationCall
-      (AttributeCall (Var STR ''member'') DotCall STR ''name'')
-      DotCall EqualOp [Var STR ''mn'']))),
-  (STR ''allProjects'', Project[1], [], (Set Project[1]\<^sub>N)[1], True,
+    (Set Employee[\<^bold>1])[1], False,
+   Some (
+    (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')\<^bold>-\<^bold>>select(
+    STR ''member'' \<^bold>|
+      (AttributeCall (Var STR ''member'') DotCall STR ''name'') \<^bold>=
+      (Var STR ''mn'')))),
+  (STR ''allProjects'', Project[1], [], (Set Project[\<^bold>1])[1], True,
    Some (MetaOperationCall Project[1] AllInstancesOp))
   ] :: (classes1 type\<^sub>N\<^sub>E, classes1 expr) oper_spec list"
 
@@ -233,17 +231,17 @@ instance
 end
 
 code_pred [show_modes] non_strict_op .
-
+(*
 values "{x. \<Gamma>\<^sub>0(STR ''x'' \<mapsto>\<^sub>f OclAny[?]) \<turnstile>\<^sub>E CollectionLiteral SetKind [
   CollectionItem (IntegerLiteral 1),
   CollectionItem NullLiteral,
   CollectionItem (Var STR ''x'')] : x}"
-
+*)
 
 (*** Simplification Rules ***************************************************)
 
 section \<open>Simplification Rules\<close>
-
+(*
 lemma ex_alt_simps [simp]:
   "\<exists>a. a"
   "\<exists>a. \<not> a"
@@ -285,7 +283,7 @@ declare op_type_alt_simps [simp]
 declare typing_alt_simps [simp]
 declare normalize_alt_simps [simp]
 declare nf_typing.simps [simp]
-
+*)
 declare subclass1.intros [intro]
 declare less_classes1_def [simp]
 
@@ -325,11 +323,11 @@ qed
 
 lemma static_operation_Project_allProjects [simp]:
   "static_operation \<langle>Project\<rangle>\<^sub>\<T>[1] STR ''allProjects'' [] oper =
-   (oper = (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], (Set \<langle>Project\<rangle>\<^sub>\<T>[1]\<^sub>N)[1], True,
+   (oper = (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], (Set \<langle>Project\<rangle>\<^sub>\<T>[\<^bold>1])[1], True,
      Some (MetaOperationCall \<langle>Project\<rangle>\<^sub>\<T>[1] AllInstancesOp)))"
 proof -
   have "static_operation \<langle>Project\<rangle>\<^sub>\<T>[1] STR ''allProjects'' []
-    (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], (Set \<langle>Project\<rangle>\<^sub>\<T>[1]\<^sub>N)[1], True,
+    (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], (Set \<langle>Project\<rangle>\<^sub>\<T>[\<^bold>1])[1], True,
      Some (MetaOperationCall \<langle>Project\<rangle>\<^sub>\<T>[1] AllInstancesOp))"
     by eval
   thus ?thesis
@@ -357,28 +355,297 @@ section \<open>Types\<close>
 subsection \<open>Positive Cases\<close>
 
 lemma "Integer[?] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)" by simp
-lemma "(Collection Real[?]\<^sub>N)[1] < (OclAny[1] :: classes1 type\<^sub>N\<^sub>E)" by simp
-lemma "(Set (Collection Boolean[1]\<^sub>N)[1]\<^sub>N)[1] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)" by simp
-lemma "(Set (Bag Boolean[1]\<^sub>N)[1]\<^sub>N)[1] < (Set (Collection (Boolean[?]\<^sub>N :: classes1 type\<^sub>N))[1]\<^sub>N)[?]"
+lemma "(Collection Real[\<^bold>?])[1] < (OclAny[1] :: classes1 type\<^sub>N\<^sub>E)" by simp
+lemma "(Set (Collection Boolean[\<^bold>1])[\<^bold>1])[1] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)" by simp
+lemma "(Set (Bag Boolean[\<^bold>1])[\<^bold>1])[1] < (Set (Collection (Boolean[\<^bold>?] :: classes1 type\<^sub>N))[\<^bold>1])[?]"
   by simp
-lemma "(Tuple (fmap_of_list [(STR ''a'', Boolean[1]\<^sub>N), (STR ''b'', Integer[1]\<^sub>N)]))[1] <
-       (Tuple (fmap_of_list [(STR ''a'', Boolean[?]\<^sub>N :: classes1 type\<^sub>N)]))[1!]" by code_simp
+lemma "(Tuple (fmap_of_list [(STR ''a'', Boolean[\<^bold>1]), (STR ''b'', Integer[\<^bold>1])]))[1] <
+       (Tuple (fmap_of_list [(STR ''a'', Boolean[\<^bold>?] :: classes1 type\<^sub>N)]))[1!]" by code_simp
 
 lemma "Integer[1] \<squnion> (Real[?] :: classes1 type\<^sub>N\<^sub>E) = Real[?]" by simp
-lemma "Set Integer[1]\<^sub>N \<squnion> Set (Real[1]\<^sub>N :: classes1 type\<^sub>N) = Set Real[1]\<^sub>N" by simp
-lemma "Set Integer[1]\<^sub>N \<squnion> Bag (Boolean[?]\<^sub>N :: classes1 type\<^sub>N) =
-  Collection OclAny[?]\<^sub>N" by simp
-lemma "(Set Integer[1]\<^sub>N)[1] \<squnion> (Real[1!] :: classes1 type\<^sub>N\<^sub>E) = OclAny[1!]" by simp
+lemma "Set Integer[\<^bold>1] \<squnion> Set (Real[\<^bold>1] :: classes1 type\<^sub>N) = Set Real[\<^bold>1]" by simp
+lemma "Set Integer[\<^bold>1] \<squnion> Bag (Boolean[\<^bold>?] :: classes1 type\<^sub>N) =
+  Collection OclAny[\<^bold>?]" by simp
+lemma "(Set Integer[\<^bold>1])[1] \<squnion> (Real[1!] :: classes1 type\<^sub>N\<^sub>E) = OclAny[1!]" by simp
 
 subsection \<open>Negative Cases\<close>
 
-lemma "\<not> (OrderedSet Boolean[1]\<^sub>N)[1] < (Set (Boolean[1]\<^sub>N :: classes1 type\<^sub>N))[1]" by simp
+lemma "\<not> (OrderedSet Boolean[\<^bold>1])[1] < (Set (Boolean[\<^bold>1] :: classes1 type\<^sub>N))[1]" by simp
 
 (*** Typing *****************************************************************)
+
+(*
+declare is_iterable_type.simps [simp]
+declare iterable_type.simps [simp]
+declare collection_type.simps [simp]
+declare collection_type\<^sub>N.simps [simp]
+declare map_type.simps [simp]
+declare map_type\<^sub>N.simps [simp]
+declare map_type\<^sub>T.simps [simp]
+
+thm collection_type\<^sub>T.simps
+
+lemma collection_type\<^sub>T_alt_simps:
+  "collection_type\<^sub>T \<tau> k \<sigma> = 
+     (Collection \<sigma> = \<tau> \<and> CollectionKind = k \<or>
+      Set \<sigma> = \<tau> \<and> SetKind = k \<or>
+      OrderedSet \<sigma> = \<tau> \<and> OrderedSetKind = k \<or>
+      Bag \<sigma> = \<tau> \<and> BagKind = k \<or>
+      Sequence \<sigma> = \<tau> \<and> SequenceKind = k)"
+  by (auto simp add: collection_type\<^sub>T.simps)
+
+declare collection_type\<^sub>T_alt_simps [simp]
+declare op_result_type_is_errorable_def [simp]
+*)
+
 
 section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
+
+
+
+term "Sequence{}"
+term "Sequence{x}"
+term "Sequence{x\<^bold>, y}"
+term "Sequence{x\<^bold>.\<^bold>.y}"
+term "Sequence{x\<^bold>, y\<^bold>, z}"
+term "Sequence{x\<^bold>, y\<^bold>, Set{x2\<^bold>, Sequence{x \<^bold>.\<^bold>. y}\<^bold>, z}}"
+
+
+
+
+lemma ex_alt_simps [simp]:
+  "\<exists>a. a"
+  "\<exists>a. \<not> a"
+  "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
+  "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
+  "(\<forall>x. x) = False"
+  by auto
+(*
+declare numeral_eq_enat [simp]
+
+(*lemmas basic_type_le_less [simp] = Orderings.order_class.le_less
+  for x y :: "'a basic_type"*)
+
+declare element_type_alt_simps [simp]
+declare update_element_type.simps [simp]
+declare to_unique_collection.simps [simp]
+declare to_nonunique_collection.simps [simp]
+declare to_ordered_collection.simps [simp]
+
+declare assoc_end_class_def [simp]
+declare assoc_end_min_def [simp]
+declare assoc_end_max_def [simp]
+declare assoc_end_ordered_def [simp]
+declare assoc_end_unique_def [simp]
+
+declare oper_name_def [simp]
+declare oper_context_def [simp]
+declare oper_params_def [simp]
+declare oper_result_def [simp]
+declare oper_static_def [simp]
+declare oper_body_def [simp]
+
+declare oper_in_params_def [simp]
+declare oper_out_params_def [simp]
+
+declare assoc_end_type_def [simp]
+declare oper_type_def [simp]
+
+
+thm collection_type\<^sub>T.simps
+
+
+declare op_result_type_is_errorable_def [simp]
+
+declare op_type_alt_simps [simp]
+declare typing_alt_simps [simp]
+*)
+thm typing_alt_simps
+
+declare normalize_alt_simps [simp]
+declare nf_typing.simps [simp]
+
+declare typing_alt_simps [simp]
+
+
+lemma collection_type\<^sub>N_left_simps:
+  "collection_type\<^sub>N (Required \<tau>) k \<sigma> n = (n = False \<and> collection_type\<^sub>T \<tau> k \<sigma>)"
+  "collection_type\<^sub>N (Optional \<tau>) k \<sigma> n = (n = True \<and> collection_type\<^sub>T \<tau> k \<sigma>)"
+  by (auto simp add: collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
+
+lemma collection_type\<^sub>N_right_simps:
+  "collection_type\<^sub>N \<tau> k \<sigma> False = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> collection_type\<^sub>T \<rho> k \<sigma>)"
+  "collection_type\<^sub>N \<tau> k \<sigma> True = (\<exists>\<rho>. \<tau> = Optional \<rho> \<and> collection_type\<^sub>T \<rho> k \<sigma>)"
+  by (auto simp add: collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
+
+lemma collection_type_left_simps:
+  "collection_type (ErrorFree \<tau>) k \<sigma> n =
+   (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  "collection_type (Errorable \<tau>) k \<sigma> n =
+   (\<exists>\<rho>. \<sigma> = Errorable \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  "Ex (collection_type (ErrorFree \<tau>) k \<sigma>) =
+   (\<exists>\<rho> n. \<sigma> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  "Ex (collection_type (Errorable \<tau>) k \<sigma>) =
+   (\<exists>\<rho> n. \<sigma> = Errorable \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  by (auto simp add: collection_type.simps) auto
+
+lemma collection_type_right_simps:
+  "collection_type \<tau> k (ErrorFree \<sigma>) n =
+   (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<rho> k \<sigma> n)"
+  "collection_type \<tau> k (Errorable \<sigma>) n =
+   (\<exists>\<rho>. \<tau> = Errorable \<rho> \<and> collection_type\<^sub>N \<rho> k \<sigma> n)"
+  by (auto simp add: collection_type.simps)
+
+declare collection_type\<^sub>T.simps [simp]
+declare collection_type\<^sub>N.simps [simp]
+(*declare collection_type.simps [simp]*)
+(*declare collection_type\<^sub>N_left_simps [simp]
+declare collection_type\<^sub>N_right_simps [simp]*)
+declare collection_type_left_simps [simp]
+declare collection_type_right_simps [simp]
+
+lemma map_type\<^sub>T_left_simps:
+  "map_type\<^sub>T (Map \<tau> \<sigma>) \<rho> \<upsilon> = (\<tau> = \<rho> \<and> \<sigma> = \<upsilon>)"
+  by (auto simp add: map_type\<^sub>T.simps)
+
+lemma map_type\<^sub>N_left_simps:
+  "map_type\<^sub>N (Required \<tau>) \<sigma> \<rho> n = (n = False \<and> map_type\<^sub>T \<tau> \<sigma> \<rho>)"
+  "map_type\<^sub>N (Optional \<tau>) \<sigma> \<rho> n = (n = True \<and> map_type\<^sub>T \<tau> \<sigma> \<rho>)"
+  by (auto simp add: map_type\<^sub>N.simps)
+
+lemma map_type_left_simps:
+  "map_type (ErrorFree \<tau>) \<sigma> \<rho> n =
+   (\<exists>\<upsilon> \<psi>. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
+  "map_type (Errorable \<tau>) \<sigma> \<rho> n =
+   (\<exists>\<upsilon> \<psi>. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
+  "Ex (map_type (ErrorFree \<tau>) \<sigma> \<rho>) =
+   (\<exists>\<upsilon> \<psi> n. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
+  "Ex (map_type (Errorable \<tau>) \<sigma> \<rho>) =
+   (\<exists>\<upsilon> \<psi> n. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> Ex (map_type\<^sub>N \<tau> \<upsilon> \<psi>))"
+  by (auto simp add: map_type.simps) auto
+
+(*declare map_type\<^sub>T_left_simps [simp]*)
+declare map_type\<^sub>T.simps [simp]
+declare map_type\<^sub>N_left_simps [simp]
+declare map_type_left_simps [simp]
+
+thm map_type\<^sub>T.simps
+
+declare is_iterable_type.simps [simp]
+declare iterable_type.simps []
+
+thm iterable_type.simps
+
+thm typing_alt_simps(30)
+
+declare mk_iterator_def [simp]
+declare to_nonunique_collection_type\<^sub>T.simps [simp]
+declare to_nonunique_collection_type\<^sub>N.simps [simp]
+declare to_nonunique_collection_type.simps []
+
+declare update_element_type\<^sub>T.simps [simp]
+declare update_element_type\<^sub>N.simps [simp]
+declare update_element_type.simps [simp]
+
+
+lemma to_nonunique_collection_type_left_simps:
+  "to_nonunique_collection_type (ErrorFree \<tau>) \<sigma> =
+   (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
+  "to_nonunique_collection_type (Errorable \<tau>) \<sigma> =
+   (\<exists>\<rho>. \<sigma> = Errorable \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
+  by (simp_all add: to_nonunique_collection_type.simps)
+
+lemma iterable_type_left_simps:
+  "iterable_type (ErrorFree \<tau>) \<sigma> =
+   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
+      (collection_type (ErrorFree \<tau>) k \<rho> n \<or>
+       map_type (ErrorFree \<tau>) \<rho> \<upsilon> n))"
+  "iterable_type (Errorable \<tau>) \<sigma> =
+   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
+      (collection_type (Errorable \<tau>) k \<rho> n \<or>
+       map_type (Errorable \<tau>) \<rho> \<upsilon> n))"
+  by (auto simp add: iterable_type.simps; blast)+
+
+lemma ex_iterable_type_left_simps:
+  "Ex (iterable_type (ErrorFree \<tau>)) =
+   (\<exists>k \<rho> \<upsilon> n.
+      (collection_type (ErrorFree \<tau>) k \<rho> n \<or>
+       map_type (ErrorFree \<tau>) \<rho> \<upsilon> n))"
+  "Ex (iterable_type (Errorable \<tau>)) =
+   (\<exists>k \<rho> \<upsilon> n.
+      (collection_type (Errorable \<tau>) k \<rho> n \<or>
+       map_type (Errorable \<tau>) \<rho> \<upsilon> n))"
+  using iterable_type_left_simps by blast+
+
+
+declare iterable_type_left_simps [simp]
+declare ex_iterable_type_left_simps [simp]
+
+declare op_type_alt_simps [simp]
+declare op_result_type_is_errorable_def [simp]
+
+
+declare numeral_eq_enat [simp]
+
+declare assoc_end_class_def [simp]
+declare assoc_end_min_def [simp]
+declare assoc_end_max_def [simp]
+declare assoc_end_ordered_def [simp]
+declare assoc_end_unique_def [simp]
+
+declare oper_name_def [simp]
+declare oper_context_def [simp]
+declare oper_params_def [simp]
+declare oper_result_def [simp]
+declare oper_static_def [simp]
+declare oper_body_def [simp]
+
+declare oper_in_params_def [simp]
+declare oper_out_params_def [simp]
+
+declare assoc_end_type_def [simp]
+declare oper_type_def [simp]
+
+declare is_collection_type.simps [simp]
+declare to_single_type.simps []
+
+thm to_single_type.simps
+
+text \<open>
+  The first argument gets simpler, so the following simplification rules
+  does not get stuck.\<close>
+
+lemma to_single_type_left_simps [simp]:
+  "to_single_type (ErrorFree \<tau>) \<sigma> =
+   ((\<not> is_collection_type (ErrorFree \<tau>) \<and> (ErrorFree \<tau>) = \<sigma>) \<or>
+    (\<exists>k \<upsilon> n. collection_type (ErrorFree \<tau>) k \<upsilon> n \<and> to_single_type \<upsilon> \<sigma>))"
+  "to_single_type (Errorable \<tau>) \<sigma> =
+   ((\<not> is_collection_type (Errorable \<tau>) \<and> (Errorable \<tau>) = \<sigma>) \<or>
+    (\<exists>k \<upsilon> n. collection_type (Errorable \<tau>) k \<upsilon> n \<and> to_single_type \<upsilon> \<sigma>))"
+  by (subst to_single_type.simps; auto)+
+
+declare to_nonunique_collection_type_left_simps []
+declare to_nonunique_collection_type.simps [simp]
+
+
+
+
+declare mk_iterate_def [simp]
+
+
+declare to_unique_collection_type\<^sub>T.simps [simp]
+declare to_unique_collection_type\<^sub>N.simps [simp]
+declare to_unique_collection_type.simps [simp]
+
+abbreviation "name \<equiv> Attribute STR ''name''"
+abbreviation "projects \<equiv> AssociationEnd None STR ''projects''"
+abbreviation "members \<equiv> AssociationEnd None STR ''members''"
+abbreviation "allProjects \<equiv> STR ''allProjects''"
+
+
+
 
 text \<open>
 \<^verbatim>\<open>E1::A : E1[1]\<close>\<close>
@@ -386,180 +653,95 @@ lemma
   "\<Gamma>\<^sub>0 \<turnstile> EnumLiteral STR ''E1'' STR ''A'' : (Enum STR ''E1'')[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>true or false : Boolean[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (BooleanLiteral True) DotCall OrOp
-    [BooleanLiteral False] : Boolean[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>t\<^bold>r\<^bold>u\<^bold>e or \<^bold>f\<^bold>a\<^bold>l\<^bold>s\<^bold>e : Boolean[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>null and true : Boolean[?]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (NullLiteral) DotCall AndOp
-    [BooleanLiteral True] : Boolean[?]"
+  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>n\<^bold>u\<^bold>l\<^bold>l and \<^bold>t\<^bold>r\<^bold>u\<^bold>e : Boolean[?]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>let x : Real[1] = 5 in x + 7 : Real[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Let (STR ''x'') (Some Real[1]) (IntegerLiteral 5)
-    (OperationCall (Var STR ''x'') DotCall PlusOp [IntegerLiteral 7]) : Real[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: Real[1] \<^bold>= \<^bold>5 \<^bold>i\<^bold>n \<lparr>x\<rparr> / \<^bold>7 : Real[1!]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>null.oclIsUndefined() : Boolean[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (NullLiteral) DotCall OclIsUndefinedOp [] : Boolean[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>n\<^bold>u\<^bold>l\<^bold>l\<^bold>.oclIsUndefined() : Boolean[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>Sequence{1..5, null}.oclIsUndefined() : Sequence(Boolean[1])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
-    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-     CollectionItem NullLiteral])
-    DotCall OclIsUndefinedOp [] : (Sequence Boolean[1]\<^sub>N)[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l} : (Sequence Integer[\<^bold>?])[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>Sequence{1..5}->product(Set{'a', 'b'})
-  : Set(Tuple(first: Integer[1], second: String[1]))\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
-    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5)])
-    ArrowCall ProductOp
-    [CollectionLiteral SetKind
-      [CollectionItem (StringLiteral ''a''),
-       CollectionItem (StringLiteral ''b'')]] :
-    (Set (Tuple (fmap_of_list [
-      (STR ''first'', Integer[1]\<^sub>N), (STR ''second'', String[1]\<^sub>N)]))[1]\<^sub>N)[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>.oclIsUndefined() : (Sequence Boolean[\<^bold>1])[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>Sequence{1..5, null}?->iterate(x, acc : Real[1] = 0 | acc + x)
-  : Real[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> IterateCall (CollectionLiteral SequenceKind
-    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-     CollectionItem NullLiteral]) SafeArrowCall
-    [STR ''x''] None
-    (STR ''acc'') (Some Real[1]) (IntegerLiteral 0)
-    (OperationCall (Var STR ''acc'') DotCall PlusOp [Var STR ''x'']) : Real[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5}\<^bold>-\<^bold>>product(Set{StringLiteral ''a''\<^bold>, StringLiteral ''b''}) :
+    (Set (Tuple(STR ''first'' \<^bold>: Integer[\<^bold>1]\<^bold>, STR ''second'' \<^bold>: String[\<^bold>1]))[\<^bold>1])[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>Sequence{1..5, null}?->max() : Integer[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
-    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-     CollectionItem NullLiteral])
-    SafeArrowCall CollectionMaxOp [] : Integer[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>?\<^bold>-\<^bold>>iterate(x\<^bold>; acc \<^bold>: Real[1] \<^bold>= \<^bold>0 \<^bold>| \<lparr>acc\<rparr> \<^bold>+ \<lparr>x\<rparr>) : Real[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
-x->any(it | it = 'test') : String[?]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Let (STR ''x'') (Some (Sequence String[?]\<^sub>N)[1])
-    (CollectionLiteral SequenceKind
-      [CollectionItem (StringLiteral ''abc''),
-       CollectionItem (StringLiteral ''zxc'')])
-    (AnyIterationCall (Var STR ''x'') ArrowCall
-      [STR ''it''] None
-      (OperationCall (Var STR ''it'') DotCall EqualOp
-        [StringLiteral ''test''])) : String[?]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>?\<^bold>-\<^bold>>max() : Integer[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
-x?->closure(it | it) : OrderedSet(String[1])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Let STR ''x'' (Some (Sequence String[?]\<^sub>N)[1])
-    (CollectionLiteral SequenceKind
-      [CollectionItem (StringLiteral ''abc''),
-       CollectionItem (StringLiteral ''zxc'')])
-    (ClosureIterationCall (Var STR ''x'') SafeArrowCall
-      [STR ''it''] None
-      (Var STR ''it'')) : (OrderedSet String[1]\<^sub>N)[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
+          Sequence{StringLiteral ''abc''\<^bold>, StringLiteral ''zxc''} \<^bold>i\<^bold>n
+   \<lparr>x\<rparr>\<^bold>-\<^bold>>any(it \<^bold>| \<lparr>it\<rparr> \<^bold>= StringLiteral ''test'') : String[?!]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>context Employee:
-name : String[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
-    AttributeCall (Var STR ''self'') DotCall STR ''name'' : String[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
+          Sequence{StringLiteral ''abc''\<^bold>, StringLiteral ''zxc''} \<^bold>i\<^bold>n
+   \<lparr>x\<rparr>\<^bold>?\<^bold>-\<^bold>>closure(it \<^bold>| \<lparr>it\<rparr>) : (OrderedSet String[\<^bold>1])[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>context Employee:
-projects : Set(Project[1])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
-    AssociationEndCall (Var STR ''self'') DotCall None
-      STR ''projects'' : (Set Project[1]\<^sub>N)[1]"
+  "\<Gamma>\<^sub>0(self \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>self\<rparr>\<^bold>.name : String[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>context Employee:
-projects.members : Bag(Employee[1])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
-    AssociationEndCall (AssociationEndCall (Var STR ''self'')
-        DotCall None STR ''projects'')
-      DotCall None STR ''members'' : (Bag Employee[1]\<^sub>N)[1]"
+  "\<Gamma>\<^sub>0(self \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>self\<rparr>\<^bold>.projects : (Set Project[\<^bold>1])[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>Project[?].allInstances() : Set(Project[?])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> MetaOperationCall Project[?] AllInstancesOp : (Set Project[?]\<^sub>N)[1]"
+  "\<Gamma>\<^sub>0(self \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>self\<rparr>\<^bold>.projects\<^bold>.members : (Bag Employee[\<^bold>1])[1]"
   by simp
 
-text \<open>
-\<^verbatim>\<open>Project[1]::allProjects() : Set(Project[1])\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> StaticOperationCall Project[1] STR ''allProjects'' [] : (Set Project[1]\<^sub>N)[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Project[?]\<^bold>.allInstances() : (Set Project[\<^bold>?])[1]"
+  by simp
+
+lemma
+  "\<Gamma>\<^sub>0 \<turnstile> Project[1]\<^bold>:\<^bold>:allProjects( ) : (Set Project[\<^bold>1])[1]"
   by simp
 
 subsection \<open>Negative Cases\<close>
 
-text \<open>
-\<^verbatim>\<open>true = null\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (BooleanLiteral True) DotCall EqualOp
-    [NullLiteral] : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> \<^bold>t\<^bold>r\<^bold>u\<^bold>e \<^bold>= \<^bold>n\<^bold>u\<^bold>l\<^bold>l : \<tau>"
   by simp
 
-text \<open>
-\<^verbatim>\<open>let x : Boolean[1] = 5 in x and true\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Let STR ''x'' (Some Boolean[1]) (IntegerLiteral 5)
-    (OperationCall (Var STR ''x'') DotCall AndOp [BooleanLiteral True]) : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: Boolean[1] \<^bold>= \<^bold>5 \<^bold>i\<^bold>n \<lparr>x\<rparr> and \<^bold>t\<^bold>r\<^bold>u\<^bold>e : \<tau>"
   by simp
 
-text \<open>
-\<^verbatim>\<open>let x : Sequence(String[?]) = Sequence{'abc', 'zxc'} in
-x->closure(it | 1)\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Let STR ''x'' (Some (Sequence String[?]\<^sub>N)[1])
-    (CollectionLiteral SequenceKind
-      [CollectionItem (StringLiteral ''abc''),
-       CollectionItem (StringLiteral ''zxc'')])
-    (ClosureIterationCall (Var STR ''x'') ArrowCall [STR ''it''] None
-      (IntegerLiteral 1)) : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
+    Sequence{StringLiteral ''abc''\<^bold>, StringLiteral ''zxc''} \<^bold>i\<^bold>n
+    \<lparr>x\<rparr>\<^bold>-\<^bold>>closure(it \<^bold>| \<^bold>1) : \<tau>"
   by simp
 
-text \<open>
-\<^verbatim>\<open>Sequence{1..5, null}->max()\<close>\<close>
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
-    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-     CollectionItem NullLiteral])
-    ArrowCall CollectionMaxOp [] : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>-\<^bold>>max() : \<tau>"
 proof -
-  have "\<not> operation_defined (Integer[?] :: classes1 type) STR ''max'' [Integer[?]]"
+  have "\<not> operation_defined (Integer[?] :: classes1 type\<^sub>N\<^sub>E) STR ''max'' [Integer[?]]"
     by eval
   thus ?thesis by simp
 qed
@@ -580,24 +762,13 @@ value "has_literal STR ''E1'' STR ''A''"
 
 text \<open>
 \<^verbatim>\<open>context Employee:
-projects.members : Bag(Employee[1])\<close>\<close>
-values
-  "{\<tau>. \<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile>
-    AssociationEndCall (AssociationEndCall (Var STR ''self'')
-        DotCall None STR ''projects'')
-      DotCall None STR ''members'' : \<tau>}"
+projects.members : Bag(Employee[1])[1]\<close>\<close>
+values "{\<tau>. \<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>STR ''self''\<rparr>\<^bold>.projects\<^bold>.members : \<tau>}"
 
 subsection \<open>Negative Cases\<close>
 
-values "{(\<D>, \<tau>). attribute Employee STR ''name2'' \<D> \<tau>}"
 value "has_literal STR ''E1'' STR ''C''"
-
-text \<open>
-\<^verbatim>\<open>Sequence{1..5, null}->max()\<close>\<close>
-values
-  "{\<tau>. \<Gamma>\<^sub>0 \<turnstile> OperationCall (CollectionLiteral SequenceKind
-    [CollectionRange (IntegerLiteral 1) (IntegerLiteral 5),
-      CollectionItem NullLiteral])
-    ArrowCall CollectionMaxOp [] : \<tau>}"
+values "{(\<D>, \<tau>). attribute Employee STR ''name2'' \<D> \<tau>}"
+values "{\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>-\<^bold>>max() : \<tau>}"
 
 end

@@ -238,18 +238,134 @@ abbreviation "SortedByIterationCall src its its_ty body \<equiv>
 
 section \<open>Notation\<close>
 
-subsection \<open>Call Expressions\<close>
+subsection \<open>Literals\<close>
 
 syntax
-(*  "_metaOpCall" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> metaop \<Rightarrow> 'a expr" ("_._'(')")*)
-  "_staticOpCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infix "\<^bold>:\<^bold>:" 100)
-
-  "_dotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>." 100)
-  "_safeDotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>." 100)
-  "_arrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>-\<^bold>>" 100)
-  "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>-\<^bold>>" 100)
+  "_null" :: "'a expr" ("\<^bold>n\<^bold>u\<^bold>l\<^bold>l")
+  "_true" :: "'a expr" ("\<^bold>t\<^bold>r\<^bold>u\<^bold>e")
+  "_false" :: "'a expr" ("\<^bold>f\<^bold>a\<^bold>l\<^bold>s\<^bold>e")
+  "_int0" :: "'a expr" ("\<^bold>0")
+  "_int1" :: "'a expr" ("\<^bold>1")
+  "_int2" :: "'a expr" ("\<^bold>2")
+  "_int3" :: "'a expr" ("\<^bold>3")
+  "_int4" :: "'a expr" ("\<^bold>4")
+  "_int5" :: "'a expr" ("\<^bold>5")
+  "_int6" :: "'a expr" ("\<^bold>6")
+  "_int7" :: "'a expr" ("\<^bold>7")
+  "_int8" :: "'a expr" ("\<^bold>8")
+  "_int9" :: "'a expr" ("\<^bold>9")
 
 translations
+  "\<^bold>n\<^bold>u\<^bold>l\<^bold>l" == "CONST Literal CONST NullLiteral"
+  "\<^bold>t\<^bold>r\<^bold>u\<^bold>e" == "CONST Literal (CONST BooleanLiteral CONST True)"
+  "\<^bold>f\<^bold>a\<^bold>l\<^bold>s\<^bold>e" == "CONST Literal (CONST BooleanLiteral CONST False)"
+  "\<^bold>0" == "CONST Literal (CONST IntegerLiteral 0)"
+  "\<^bold>1" == "CONST Literal (CONST IntegerLiteral 1)"
+  "\<^bold>2" == "CONST Literal (CONST IntegerLiteral 2)"
+  "\<^bold>3" == "CONST Literal (CONST IntegerLiteral 3)"
+  "\<^bold>4" == "CONST Literal (CONST IntegerLiteral 4)"
+  "\<^bold>5" == "CONST Literal (CONST IntegerLiteral 5)"
+  "\<^bold>6" == "CONST Literal (CONST IntegerLiteral 6)"
+  "\<^bold>7" == "CONST Literal (CONST IntegerLiteral 7)"
+  "\<^bold>8" == "CONST Literal (CONST IntegerLiteral 8)"
+  "\<^bold>9" == "CONST Literal (CONST IntegerLiteral 9)"
+
+nonterminal collection_part and collection_parts
+
+syntax
+  "_collection_item" :: "'a expr \<Rightarrow> collection_part" ("_")
+  "_collection_range" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> collection_part" ("_ \<^bold>.\<^bold>. _")
+
+  "_collection_part" :: "collection_part \<Rightarrow> collection_parts" ("_")
+  "_collection_parts" ::
+      "collection_part \<Rightarrow> collection_parts \<Rightarrow> collection_parts" ("_\<^bold>, _")
+
+  "_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Set{}")
+  "_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Set{_}")
+  "_ordered_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("OrderedSet{}")
+  "_ordered_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("OrderedSet{_}")
+  "_bag" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Bag{}")
+  "_bag" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Bag{_}")
+  "_sequence" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Sequence{}")
+  "_sequence" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Sequence{_}")
+
+translations
+  "_collection_item x" == "CONST CollectionItem x"
+  "_collection_range x y" == "CONST CollectionRange x y"
+
+  "_collection_part x" == "[x]"
+  "_collection_parts x (y # xs)" == "x # y # xs"
+
+  "_set" == "CONST CollectionLiteral CONST SetKind []"
+  "_set xs" == "CONST CollectionLiteral CONST SetKind xs"
+  "_ordered_set" == "CONST CollectionLiteral CONST OrderedSetKind []"
+  "_ordered_set xs" == "CONST CollectionLiteral CONST OrderedSetKind xs"
+  "_bag" == "CONST CollectionLiteral CONST BagKind []"
+  "_bag xs" == "CONST CollectionLiteral CONST BagKind xs"
+  "_sequence" == "CONST CollectionLiteral CONST SequenceKind []"
+  "_sequence xs" == "CONST CollectionLiteral CONST SequenceKind xs"
+
+subsection \<open>Types\<close>
+
+nonterminal tuple_type_element and tuple_type_elements
+
+syntax
+  "_tuple_type_element" :: "vname \<Rightarrow> 'a type\<^sub>N \<Rightarrow> tuple_type_element" ("_ \<^bold>: _")
+
+  "_tuple_type_element" :: "tuple_type_element \<Rightarrow> tuple_type_elements" ("_")
+  "_tuple_type_elements" ::
+      "tuple_type_element \<Rightarrow> tuple_type_elements \<Rightarrow> tuple_type_elements" ("_\<^bold>, _")
+
+  "_tuple_type" :: "'a type" ("Tuple'(')")
+  "_tuple_type" :: "tuple_type_elements \<Rightarrow> 'a type" ("Tuple'(_')")
+
+translations
+  "_tuple_type_element elem \<tau>" == "(elem, \<tau>)"
+
+  "_tuple_type_element x" == "[x]"
+  "_tuple_type_elements x (y # xs)" == "x # y # xs"
+
+  "_tuple_type" == "CONST Tuple CONST fmempty"
+  "_tuple_type \<pi>" == "CONST Tuple (CONST fmap_of_list \<pi>)"
+
+subsection \<open>Misc Expressions\<close>
+
+notation Var ("\<lparr>_\<rparr>")
+
+syntax
+  "_let" :: "vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr"
+                ("\<^bold>l\<^bold>e\<^bold>t _ \<^bold>= _ \<^bold>i\<^bold>n _" [101,101,101] 100)
+  "_typed_let" :: "vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr"
+                ("\<^bold>l\<^bold>e\<^bold>t _ \<^bold>: _ \<^bold>= _ \<^bold>i\<^bold>n _" [101,101,101,101] 100)
+  "_if" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr"
+                ("\<^bold>i\<^bold>f _ \<^bold>t\<^bold>h\<^bold>e\<^bold>n _ \<^bold>e\<^bold>l\<^bold>s\<^bold>e _ \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f")
+
+translations
+  "\<^bold>l\<^bold>e\<^bold>t v \<^bold>= init \<^bold>i\<^bold>n body" == "CONST Let v CONST None init body"
+  "\<^bold>l\<^bold>e\<^bold>t v \<^bold>: \<tau> \<^bold>= init \<^bold>i\<^bold>n body" == "CONST Let v (CONST Some \<tau>) init body"
+  "\<^bold>i\<^bold>f cnd \<^bold>t\<^bold>h\<^bold>e\<^bold>n thn \<^bold>e\<^bold>l\<^bold>s\<^bold>e els \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f" == "CONST If cnd thn els"
+
+subsection \<open>Call Expressions\<close>
+
+nonterminal op_args
+
+syntax
+  "_op_empty_args" :: "op_args" ("")
+  "_op_single_arg" :: "'a expr \<Rightarrow> op_args" ("_")
+  "_op_args" :: "'a expr \<Rightarrow> op_args \<Rightarrow> op_args" ("_\<^bold>, _")
+
+  "_staticOpCall" :: "'a expr \<Rightarrow> oper \<Rightarrow> op_args \<Rightarrow> 'a expr" ("_\<^bold>:\<^bold>:_'(_')" [501,501,501] 500)
+  "_dotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>." 500)
+  "_safeDotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>." 500)
+  "_arrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>-\<^bold>>" 500)
+  "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>-\<^bold>>" 500)
+
+translations
+  "_op_empty_args" == "[]"
+  "_op_single_arg x" == "[x]"
+  "_op_args x (y # xs)" == "x # y # xs"
+
+  "_staticOpCall src op args" == "CONST StaticOperationCall src op args"
   "src\<^bold>.call" == "CONST Call src (CONST DotCall) call"
   "src\<^bold>?\<^bold>.call" == "CONST Call src (CONST SafeDotCall) call"
   "src\<^bold>-\<^bold>>call" == "CONST Call src (CONST ArrowCall) call"
@@ -257,14 +373,14 @@ translations
 
 subsection \<open>Operations\<close>
 
+\<comment> \<open>Meta Operations\<close>
 syntax
   "_allInstances" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("_\<^bold>. allInstances'(')")
 
 translations
   "\<tau>\<^bold>.allInstances()" == "CONST MetaOperationCall \<tau> (CONST AllInstancesOp)"
 
-term "Boolean[1]\<^bold>.allInstances()"
-
+\<comment> \<open>Type Operations\<close>
 syntax
   "_oclAsType" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("oclAsType'(_')")
   "_oclIsTypeOf" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("oclIsTypeOf'(_')")
@@ -287,36 +403,36 @@ syntax
   "_oclIsInvalid" :: "'a call_expr" ("oclIsInvalid'(')")
   "_toString" :: "'a call_expr" ("toString'(')")
 
-  "_equal" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>=" 50)
-  "_notEqual" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "<>" 50)
+  "_equal" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>=" 250)
+  "_notEqual" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "<>" 250)
 
   \<comment> \<open>Boolean Operations\<close>
-  "_not" :: "'a expr \<Rightarrow> 'a expr" ("not _" [40] 40)
+  "_not" :: "'a expr \<Rightarrow> 'a expr" ("not _" [240] 240)
 
-  "_and" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "and" 35)
-  "_or" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "or" 30)
-  "_xor" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "xor" 30)
-  "_implies" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "implies" 25)
+  "_and" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "and" 235)
+  "_or" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "or" 230)
+  "_xor" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "xor" 230)
+  "_implies" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "implies" 225)
 
   \<comment> \<open>Numeric Operations\<close>
-  "_uminus" :: "'a expr \<Rightarrow> 'a expr" ("\<^bold>- _" [81] 80)
+  "_uminus" :: "'a expr \<Rightarrow> 'a expr" ("\<^bold>- _" [281] 280)
   "_absOp" :: "'a call_expr" ("abs'(')") (* Should not be named _abs. It could cause strange exceptions *)
   "_floor" :: "'a call_expr" ("floor'(')")
   "_round" :: "'a call_expr" ("round'(')")
   "_toInteger" :: "'a call_expr" ("toInteger'(')")
 
-  "_plus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>+" 65)
-  "_minus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>-" 65)
-  "_mult" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>*" 70)
-  "_divide" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>/" 70)
+  "_plus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>+" 265)
+  "_minus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>-" 265)
+  "_mult" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>*" 270)
+  "_divide" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>/" 270)
   "_div" :: "'a expr \<Rightarrow> 'a call_expr" ("div'(_')")
   "_mod" :: "'a expr \<Rightarrow> 'a call_expr" ("mod'(_')")
   "_max" :: "'a expr \<Rightarrow> 'a call_expr" ("max\<^sub>N'(_')")
   "_min" :: "'a expr \<Rightarrow> 'a call_expr" ("min\<^sub>N'(_')")
-  "_less" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><" 50)
-  "_lessEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><=" 50)
-  "_greater" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>" 50)
-  "_greaterEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>=" 50)
+  "_less" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><" 250)
+  "_lessEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><=" 250)
+  "_greater" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>" 250)
+  "_greaterEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>=" 250)
 
   \<comment> \<open>String Operations\<close>
   "_size" :: "'a call_expr" ("size\<^sub>S'(')")

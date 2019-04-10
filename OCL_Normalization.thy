@@ -82,62 +82,6 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
-(*
-syntax
-  "_staticOpCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>:\<^bold>:_")
-
-  "_dotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>._")
-  "_safeDotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>?\<^bold>._")
-  "_arrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>-\<^bold>>_")
-  "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" ("_\<^bold>?\<^bold>-\<^bold>>_")
-
-translations
-  "src\<^bold>.call" == "CONST Call src (CONST DotCall) call"
-  "src\<^bold>?\<^bold>.call" == "CONST Call src (CONST SafeDotCall) call"
-  "src\<^bold>-\<^bold>>call" == "CONST Call src (CONST ArrowCall) call"
-  "src\<^bold>?\<^bold>-\<^bold>>call" == "CONST Call src (CONST SafeArrowCall) call"
-*)
-(*
-syntax
-  "_var" :: "vname \<Rightarrow> 'a expr" ("_V")
-
-translations
-  "_var v" == "CONST Var v"
-*)
-
-(*
-inductive normalize
-    :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
-    ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50)
-
-term "src\<^sub>1\<^bold>.call\<^sub>1\<^bold>.call\<^sub>2"
-term "src\<^sub>2\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| (Var it)\<^bold>.call\<^sub>2)"
-term "CollectIterationCall src\<^sub>2 [(it, None)] (Some \<sigma>, None) (Call (Var it) DotCall call\<^sub>2)"
-term "\<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> (src\<^sub>2\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| (Var it)\<^bold>.call\<^sub>2))"
-term "\<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| (Var it)\<^bold>.call\<^sub>2)"
-*)
-
-syntax
-  "_null" :: "'a expr" ("\<^bold>n\<^bold>u\<^bold>l\<^bold>l")
-  "_let" :: "vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" ("\<^bold>l\<^bold>e\<^bold>t _ \<^bold>= _ \<^bold>i\<^bold>n _" [500, 500, 500] 500)
-  "_typed_let" :: "vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" ("\<^bold>l\<^bold>e\<^bold>t _ \<^bold>: _ \<^bold>= _ \<^bold>i\<^bold>n _")
-  "_if" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" ("\<^bold>i\<^bold>f _ \<^bold>t\<^bold>h\<^bold>e\<^bold>n _ \<^bold>e\<^bold>l\<^bold>s\<^bold>e _ \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f")
-
-translations
-  "\<^bold>n\<^bold>u\<^bold>l\<^bold>l" == "CONST NullLiteral"
-  "\<^bold>l\<^bold>e\<^bold>t v \<^bold>= init \<^bold>i\<^bold>n body" == "CONST Let v CONST None init body"
-  "\<^bold>l\<^bold>e\<^bold>t v \<^bold>: \<tau> \<^bold>= init \<^bold>i\<^bold>n body" == "CONST Let v (CONST Some \<tau>) init body"
-  "\<^bold>i\<^bold>f cnd \<^bold>t\<^bold>h\<^bold>e\<^bold>n thn \<^bold>e\<^bold>l\<^bold>s\<^bold>e els \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f" == "CONST If cnd thn els"
-
-inductive normalize
-    :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
-    ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50)
-
-
-term "\<Gamma> \<turnstile> ( \<^bold>l\<^bold>e\<^bold>t v \<^bold>= init\<^sub>1 \<^bold>i\<^bold>n body\<^sub>1 ) \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> ( \<^bold>l\<^bold>e\<^bold>t v \<^bold>: \<tau> \<^bold>= init\<^sub>2 \<^bold>i\<^bold>n body\<^sub>2 ) = expr\<^sub>2 "
-term "\<Gamma> \<turnstile> ( \<^bold>l\<^bold>e\<^bold>t v \<^bold>= init\<^sub>1 \<^bold>i\<^bold>n body\<^sub>1 ) \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>  \<^bold>l\<^bold>e\<^bold>t v \<^bold>: \<tau> \<^bold>= init\<^sub>2 \<^bold>i\<^bold>n body\<^sub>2  = expr\<^sub>2 "
-term "\<Gamma> \<turnstile> \<^bold>l\<^bold>e\<^bold>t v \<^bold>= init\<^sub>1 \<^bold>i\<^bold>n body\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> \<^bold>l\<^bold>e\<^bold>t v \<^bold>: \<tau> \<^bold>= init\<^sub>2 \<^bold>i\<^bold>n body\<^sub>2 = expr\<^sub>2"
-
 inductive iterable_type where
   "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
    iterable_type \<tau> \<sigma>"
@@ -157,6 +101,7 @@ inductive normalize
     ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50) and
     normalize_call ("_ \<turnstile>\<^sub>C _ \<Rrightarrow>/ _" [51,51,51] 50) and
     normalize_loop ("_ \<turnstile>\<^sub>I _ \<Rrightarrow>/ _" [51,51,51] 50) and
+    normalize_closure_body ("_ \<turnstile>\<^sub>B _ \<Rrightarrow>/ _" [51,51,51] 50) and
     normalize_expr_list ("_ \<turnstile>\<^sub>L _ \<Rrightarrow>/ _" [51,51,51] 50)
     where
  LiteralN:
@@ -188,15 +133,16 @@ inductive normalize
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    non_iterable_type \<tau> \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<tau>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>.call\<^sub>2"
 |SingleSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    non_iterable_type \<tau> \<Longrightarrow>
    optional_type \<tau> \<Longrightarrow>
-   (\<Gamma>, to_required_type \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow> \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+   (\<Gamma>, to_required_type \<tau>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow>
+      \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
       \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>.call\<^sub>2
       \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
 |SingleArrowCallN:
@@ -205,7 +151,7 @@ inductive normalize
    non_iterable_type \<tau> \<Longrightarrow>
    src\<^sub>3 = src\<^sub>2\<^bold>.oclAsSet() \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<sigma>, ArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> src\<^sub>3\<^bold>-\<^bold>>call\<^sub>2"
 
 |CollectionDotCallN:
@@ -213,9 +159,9 @@ inductive normalize
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    iterable_type \<tau> \<sigma> \<Longrightarrow>
    required_type \<tau> \<Longrightarrow>
-   (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<sigma>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| (Var it)\<^bold>.call\<^sub>2)"
+   \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| \<lparr>it\<rparr>\<^bold>.call\<^sub>2)"
 |CollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
@@ -223,14 +169,14 @@ inductive normalize
    required_type \<tau> \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    \<rho> = to_required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>-\<^bold>>selectByKind(\<rho>)\<^bold>-\<^bold>>collect(it \<^bold>: \<rho> \<^bold>| (Var it)\<^bold>.call\<^sub>2)"
+   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>-\<^bold>>selectByKind(\<rho>)\<^bold>-\<^bold>>collect(it \<^bold>: \<rho> \<^bold>| \<lparr>it\<rparr>\<^bold>.call\<^sub>2)"
 |CollectionArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
    iterable_type \<tau> _ \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<tau>, ArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>-\<^bold>>call\<^sub>2"
 |CollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
@@ -240,7 +186,7 @@ inductive normalize
    optional_type \<sigma> \<Longrightarrow>
    src\<^sub>3 = src\<^sub>2\<^bold>-\<^bold>>selectByKind(to_required_type \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
-   (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<rho>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> src\<^sub>3\<^bold>-\<^bold>>call\<^sub>2"
 
 |NullableCollectionSafeDotCallN:
@@ -249,10 +195,11 @@ inductive normalize
    iterable_type \<tau> \<sigma> \<Longrightarrow>
    optional_type \<tau> \<Longrightarrow>
    required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<sigma>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<sigma>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow> \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
-      \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| (Var it)\<^bold>.call\<^sub>2)
+   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow>
+      \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+      \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
       \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
 |NullableNullableCollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
@@ -261,11 +208,12 @@ inductive normalize
    optional_type \<tau> \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    \<rho> = to_required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow> \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow>
+      \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
       \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>selectByKind(\<rho>)\<^bold>-\<^bold>>
-                  collect(it \<^bold>: \<rho> \<^bold>| (Var it)\<^bold>.call\<^sub>2)
+                  collect(it \<^bold>: \<rho> \<^bold>| \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
       \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
 |NullableCollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
@@ -273,8 +221,9 @@ inductive normalize
    iterable_type \<tau> \<sigma> \<Longrightarrow>
    optional_type \<tau> \<Longrightarrow>
    required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, to_required_type \<tau>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+   (\<Gamma>, to_required_type \<tau>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow>
+      \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
       \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>call\<^sub>2
       \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
 |NullableNullableCollectionSafeArrowCallN:
@@ -285,36 +234,79 @@ inductive normalize
    optional_type \<sigma> \<Longrightarrow>
    src\<^sub>3 = src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>selectByKind(to_required_type \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
-   (\<Gamma>, \<rho>) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+   (\<Gamma>, \<rho>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow>
+      \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
       \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>3\<^bold>-\<^bold>>call\<^sub>2
       \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
 
 |TypeOperationN:
-  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C TypeOperation op ty \<Rrightarrow> TypeOperation op ty"
+  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C TypeOperation op ty \<Rrightarrow> TypeOperation op ty"
 |AttributeN:
-  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Attribute attr \<Rrightarrow> Attribute attr"
+  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Attribute attr \<Rrightarrow> Attribute attr"
 |AssociationEndN:
-  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationEnd role from \<Rrightarrow> AssociationEnd role from"
+  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C AssociationEnd role from \<Rrightarrow> AssociationEnd role from"
 |AssociationClassN:
-  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationClass \<A> from \<Rrightarrow> AssociationClass \<A> from"
+  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C AssociationClass \<A> from \<Rrightarrow> AssociationClass \<A> from"
 |AssociationClassEndN:
-  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C AssociationClassEnd role \<Rrightarrow> AssociationClassEnd role"
+  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C AssociationClassEnd role \<Rrightarrow> AssociationClassEnd role"
 |OperationN:
   "\<Gamma> \<turnstile>\<^sub>L params\<^sub>1 \<Rrightarrow> params\<^sub>2 \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
+   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Operation op params\<^sub>1 \<Rrightarrow> Operation op params\<^sub>2"
 |TupleElementN:
-  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C TupleElement elem \<Rrightarrow> TupleElement elem"
+  "(\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C TupleElement elem \<Rrightarrow> TupleElement elem"
 
 |IterateN:
   "\<Gamma> \<turnstile> res_init\<^sub>1 \<Rrightarrow> res_init\<^sub>2 \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, its_ty\<^sub>1, Let res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1) \<Rrightarrow>
       (its, its_ty\<^sub>2, Let res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2) \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty\<^sub>1 res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow>
+   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterate its its_ty\<^sub>1 res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow>
       Iterate its its_ty\<^sub>2 res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2"
-|IteratorN:
-  "(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, its_ty\<^sub>1, body\<^sub>1) \<Rrightarrow> (its, its_ty\<^sub>2, body\<^sub>2) \<Longrightarrow>
-   (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> Iterator iter its its_ty\<^sub>2 body\<^sub>2"
+|ClosureIterationN:
+  "iter = ClosureIter \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, its_ty\<^sub>1, body\<^sub>1) \<Rrightarrow> (its, its_ty\<^sub>2, body\<^sub>2) \<Longrightarrow>
+   its_ty\<^sub>2 = (Some \<sigma>, None) \<Longrightarrow>
+   (\<Gamma> ++\<^sub>f iterators its \<sigma>, k) \<turnstile>\<^sub>B body\<^sub>2 \<Rrightarrow> body\<^sub>3 \<Longrightarrow>
+   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> Iterator iter its its_ty\<^sub>2 body\<^sub>3"
+|IterationN:
+  "iter \<noteq> ClosureIter \<Longrightarrow>
+   (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, its_ty\<^sub>1, body\<^sub>1) \<Rrightarrow> (its, its_ty\<^sub>2, body\<^sub>2) \<Longrightarrow>
+   (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> Iterator iter its its_ty\<^sub>2 body\<^sub>2"
+
+|SingleClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   \<not> is_collection_type \<tau> \<Longrightarrow>
+   (\<Gamma>, _) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1\<^bold>.oclAsSet()"
+|CollectionClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
+   (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
+|NullFreeNullFreeClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   collection_type \<tau> _ \<sigma> False \<Longrightarrow>
+   required_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
+|NullFreeNullableClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   collection_type \<tau> _ \<sigma> False \<Longrightarrow>
+   optional_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1\<^bold>-\<^bold>>selectByKind(to_required_type \<sigma>)"
+|NullableNullFreeClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   collection_type \<tau> k \<sigma> True \<Longrightarrow>
+   required_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
+      \<^bold>i\<^bold>f body\<^sub>1 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+      \<^bold>t\<^bold>h\<^bold>e\<^bold>n body\<^sub>1
+      \<^bold>e\<^bold>l\<^bold>s\<^bold>e CollectionLiteral k [] \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
+|NullableNullableClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   collection_type \<tau> k \<sigma> True \<Longrightarrow>
+   optional_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
+      \<^bold>i\<^bold>f body\<^sub>1 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+      \<^bold>t\<^bold>h\<^bold>e\<^bold>n body\<^sub>1\<^bold>-\<^bold>>selectByKind(to_required_type \<sigma>)
+      \<^bold>e\<^bold>l\<^bold>s\<^bold>e CollectionLiteral k [] \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
 
 |ExplicitlyTypedCollectionLoopN:
   "collection_type \<tau> _ _ _ \<Longrightarrow>
@@ -349,11 +341,6 @@ inductive normalize
    \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> y # ys"
 
-
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_loop .
-
 (*** Elimination Rules ******************************************************)
 
 section \<open>Elimination Rules\<close>
@@ -374,6 +361,8 @@ inductive_cases CallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C call \<R
 inductive_cases OperationCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> call"
 inductive_cases IterateCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
 inductive_cases IterationCallNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
+
+inductive_cases LoopNE [elim]: "(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, its_ty, body) \<Rrightarrow> b"
 
 inductive_cases ExprListNE [elim]: "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys"
 
@@ -398,6 +387,16 @@ inductive_simps normalize_alt_simps:
 "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Operation op as \<Rrightarrow> call"
 "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty res res_t res_init body \<Rrightarrow> call"
 "(\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty body \<Rrightarrow> call"
+
+"(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, None), body) \<Rrightarrow> b"
+"(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<tau>, None), body) \<Rrightarrow> b"
+"(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, Some \<sigma>), body) \<Rrightarrow> b"
+"(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<tau>, Some \<sigma>), body) \<Rrightarrow> b"
+
+"(\<Gamma>, DotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, SafeDotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, ArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
 
 "\<Gamma> \<turnstile>\<^sub>L [] \<Rrightarrow> ys"
 "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> ys"
@@ -439,7 +438,7 @@ lemma
      \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> zs \<Longrightarrow> ys = zs"
   for \<Gamma> :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env"
   and \<Gamma>_\<tau> :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<times> 'a type\<^sub>N\<^sub>E"
-proof (induct arbitrary: expr\<^sub>2 and call\<^sub>2 and zs and ns
+proof (induct arbitrary: expr\<^sub>2 and call\<^sub>2 and ns and zs
        rule: normalize_normalize_call_normalize_loop_normalize_expr_list.inducts)
   case (LiteralN \<Gamma> a) thus ?case by auto
 next
@@ -447,39 +446,93 @@ next
 next
   case (ImplicitlyTypedLetN \<Gamma> init\<^sub>1 init\<^sub>2 \<tau> v body\<^sub>1 body\<^sub>2)
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> \<^bold>l\<^bold>e\<^bold>t v \<^bold>= init\<^sub>1 \<^bold>i\<^bold>n body\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> \<^bold>l\<^bold>e\<^bold>t v \<^bold>: \<tau> \<^bold>= init\<^sub>2 \<^bold>i\<^bold>n body\<^sub>2 = expr\<^sub>2"
-  then show ?case sorry
+    apply (erule LetNE)
+    using ImplicitlyTypedLetN.hyps typing_det by blast+
+  thus ?case by (simp add: ImplicitlyTypedLetN.prems)
 next
   case (VarN \<Gamma> v) thus ?case by auto
 next
   case (IfN \<Gamma> cnd\<^sub>1 cnd\<^sub>2 thn\<^sub>1 thn\<^sub>2 els\<^sub>1 els\<^sub>2)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> \<^bold>i\<^bold>f cnd\<^sub>1 \<^bold>t\<^bold>h\<^bold>e\<^bold>n thn\<^sub>1 \<^bold>e\<^bold>l\<^bold>s\<^bold>e els\<^sub>1 \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
+          \<^bold>i\<^bold>f cnd\<^sub>2 \<^bold>t\<^bold>h\<^bold>e\<^bold>n thn\<^sub>2 \<^bold>e\<^bold>l\<^bold>s\<^bold>e els\<^sub>2 \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f = expr\<^sub>2"
+    by (erule IfNE; simp add: IfN.hyps)
+  thus ?case by (simp add: IfN.prems)
 next
-  case (MetaOperationCallN \<Gamma> \<tau> op)
-  then show ?case sorry
+  case (MetaOperationCallN \<Gamma> \<tau> op) thus ?case by auto
 next
   case (StaticOperationCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<tau> op)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> StaticOperationCall \<tau> op params\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
+          StaticOperationCall \<tau> op params\<^sub>2 = expr\<^sub>2"
+    by (erule StaticOperationCallNE; simp add: StaticOperationCallN.hyps)
+  thus ?case by (simp add: StaticOperationCallN.prems)
 next
   case (SingleDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>2\<^bold>.call\<^sub>2 = expr\<^sub>2"
+    apply (erule DotCallNE)
+    using SingleDotCallN.hyps(2) SingleDotCallN.hyps(3)
+          SingleDotCallN.hyps(6) typing_det apply blast
+    using SingleDotCallN.hyps(2) SingleDotCallN.hyps(3)
+          SingleDotCallN.hyps(4) is_iterable_type.intros typing_det by fastforce
+  thus ?case by (simp add: SingleDotCallN.prems)
 next
   case (SingleSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
+      \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>.call\<^sub>2
+      \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f = expr\<^sub>2"
+    apply (erule SafeDotCallNE, auto)
+    apply (simp add: SingleSafeDotCallN.hyps(2))
+    using SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(3)
+          typing_det apply blast
+    using SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(3)
+          SingleSafeDotCallN.hyps(7) typing_det apply blast
+    using SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(3)
+          SingleSafeDotCallN.hyps(5) typing_det apply blast
+    using SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(3)
+          SingleSafeDotCallN.hyps(4) is_iterable_type.intros typing_det apply blast
+    using SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(3)
+          SingleSafeDotCallN.hyps(4) is_iterable_type.intros typing_det by blast
+  thus ?case by (simp add: SingleSafeDotCallN.prems)
 next
   case (SingleArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>3\<^bold>-\<^bold>>call\<^sub>2 = expr\<^sub>2"
+    apply (erule ArrowCallNE)
+    apply (metis SingleArrowCallN.hyps(2) SingleArrowCallN.hyps(5)
+          SingleArrowCallN.hyps(6) SingleArrowCallN.hyps(8) comp_apply typing_det)
+    using SingleArrowCallN.hyps(2) SingleArrowCallN.hyps(3)
+          SingleArrowCallN.hyps(4) is_iterable_type.intros typing_det by blast
+  thus ?case by (simp add: SingleArrowCallN.prems)
 next
   case (CollectionDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> call\<^sub>1 call\<^sub>2 it)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>2\<^bold>-\<^bold>>collect(it \<^bold>: \<sigma> \<^bold>| (Var it)\<^bold>.call\<^sub>2) = expr\<^sub>2"
+    apply (erule DotCallNE, auto)
+    using CollectionDotCallN.hyps(2) CollectionDotCallN.hyps(3)
+          CollectionDotCallN.hyps(4) is_iterable_type.intros typing_det apply blast
+    apply (simp add: CollectionDotCallN.hyps(2))
+    sorry
+  thus ?case by (simp add: CollectionDotCallN.prems)
 next
   case (CollectionSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> \<rho> call\<^sub>1 call\<^sub>2 it)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>2\<^bold>-\<^bold>>selectByKind(\<rho>)\<^bold>-\<^bold>>collect(it \<^bold>: \<rho> \<^bold>| (Var it)\<^bold>.call\<^sub>2) = expr\<^sub>2"
+    apply (erule SafeDotCallNE, auto)
+    using CollectionSafeDotCallN.hyps(2) CollectionSafeDotCallN.hyps(3)
+          CollectionSafeDotCallN.hyps(5) typing_det apply blast
+    sorry
+  thus ?case by (simp add: CollectionSafeDotCallN.prems)
 next
   case (CollectionArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> uu call\<^sub>1 call\<^sub>2)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>2\<^bold>-\<^bold>>call\<^sub>2 = expr\<^sub>2"
+    apply (erule ArrowCallNE)
+    using CollectionArrowCallN.hyps(2) CollectionArrowCallN.hyps(3)
+          CollectionArrowCallN.hyps(4) is_iterable_type.intros typing_det apply blast
+    using CollectionArrowCallN.hyps(2) CollectionArrowCallN.hyps(3)
+          CollectionArrowCallN.hyps(6) typing_det by blast
+  thus ?case by (simp add: CollectionArrowCallN.prems)
 next
   case (CollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2)
-  then show ?case sorry
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>3\<^bold>-\<^bold>>call\<^sub>2 = expr\<^sub>2"
+    apply (erule SafeArrowCallNE, auto)
+    sorry
+  thus ?case by (simp add: CollectionSafeArrowCallN.prems)
 next
   case (NullableCollectionSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> call\<^sub>1 call\<^sub>2 it)
   then show ?case sorry
@@ -492,130 +545,6 @@ next
 next
   case (NullableNullableCollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2)
   then show ?case sorry
-next
-  case (TypeOperationN \<Gamma> \<tau> op ty)
-  then show ?case sorry
-next
-  case (AttributeN \<Gamma> \<tau> attr)
-  then show ?case sorry
-next
-  case (AssociationEndN \<Gamma> \<tau> role "from")
-  then show ?case sorry
-next
-  case (AssociationClassN \<Gamma> \<tau> \<A> "from")
-  then show ?case sorry
-next
-  case (AssociationClassEndN \<Gamma> \<tau> role)
-  then show ?case sorry
-next
-  case (OperationN \<Gamma> params\<^sub>1 params\<^sub>2 \<tau> op)
-  then show ?case sorry
-next
-  case (TupleElementN \<Gamma> \<tau> elem)
-  then show ?case sorry
-next
-  case (IterateN \<Gamma> res_init\<^sub>1 res_init\<^sub>2 \<tau> its its_ty\<^sub>1 res res_t\<^sub>1 body\<^sub>1 its_ty\<^sub>2 res_t\<^sub>2 body\<^sub>2)
-  then show ?case sorry
-next
-  case (IteratorN \<Gamma> \<tau> its its_ty\<^sub>1 body\<^sub>1 its_ty\<^sub>2 body\<^sub>2 iter)
-  then show ?case sorry
-next
-  case (ExplicitlyTypedCollectionLoopN \<tau> uv uw ux \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
-  then show ?case sorry
-next
-  case (ImplicitlyTypedCollectionLoopN \<tau> uy \<sigma> uz \<Gamma> its body\<^sub>1 body\<^sub>2)
-  then show ?case sorry
-next
-  case (ExplicitlyTypedMapLoopN \<tau> va vb vc \<Gamma> its \<sigma> \<rho> body\<^sub>1 body\<^sub>2)
-  then show ?case sorry
-next
-  case (ImplicitlyTypedMapKeyLoopN \<tau> \<sigma> vd ve \<Gamma> its \<rho> body\<^sub>1 body\<^sub>2)
-  then show ?case sorry
-next
-  case (ImplicitlyTypedMapValueLoopN \<tau> vf \<rho> vg \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
-  then show ?case sorry
-next
-  case (ImplicitlyTypedMapLoopN \<tau> \<sigma> \<rho> vh \<Gamma> its body\<^sub>1 body\<^sub>2)
-  then show ?case sorry
-next
-  case (ExprListNilN \<Gamma>)
-  then show ?case sorry
-next
-  case (ExprListConsN \<Gamma> x y xs ys)
-  then show ?case sorry
-qed
-(*
-  case (LiteralN \<Gamma> a) thus ?case by auto
-next
-  case (ExplicitlyTypedLetN \<Gamma> init\<^sub>1 init\<^sub>2 v \<tau> body\<^sub>1 body\<^sub>2) thus ?case
-    by blast
-next
-  case (ImplicitlyTypedLetN \<Gamma> init\<^sub>1 init\<^sub>2 \<tau> v body\<^sub>1 body\<^sub>2) thus ?case
-    by (metis (mono_tags, lifting) LetNE option.distinct(1) typing_det)
-next
-  case (VarN \<Gamma> v) thus ?case by auto
-next
-  case (IfN \<Gamma> a\<^sub>1 a\<^sub>2 b\<^sub>1 b\<^sub>2 c\<^sub>1 c\<^sub>2) thus ?case
-    apply (insert IfN.prems)
-    apply (erule IfNE)
-    by (simp add: IfN.hyps)
-next
-  case (MetaOperationCallN \<Gamma> \<tau> op) thus ?case by auto
-next
-  case (StaticOperationCallN \<Gamma> params\<^sub>1 params\<^sub>2 \<tau> op) thus ?case by blast
-next
-  case (SingleDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert SingleDotCallN.prems)
-    apply (erule DotCallNE)
-    using SingleDotCallN.hyps typing_det apply metis
-    using SingleDotCallN.hyps(2) SingleDotCallN.hyps(3)
-      SingleDotCallN.hyps(4) is_collection_type.simps typing_det by fastforce
-next
-  case (SingleSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert SingleSafeDotCallN.prems)
-    apply (erule SafeDotCallNE)
-    using SingleSafeDotCallN.hyps typing_det comp_apply
-    apply (metis (no_types, lifting) list.simps(8) list.simps(9))
-    using SingleSafeDotCallN.hyps typing_det any_has_not_element_type'
-    by metis
-next
-  case (SingleArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert SingleArrowCallN.prems)
-    apply (erule ArrowCallNE)
-    using SingleArrowCallN.hyps typing_det comp_apply apply metis
-    using SingleArrowCallN.hyps(2) SingleArrowCallN.hyps(3)
-      SingleArrowCallN.hyps(4) is_collection_type.intros typing_det by blast
-next
-  case (CollectionArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> uu call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert CollectionArrowCallN.prems)
-    apply (erule ArrowCallNE)
-    using CollectionArrowCallN.hyps(2) CollectionArrowCallN.hyps(3)
-      CollectionArrowCallN.hyps(4) is_collection_type.simps typing_det apply blast
-    using CollectionArrowCallN.hyps typing_det by metis
-next
-  case (CollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2) show ?case
-    apply (insert CollectionSafeArrowCallN.prems)
-    apply (erule SafeArrowCallNE)
-    by (metis CollectionSafeArrowCallN.hyps(2) CollectionSafeArrowCallN.hyps(3)
-        CollectionSafeArrowCallN.hyps(4) CollectionSafeArrowCallN.hyps(6)
-        CollectionSafeArrowCallN.hyps(7) CollectionSafeArrowCallN.hyps(9)
-        element_type_det typing_det)
-next
-  case (CollectionDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> call\<^sub>1 call\<^sub>2 it) show ?case
-    apply (insert CollectionDotCallN.prems)
-    apply (erule DotCallNE)
-    using CollectionDotCallN.hyps(2) CollectionDotCallN.hyps(3)
-      CollectionDotCallN.hyps(4) is_collection_type.simps typing_det apply force
-    by (metis CollectionDotCallN.hyps(2) CollectionDotCallN.hyps(3)
-          CollectionDotCallN.hyps(4) CollectionDotCallN.hyps(6)
-          CollectionDotCallN.hyps(7) element_type_det typing_det)
-next
-  case (CollectionSafeDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 call\<^sub>1 call\<^sub>2 it) show ?case
-    apply (insert CollectionSafeDotCallN.prems)
-    apply (erule SafeDotCallNE)
-    using CollectionSafeDotCallN.hyps typing_det any_has_not_element_type'
-    apply metis
-    using CollectionSafeDotCallN.hyps typing_det element_type_det by metis
 next
   case (TypeOperationN \<Gamma> \<tau> op ty) thus ?case by auto
 next
@@ -631,38 +560,59 @@ next
 next
   case (TupleElementN \<Gamma> \<tau> elem) thus ?case by auto
 next
-  case (ExplicitlyTypedIterateN
-    \<Gamma> res_init\<^sub>1 res_init\<^sub>2 \<sigma> its res res_t\<^sub>1 body\<^sub>1 res_t\<^sub>2 body\<^sub>2 \<tau>)
-  show ?case
-    apply (insert ExplicitlyTypedIterateN.prems)
+  case (IterateN \<Gamma> res_init\<^sub>1 res_init\<^sub>2 \<tau> its its_ty\<^sub>1 res res_t\<^sub>1 body\<^sub>1 its_ty\<^sub>2 res_t\<^sub>2 body\<^sub>2)
+  have "\<And>call\<^sub>2. (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterate its its_ty\<^sub>1 res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+       Iterate its its_ty\<^sub>2 res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2 = call\<^sub>2"
     apply (erule IterateCallNE)
-    using ExplicitlyTypedIterateN.hyps element_type_det by blast+
+    using IterateN.hyps(4) by blast
+  thus ?case by (simp add: IterateN.prems)
 next
-  case (ImplicitlyTypedIterateN
-    \<tau> \<sigma> \<Gamma> res_init\<^sub>1 res_init\<^sub>2 its res res_t\<^sub>1 body\<^sub>1 res_t\<^sub>2 body\<^sub>2)
-  show ?case
-    apply (insert ImplicitlyTypedIterateN.prems)
-    apply (erule IterateCallNE)
-    using ImplicitlyTypedIterateN.hyps element_type_det by blast+
-next
-  case (ExplicitlyTypedIteratorN \<Gamma> \<sigma> its body\<^sub>1 body\<^sub>2 \<tau> iter)
-  show ?case
-    apply (insert ExplicitlyTypedIteratorN.prems)
+  case (IteratorN \<Gamma> \<tau> its its_ty\<^sub>1 body\<^sub>1 its_ty\<^sub>2 body\<^sub>2 iter)
+  have "\<And>call\<^sub>2. (\<Gamma>, \<tau>) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+       Iterator iter its its_ty\<^sub>2 body\<^sub>2 = call\<^sub>2"
     apply (erule IterationCallNE)
-    using ExplicitlyTypedIteratorN.hyps by blast+
+    using IteratorN.hyps(2) by auto
+  thus ?case by (simp add: IteratorN.prems)
 next
-  case (ImplicitlyTypedIteratorN \<tau> \<sigma> \<Gamma> its body\<^sub>1 body\<^sub>2 iter)
-  show ?case
-    apply (insert ImplicitlyTypedIteratorN.prems)
-    apply (erule IterationCallNE)
-    using ImplicitlyTypedIteratorN.hyps element_type_det by blast+
+  case (ExplicitlyTypedCollectionLoopN \<tau> uv uw ux \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
+  have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
+       (its, (Some \<sigma>, None), body\<^sub>2) = ns"
+    apply (erule LoopNE, auto)
+    apply (simp add: ExplicitlyTypedCollectionLoopN.hyps(3))
+    using ExplicitlyTypedCollectionLoopN.hyps(1) collection_and_map_type_distinct by blast
+  thus ?case by (simp add: ExplicitlyTypedCollectionLoopN.prems)
 next
-  case (ExprListNilN \<Gamma>) thus ?case
-    using normalize_expr_list.cases by auto
+  case (ImplicitlyTypedCollectionLoopN \<tau> uy \<sigma> uz \<Gamma> its body\<^sub>1 body\<^sub>2)
+  have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
+       (its, (Some \<sigma>, None), body\<^sub>2) = ns"
+    apply (erule LoopNE, auto)
+    using ImplicitlyTypedCollectionLoopN.hyps(1) collection_type_det(1) apply blast
+    using ImplicitlyTypedCollectionLoopN.hyps(1) ImplicitlyTypedCollectionLoopN.hyps(3) collection_type_det(1) apply blast
+    using ImplicitlyTypedCollectionLoopN.hyps(1) collection_and_map_type_distinct by blast
+  thus ?case by (simp add: ImplicitlyTypedCollectionLoopN.prems)
+next
+  case (ExplicitlyTypedMapLoopN \<tau> va vb vc \<Gamma> its \<sigma> \<rho> body\<^sub>1 body\<^sub>2)
+  have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, Some \<rho>), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
+       (its, (Some \<sigma>, Some \<rho>), body\<^sub>2) = ns"
+(*    by (smt fst_conv local.ExplicitlyTypedMapLoopN(3) map_eq_conv normalize_loop.cases option.distinct(1) option.sel snd_conv)*)
+    apply (erule LoopNE, auto)
+    sorry
+  thus ?case by (simp add: ExplicitlyTypedMapLoopN.prems)
+next
+  case (ImplicitlyTypedMapKeyLoopN \<tau> \<sigma> vd ve \<Gamma> its \<rho> body\<^sub>1 body\<^sub>2)
+  then show ?case sorry
+next
+  case (ImplicitlyTypedMapValueLoopN \<tau> vf \<rho> vg \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
+  then show ?case sorry
+next
+  case (ImplicitlyTypedMapLoopN \<tau> \<sigma> \<rho> vh \<Gamma> its body\<^sub>1 body\<^sub>2)
+  then show ?case sorry
+next
+  case (ExprListNilN \<Gamma>) thus ?case by auto
 next
   case (ExprListConsN \<Gamma> x y xs ys) thus ?case by blast
 qed
-*)
+
 (*** Normalized Expressions Typing ******************************************)
 
 section \<open>Normalized Expressions Typing\<close>
@@ -684,9 +634,12 @@ lemma nf_typing_det:
 
 section \<open>Code Setup\<close>
 
-code_pred [show_modes] normalize .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_loop .
 
 code_pred [show_modes] nf_typing .
+
 (*
 definition "check_type \<Gamma> expr \<tau> \<equiv>
   Predicate.eval (nf_typing_i_i_i \<Gamma> expr \<tau>) ()"

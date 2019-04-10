@@ -128,7 +128,7 @@ text \<open>
 
 inductive any_unop_type where
   "\<not> is_collection_type \<tau> \<Longrightarrow>
-   any_unop_type OclAsSetOp \<tau> (map_errorable (\<lambda>\<tau>. (Set \<tau>)[1]\<^sub>N) (to_required_type \<tau>))"
+   any_unop_type OclAsSetOp \<tau> (map_errorable (\<lambda>\<tau>. (Set \<tau>)[\<^bold>1]) (to_required_type \<tau>))"
 
 | "object_type \<tau> _ _ \<Longrightarrow>
    any_unop_type OclIsNewOp \<tau> Boolean[1]"
@@ -248,7 +248,7 @@ subsection \<open>String Operations\<close>
 
 inductive string_unop_type where
   "string_unop_type SizeOp String[1] Integer[1]"
-| "string_unop_type CharactersOp String[1] (Sequence String[1]\<^sub>N)[1]"
+| "string_unop_type CharactersOp String[1] (Sequence String[\<^bold>1])[1]"
 | "string_unop_type ToUpperCaseOp String[1] String[1]"
 | "string_unop_type ToLowerCaseOp String[1] String[1]"
 | "string_unop_type ToBooleanOp String[1] Boolean[1!]"
@@ -308,9 +308,10 @@ inductive collection_unop_type where
 | "collection_type \<tau> _ (ErrorFree \<sigma>) False \<Longrightarrow>
    collection_unop_type AsSequenceOp \<tau> (Sequence \<sigma>)[1]"
 
-| "inner_element_type \<tau>[1] \<rho> \<Longrightarrow>
-   update_element_type \<tau>[1] \<rho> \<sigma> \<Longrightarrow>
-   collection_unop_type FlattenOp \<tau>[1] \<sigma>"
+| "collection_type \<tau>[1] _ \<sigma> _ \<Longrightarrow>
+   to_single_type \<sigma> \<rho> \<Longrightarrow>
+   update_element_type \<tau>[1] \<rho> \<upsilon> \<Longrightarrow>
+   collection_unop_type FlattenOp \<tau>[1] \<upsilon>"
 
 | "collection_unop_type FirstOp (OrderedSet \<tau>)[1] (Errorable \<tau>)"
 | "collection_unop_type FirstOp (Sequence \<tau>)[1] (Errorable \<tau>)"
@@ -385,7 +386,7 @@ inductive collection_binop_type where
 | "collection_type \<tau> _ (ErrorFree \<rho>) False \<Longrightarrow>
    collection_type \<sigma> _ (ErrorFree \<upsilon>) False \<Longrightarrow>
    collection_binop_type ProductOp \<tau> \<sigma>
-      (Set (Tuple (fmap_of_list [(STR ''first'', \<rho>), (STR ''second'', \<upsilon>)]))[1]\<^sub>N)[1]"
+      (Set (Tuple (fmap_of_list [(STR ''first'', \<rho>), (STR ''second'', \<upsilon>)]))[\<^bold>1])[1]"
 
 | "collection_binop_type UnionOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set (\<tau> \<squnion> \<sigma>))[1]"
 | "collection_binop_type UnionOp (Set \<tau>)[1] (Bag \<sigma>)[1] (Bag (\<tau> \<squnion> \<sigma>))[1]"
@@ -575,8 +576,9 @@ lemma collection_unop_type_det:
    collection_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   apply (simp add: collection_unop_type.simps)
   using collection_type_det apply auto
-  apply blast+
-  using update_element_type_det inner_element_type_det by blast
+  sorry
+(*  apply blast+
+  using update_element_type_det inner_element_type_det by blast*)
 
 lemma unop_type_det:
   "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -860,31 +862,65 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AnyIterationCall src its its_ty body : \<sigma>[!]"
-|ClosureIterationT:
+(*
+|SingleClosureIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_single_type \<rho> \<rho>' \<Longrightarrow>
    \<rho>' \<le> \<sigma> \<Longrightarrow>
    to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
-|CollectIterationT:
+|CollectionClosureIterationT:
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   collection_type \<rho> _ \<rho>' _
+   to_single_type \<rho> \<rho>' \<Longrightarrow>
+   \<rho>' \<le> \<sigma> \<Longrightarrow>
+   to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
+*)
+|ClosureIterationT:
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   collection_type \<rho> _ \<rho>' _ \<Longrightarrow>
+   \<rho>' \<le> \<sigma> \<Longrightarrow>
+   to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
+
+|CollectionCollectIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection_type \<tau> \<upsilon> \<Longrightarrow>
-   inner_element_type \<rho> \<rho>' \<Longrightarrow>
+   to_single_type \<rho> \<rho>' \<Longrightarrow>
    update_element_type \<upsilon> \<rho>' \<phi> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<phi>"
+|MapCollectIterationT:
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   map_type \<tau> _ _ False \<Longrightarrow>
+   to_single_type \<rho> \<rho>' \<Longrightarrow>
+   collection_type \<upsilon> BagKind \<rho>' False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<upsilon>"
+
 |CollectByIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    map_type' \<upsilon> \<sigma> \<rho> False \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src its its_ty body : \<upsilon>"
-|CollectNestedIterationT:
+
+|CollectionCollectNestedIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
    to_nonunique_collection_type \<tau> \<upsilon> \<Longrightarrow>
    update_element_type \<upsilon> \<rho> \<phi> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<phi>"
+|MapCollectNestedIterationT:
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   length its \<le> 1 \<Longrightarrow>
+   map_type \<tau> \<upsilon> _ False \<Longrightarrow>
+   map_type' \<phi> \<upsilon> \<rho> False \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<phi>"
+
 |ExistsIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<rho> \<le> Boolean[?!] \<Longrightarrow>
@@ -992,8 +1028,10 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>E IntegerLiteral c : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E StringLiteral c : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E EnumLiteral enm lit : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k [] : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k (x # xs) : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E MapLiteral [] : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E MapLiteral (x # xs) : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
 
@@ -1303,9 +1341,9 @@ lemma q11:
              \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]) \<Longrightarrow>
        \<tau> =
        (case \<rho> of
-        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)
+        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)
         | Errorable \<rho> \<Rightarrow>
-            Errorable ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)) \<Longrightarrow>
+            Errorable ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)) \<Longrightarrow>
        \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<rho> \<Longrightarrow>
        \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]"
   apply auto
@@ -1333,25 +1371,25 @@ lemma type\<^sub>N_less_eq_right_simps [simp]:
 *)
 (*
 lemma q11:
-  "ErrorFree \<rho> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1] \<Longrightarrow>
-   \<tau> = ErrorFree ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>) \<Longrightarrow>
-   \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]"
+  "ErrorFree \<rho> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1] \<Longrightarrow>
+   \<tau> = ErrorFree ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>) \<Longrightarrow>
+   \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]"
   by (smt less_eq_errorable_type.simps(1) sup.boundedI sup.orderI sup_ge1
           type.inject(8) type\<^sub>N_less_eq_left_simps(2) type\<^sub>N_less_eq_right_simps(1)
           type_less_eq_left_simps(1) type_less_eq_x_Map_intro)
 
 lemma q12:
   "       (\<And>\<tau>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<tau> \<Longrightarrow>
-             \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]) \<Longrightarrow>
+             \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]) \<Longrightarrow>
        \<tau> =
        (case \<rho> of
-        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)
+        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)
         | Errorable \<rho> \<Rightarrow>
-            Errorable ((Map \<tau>' \<sigma>)[1]\<^sub>N \<squnion> \<rho>)) \<Longrightarrow>
+            Errorable ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)) \<Longrightarrow>
        \<Gamma> \<turnstile>\<^sub>E map_literal_element_key x : ErrorFree \<tau>' \<Longrightarrow>
        \<Gamma> \<turnstile>\<^sub>E map_literal_element_value x : ErrorFree \<sigma> \<Longrightarrow>
        \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<rho> \<Longrightarrow>
-       \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]"
+       \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]"
   by (metis (no_types, lifting) OCL_Typing.q11 errorable_type.simps(5)
         type\<^sub>N\<^sub>E_less_eq_right_simps(1))
 
@@ -1360,7 +1398,7 @@ lemma q13:
   by auto
 
 lemma MapLiteral_has_Map_type:
-  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<tau> \<le> (Map OclAny[?]\<^sub>N OclAny[?]\<^sub>N)[1]"
+  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]"
   apply (induct prts arbitrary: \<tau>)
   apply auto[1]
   apply (erule MapLiteralTE)

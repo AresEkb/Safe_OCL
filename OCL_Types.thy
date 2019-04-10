@@ -43,8 +43,8 @@ datatype (plugins del: size) 'a type =
 | Tuple "telem \<rightharpoonup>\<^sub>f 'a type\<^sub>N"
 
 and 'a type\<^sub>N =
-  Required "'a type" ("_[1]\<^sub>N" [1000] 1000)
-| Optional "'a type" ("_[?]\<^sub>N" [1000] 1000)
+  Required "'a type" ("_[\<^bold>1]" [1000] 1000)
+| Optional "'a type" ("_[\<^bold>?]" [1000] 1000)
 
 
 primrec type_size :: "'a type \<Rightarrow> nat"
@@ -116,10 +116,10 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 
 \<comment> \<open>Collection Types\<close>
 
-| "OclVoid \<sqsubset> Set OclVoid[1]\<^sub>N"
-| "OclVoid \<sqsubset> OrderedSet OclVoid[1]\<^sub>N"
-| "OclVoid \<sqsubset> Bag OclVoid[1]\<^sub>N"
-| "OclVoid \<sqsubset> Sequence OclVoid[1]\<^sub>N"
+| "OclVoid \<sqsubset> Set OclVoid[\<^bold>1]"
+| "OclVoid \<sqsubset> OrderedSet OclVoid[\<^bold>1]"
+| "OclVoid \<sqsubset> Bag OclVoid[\<^bold>1]"
+| "OclVoid \<sqsubset> Sequence OclVoid[\<^bold>1]"
 
 | "\<tau> \<sqsubset>\<^sub>N \<sigma> \<Longrightarrow> Collection \<tau> \<sqsubset> Collection \<sigma>"
 | "\<tau> \<sqsubset>\<^sub>N \<sigma> \<Longrightarrow> Set \<tau> \<sqsubset> Set \<sigma>"
@@ -132,7 +132,7 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "Bag \<tau> \<sqsubset> Collection \<tau>"
 | "Sequence \<tau> \<sqsubset> Collection \<tau>"
 
-| "Collection OclAny[?]\<^sub>N \<sqsubset> OclAny"
+| "Collection OclAny[\<^bold>?] \<sqsubset> OclAny"
 
 \<comment> \<open>Map Types\<close>
 
@@ -310,51 +310,51 @@ next
 next
   case (Collection \<tau>)
   from Collection.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?]\<^sub>N)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[\<^bold>?])"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?]\<^sub>N) OclAny" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[\<^bold>?]) OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case (Set \<tau>)
   have "(\<sqsubset>)\<^sup>*\<^sup>* (Set \<tau>) (Collection \<tau>)" by auto
   also from Set.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?]\<^sub>N)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[\<^bold>?])"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?]\<^sub>N) OclAny" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[\<^bold>?]) OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case (OrderedSet \<tau>)
   have "(\<sqsubset>)\<^sup>*\<^sup>* (OrderedSet \<tau>) (Collection \<tau>)" by auto
   also from OrderedSet.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?]\<^sub>N)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[\<^bold>?])"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?]\<^sub>N) OclAny" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[\<^bold>?]) OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case (Bag \<tau>)
   have "(\<sqsubset>)\<^sup>*\<^sup>* (Bag \<tau>) (Collection \<tau>)" by auto
   also from Bag.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?]\<^sub>N)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[\<^bold>?])"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?]\<^sub>N) OclAny" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[\<^bold>?]) OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case (Sequence \<tau>)
   have "(\<sqsubset>)\<^sup>*\<^sup>* (Sequence \<tau>) (Collection \<tau>)" by auto
   also from Sequence.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[?]\<^sub>N)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Collection \<tau>) (Collection OclAny[\<^bold>?])"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[?]\<^sub>N) OclAny" by auto
+  also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[\<^bold>?]) OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
   case (Tuple \<pi>) show ?case unfolding less_type_def by auto
@@ -410,9 +410,9 @@ next
   case (Enum \<E>) show ?case unfolding less_type_def by auto
 next
   case (Collection \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[1]\<^sub>N)" by auto
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[\<^bold>1])" by auto
   also from Collection.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[1]\<^sub>N) (Set \<tau>)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[\<^bold>1]) (Set \<tau>)"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
@@ -420,36 +420,36 @@ next
   finally show ?case unfolding less_type_def by simp
 next
   case (Set \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[1]\<^sub>N)" by auto
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[\<^bold>1])" by auto
   also from Set.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[1]\<^sub>N) (Set \<tau>)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Set OclVoid[\<^bold>1]) (Set \<tau>)"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
   case (OrderedSet \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (OrderedSet OclVoid[1]\<^sub>N)" by auto
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (OrderedSet OclVoid[\<^bold>1])" by auto
   also from OrderedSet.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (OrderedSet OclVoid[1]\<^sub>N) (OrderedSet \<tau>)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (OrderedSet OclVoid[\<^bold>1]) (OrderedSet \<tau>)"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
   case (Bag \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Bag OclVoid[1]\<^sub>N)" by auto
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Bag OclVoid[\<^bold>1])" by auto
   also from Bag.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Bag OclVoid[1]\<^sub>N) (Bag \<tau>)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Bag OclVoid[\<^bold>1]) (Bag \<tau>)"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
   case (Sequence \<tau>)
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Sequence OclVoid[1]\<^sub>N)" by auto
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Sequence OclVoid[\<^bold>1])" by auto
   also from Sequence.hyps
-  have "(\<sqsubset>)\<^sup>*\<^sup>* (Sequence OclVoid[1]\<^sub>N) (Sequence \<tau>)"
+  have "(\<sqsubset>)\<^sup>*\<^sup>* (Sequence OclVoid[\<^bold>1]) (Sequence \<tau>)"
     unfolding less_type\<^sub>N_def
     by (rule_tac ?R="(\<sqsubset>\<^sub>N)" in preserve_rtranclp;
         auto simp add: Nitpick.rtranclp_unfold)
@@ -2198,11 +2198,11 @@ code_pred [show_modes] to_ordered_collection_type\<^sub>N .
 (* Надо понять что делать с ошибками *)
 (*
 values "{x. inner_element_type (Boolean[?] :: nat type\<^sub>N\<^sub>\<bottom>) x}"
-values "{x. inner_element_type (Set (Boolean[?]\<^sub>N :: nat type\<^sub>N))[?!] x}"
-values "{x. inner_element_type (Sequence (Set (Integer[1]\<^sub>N :: nat type\<^sub>N))[?]\<^sub>N)[1] x}"
-values "{x. inner_element_type (Bag (Sequence (Set (Real[1]\<^sub>N :: nat type\<^sub>N))[?]\<^sub>N)[1]\<^sub>N)[?!] x}"
+values "{x. inner_element_type (Set (Boolean[\<^bold>?] :: nat type\<^sub>N))[?!] x}"
+values "{x. inner_element_type (Sequence (Set (Integer[\<^bold>1] :: nat type\<^sub>N))[\<^bold>?])[1] x}"
+values "{x. inner_element_type (Bag (Sequence (Set (Real[\<^bold>1] :: nat type\<^sub>N))[\<^bold>?])[\<^bold>1])[?!] x}"
 
-values "{x. update_element_type (Set Integer[1]\<^sub>N)[?!] (Boolean[1] :: nat type\<^sub>N\<^sub>\<bottom>) x}"
-values "{x. update_element_type (Sequence (Set Integer[1]\<^sub>N)[?]\<^sub>N)[1] (Boolean[?!] :: nat type\<^sub>N\<^sub>\<bottom>) x}"
+values "{x. update_element_type (Set Integer[\<^bold>1])[?!] (Boolean[1] :: nat type\<^sub>N\<^sub>\<bottom>) x}"
+values "{x. update_element_type (Sequence (Set Integer[\<^bold>1])[\<^bold>?])[1] (Boolean[?!] :: nat type\<^sub>N\<^sub>\<bottom>) x}"
 *)
 end

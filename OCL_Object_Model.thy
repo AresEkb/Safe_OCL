@@ -23,14 +23,14 @@ definition
     else
       if assoc_end_unique end then
         if assoc_end_ordered end
-        then (OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]
-        else (Set \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]
+        then (OrderedSet \<langle>\<C>\<rangle>\<^sub>\<T>[\<^bold>1])[1]
+        else (Set \<langle>\<C>\<rangle>\<^sub>\<T>[\<^bold>1])[1]
       else
         if assoc_end_ordered end
-        then (Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]
-        else (Bag \<langle>\<C>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]"
+        then (Sequence \<langle>\<C>\<rangle>\<^sub>\<T>[\<^bold>1])[1]
+        else (Bag \<langle>\<C>\<rangle>\<^sub>\<T>[\<^bold>1])[1]"
 
-definition "class_assoc_type \<A> \<equiv> (Set \<langle>\<A>\<rangle>\<^sub>\<T>[1]\<^sub>N)[1]"
+definition "class_assoc_type \<A> \<equiv> (Set \<langle>\<A>\<rangle>\<^sub>\<T>[\<^bold>1])[1]"
 
 definition "class_assoc_end_type end \<equiv> \<langle>assoc_end_class end\<rangle>\<^sub>\<T>[1]"
 
