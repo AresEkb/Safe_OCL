@@ -5,7 +5,7 @@
 *)
 chapter \<open>Typing\<close>
 theory OCL_Typing
-  imports OCL_Object_Model "HOL-Library.Transitive_Closure_Table"
+  imports OCL_Object_Model OCL_Type_Helpers "HOL-Library.Transitive_Closure_Table"
 begin
 
 inductive non_strict_op :: "op \<Rightarrow> bool" where
@@ -575,10 +575,7 @@ lemma collection_unop_type_det:
   "collection_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    collection_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   apply (simp add: collection_unop_type.simps)
-  using collection_type_det apply auto
-  sorry
-(*  apply blast+
-  using update_element_type_det inner_element_type_det by blast*)
+  using collection_type_det to_single_type_det update_element_type_det by blast+
 
 lemma unop_type_det:
   "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -862,28 +859,11 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
    length its \<le> 1 \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E AnyIterationCall src its its_ty body : \<sigma>[!]"
-(*
-|SingleClosureIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   to_single_type \<rho> \<rho>' \<Longrightarrow>
-   \<rho>' \<le> \<sigma> \<Longrightarrow>
-   to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
-|CollectionClosureIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   collection_type \<rho> _ \<rho>' _
-   to_single_type \<rho> \<rho>' \<Longrightarrow>
-   \<rho>' \<le> \<sigma> \<Longrightarrow>
-   to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
-*)
 |ClosureIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   collection_type \<rho> _ \<rho>' _ \<Longrightarrow>
-   \<rho>' \<le> \<sigma> \<Longrightarrow>
+   collection_type \<rho> _ \<psi> _ \<Longrightarrow>
+   \<psi> \<le> \<sigma> \<Longrightarrow>
    to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
 
@@ -981,6 +961,9 @@ inductive_cases MapLiteralConsTE [elim]: "\<Gamma> \<turnstile>\<^sub>E MapLiter
 inductive_cases TupleLiteralNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
 inductive_cases TupleLiteralConsTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
 
+inductive_cases CollectionItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
+inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>C CollectionRange a b : \<tau>"
+
 inductive_cases LetTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
 inductive_cases VarTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
 inductive_cases IfTE [elim]: "\<Gamma> \<turnstile>\<^sub>E If a b c : \<tau>"
@@ -1011,10 +994,8 @@ inductive_cases SelectIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SelectI
 inductive_cases RejectIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E RejectIterationCall src its its_ty body : \<tau>"
 inductive_cases SortedByIterationTE [elim]: "\<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src its its_ty body : \<tau>"
 
-inductive_cases CollectionItemTE [elim]: "\<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
-inductive_cases CollectionRangeTE [elim]: "\<Gamma> \<turnstile>\<^sub>C CollectionRange a b : \<tau>"
-
-inductive_cases ExprListTE [elim]: "\<Gamma> \<turnstile>\<^sub>L exprs : \<pi>"
+inductive_cases ExprListNilTE [elim]: "\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
+inductive_cases ExprListConsTE [elim]: "\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
 
 (*** Simplification Rules ***************************************************)
 
@@ -1034,6 +1015,9 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>E MapLiteral (x # xs) : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E TupleLiteral [] : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E TupleLiteral (x # xs) : \<tau>"
+
+"\<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>C CollectionRange a b : \<tau>"
 
 "\<Gamma> \<turnstile>\<^sub>E Let v \<tau> init body : \<sigma>"
 "\<Gamma> \<turnstile>\<^sub>E Var v : \<tau>"
@@ -1065,9 +1049,6 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>E RejectIterationCall src its its_ty body : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src its its_ty body : \<tau>"
 
-"\<Gamma> \<turnstile>\<^sub>C CollectionItem a : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>C CollectionRange a b : \<tau>"
-
 "\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
 "\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
 
@@ -1075,10 +1056,16 @@ inductive_simps typing_alt_simps:
 
 section \<open>Determinism\<close>
 
-lemma collection_and_map_type_distinct:
+lemma collection_type_and_map_type_distinct:
   "collection_type \<tau> k \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
   by (auto simp add: collection_type.simps collection_type\<^sub>N.simps
         collection_type\<^sub>T.simps map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
+lemma to_nonunique_collection_type_and_map_type_distinct:
+  "to_nonunique_collection_type \<tau> \<sigma> \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp add: to_nonunique_collection_type.simps
+        to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T.simps
+        map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
 
 lemma
   typing_det:
@@ -1249,12 +1236,23 @@ next
   case (ClosureIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<rho>' \<upsilon>) thus ?case
     by (metis ClosureIterationTE Pair_inject to_unique_collection_type_det)
 next
-  case (CollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<rho>' \<phi>)
+  case (CollectionCollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<rho>' \<phi>)
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<phi> = \<sigma>"
     apply (erule CollectIterationTE)
-    using CollectIterationT.hyps inner_element_type_det
-        to_nonunique_collection_type_det update_element_type_det by fastforce
-  thus ?case by (simp add: CollectIterationT.prems)
+    using CollectionCollectIterationT.hyps to_nonunique_collection_type_det
+        to_single_type_det update_element_type_det apply fastforce
+    using CollectionCollectIterationT.hyps
+        to_nonunique_collection_type_and_map_type_distinct by fastforce
+  thus ?case by (simp add: CollectionCollectIterationT.prems)
+next
+  case (MapCollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> uz va \<rho>' \<upsilon>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
+    apply (erule CollectIterationTE)
+    using MapCollectIterationT.hyps
+        to_nonunique_collection_type_and_map_type_distinct apply fastforce
+    using MapCollectIterationT.hyps collection_type_det(2)
+        to_single_type_det by fastforce
+  thus ?case by (simp add: MapCollectIterationT.prems)
 next
   case (CollectByIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>)
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
@@ -1262,12 +1260,22 @@ next
     using CollectByIterationT.hyps map_type_det(2) by fastforce
   thus ?case by (simp add: CollectByIterationT.prems)
 next
-  case (CollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<phi>)
+  case (CollectionCollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<phi>)
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<phi> = \<sigma>"
     apply (erule CollectNestedIterationTE)
-    using CollectNestedIterationT.hyps to_nonunique_collection_type_det
-        update_element_type_det by fastforce
-  thus ?case by (simp add: CollectNestedIterationT.prems)
+    using CollectionCollectNestedIterationT.hyps to_nonunique_collection_type_det
+      update_element_type_det apply fastforce
+    using CollectionCollectNestedIterationT.hyps
+      to_nonunique_collection_type_and_map_type_distinct by fastforce
+  thus ?case by (simp add: CollectionCollectNestedIterationT.prems)
+next
+  case (MapCollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> vb \<phi>)
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<phi> = \<sigma>"
+    apply (erule CollectNestedIterationTE)
+    using MapCollectNestedIterationT.hyps
+        to_nonunique_collection_type_and_map_type_distinct apply fastforce
+    using MapCollectNestedIterationT.hyps map_type_det(1) map_type_det(2) by fastforce
+  thus ?case by (simp add: MapCollectNestedIterationT.prems)
 next
   case (ExistsIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
     by (metis ExistsIterationTE snd_conv)

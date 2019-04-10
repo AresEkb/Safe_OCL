@@ -158,6 +158,10 @@ instance
 
 end
 
+fun unwrap_errorable_type where
+  "unwrap_errorable_type (ErrorFree \<tau>) = \<tau>"
+| "unwrap_errorable_type (Errorable \<tau>) = \<tau>"
+
 fun errorable_type where
   "errorable_type (ErrorFree \<tau>) = False"
 | "errorable_type (Errorable \<tau>) = True"
@@ -171,9 +175,5 @@ fun to_error_free_type where
 fun to_errorable_type where
   "to_errorable_type (ErrorFree \<tau>) = (Errorable \<tau>)"
 | "to_errorable_type (Errorable \<tau>) = (Errorable \<tau>)"
-
-fun unwrap_errorable_type where
-  "unwrap_errorable_type (ErrorFree \<tau>) = \<tau>"
-| "unwrap_errorable_type (Errorable \<tau>) = \<tau>"
 
 end

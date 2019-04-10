@@ -5,7 +5,7 @@
 *)
 chapter \<open>Abstract Syntax\<close>
 theory OCL_Syntax
-  imports Complex_Main Object_Model OCL_Errorable_Types
+  imports Complex_Main Object_Model OCL_Types
 begin
 
 section \<open>Preliminaries\<close>
