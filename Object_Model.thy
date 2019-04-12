@@ -26,8 +26,8 @@ datatype param_dir = In | Out | InOut
 
 type_synonym 'c assoc_end = "'c \<times> nat \<times> enat \<times> bool \<times> bool"
 type_synonym 't param_spec = "param \<times> 't \<times> param_dir"
-type_synonym ('t, 'e) oper_spec =
-  "oper \<times> 't \<times> 't param_spec list \<times> 't \<times> bool \<times> 'e option"
+type_synonym ('t, 'e) oper_def = "oper \<times> 't param_spec list \<times> 't \<times> bool \<times> 'e option"
+type_synonym ('t, 'e) oper_spec = "'t \<times> ('t, 'e) oper_def"
 
 definition "assoc_end_class :: 'c assoc_end \<Rightarrow> 'c \<equiv> fst"
 definition "assoc_end_min :: 'c assoc_end \<Rightarrow> nat \<equiv> fst \<circ> snd"
@@ -35,8 +35,8 @@ definition "assoc_end_max :: 'c assoc_end \<Rightarrow> enat \<equiv> fst \<circ
 definition "assoc_end_ordered :: 'c assoc_end \<Rightarrow> bool \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
 definition "assoc_end_unique :: 'c assoc_end \<Rightarrow> bool \<equiv> snd \<circ> snd \<circ> snd \<circ> snd"
 
-definition "oper_name :: ('t, 'e) oper_spec \<Rightarrow> oper \<equiv> fst"
-definition "oper_context :: ('t, 'e) oper_spec \<Rightarrow> 't \<equiv> fst \<circ> snd"
+definition "oper_context :: ('t, 'e) oper_spec \<Rightarrow> 't \<equiv> fst"
+definition "oper_name :: ('t, 'e) oper_spec \<Rightarrow> oper \<equiv> fst \<circ> snd"
 definition "oper_params :: ('t, 'e) oper_spec \<Rightarrow> 't param_spec list \<equiv> fst \<circ> snd \<circ> snd"
 definition "oper_result :: ('t, 'e) oper_spec \<Rightarrow> 't \<equiv> fst \<circ> snd \<circ> snd \<circ> snd"
 definition "oper_static :: ('t, 'e) oper_spec \<Rightarrow> bool \<equiv> fst \<circ> snd \<circ> snd \<circ> snd \<circ> snd"
@@ -364,6 +364,159 @@ lemma (in object_model) static_operation_det:
   "static_operation \<tau> name \<pi> oper\<^sub>1 \<Longrightarrow>
    static_operation \<tau> name \<pi> oper\<^sub>2 \<Longrightarrow> oper\<^sub>1 = oper\<^sub>2"
   by (meson static_operation_not_unique.intros unique_static_operation.cases)
+
+(*** Notation ***************************************************************)
+
+subsection \<open>Notation\<close>
+
+datatype ('a, 't, 'n, 'e) model_element_spec =
+  EnumSpec 'n "elit list"
+| ClassSpec 'a "attr \<rightharpoonup>\<^sub>f 't"
+| AssociationSpec assoc "role \<rightharpoonup>\<^sub>f 'a assoc_end"
+| ContextSpec 't "('t, 'e) oper_def list"
+
+datatype ('a, 't, 'n, 'e) model_spec =
+  ModelSpec (model_spec_elements: "('a, 't, 'n, 'e) model_element_spec list")
+
+primrec model_spec_classes where
+  "model_spec_classes [] = []"
+| "model_spec_classes (x # xs) = (case x
+    of ClassSpec cls attrs \<Rightarrow> (cls, attrs) # (model_spec_classes xs)
+     | _ \<Rightarrow> (model_spec_classes xs))"
+
+primrec model_spec_assocs where
+  "model_spec_assocs [] = []"
+| "model_spec_assocs (x # xs) = (case x
+    of AssociationSpec assoc ends \<Rightarrow> (assoc, ends) # (model_spec_assocs xs)
+     | _ \<Rightarrow> (model_spec_assocs xs))"
+
+primrec model_spec_contexts where
+  "model_spec_contexts [] = []"
+| "model_spec_contexts (x # xs) = (case x
+    of ContextSpec ctx opers \<Rightarrow> (ctx, opers) # (model_spec_contexts xs)
+     | _ \<Rightarrow> (model_spec_contexts xs))"
+
+definition "model_spec_attributes m \<equiv>
+  fmap_of_list (model_spec_classes (model_spec_elements m))"
+
+definition "model_spec_assoc_ens m \<equiv>
+  fmap_of_list (model_spec_assocs (model_spec_elements m))"
+
+definition "model_spec_operations m \<equiv>
+  concat (map (\<lambda>ctx. map (\<lambda>op. (fst ctx, op)) (snd ctx))
+      (model_spec_contexts (model_spec_elements m)))"
+
+nonterminal model_elements and model_element
+
+nonterminal enum_def and enum_literal_defs and enum_literal_def
+
+syntax
+  "_enum_def" :: "'a \<Rightarrow> enum_literal_defs \<Rightarrow> model_element" ("enum _ {_}" [1000,0] 0)
+  "_enum_literal_defs_single" :: "elit \<Rightarrow> enum_literal_defs" ("_")
+  "_enum_literal_defs_cons" :: "elit \<Rightarrow> enum_literal_defs \<Rightarrow> enum_literal_defs" ("_, _")
+
+translations
+  "_enum_def name literals" \<rightharpoonup> "CONST EnumSpec name literals"
+  "_enum_literal_defs_cons x (y # xs)" \<rightharpoonup> "x # y # xs"
+  "_enum_literal_defs_single x" \<rightharpoonup> "[x]"
+
+nonterminal class_defs and class_def
+nonterminal attr_defs and attr_def
+
+syntax
+  "_class_def" :: "'a \<Rightarrow> attr_defs \<Rightarrow> model_element" ("class _ _" [1000,0] 0)
+  "_class_def" :: "'a \<Rightarrow> model_element" ("class _" [1000] 0)
+  "_attr_def" :: "'a \<Rightarrow> 'b \<Rightarrow> attr_def" ("_ : _" [1000,1000] 0)
+  "_attr_defs_single" :: "attr_def \<Rightarrow> attr_defs" ("_")
+  "_attr_defs_cons" :: "attr_def \<Rightarrow> attr_defs \<Rightarrow> attr_defs" ("_ _")
+
+translations
+  "_class_def cls attrs" \<rightharpoonup> "CONST ClassSpec cls (CONST fmap_of_list attrs)"
+  "_class_def cls" \<rightharpoonup> "CONST ClassSpec cls (CONST fmap_of_list [])"
+  "_attr_def x y" \<rightharpoonup> "(x, y)"
+  "_attr_defs_single x" \<rightharpoonup> "[x]"
+  "_attr_defs_cons x (y # xs)" \<rightharpoonup> "x # y # xs"
+
+nonterminal assoc_defs and assoc_def
+nonterminal assoc_end_defs and assoc_end_def
+
+syntax
+  "_assoc_def" :: "'a \<Rightarrow> assoc_end_defs \<Rightarrow> model_element" ("association _ _" [1000,100] 10)
+  "_assoc_end_defs_single" :: "assoc_end_def \<Rightarrow> assoc_end_defs" ("_")
+  "_assoc_end_defs_cons" :: "assoc_end_def \<Rightarrow> assoc_end_defs \<Rightarrow> assoc_end_defs" ("_ _")
+  "_assoc_end_def" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._]" [100,100,100,100] 100)
+  "_assoc_end_def_o" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._] {ordered}" [100,100,100,100] 100)
+  "_assoc_end_def_u" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._] {unique}" [100,100,100,100] 100)
+  "_assoc_end_def_ou" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._] {ordered,unique}" [100,100,100,100] 100)
+
+translations
+  "_assoc_def assoc ends" \<rightharpoonup> "CONST AssociationSpec assoc (CONST fmap_of_list ends)"
+  "_assoc_end_defs_single x" \<rightharpoonup> "[x]"
+  "_assoc_end_defs_cons x (y # xs)" \<rightharpoonup> "x # y # xs"
+  "_assoc_end_def name cls lower upper" \<rightharpoonup>
+    "(name, cls, lower :: nat, upper :: enat, CONST False, CONST False)"
+  "_assoc_end_def_o name cls lower upper" \<rightharpoonup>
+    "(name, cls, lower :: nat, upper :: enat, CONST True, CONST False)"
+  "_assoc_end_def_u name cls lower upper" \<rightharpoonup>
+    "(name, cls, lower :: nat, upper :: enat, CONST False, CONST True)"
+  "_assoc_end_def_ou name cls lower upper" \<rightharpoonup>
+    "(name, cls, lower :: nat, upper :: enat, CONST True, CONST True)"
+
+nonterminal context_defs and context_def
+nonterminal oper_defs and oper_def_const and oper_signature
+nonterminal oper_params and oper_param
+
+syntax
+  "_oper_param" :: "'a \<Rightarrow> 'a \<Rightarrow> oper_param" ("_ : _")
+  "_oper_param_in" :: "'a \<Rightarrow> 'a \<Rightarrow> oper_param" ("in _ : _")
+  "_oper_param_out" :: "'a \<Rightarrow> 'a \<Rightarrow> oper_param" ("out _ : _")
+  "_oper_param_inout" :: "'a \<Rightarrow> 'a \<Rightarrow> oper_param" ("inout _ : _")
+  "_oper_params_nil" :: "oper_params" ("")
+  "_oper_params_single" :: "oper_param \<Rightarrow> oper_params" ("_")
+  "_oper_params_cons" :: "oper_param \<Rightarrow> oper_params \<Rightarrow> oper_params" ("_, _")
+
+translations
+  "_oper_param param ty" \<rightharpoonup> "(param, ty, CONST In)"
+  "_oper_param_in param ty" \<rightharpoonup> "(param, ty, CONST In)"
+  "_oper_param_out param ty" \<rightharpoonup> "(param, ty, CONST Out)"
+  "_oper_param_inout param ty" \<rightharpoonup> "(param, ty, CONST InOut)"
+  "_oper_params_nil" \<rightharpoonup> "[]"
+  "_oper_params_single x" \<rightharpoonup> "[x]"
+  "_oper_params_cons x xs" \<rightharpoonup> "x # xs"
+
+syntax
+  "_context_def" :: "'a \<Rightarrow> oper_defs \<Rightarrow> model_element" ("context _ _" [1000,100] 10)
+  "_oper_def" :: "oper_signature \<Rightarrow> 'a \<Rightarrow> oper_def_const" ("def : _ = _" [100,100] 100)
+  "_oper_def_no_body" :: "oper_signature \<Rightarrow> oper_def_const" ("def : _" [100] 100)
+  "_oper_def_static" :: "oper_signature \<Rightarrow> 'a \<Rightarrow> oper_def_const" ("static def : _ = _" [100,100] 100)
+  "_oper_def_static_no_body" :: "oper_signature \<Rightarrow> oper_def_const" ("static def : _" [100] 100)
+  "_oper_defs_nil" :: "oper_defs" ("")
+  "_oper_defs_cons" :: "oper_def_const \<Rightarrow> oper_defs \<Rightarrow> oper_defs" ("_ _")
+  "_oper_signature" :: "'a \<Rightarrow> oper_params \<Rightarrow> 'b \<Rightarrow> oper_signature" ("_'(_') : _" [1000,100,100] 100)
+  "_oper_signature_no_params" :: "'a \<Rightarrow> 'b \<Rightarrow> oper_signature" ("_'(') : _" [1000,100] 100)
+
+definition "mk_oper_spec op st body \<equiv> (fst op, fst (snd op), snd (snd op), st, body)"
+
+translations
+  "_context_def ctx ops" \<rightharpoonup> "CONST ContextSpec ctx ops"
+  "_oper_defs_nil" \<rightharpoonup> "[]"
+  "_oper_defs_cons x xs" \<rightharpoonup> "x # xs"
+  "_oper_def sign body" \<rightharpoonup> "CONST mk_oper_spec sign CONST False (CONST Some body)"
+  "_oper_def_no_body sign" \<rightharpoonup> "CONST mk_oper_spec sign CONST False CONST None"
+  "_oper_def_static sign body" \<rightharpoonup> "CONST mk_oper_spec sign CONST True (CONST Some body)"
+  "_oper_def_static_no_body sign" \<rightharpoonup> "CONST mk_oper_spec sign CONST True (CONST None)"
+  "_oper_signature op params ty" \<rightharpoonup> "(op, params, ty)"
+  "_oper_signature_no_params op ty" \<rightharpoonup> "(op, [], ty)"
+
+syntax
+  "_model" :: "model_elements \<Rightarrow> ('a, 't, 'n, 'e) model_spec" ("_" 10)
+  "_model_element_single" :: "model_element \<Rightarrow> model_elements" (" _")
+  "_model_element_cons" :: "model_element \<Rightarrow> model_elements \<Rightarrow> model_elements" ("_ _")
+
+translations
+  "_model xs" \<rightharpoonup> "CONST ModelSpec xs"
+  "_model_element_single x" \<rightharpoonup> "[x]"
+  "_model_element_cons x (y # xs)" \<rightharpoonup> "x # y # xs"
 
 (*** Code Setup *************************************************************)
 

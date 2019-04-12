@@ -113,6 +113,9 @@ inductive collection_type where
 | "collection_type\<^sub>N \<tau> k \<sigma> n \<Longrightarrow>
    collection_type (Errorable \<tau>) k (Errorable \<sigma>) n"
 
+abbreviation "required_collection_type \<tau> k \<sigma> \<equiv> collection_type \<tau> k \<sigma> False"
+abbreviation "optional_collection_type \<tau> k \<sigma> \<equiv> collection_type \<tau> k \<sigma> True"
+
 inductive is_collection_type where
   "collection_type \<tau> _ _ _ \<Longrightarrow>
    is_collection_type \<tau>"
@@ -242,6 +245,19 @@ inductive map_type' where
 | "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
    map_type' (Errorable \<tau>) (Errorable \<sigma>) (Errorable \<rho>) n"
 
+subsection \<open>Iterable Types\<close>
+
+inductive iterable_type where
+  "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
+   iterable_type \<tau> \<sigma>"
+| "map_type \<tau> \<sigma> _ _ \<Longrightarrow>
+   iterable_type \<tau> \<sigma>"
+
+inductive is_iterable_type where
+  "iterable_type \<tau> _ \<Longrightarrow> is_iterable_type \<tau>"
+
+abbreviation "non_iterable_type \<tau> \<equiv> \<not> is_iterable_type \<tau>"
+
 subsection \<open>Nullable and Null-free Types\<close>
 
 fun required_type\<^sub>N where
@@ -289,6 +305,52 @@ and to_optional_type_nested\<^sub>N where
 | "to_optional_type_nested\<^sub>N (Optional \<tau>) = Optional (to_optional_type_nested\<^sub>T \<tau>)"
 
 abbreviation "to_optional_type_nested \<equiv> map_errorable to_optional_type_nested\<^sub>N"
+
+(*** Misc Properties ********************************************************)
+
+section \<open>Misc Properties\<close>
+
+lemma collection_type_left_simps:
+  "collection_type (ErrorFree \<tau>) k \<sigma> n =
+   (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  "collection_type (Errorable \<tau>) k \<sigma> n =
+   (\<exists>\<rho>. \<sigma> = Errorable \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  "Ex (collection_type (ErrorFree \<tau>) k \<sigma>) =
+   (\<exists>\<rho> n. \<sigma> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  "Ex (collection_type (Errorable \<tau>) k \<sigma>) =
+   (\<exists>\<rho> n. \<sigma> = Errorable \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
+  by (auto simp: collection_type.simps) auto
+
+lemma collection_type_right_simps:
+  "collection_type \<tau> k (ErrorFree \<sigma>) n =
+   (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<rho> k \<sigma> n)"
+  "collection_type \<tau> k (Errorable \<sigma>) n =
+   (\<exists>\<rho>. \<tau> = Errorable \<rho> \<and> collection_type\<^sub>N \<rho> k \<sigma> n)"
+  by (auto simp: collection_type.simps)
+
+text \<open>
+  The first argument gets simpler, so the following simplification rules
+  does not get stuck.\<close>
+
+lemma to_single_type_left_simps:
+  "to_single_type (ErrorFree \<tau>) \<sigma> =
+   ((\<not> is_collection_type (ErrorFree \<tau>) \<and> (ErrorFree \<tau>) = \<sigma>) \<or>
+    (\<exists>k \<upsilon> n. collection_type (ErrorFree \<tau>) k \<upsilon> n \<and> to_single_type \<upsilon> \<sigma>))"
+  "to_single_type (Errorable \<tau>) \<sigma> =
+   ((\<not> is_collection_type (Errorable \<tau>) \<and> (Errorable \<tau>) = \<sigma>) \<or>
+    (\<exists>k \<upsilon> n. collection_type (Errorable \<tau>) k \<upsilon> n \<and> to_single_type \<upsilon> \<sigma>))"
+  by (subst to_single_type.simps; auto)+
+
+lemma collection_type_and_map_type_distinct:
+  "collection_type \<tau> k \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: collection_type.simps collection_type\<^sub>N.simps
+      collection_type\<^sub>T.simps map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
+lemma to_nonunique_collection_type_and_map_type_distinct:
+  "to_nonunique_collection_type \<tau> \<sigma> \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: to_nonunique_collection_type.simps
+      to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T.simps
+      map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
 
 (*** Determinism ************************************************************)
 
@@ -442,6 +504,13 @@ lemma map_type_det:
   apply (elim map_type.cases; simp add: map_type\<^sub>N_det(1))
   by (elim map_type'.cases; simp add: map_type\<^sub>N_det(2))
 
+
+lemma iterable_type_det:
+  "iterable_type \<tau> \<sigma> \<Longrightarrow>
+   iterable_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
+  apply (auto simp add: iterable_type.simps collection_type_det(1) map_type_det(1))
+  using collection_type_and_map_type_distinct by blast+
+
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
@@ -459,6 +528,7 @@ code_pred update_element_type .
 code_pred to_unique_collection_type .
 code_pred to_nonunique_collection_type .
 code_pred to_ordered_collection_type .
+code_pred is_iterable_type .
 (*
 values "{(x, y, n). map_type (Map (Boolean[\<^bold>1] :: nat type\<^sub>N) Integer[\<^bold>?])[1] x y n}"
 values "{(x, y, n). map_type (Map (Boolean[\<^bold>1] :: nat type\<^sub>N) Integer[\<^bold>?])[1!] x y n}"

@@ -51,7 +51,7 @@ class ocl_object_model =
     and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
     and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
     and operations :: "('a type\<^sub>N\<^sub>E, 'a expr) oper_spec list"
-    and literals :: "'a enum \<rightharpoonup>\<^sub>f elit fset"
+    and literals :: "'a enum_type \<rightharpoonup>\<^sub>f elit fset"
   assumes assoc_end_min_less_eq_max:
     "assoc |\<in>| fmdom associations \<Longrightarrow>
      fmlookup associations assoc = Some ends \<Longrightarrow>

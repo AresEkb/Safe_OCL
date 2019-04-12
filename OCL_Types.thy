@@ -5,7 +5,7 @@
 *)
 chapter \<open>Types\<close>
 theory OCL_Types
-  imports Tuple Errorable_Type "HOL-Library.Phantom_Type"
+  imports Tuple Errorable "HOL-Library.Phantom_Type"
 begin
 
 (*** Definition *************************************************************)
@@ -15,7 +15,7 @@ section \<open>Definition\<close>
 text \<open>
   Types are parameterized over classes.\<close>
 
-type_synonym 'a enum = "('a, String.literal) phantom"
+type_synonym 'a enum_type = "('a, String.literal) phantom"
 type_synonym elit = String.literal
 type_synonym telem = String.literal
 datatype collection_kind =
@@ -31,8 +31,9 @@ datatype (plugins del: size) 'a type =
 | UnlimitedNatural
 | String
 
+| Enum "'a enum_type"
 | ObjectType 'a ("\<langle>_\<rangle>\<^sub>\<T>" [0] 1000)
-| Enum "'a enum"
+| Tuple "telem \<rightharpoonup>\<^sub>f 'a type\<^sub>N"
 
 | Collection "'a type\<^sub>N"
 | Set "'a type\<^sub>N"
@@ -41,8 +42,6 @@ datatype (plugins del: size) 'a type =
 | Sequence "'a type\<^sub>N"
 
 | Map "'a type\<^sub>N" "'a type\<^sub>N"
-
-| Tuple "telem \<rightharpoonup>\<^sub>f 'a type\<^sub>N"
 
 and 'a type\<^sub>N =
   Required "'a type" ("_[\<^bold>1]" [1000] 1000)
@@ -78,8 +77,9 @@ primrec type_size :: "'a type \<Rightarrow> nat"
 | "type_size UnlimitedNatural = 0"
 | "type_size String = 0"
 
-| "type_size (ObjectType \<C>) = 0"
 | "type_size (Enum \<E>) = 0"
+| "type_size (ObjectType \<C>) = 0"
+| "type_size (Tuple \<pi>) = Suc (ffold tcf 0 (fset_of_fmap (fmmap type_size\<^sub>N \<pi>)))"
 
 | "type_size (Collection \<tau>) = Suc (type_size\<^sub>N \<tau>)"
 | "type_size (Set \<tau>) = Suc (type_size\<^sub>N \<tau>)"
@@ -88,8 +88,6 @@ primrec type_size :: "'a type \<Rightarrow> nat"
 | "type_size (Sequence \<tau>) = Suc (type_size\<^sub>N \<tau>)"
 
 | "type_size (Map \<tau> \<sigma>) = Suc (type_size\<^sub>N \<tau> + type_size\<^sub>N \<sigma>)"
-
-| "type_size (Tuple \<pi>) = Suc (ffold tcf 0 (fset_of_fmap (fmmap type_size\<^sub>N \<pi>)))"
 
 | "type_size\<^sub>N (Required \<tau>) = Suc (type_size \<tau>)"
 | "type_size\<^sub>N (Optional \<tau>) = Suc (type_size \<tau>)"
@@ -111,6 +109,9 @@ definition size_type\<^sub>N where [simp, code]: "size_type\<^sub>N \<equiv> typ
 instance ..
 end
 
+text \<open>
+  Please take a note that the @{text "UnlimitedNatural"} type is not a subtype
+  of the @{text "Integer"} type.\<close>
 
 inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (infix "\<sqsubset>" 65)
       and subtype\<^sub>N :: "'a type\<^sub>N \<Rightarrow> 'a type\<^sub>N \<Rightarrow> bool" (infix "\<sqsubset>\<^sub>N" 65) where
@@ -118,20 +119,28 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 \<comment> \<open>Basic Types\<close>
 
   "OclVoid \<sqsubset> Boolean"
+| "OclVoid \<sqsubset> Integer"
 | "OclVoid \<sqsubset> UnlimitedNatural"
 | "OclVoid \<sqsubset> String"
 | "OclVoid \<sqsubset> \<langle>\<C>\<rangle>\<^sub>\<T>"
 | "OclVoid \<sqsubset> Enum \<E>"
 
-| "UnlimitedNatural \<sqsubset> Integer"
 | "Integer \<sqsubset> Real"
 | "\<C> < \<D> \<Longrightarrow> \<langle>\<C>\<rangle>\<^sub>\<T> \<sqsubset> \<langle>\<D>\<rangle>\<^sub>\<T>"
 
 | "Boolean \<sqsubset> OclAny"
 | "Real \<sqsubset> OclAny"
+| "UnlimitedNatural \<sqsubset> OclAny"
 | "String \<sqsubset> OclAny"
 | "\<langle>\<C>\<rangle>\<^sub>\<T> \<sqsubset> OclAny"
 | "Enum \<E> \<sqsubset> OclAny"
+
+\<comment> \<open>Tuple Types\<close>
+
+| "OclVoid \<sqsubset> Tuple \<pi>"
+| "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi> \<Longrightarrow>
+   Tuple \<pi> \<sqsubset> Tuple \<xi>"
+| "Tuple \<pi> \<sqsubset> OclAny"
 
 \<comment> \<open>Collection Types\<close>
 
@@ -160,13 +169,6 @@ inductive subtype :: "'a::order type \<Rightarrow> 'a type \<Rightarrow> bool" (
 | "\<tau> \<sqsubset>\<^sub>N \<rho> \<Longrightarrow> Map \<tau> \<sigma> \<sqsubset> Map \<rho> \<sigma>"
 | "Map \<tau> \<sigma> \<sqsubset> OclAny"
 
-\<comment> \<open>Tuple Types\<close>
-
-| "OclVoid \<sqsubset> Tuple \<pi>"
-| "strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi> \<Longrightarrow>
-   Tuple \<pi> \<sqsubset> Tuple \<xi>"
-| "Tuple \<pi> \<sqsubset> OclAny"
-
 \<comment> \<open>Nullable Types\<close>
 
 | "\<tau> \<sqsubset> \<sigma> \<Longrightarrow> Required \<tau> \<sqsubset>\<^sub>N Required \<sigma>"
@@ -182,14 +184,14 @@ inductive_cases subtype_x_Real [elim!]: "\<tau> \<sqsubset> Real"
 inductive_cases subtype_x_Integer [elim!]: "\<tau> \<sqsubset> Integer"
 inductive_cases subtype_x_UnlimitedNatural [elim!]: "\<tau> \<sqsubset> UnlimitedNatural"
 inductive_cases subtype_x_String [elim!]: "\<tau> \<sqsubset> String"
-inductive_cases subtype_x_ObjectType [elim!]: "\<tau> \<sqsubset> ObjectType \<C>"
 inductive_cases subtype_x_Enum [elim!]: "\<tau> \<sqsubset> Enum \<E>"
+inductive_cases subtype_x_ObjectType [elim!]: "\<tau> \<sqsubset> ObjectType \<C>"
+inductive_cases subtype_x_Tuple [elim!]: "\<tau> \<sqsubset> Tuple \<pi>"
 inductive_cases subtype_x_Collection [elim!]: "\<tau> \<sqsubset> Collection \<sigma>"
 inductive_cases subtype_x_Set [elim!]: "\<tau> \<sqsubset> Set \<sigma>"
 inductive_cases subtype_x_OrderedSet [elim!]: "\<tau> \<sqsubset> OrderedSet \<sigma>"
 inductive_cases subtype_x_Bag [elim!]: "\<tau> \<sqsubset> Bag \<sigma>"
 inductive_cases subtype_x_Sequence [elim!]: "\<tau> \<sqsubset> Sequence \<sigma>"
-inductive_cases subtype_x_Tuple [elim!]: "\<tau> \<sqsubset> Tuple \<pi>"
 inductive_cases subtype_x_Map [elim!]: "\<tau> \<sqsubset> Map \<rho> \<upsilon>"
 
 inductive_cases subtype_x_Required [elim!]: "\<tau> \<sqsubset>\<^sub>N Required \<sigma>"
@@ -315,17 +317,15 @@ next
   also have "(\<sqsubset>)\<^sup>+\<^sup>+ Real OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
-  case UnlimitedNatural
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by auto
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Integer Real" by auto
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ Real OclAny" by auto
-  finally show ?case unfolding less_type_def by simp
+  case UnlimitedNatural show ?case unfolding less_type_def by auto
 next
   case String show ?case unfolding less_type_def by auto
 next
+  case (Enum \<E>) show ?case unfolding less_type_def by auto
+next
   case (ObjectType \<C>) show ?case unfolding less_type_def by auto
 next
-  case (Enum \<E>) show ?case unfolding less_type_def by auto
+  case (Tuple \<pi>) show ?case unfolding less_type_def by auto
 next
   case (Collection \<tau>)
   from Collection.hyps
@@ -376,8 +376,6 @@ next
   also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection OclAny[\<^bold>?]) OclAny" by auto
   finally show ?case unfolding less_type_def by simp
 next
-  case (Tuple \<pi>) show ?case unfolding less_type_def by auto
-next
   case (Map \<tau> \<sigma>) show ?case unfolding less_type_def by auto
 next
   case (Required \<tau>)
@@ -410,23 +408,21 @@ next
   case Boolean show ?case unfolding less_type_def by auto
 next
   case Real
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid UnlimitedNatural" by auto
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by auto
+  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid Integer" by auto
   also have "(\<sqsubset>)\<^sup>+\<^sup>+ Integer Real" by auto
   finally show ?case unfolding less_type_def by simp
 next
-  case Integer
-  have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid UnlimitedNatural" by auto
-  also have "(\<sqsubset>)\<^sup>+\<^sup>+ UnlimitedNatural Integer" by auto
-  finally show ?case unfolding less_type_def by simp
+  case Integer show ?case unfolding less_type_def by auto
 next
   case UnlimitedNatural show ?case unfolding less_type_def by auto
 next
   case String show ?case unfolding less_type_def by auto
 next
+  case (Enum \<E>) show ?case unfolding less_type_def by auto
+next
   case (ObjectType \<C>) show ?case unfolding less_type_def by auto
 next
-  case (Enum \<E>) show ?case unfolding less_type_def by auto
+  case (Tuple \<pi>) show ?case unfolding less_type_def by auto
 next
   case (Collection \<tau>)
   have "(\<sqsubset>)\<^sup>+\<^sup>+ OclVoid (Set OclVoid[\<^bold>1])" by auto
@@ -474,8 +470,6 @@ next
         auto simp add: Nitpick.rtranclp_unfold)
   finally show ?case unfolding less_type_def by simp
 next
-  case (Tuple \<pi>) show ?case unfolding less_type_def by auto
-next
   case (Map \<tau> \<sigma>) show ?case unfolding less_type_def by auto
 next
   case (Required \<tau>) thus ?case
@@ -493,19 +487,36 @@ qed
 
 lemma type_less_x_Real_intro [intro]:
   "\<tau> = Integer \<Longrightarrow> \<tau> < Real"
-  "\<tau> = UnlimitedNatural \<Longrightarrow> \<tau> < Real"
   unfolding less_type_def
   by (rule rtranclp_into_tranclp2, auto)+
-
-lemma type_less_x_Integer_intro [intro]:
-  "\<tau> = UnlimitedNatural \<Longrightarrow> \<tau> < Integer"
-  unfolding less_type_def
-  by auto
 
 lemma type_less_x_ObjectType_intro [intro]:
   "\<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> < \<D> \<Longrightarrow> \<tau> < \<langle>\<D>\<rangle>\<^sub>\<T>"
   unfolding less_type_def
   using dual_order.order_iff_strict by blast
+
+lemma fun_or_eq_refl [intro]:
+  "reflp (\<lambda>x y. f x y \<or> x = y)"
+  by (simp add: reflpI)
+
+lemma type_less_x_Tuple_intro [intro]:
+  assumes "\<tau> = Tuple \<pi>"
+      and "strict_subtuple (\<le>) \<pi> \<xi>"
+    shows "\<tau> < Tuple \<xi>"
+proof -
+  have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>)\<^sup>*\<^sup>* \<pi> \<xi>"
+    by (metis assms(2) less_eq_type\<^sub>N_def rtranclp_eq_rtranclp)
+  hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
+    by simp (rule subtuple_to_trancl; auto)
+  hence "(strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
+    by (simp add: tranclp_into_rtranclp)
+  hence "(strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
+    by (meson assms(2) rtranclpD)
+  thus ?thesis
+    unfolding less_type_def
+    using assms(1) apply simp
+    by (rule preserve_tranclp; auto)
+qed
 
 lemma type_less_x_Collection_intro [intro]:
   "\<tau> = Collection \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Collection \<sigma>"
@@ -541,29 +552,6 @@ lemma type_less_x_Sequence_intro [intro]:
   unfolding less_type_def less_type\<^sub>N_def
   by simp (rule preserve_tranclp; auto)
 
-lemma fun_or_eq_refl [intro]:
-  "reflp (\<lambda>x y. f x y \<or> x = y)"
-  by (simp add: reflpI)
-
-lemma type_less_x_Tuple_intro [intro]:
-  assumes "\<tau> = Tuple \<pi>"
-      and "strict_subtuple (\<le>) \<pi> \<xi>"
-    shows "\<tau> < Tuple \<xi>"
-proof -
-  have "subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>)\<^sup>*\<^sup>* \<pi> \<xi>"
-    by (metis assms(2) less_eq_type\<^sub>N_def rtranclp_eq_rtranclp)
-  hence "(subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
-    by simp (rule subtuple_to_trancl; auto)
-  hence "(strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>))\<^sup>*\<^sup>* \<pi> \<xi>"
-    by (simp add: tranclp_into_rtranclp)
-  hence "(strict_subtuple (\<lambda>\<tau> \<sigma>. \<tau> \<sqsubset>\<^sub>N \<sigma> \<or> \<tau> = \<sigma>))\<^sup>+\<^sup>+ \<pi> \<xi>"
-    by (meson assms(2) rtranclpD)
-  thus ?thesis
-    unfolding less_type_def
-    using assms(1) apply simp
-    by (rule preserve_tranclp; auto)
-qed
-
 (*
 lemma Map_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>) (\<lambda>\<tau>. Map (fst \<tau>) (snd \<tau>))"
@@ -595,10 +583,10 @@ lemma type_less_x_Map_intro':
     shows "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>)"
 proof -
   from assms(2) have "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<tau> \<upsilon>)"
-    by (metis preserve_tranclp subtype_subtype\<^sub>N.intros(29))
+    by (metis preserve_tranclp subtype_subtype\<^sub>N.intros(33))
   also have "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<upsilon>) (Map \<rho> \<upsilon>)"
     apply (insert assms(1))
-    by (rule preserve_tranclp; simp add: subtype_subtype\<^sub>N.intros(30))
+    by (rule preserve_tranclp; simp add: subtype_subtype\<^sub>N.intros(34))
   finally show ?thesis by simp
 qed
 
@@ -609,7 +597,7 @@ lemma type_less_x_Map_intro [intro]:
   unfolding less_type\<^sub>N_def less_type_def
   apply simp_all
   apply (rule preserve_tranclp;
-         simp add: subtype_subtype\<^sub>N.intros(29) subtype_subtype\<^sub>N.intros(30))+
+         simp add: subtype_subtype\<^sub>N.intros(33) subtype_subtype\<^sub>N.intros(34))+
   by (simp add: type_less_x_Map_intro')
 
 lemma type_less_x_Required_intro [intro]:
@@ -648,15 +636,13 @@ lemma type_less_x_Boolean [elim!]:
 lemma type_less_x_Real [elim!]:
   "\<tau> < Real \<Longrightarrow>
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
 lemma type_less_x_Integer [elim!]:
   "\<tau> < Integer \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow> P"
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   unfolding less_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
@@ -672,6 +658,12 @@ lemma type_less_x_String [elim!]:
   unfolding less_type_def
   by (induct rule: converse_tranclp_induct; auto)
 
+lemma type_less_x_Enum [elim!]:
+  "\<tau> < Enum \<E> \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  unfolding less_type_def
+  by (induct rule: converse_tranclp_induct; auto)
+
 lemma type_less_x_ObjectType [elim!]:
   "\<tau> < \<langle>\<D>\<rangle>\<^sub>\<T> \<Longrightarrow>
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
@@ -681,11 +673,27 @@ lemma type_less_x_ObjectType [elim!]:
   apply auto[1]
   using less_trans by auto
 
-lemma type_less_x_Enum [elim!]:
-  "\<tau> < Enum \<E> \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
-  unfolding less_type_def
-  by (induct rule: converse_tranclp_induct; auto)
+text \<open>
+  We will be able to remove the acyclicity assumption only after
+  we prove that the subtype relation is acyclic.\<close>
+
+lemma type_less_x_Tuple':
+  assumes "\<tau> < Tuple \<xi>"
+      and "acyclicP_on (fmran' \<xi>) (\<sqsubset>\<^sub>N)"
+      and "\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P"
+      and "\<tau> = OclVoid \<Longrightarrow> P"
+    shows "P"
+proof -
+  from assms(1) obtain \<pi> where "\<tau> = Tuple \<pi> \<or> \<tau> = OclVoid"
+    unfolding less_type_def
+    by (induct rule: converse_tranclp_induct; auto)
+  moreover from assms(2) have
+    "\<And>\<pi>. Tuple \<pi> < Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi>"
+    unfolding less_type_def less_eq_type\<^sub>N_def
+    by (rule_tac ?f="Tuple" in strict_subtuple_rtranclp_intro; auto)
+  ultimately show ?thesis
+    using assms by auto
+qed
 
 lemma type_less_x_Collection [elim!]:
   "\<tau> < Collection \<sigma> \<Longrightarrow>
@@ -979,28 +987,6 @@ qed
          Tuple x < Tuple x \<Longrightarrow> False
 *)
 
-text \<open>
-  We will be able to remove the acyclicity assumption only after
-  we prove that the subtype relation is acyclic.\<close>
-
-lemma type_less_x_Tuple':
-  assumes "\<tau> < Tuple \<xi>"
-      and "acyclicP_on (fmran' \<xi>) (\<sqsubset>\<^sub>N)"
-      and "\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P"
-      and "\<tau> = OclVoid \<Longrightarrow> P"
-    shows "P"
-proof -
-  from assms(1) obtain \<pi> where "\<tau> = Tuple \<pi> \<or> \<tau> = OclVoid"
-    unfolding less_type_def
-    by (induct rule: converse_tranclp_induct; auto)
-  moreover from assms(2) have
-    "\<And>\<pi>. Tuple \<pi> < Tuple \<xi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi>"
-    unfolding less_type_def less_eq_type\<^sub>N_def
-    by (rule_tac ?f="Tuple" in strict_subtuple_rtranclp_intro; auto)
-  ultimately show ?thesis
-    using assms by auto
-qed
-
 
 lemma type_less_x_Required [elim!]:
   assumes "\<tau> < Required \<sigma>"
@@ -1181,17 +1167,19 @@ lemma type_less_eq_OclVoid_x_intro [intro]:
 lemma type_less_eq_x_Real_intro [intro]:
   "\<tau> = Real \<Longrightarrow> \<tau> \<le> Real"
   "\<tau> = Integer \<Longrightarrow> \<tau> \<le> Real"
-  "\<tau> = UnlimitedNatural \<Longrightarrow> \<tau> \<le> Real"
   unfolding dual_order.order_iff_strict by auto
 
 lemma type_less_eq_x_Integer_intro [intro]:
   "\<tau> = Integer \<Longrightarrow> \<tau> \<le> Integer"
-  "\<tau> = UnlimitedNatural \<Longrightarrow> \<tau> \<le> Integer"
   unfolding dual_order.order_iff_strict by auto
 
 lemma type_less_eq_x_ObjectType_intro [intro]:
   "\<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> \<tau> \<le> \<langle>\<D>\<rangle>\<^sub>\<T>"
   unfolding dual_order.order_iff_strict by auto
+
+lemma type_less_eq_x_Tuple_intro [intro]:
+  "\<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
+  using order.strict_iff_order by blast
 
 lemma type_less_eq_x_Collection_intro [intro]:
   "\<tau> = Collection \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Collection \<sigma>"
@@ -1221,10 +1209,6 @@ lemma type_less_eq_x_Map_intro [intro]:
   "\<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> \<psi> \<le> Map \<rho> \<upsilon>"
   by (metis eq_iff le_imp_less_or_eq order.strict_implies_order type_less_x_Map_intro)
 
-lemma type_less_eq_x_Tuple_intro [intro]:
-  "\<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> \<tau> \<le> Tuple \<xi>"
-  using order.strict_iff_order by blast
-
 lemma type_less_eq_x_Required_intro [intro]:
   "\<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Required \<sigma>"
   unfolding order.order_iff_strict by auto
@@ -1252,7 +1236,6 @@ lemma type_less_eq_x_Boolean [elim!]:
 lemma type_less_eq_x_Real [elim!]:
   "\<tau> \<le> Real \<Longrightarrow>
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Real \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
@@ -1260,7 +1243,6 @@ lemma type_less_eq_x_Real [elim!]:
 lemma type_less_eq_x_Integer [elim!]:
   "\<tau> \<le> Integer \<Longrightarrow>
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = UnlimitedNatural \<Longrightarrow> P) \<Longrightarrow>
    (\<tau> = Integer \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
 
@@ -1276,17 +1258,32 @@ lemma type_less_eq_x_String [elim!]:
    (\<tau> = String \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
 
+lemma type_less_eq_x_Enum [elim!]:
+  "\<tau> \<le> Enum \<E> \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = Enum \<E> \<Longrightarrow> P) \<Longrightarrow> P"
+  by (drule le_imp_less_or_eq; auto)
+
 lemma type_less_eq_x_ObjectType [elim!]:
   "\<tau> \<le> \<langle>\<D>\<rangle>\<^sub>\<T> \<Longrightarrow>
    (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<C>. \<tau> = \<langle>\<C>\<rangle>\<^sub>\<T> \<Longrightarrow> \<C> \<le> \<D> \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
 
-lemma type_less_eq_x_Enum [elim!]:
-  "\<tau> \<le> Enum \<E> \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = Enum \<E> \<Longrightarrow> P) \<Longrightarrow> P"
-  by (drule le_imp_less_or_eq; auto)
+lemma type_less_x_Tuple [elim!]:
+  "\<tau> < Tuple \<xi> \<Longrightarrow>
+   (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (erule type_less_x_Tuple')
+  apply (meson acyclic_def subtype\<^sub>N_acyclic)
+  by simp
+
+lemma type_less_eq_x_Tuple [elim!]:
+  "\<tau> \<le> Tuple \<xi> \<Longrightarrow>
+   (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
+   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (drule le_imp_less_or_eq, auto)
+  by (simp add: fmap.rel_refl fmrel_to_subtuple)
 
 lemma type_less_eq_x_Collection [elim!]:
   "\<tau> \<le> Collection \<sigma> \<Longrightarrow>
@@ -1328,21 +1325,6 @@ lemma type_less_eq_x_Map [elim!]:
    (\<psi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
 
-lemma type_less_x_Tuple [elim!]:
-  "\<tau> < Tuple \<xi> \<Longrightarrow>
-   (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> strict_subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (erule type_less_x_Tuple')
-  apply (meson acyclic_def subtype\<^sub>N_acyclic)
-  by simp
-
-lemma type_less_eq_x_Tuple [elim!]:
-  "\<tau> \<le> Tuple \<xi> \<Longrightarrow>
-   (\<And>\<pi>. \<tau> = Tuple \<pi> \<Longrightarrow> subtuple (\<le>) \<pi> \<xi> \<Longrightarrow> P) \<Longrightarrow>
-   (\<tau> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (drule le_imp_less_or_eq, auto)
-  by (simp add: fmap.rel_refl fmrel_to_subtuple)
-
 lemma type_less_eq_x_Required [elim!]:
   "\<tau> \<le> Required \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = Required \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
@@ -1361,7 +1343,7 @@ subsection \<open>Simplification Rules\<close>
 text \<open>
   We can not declare @{thm Orderings.order_class.le_less} as
   a simplification theorem for two arbitrary types, because it is too aggressive.
-  So we define a specific simplification rules for @{text "(\<le>)"} operator.}\<close>
+  So we define a specific simplification rules for @{text "\<le>"} operator.\<close>
 
 lemma type_less_left_simps [simp]:
   "OclAny < \<sigma> = False"
@@ -1370,11 +1352,14 @@ lemma type_less_left_simps [simp]:
   "Boolean < \<sigma> = (\<sigma> = OclAny)"
   "Real < \<sigma> = (\<sigma> = OclAny)"
   "Integer < \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real)"
-  "UnlimitedNatural < \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real \<or> \<sigma> = Integer)"
+  "UnlimitedNatural < \<sigma> = (\<sigma> = OclAny)"
   "String < \<sigma> = (\<sigma> = OclAny)"
 
-  "ObjectType \<C> < \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> < \<D>)"
   "Enum \<E> < \<sigma> = (\<sigma> = OclAny)"
+  "ObjectType \<C> < \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> < \<D>)"
+  "Tuple \<pi> < \<sigma> = (\<exists>\<xi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Tuple \<xi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
 
   "Collection \<tau> < \<sigma> = (\<exists>\<phi>.
       \<sigma> = OclAny \<or>
@@ -1401,10 +1386,6 @@ lemma type_less_left_simps [simp]:
       \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> = \<rho> \<and> \<psi> < \<upsilon> \<or>
       \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> < \<rho> \<and> \<psi> = \<upsilon> \<or>
       \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> < \<rho> \<and> \<psi> < \<upsilon>)"
-
-  "Tuple \<pi> < \<sigma> = (\<exists>\<xi>.
-      \<sigma> = OclAny \<or>
-      \<sigma> = Tuple \<xi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
   by (induct \<sigma>; auto)+
 
 lemma type_less_eq_left_simps [simp]:
@@ -1414,11 +1395,14 @@ lemma type_less_eq_left_simps [simp]:
   "Boolean \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Boolean)"
   "Real \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real)"
   "Integer \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real \<or> \<sigma> = Integer)"
-  "UnlimitedNatural \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Real \<or> \<sigma> = Integer \<or> \<sigma> = UnlimitedNatural)"
+  "UnlimitedNatural \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = UnlimitedNatural)"
   "String \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = String)"
 
-  "ObjectType \<C> \<le> \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> \<le> \<D>)"
   "Enum \<E> \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Enum \<E>)"
+  "ObjectType \<C> \<le> \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> \<le> \<D>)"
+  "Tuple \<pi> \<le> \<sigma> = (\<exists>\<xi>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = Tuple \<xi> \<and> subtuple (\<le>) \<pi> \<xi>)"
 
   "Collection \<tau> \<le> \<sigma> = (\<exists>\<phi>.
       \<sigma> = OclAny \<or>
@@ -1443,10 +1427,6 @@ lemma type_less_eq_left_simps [simp]:
   "Map \<tau> \<psi> \<le> \<sigma> = (\<exists>\<rho> \<upsilon>.
       \<sigma> = OclAny \<or>
       \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> \<le> \<rho> \<and> \<psi> \<le> \<upsilon>)"
-
-  "Tuple \<pi> \<le> \<sigma> = (\<exists>\<xi>.
-      \<sigma> = OclAny \<or>
-      \<sigma> = Tuple \<xi> \<and> subtuple (\<le>) \<pi> \<xi>)"
   by (auto simp: order.order_iff_strict reflpI)
 
 lemma type\<^sub>N_less_left_simps [simp]:
@@ -1470,13 +1450,14 @@ lemma type_less_right_simps [simp]:
   "\<tau> < OclVoid = False"
 
   "\<tau> < Boolean = (\<tau> = OclVoid)"
-  "\<tau> < Real = (\<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
-  "\<tau> < Integer = (\<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> < Real = (\<tau> = Integer \<or> \<tau> = OclVoid)"
+  "\<tau> < Integer = (\<tau> = OclVoid)"
   "\<tau> < UnlimitedNatural = (\<tau> = OclVoid)"
   "\<tau> < String = (\<tau> = OclVoid)"
 
-  "\<tau> < ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> < \<D> \<or> \<tau> = OclVoid)"
   "\<tau> < Enum \<E> = (\<tau> = OclVoid)"
+  "\<tau> < ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> < \<D> \<or> \<tau> = OclVoid)"
+  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
 
   "\<tau> < Collection \<sigma> = (\<exists>\<phi>.
       \<tau> = Collection \<phi> \<and> \<phi> < \<sigma> \<or>
@@ -1495,8 +1476,6 @@ lemma type_less_right_simps [simp]:
       \<tau> = Map \<psi> \<sigma> \<and> \<psi> < \<rho> \<and> \<sigma> = \<upsilon> \<or>
       \<tau> = Map \<psi> \<sigma> \<and> \<psi> < \<rho> \<and> \<sigma> < \<upsilon> \<or>
       \<tau> = OclVoid)"
-
-  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
   by auto
 
 lemma type_less_eq_right_simps [simp]:
@@ -1504,13 +1483,14 @@ lemma type_less_eq_right_simps [simp]:
   "\<tau> \<le> OclVoid = (\<tau> = OclVoid)"
 
   "\<tau> \<le> Boolean = (\<tau> = Boolean \<or> \<tau> = OclVoid)"
-  "\<tau> \<le> Real = (\<tau> = Real \<or> \<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
-  "\<tau> \<le> Integer = (\<tau> = Integer \<or> \<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Real = (\<tau> = Real \<or> \<tau> = Integer \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Integer = (\<tau> = Integer \<or> \<tau> = OclVoid)"
   "\<tau> \<le> UnlimitedNatural = (\<tau> = UnlimitedNatural \<or> \<tau> = OclVoid)"
   "\<tau> \<le> String = (\<tau> = String \<or> \<tau> = OclVoid)"
 
-  "\<tau> \<le> ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> \<le> \<D> \<or> \<tau> = OclVoid)"
   "\<tau> \<le> Enum \<E> = (\<tau> = Enum \<E> \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> \<le> \<D> \<or> \<tau> = OclVoid)"
+  "\<tau> \<le> Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
 
   "\<tau> \<le> Collection \<sigma> = (\<exists>\<phi>.
       \<tau> = Collection \<phi> \<and> \<phi> \<le> \<sigma> \<or>
@@ -1527,8 +1507,6 @@ lemma type_less_eq_right_simps [simp]:
   "\<tau> \<le> Map \<rho> \<upsilon> = (\<exists>\<psi> \<sigma>.
       \<tau> = Map \<psi> \<sigma> \<and> \<psi> \<le> \<rho> \<and> \<sigma> \<le> \<upsilon> \<or>
       \<tau> = OclVoid)"
-
-  "\<tau> \<le> Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
   by (auto simp: order.order_iff_strict reflpI)
 
 lemma type\<^sub>N_less_right_simps [simp]:
@@ -1559,19 +1537,15 @@ and type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65) where
 | "Real \<squnion>\<^sub>T \<sigma> = (case \<sigma>
     of Real \<Rightarrow> Real
      | Integer \<Rightarrow> Real
-     | UnlimitedNatural \<Rightarrow> Real
      | OclVoid \<Rightarrow> Real
      | _ \<Rightarrow> OclAny)"
 | "Integer \<squnion>\<^sub>T \<sigma> = (case \<sigma>
     of Real \<Rightarrow> Real
      | Integer \<Rightarrow> Integer
-     | UnlimitedNatural \<Rightarrow> Integer
      | OclVoid \<Rightarrow> Integer
      | _ \<Rightarrow> OclAny)"
 | "UnlimitedNatural \<squnion>\<^sub>T \<sigma> = (case \<sigma>
-    of Real \<Rightarrow> Real
-     | Integer \<Rightarrow> Integer
-     | UnlimitedNatural \<Rightarrow> UnlimitedNatural
+    of UnlimitedNatural \<Rightarrow> UnlimitedNatural
      | OclVoid \<Rightarrow> UnlimitedNatural
      | _ \<Rightarrow> OclAny)"
 | "String \<squnion>\<^sub>T \<sigma> = (case \<sigma>
@@ -1579,13 +1553,17 @@ and type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65) where
      | OclVoid \<Rightarrow> String
      | _ \<Rightarrow> OclAny)"
 
+| "Enum \<E> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
+    of Enum \<E>' \<Rightarrow> if \<E> = \<E>' then Enum \<E> else OclAny
+     | OclVoid \<Rightarrow> Enum \<E>
+     | _ \<Rightarrow> OclAny)"
 | "\<langle>\<C>\<rangle>\<^sub>\<T> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
     of \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<langle>\<C> \<squnion> \<D>\<rangle>\<^sub>\<T>
      | OclVoid \<Rightarrow> \<langle>\<C>\<rangle>\<^sub>\<T>
      | _ \<Rightarrow> OclAny)"
-| "Enum \<E> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
-    of Enum \<E>' \<Rightarrow> if \<E> = \<E>' then Enum \<E> else OclAny
-     | OclVoid \<Rightarrow> Enum \<E>
+| "Tuple \<pi> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
+    of Tuple \<xi> \<Rightarrow> Tuple (fmmerge_fun (\<squnion>\<^sub>N) \<pi> \<xi>)
+     | OclVoid \<Rightarrow> Tuple \<pi>
      | _ \<Rightarrow> OclAny)"
 
 | "Collection \<tau> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
@@ -1629,11 +1607,6 @@ and type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65) where
      | OclVoid \<Rightarrow> Sequence \<tau>
      | _ \<Rightarrow> OclAny)"
 
-| "Tuple \<pi> \<squnion>\<^sub>T \<sigma> = (case \<sigma>
-    of Tuple \<xi> \<Rightarrow> Tuple (fmmerge_fun (\<squnion>\<^sub>N) \<pi> \<xi>)
-     | OclVoid \<Rightarrow> Tuple \<pi>
-     | _ \<Rightarrow> OclAny)"
-
 | "Map \<tau> \<sigma> \<squnion>\<^sub>T \<psi> = (case \<psi>
     of Map \<rho> \<upsilon> \<Rightarrow> Map (\<tau> \<squnion>\<^sub>N \<rho>) (\<sigma> \<squnion>\<^sub>N \<upsilon>)
      | OclVoid \<Rightarrow> Map \<tau> \<sigma>
@@ -1666,9 +1639,12 @@ next
 next
   case String show ?case by (cases \<sigma>; auto)
 next
+  case (Enum \<E>) show ?case by (cases \<sigma>; auto)
+next
   case (ObjectType \<C>) show ?case by (cases \<sigma>; auto)
 next
-  case (Enum \<E>) show ?case by (cases \<sigma>; auto)
+  case (Tuple \<pi>) thus ?case by (cases \<sigma>;
+    auto simp del: type_less_eq_left_simps type_less_eq_right_simps)
 next
   case (Collection \<tau>) thus ?case by (cases \<sigma>; auto)
 next
@@ -1679,9 +1655,6 @@ next
   case (Bag \<tau>) thus ?case by (cases \<sigma>; auto)
 next
   case (Sequence \<tau>) thus ?case by (cases \<sigma>; auto)
-next
-  case (Tuple \<pi>) thus ?case by (cases \<sigma>;
-    auto simp del: type_less_eq_left_simps type_less_eq_right_simps)
 next
   case (Map \<tau> \<psi>) thus ?case by (cases \<sigma>; auto)
 next
@@ -1710,9 +1683,12 @@ next
 next
   case String show ?case by (cases \<sigma>; simp)
 next
+  case (Enum \<E>) show ?case by (cases \<sigma>; simp)
+next
   case (ObjectType \<C>) show ?case by (cases \<sigma>; simp add: sup_commute)
 next
-  case (Enum \<E>) show ?case by (cases \<sigma>; simp)
+  case (Tuple \<pi>) thus ?case apply (cases \<sigma>; simp)
+    using fmmerge_commut by blast
 next
   case (Collection \<tau>) thus ?case by (cases \<sigma>; simp)
 next
@@ -1723,9 +1699,6 @@ next
   case (Bag \<tau>) thus ?case by (cases \<sigma>; simp)
 next
   case (Sequence \<tau>) thus ?case by (cases \<sigma>; simp)
-next
-  case (Tuple \<pi>) thus ?case apply (cases \<sigma>; simp)
-    using fmmerge_commut by blast
 next
   case (Map \<tau> \<psi>) thus ?case by (cases \<sigma>; simp)
 next
@@ -1792,14 +1765,18 @@ function subtype\<^sub>T_fun :: "'a::order type \<Rightarrow> 'a type \<Rightarr
 | "subtype\<^sub>T_fun Boolean \<sigma> = (\<sigma> = OclAny)"
 | "subtype\<^sub>T_fun Real \<sigma> = (\<sigma> = OclAny)"
 | "subtype\<^sub>T_fun Integer \<sigma> = (\<sigma> = Real \<or> \<sigma> = OclAny)"
-| "subtype\<^sub>T_fun UnlimitedNatural \<sigma> = (\<sigma> = Integer \<or> \<sigma> = Real \<or> \<sigma> = OclAny)"
+| "subtype\<^sub>T_fun UnlimitedNatural \<sigma> = (\<sigma> = OclAny)"
 | "subtype\<^sub>T_fun String \<sigma> = (\<sigma> = OclAny)"
 
+| "subtype\<^sub>T_fun (Enum _) \<sigma> = (\<sigma> = OclAny)"
 | "subtype\<^sub>T_fun \<langle>\<C>\<rangle>\<^sub>\<T> \<sigma> = (case \<sigma>
     of OclAny \<Rightarrow> True
      | \<langle>\<D>\<rangle>\<^sub>\<T> \<Rightarrow> \<C> < \<D>
      | _ \<Rightarrow> False)"
-| "subtype\<^sub>T_fun (Enum _) \<sigma> = (\<sigma> = OclAny)"
+| "subtype\<^sub>T_fun (Tuple \<pi>) \<sigma> = (case \<sigma>
+    of OclAny \<Rightarrow> True
+     | Tuple \<xi> \<Rightarrow> strict_subtuple_fun (\<lambda>\<tau> \<sigma>. subtype\<^sub>N_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi>
+     | _ \<Rightarrow> False)"
 
 | "subtype\<^sub>T_fun (Collection \<tau>) \<sigma> = (case \<sigma>
     of OclAny \<Rightarrow> True
@@ -1824,11 +1801,6 @@ function subtype\<^sub>T_fun :: "'a::order type \<Rightarrow> 'a type \<Rightarr
     of OclAny \<Rightarrow> True
      | Collection \<rho> \<Rightarrow> subtype\<^sub>N_fun \<tau> \<rho> \<or> \<tau> = \<rho>
      | Sequence \<rho> \<Rightarrow> subtype\<^sub>N_fun \<tau> \<rho>
-     | _ \<Rightarrow> False)"
-
-| "subtype\<^sub>T_fun (Tuple \<pi>) \<sigma> = (case \<sigma>
-    of OclAny \<Rightarrow> True
-     | Tuple \<xi> \<Rightarrow> strict_subtuple_fun (\<lambda>\<tau> \<sigma>. subtype\<^sub>N_fun \<tau> \<sigma> \<or> \<tau> = \<sigma>) \<pi> \<xi>
      | _ \<Rightarrow> False)"
 
 | "subtype\<^sub>T_fun (Map \<tau> \<sigma>) \<psi> = (case \<psi>
@@ -1899,9 +1871,11 @@ next
 next
   case String thus ?case by auto
 next
+  case (Enum \<E>) thus ?case by auto
+next
   case (ObjectType \<C>) thus ?case by (cases \<sigma>; auto)
 next
-  case (Enum \<E>) thus ?case by auto
+  case (Tuple \<pi>) thus ?case by (cases \<sigma>; auto)
 next
   case (Collection \<tau>) thus ?case by (cases \<sigma>; auto)
 next
@@ -1912,8 +1886,6 @@ next
   case (Bag \<tau>) thus ?case by (cases \<sigma>; auto simp: less_imp_le)
 next
   case (Sequence \<tau>) thus ?case by (cases \<sigma>; auto simp: less_imp_le)
-next
-  case (Tuple \<pi>) thus ?case by (cases \<sigma>; auto)
 next
   case (Map \<tau> \<psi>) thus ?case by (cases \<sigma>; auto)
 next

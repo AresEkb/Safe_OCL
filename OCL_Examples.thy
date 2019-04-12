@@ -8,6 +8,36 @@ theory OCL_Examples
   imports OCL_Normalization
 begin
 
+
+
+term "context Project
+  def: zxcv(out a : b) : zxca = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
+"
+
+term "
+enum E1 {A}
+enum E1 {A, B}
+
+association as
+  ww : zx[1..2]
+  ww : zx[1..2] {unique}
+
+enum E2 {C, D, E}
+
+class Z
+  q : bqz
+  q : bq
+
+association as
+  ww : zx[1..2]
+  ww : zx[1..2] {unique}
+
+context Project
+  def: zxcv(out a : b) : zxca = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
+  def: zxcv(out a : b) : zxca
+  def: zxcv(out a : b) : zxca = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
+"
+
 (*** Classes ****************************************************************)
 
 section \<open>Classes\<close>
@@ -27,7 +57,7 @@ begin
 definition "(<) \<equiv> subclass1"
 definition "(\<le>) \<equiv> subclass1\<^sup>=\<^sup>="
 
-fun sup_classes1 where
+primrec sup_classes1 where
   "Object \<squnion> _ = Object"
 | "Person \<squnion> c = (if c = Person \<or> c = Employee \<or> c = Customer
     then Person else Object)"
@@ -92,7 +122,7 @@ end
 
 code_pred subclass1 .
 
-fun subclass1_fun where
+primrec subclass1_fun where
   "subclass1_fun Object \<C> = False"
 | "subclass1_fun Person \<C> = (\<C> = Object)"
 | "subclass1_fun Employee \<C> = (\<C> = Object \<or> \<C> = Person)"
@@ -107,10 +137,9 @@ proof (intro ext iffI)
   fix \<C> \<D> :: "classes1"
   show "\<C> < \<D> \<Longrightarrow> subclass1_fun \<C> \<D>"
     unfolding less_classes1_def
-    apply (erule subclass1.cases, auto)
-    using subclass1_fun.elims(3) by blast
+    by (cases \<C>; erule subclass1.cases; simp)
   show "subclass1_fun \<C> \<D> \<Longrightarrow> \<C> < \<D>"
-    by (erule subclass1_fun.elims, auto simp add: less_classes1_def subclass1.intros)
+    by (cases \<C>; auto simp add: less_classes1_def subclass1.intros)
 qed
 
 lemma less_eq_classes1_code [code]:
@@ -122,9 +151,118 @@ lemma less_eq_classes1_code [code]:
 
 section \<open>Object Model\<close>
 
-abbreviation "\<Gamma>\<^sub>0 \<equiv> fmempty :: classes1 type\<^sub>N\<^sub>E env"
+abbreviation "self \<equiv> STR ''self''"
+abbreviation "it \<equiv> STR ''it''"
+
+abbreviation "name \<equiv> STR ''name''"
+abbreviation "position \<equiv> STR ''position''"
+abbreviation "vip \<equiv> STR ''vip''"
+abbreviation "cost \<equiv> STR ''cost''"
+abbreviation "description \<equiv> STR ''description''"
+
+abbreviation "ProjectManager \<equiv> STR ''ProjectManager''"
+abbreviation "projects \<equiv> STR ''projects''"
+abbreviation "manager \<equiv>  STR ''manager''"
+abbreviation "ProjectMember \<equiv>  STR ''ProjectMember''"
+abbreviation "member_of \<equiv>  STR ''member_of''"
+abbreviation "members \<equiv>  STR ''members''"
+abbreviation "ManagerEmployee \<equiv>  STR ''ManagerEmployee''"
+abbreviation "line_manager \<equiv>  STR ''line_manager''"
+abbreviation "project_manager \<equiv>  STR ''project_manager''"
+abbreviation "employees \<equiv>  STR ''employees''"
+abbreviation "ProjectCustomer \<equiv>  STR ''ProjectCustomer''"
+abbreviation "customer \<equiv>  STR ''customer''"
+abbreviation "ProjectTask \<equiv>  STR ''ProjectTask''"
+abbreviation "project \<equiv>  STR ''project''"
+abbreviation "tasks \<equiv>  STR ''tasks''"
+abbreviation "SprintTaskAssignee \<equiv>  STR ''SprintTaskAssignee''"
+abbreviation "sprint \<equiv>  STR ''sprint''"
+abbreviation "assignee \<equiv>  STR ''assignee''"
+
+abbreviation "membersCount \<equiv>  STR ''membersCount''"
+abbreviation "membersByName \<equiv>  STR ''membersByName''"
+abbreviation "allProjects \<equiv>  STR ''allProjects''"
+
+definition "literal_to_expr_map \<equiv> fmap_of_list [
+  (name, Attribute STR ''name''),
+  (position, Attribute STR ''position''),
+  (vip, Attribute STR ''vip''),
+  (cost, Attribute STR ''cost''),
+  (description, Attribute STR ''description''),
+  (projects, AssociationEnd None STR ''projects''),
+  (members, AssociationEnd None STR ''members''),
+  (member_of, AssociationEnd None STR ''member_of''),
+  (manager, AssociationEnd None STR ''manager''),
+  (line_manager, AssociationEnd None STR ''line_manager''),
+  (project_manager, AssociationEnd None STR ''project_manager''),
+  (employees, AssociationEnd None STR ''employees''),
+  (customer, AssociationEnd None STR ''customer''),
+  (project, AssociationEnd None STR ''project''),
+  (tasks, AssociationEnd None STR ''tasks''),
+  (sprint, AssociationEnd None STR ''sprint''),
+  (assignee, AssociationEnd None STR ''assignee'')]"
+
+definition "literal_to_expr lit \<equiv> the (fmlookup literal_to_expr_map lit)"
+
+declare [[coercion "StringLiteral :: string \<Rightarrow> classes1 literal_expr"]]
 declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 type"]]
-declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum"]]
+declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum_type"]]
+declare [[coercion "literal_to_expr :: String.literal \<Rightarrow> classes1 call_expr"]]
+
+definition "model_spec \<equiv>
+
+  class Person
+    name : String[1]
+  
+  class Employee
+    name : String[1]
+    position : String[1]
+  
+  class Customer
+    vip : Boolean[1]
+  
+  class Project
+    name : String[1]
+    cost : Real[?]
+  
+  class Task
+    description : String[1]
+
+  association ProjectManager
+    projects : Project[0..\<infinity>] {unique}
+    manager : Employee[1..1]
+  
+  association ProjectMember
+    member_of : Project[0..\<infinity>]
+    members : Employee[1..20] {ordered,unique}
+  
+  association ManagerEmployee
+    line_manager : Employee[0..1]
+    project_manager : Employee[0..\<infinity>]
+    employees : Employee[3..7]
+  
+  association ProjectCustomer
+    projects : Project[0..\<infinity>] {unique}
+    customer : Customer[1..1]
+  
+  association ProjectTask
+    project : Project[1..1]
+    tasks : Task[0..\<infinity>] {ordered,unique}
+  
+  association SprintTaskAssignee
+    sprint : Sprint[0..10] {unique}
+    tasks : Task[0..5] {unique}
+    assignee : Employee[0..1]
+
+  context Project[1]
+    def: membersCount() : Integer[1] = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
+
+    def: membersByName(name : String[1]) : (Set Employee[\<^bold>1])[1] =
+         \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>select(it \<^bold>| \<lparr>it\<rparr>\<^bold>.name \<^bold>= \<lparr>name\<rparr>)
+
+    static def: allProjects() : (Set Project[\<^bold>1])[1] =
+         (MetaOperationCall Project[1] AllInstancesOp)"
+
 
 instantiation classes1 :: ocl_object_model
 begin
@@ -132,73 +270,14 @@ begin
 definition "classes_classes1 \<equiv>
   {|Object, Person, Employee, Customer, Project, Task, Sprint|}"
 
-definition "attributes_classes1 \<equiv> fmap_of_list [
-  (Person, fmap_of_list [
-    (STR ''name'', String[1] :: classes1 type\<^sub>N\<^sub>E)]),
-  (Employee, fmap_of_list [
-    (STR ''name'', String[1]),
-    (STR ''position'', String[1])]),
-  (Customer, fmap_of_list [
-    (STR ''vip'', Boolean[1])]),
-  (Project, fmap_of_list [
-    (STR ''name'', String[1]),
-    (STR ''cost'', Real[?])]),
-  (Task, fmap_of_list [
-    (STR ''description'', String[1])])]"
-
-abbreviation "assocs \<equiv> [
-  STR ''ProjectManager'' \<mapsto>\<^sub>f [
-    STR ''projects'' \<mapsto>\<^sub>f (Project, 0::nat, \<infinity>::enat, False, True),
-    STR ''manager'' \<mapsto>\<^sub>f (Employee, 1, 1, False, False)],
-  STR ''ProjectMember'' \<mapsto>\<^sub>f [
-    STR ''member_of'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, False),
-    STR ''members'' \<mapsto>\<^sub>f (Employee, 1, 20, True, True)],
-  STR ''ManagerEmployee'' \<mapsto>\<^sub>f [
-    STR ''line_manager'' \<mapsto>\<^sub>f (Employee, 0, 1, False, False),
-    STR ''project_manager'' \<mapsto>\<^sub>f (Employee, 0, \<infinity>, False, False),
-    STR ''employees'' \<mapsto>\<^sub>f (Employee, 3, 7, False, False)],
-  STR ''ProjectCustomer'' \<mapsto>\<^sub>f [
-    STR ''projects'' \<mapsto>\<^sub>f (Project, 0, \<infinity>, False, True),
-    STR ''customer'' \<mapsto>\<^sub>f (Customer, 1, 1, False, False)],
-  STR ''ProjectTask'' \<mapsto>\<^sub>f [
-    STR ''project'' \<mapsto>\<^sub>f (Project, 1, 1, False, False),
-    STR ''tasks'' \<mapsto>\<^sub>f (Task, 0, \<infinity>, True, True)],
-  STR ''SprintTaskAssignee'' \<mapsto>\<^sub>f [
-    STR ''sprint'' \<mapsto>\<^sub>f (Sprint, 0, 10, False, True),
-    STR ''tasks'' \<mapsto>\<^sub>f (Task, 0, 5, False, True),
-    STR ''assignee'' \<mapsto>\<^sub>f (Employee, 0, 1, False, False)]]"
-
+definition "attributes_classes1 \<equiv> model_spec_attributes model_spec"
+abbreviation "assocs \<equiv> model_spec_assoc_ens model_spec"
 definition "associations_classes1 \<equiv> assocs"
-
 definition "association_classes_classes1 \<equiv> fmempty :: classes1 \<rightharpoonup>\<^sub>f assoc"
-
-text \<open>
-\begin{verbatim}
-context Project
-def: membersCount() : Integer[1] = members->size()
-def: membersByName(mn : String[1]) : Set(Employee[1]) =
-       members->select(member | member.name = mn)
-static def: allProjects() : Set(Project[1]) =
-              Project[1].allInstances()
-\end{verbatim}\<close>
-
-definition "operations_classes1 \<equiv> [
-  (STR ''membersCount'', Project[1], [], Integer[1], False,
-   Some (
-    (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')\<^bold>-\<^bold>>size())),
-  (STR ''membersByName'', Project[1], [(STR ''mn'', String[1], In)],
-    (Set Employee[\<^bold>1])[1], False,
-   Some (
-    (AssociationEndCall (Var STR ''self'') DotCall None STR ''members'')\<^bold>-\<^bold>>select(
-    STR ''member'' \<^bold>|
-      (AttributeCall (Var STR ''member'') DotCall STR ''name'') \<^bold>=
-      (Var STR ''mn'')))),
-  (STR ''allProjects'', Project[1], [], (Set Project[\<^bold>1])[1], True,
-   Some (MetaOperationCall Project[1] AllInstancesOp))
-  ] :: (classes1 type\<^sub>N\<^sub>E, classes1 expr) oper_spec list"
+definition "operations_classes1 \<equiv> model_spec_operations model_spec"
 
 definition "literals_classes1 \<equiv> fmap_of_list [
-  (STR ''E1'' :: classes1 enum, {|STR ''A'', STR ''B''|}),
+  (STR ''E1'' :: classes1 enum_type, {|STR ''A'', STR ''B''|}),
   (STR ''E2'', {|STR ''C'', STR ''D'', STR ''E''|})]"
 
 
@@ -208,7 +287,8 @@ lemma assoc_end_min_less_eq_max:
    role |\<in>| fmdom ends  \<Longrightarrow>
    fmlookup ends role = Some end \<Longrightarrow>
    assoc_end_min end \<le> assoc_end_max end"
-  unfolding assoc_end_min_def assoc_end_max_def
+  unfolding assoc_end_min_def assoc_end_max_def model_spec_assoc_ens_def
+    model_spec_elements_def model_spec_assocs_def model_spec_def
   using zero_enat_def one_enat_def numeral_eq_enat apply auto
   by (metis enat_ord_number(1) numeral_One one_le_numeral)
 
@@ -230,63 +310,156 @@ instance
 
 end
 
-code_pred [show_modes] non_strict_op .
-(*
-values "{x. \<Gamma>\<^sub>0(STR ''x'' \<mapsto>\<^sub>f OclAny[?]) \<turnstile>\<^sub>E CollectionLiteral SetKind [
-  CollectionItem (IntegerLiteral 1),
-  CollectionItem NullLiteral,
-  CollectionItem (Var STR ''x'')] : x}"
-*)
+abbreviation "\<Gamma>\<^sub>0 \<equiv> fmempty :: classes1 type\<^sub>N\<^sub>E env"
 
+(*
+abbreviation "name \<equiv> Attribute STR ''name''"
+abbreviation "projects \<equiv> AssociationEnd None STR ''projects''"
+abbreviation "members \<equiv> AssociationEnd None STR ''members''"
+abbreviation "allProjects \<equiv> STR ''allProjects''"
+*)
 (*** Simplification Rules ***************************************************)
 
 section \<open>Simplification Rules\<close>
-(*
+
 lemma ex_alt_simps [simp]:
   "\<exists>a. a"
   "\<exists>a. \<not> a"
   "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
   "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
+  "(\<forall>x. x) = False"
   by auto
 
 declare numeral_eq_enat [simp]
 
-(*lemmas basic_type_le_less [simp] = Orderings.order_class.le_less
-  for x y :: "'a basic_type"*)
+lemmas object_model_simps =
+  assoc_end_class_def
+  assoc_end_min_def
+  assoc_end_max_def
+  assoc_end_ordered_def
+  assoc_end_unique_def
+  oper_name_def
+  oper_context_def
+  oper_params_def
+  oper_result_def
+  oper_static_def
+  oper_body_def
+  oper_in_params_def
+  oper_out_params_def
 
-declare element_type_alt_simps [simp]
+lemmas ocl_object_model_simps =
+  object_model_simps
+  assoc_end_type_def
+  class_assoc_type_def
+  class_assoc_end_type_def
+  oper_type_def
+
+declare ocl_object_model_simps [simp]
+
+
+lemmas type_helpers_simps =
+  collection_type\<^sub>T.simps
+  collection_type\<^sub>N.simps
+  collection_type_left_simps
+  collection_type_right_simps
+  to_unique_collection_type\<^sub>T.simps
+  to_unique_collection_type\<^sub>N.simps
+  to_unique_collection_type.simps
+  to_nonunique_collection_type\<^sub>T.simps
+  to_nonunique_collection_type\<^sub>N.simps
+  to_nonunique_collection_type.simps
+  is_collection_type.simps
+  to_single_type_left_simps
+  update_element_type\<^sub>T.simps
+  update_element_type\<^sub>N.simps
+  update_element_type.simps
+
+declare collection_type\<^sub>T.simps [simp]
+declare collection_type\<^sub>N.simps [simp]
+declare collection_type_left_simps [simp]
+declare collection_type_right_simps [simp]
+
+declare to_unique_collection_type\<^sub>T.simps [simp]
+declare to_unique_collection_type\<^sub>N.simps [simp]
+declare to_unique_collection_type.simps [simp]
+
+declare to_nonunique_collection_type\<^sub>T.simps [simp]
+declare to_nonunique_collection_type\<^sub>N.simps [simp]
+declare to_nonunique_collection_type.simps [simp]
+
+declare is_collection_type.simps [simp]
+declare to_single_type_left_simps [simp]
+
+declare update_element_type\<^sub>T.simps [simp]
+declare update_element_type\<^sub>N.simps [simp]
 declare update_element_type.simps [simp]
-declare to_unique_collection.simps [simp]
-declare to_nonunique_collection.simps [simp]
-declare to_ordered_collection.simps [simp]
 
-declare assoc_end_class_def [simp]
-declare assoc_end_min_def [simp]
-declare assoc_end_max_def [simp]
-declare assoc_end_ordered_def [simp]
-declare assoc_end_unique_def [simp]
+(*
+lemma map_type_left_simps:
+  "map_type (ErrorFree \<tau>) \<sigma> \<rho> n =
+   (\<exists>\<upsilon> \<psi>. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
+  "map_type (Errorable \<tau>) \<sigma> \<rho> n =
+   (\<exists>\<upsilon> \<psi>. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
+  "Ex (map_type (ErrorFree \<tau>) \<sigma> \<rho>) =
+   (\<exists>\<upsilon> \<psi> n. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
+  "Ex (map_type (Errorable \<tau>) \<sigma> \<rho>) =
+   (\<exists>\<upsilon> \<psi> n. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> Ex (map_type\<^sub>N \<tau> \<upsilon> \<psi>))"
+  by (auto simp add: map_type.simps) auto
+*)
+declare map_type\<^sub>T.simps [simp]
+(*declare map_type\<^sub>N_left_simps [simp]
+declare map_type_left_simps [simp]*)
+declare map_type\<^sub>N.simps [simp]
+declare map_type.simps [simp]
 
-declare oper_name_def [simp]
-declare oper_context_def [simp]
-declare oper_params_def [simp]
-declare oper_result_def [simp]
-declare oper_static_def [simp]
-declare oper_body_def [simp]
+declare iterable_type.simps [simp]
+declare is_iterable_type.simps [simp]
 
-declare oper_in_params_def [simp]
-declare oper_out_params_def [simp]
-
-declare assoc_end_type_def [simp]
-declare oper_type_def [simp]
 
 declare op_type_alt_simps [simp]
-declare typing_alt_simps [simp]
+declare op_result_type_is_errorable_def [simp]
+
+declare mk_iterate_def [simp]
+declare mk_iterator_def [simp]
+
+declare iterators_def [simp]
+declare coiterators_def [simp]
+
+
 declare normalize_alt_simps [simp]
 declare nf_typing.simps [simp]
+declare typing_alt_simps [simp]
+
+(*
+lemma to_nonunique_collection_type_left_simps:
+  "to_nonunique_collection_type (ErrorFree \<tau>) \<sigma> =
+   (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
+  "to_nonunique_collection_type (Errorable \<tau>) \<sigma> =
+   (\<exists>\<rho>. \<sigma> = Errorable \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
+  by (simp_all add: to_nonunique_collection_type.simps)
 *)
+
+
+
+(*
+lemma iterable_type_left_simps:
+  "iterable_type (ErrorFree \<tau>) \<sigma> =
+   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
+      (collection_type (ErrorFree \<tau>) k \<rho> n \<or>
+       map_type (ErrorFree \<tau>) \<rho> \<upsilon> n))"
+  "iterable_type (Errorable \<tau>) \<sigma> =
+   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
+      (collection_type (Errorable \<tau>) k \<rho> n \<or>
+       map_type (Errorable \<tau>) \<rho> \<upsilon> n))"
+  by (auto simp add: iterable_type.simps; blast)+
+*)
+(*declare iterable_type_left_simps [simp]*)
+
 declare subclass1.intros [intro]
 declare less_classes1_def [simp]
 
+declare literal_to_expr_def [simp]
+declare literal_to_expr_map_def [simp]
 declare literals_classes1_def [simp]
 
 lemma attribute_Employee_name [simp]:
@@ -323,11 +496,11 @@ qed
 
 lemma static_operation_Project_allProjects [simp]:
   "static_operation \<langle>Project\<rangle>\<^sub>\<T>[1] STR ''allProjects'' [] oper =
-   (oper = (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], (Set \<langle>Project\<rangle>\<^sub>\<T>[\<^bold>1])[1], True,
+   (oper = (\<langle>Project\<rangle>\<^sub>\<T>[1], STR ''allProjects'', [], (Set \<langle>Project\<rangle>\<^sub>\<T>[\<^bold>1])[1], True,
      Some (MetaOperationCall \<langle>Project\<rangle>\<^sub>\<T>[1] AllInstancesOp)))"
 proof -
   have "static_operation \<langle>Project\<rangle>\<^sub>\<T>[1] STR ''allProjects'' []
-    (STR ''allProjects'', \<langle>Project\<rangle>\<^sub>\<T>[1], [], (Set \<langle>Project\<rangle>\<^sub>\<T>[\<^bold>1])[1], True,
+    (\<langle>Project\<rangle>\<^sub>\<T>[1], STR ''allProjects'', [], (Set \<langle>Project\<rangle>\<^sub>\<T>[\<^bold>1])[1], True,
      Some (MetaOperationCall \<langle>Project\<rangle>\<^sub>\<T>[1] AllInstancesOp))"
     by eval
   thus ?thesis
@@ -340,7 +513,7 @@ section \<open>Basic Types\<close>
 
 subsection \<open>Positive Cases\<close>
 
-lemma "UnlimitedNatural < (Real :: classes1 type)" by simp
+lemma "Integer < (Real :: classes1 type)" by simp
 lemma "\<langle>Employee\<rangle>\<^sub>\<T> < \<langle>Person\<rangle>\<^sub>\<T>" by auto
 lemma "\<langle>Person\<rangle>\<^sub>\<T> \<le> OclAny" by simp
 
@@ -374,201 +547,12 @@ lemma "\<not> (OrderedSet Boolean[\<^bold>1])[1] < (Set (Boolean[\<^bold>1] :: c
 
 (*** Typing *****************************************************************)
 
-(*
-declare is_iterable_type.simps [simp]
-declare iterable_type.simps [simp]
-declare collection_type.simps [simp]
-declare collection_type\<^sub>N.simps [simp]
-declare map_type.simps [simp]
-declare map_type\<^sub>N.simps [simp]
-declare map_type\<^sub>T.simps [simp]
-
-thm collection_type\<^sub>T.simps
-
-lemma collection_type\<^sub>T_alt_simps:
-  "collection_type\<^sub>T \<tau> k \<sigma> = 
-     (Collection \<sigma> = \<tau> \<and> CollectionKind = k \<or>
-      Set \<sigma> = \<tau> \<and> SetKind = k \<or>
-      OrderedSet \<sigma> = \<tau> \<and> OrderedSetKind = k \<or>
-      Bag \<sigma> = \<tau> \<and> BagKind = k \<or>
-      Sequence \<sigma> = \<tau> \<and> SequenceKind = k)"
-  by (auto simp add: collection_type\<^sub>T.simps)
-
-declare collection_type\<^sub>T_alt_simps [simp]
-declare op_result_type_is_errorable_def [simp]
-*)
-
-
 section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
 
-
-
-term "Sequence{}"
-term "Sequence{x}"
-term "Sequence{x\<^bold>, y}"
-term "Sequence{x\<^bold>.\<^bold>.y}"
-term "Sequence{x\<^bold>, y\<^bold>, z}"
-term "Sequence{x\<^bold>, y\<^bold>, Set{x2\<^bold>, Sequence{x \<^bold>.\<^bold>. y}\<^bold>, z}}"
-
-
-
-
-lemma ex_alt_simps [simp]:
-  "\<exists>a. a"
-  "\<exists>a. \<not> a"
-  "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
-  "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
-  "(\<forall>x. x) = False"
-  by auto
 (*
-declare numeral_eq_enat [simp]
-
-(*lemmas basic_type_le_less [simp] = Orderings.order_class.le_less
-  for x y :: "'a basic_type"*)
-
-declare element_type_alt_simps [simp]
-declare update_element_type.simps [simp]
-declare to_unique_collection.simps [simp]
-declare to_nonunique_collection.simps [simp]
-declare to_ordered_collection.simps [simp]
-
-declare assoc_end_class_def [simp]
-declare assoc_end_min_def [simp]
-declare assoc_end_max_def [simp]
-declare assoc_end_ordered_def [simp]
-declare assoc_end_unique_def [simp]
-
-declare oper_name_def [simp]
-declare oper_context_def [simp]
-declare oper_params_def [simp]
-declare oper_result_def [simp]
-declare oper_static_def [simp]
-declare oper_body_def [simp]
-
-declare oper_in_params_def [simp]
-declare oper_out_params_def [simp]
-
-declare assoc_end_type_def [simp]
-declare oper_type_def [simp]
-
-
-thm collection_type\<^sub>T.simps
-
-
-declare op_result_type_is_errorable_def [simp]
-
-declare op_type_alt_simps [simp]
-declare typing_alt_simps [simp]
-*)
-thm typing_alt_simps
-
-declare normalize_alt_simps [simp]
-declare nf_typing.simps [simp]
-
-declare typing_alt_simps [simp]
-
-
-lemma collection_type\<^sub>N_left_simps:
-  "collection_type\<^sub>N (Required \<tau>) k \<sigma> n = (n = False \<and> collection_type\<^sub>T \<tau> k \<sigma>)"
-  "collection_type\<^sub>N (Optional \<tau>) k \<sigma> n = (n = True \<and> collection_type\<^sub>T \<tau> k \<sigma>)"
-  by (auto simp add: collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
-
-lemma collection_type\<^sub>N_right_simps:
-  "collection_type\<^sub>N \<tau> k \<sigma> False = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> collection_type\<^sub>T \<rho> k \<sigma>)"
-  "collection_type\<^sub>N \<tau> k \<sigma> True = (\<exists>\<rho>. \<tau> = Optional \<rho> \<and> collection_type\<^sub>T \<rho> k \<sigma>)"
-  by (auto simp add: collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
-
-lemma collection_type_left_simps:
-  "collection_type (ErrorFree \<tau>) k \<sigma> n =
-   (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
-  "collection_type (Errorable \<tau>) k \<sigma> n =
-   (\<exists>\<rho>. \<sigma> = Errorable \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
-  "Ex (collection_type (ErrorFree \<tau>) k \<sigma>) =
-   (\<exists>\<rho> n. \<sigma> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
-  "Ex (collection_type (Errorable \<tau>) k \<sigma>) =
-   (\<exists>\<rho> n. \<sigma> = Errorable \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
-  by (auto simp add: collection_type.simps) auto
-
-lemma collection_type_right_simps:
-  "collection_type \<tau> k (ErrorFree \<sigma>) n =
-   (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<rho> k \<sigma> n)"
-  "collection_type \<tau> k (Errorable \<sigma>) n =
-   (\<exists>\<rho>. \<tau> = Errorable \<rho> \<and> collection_type\<^sub>N \<rho> k \<sigma> n)"
-  by (auto simp add: collection_type.simps)
-
-declare collection_type\<^sub>T.simps [simp]
-declare collection_type\<^sub>N.simps [simp]
-(*declare collection_type.simps [simp]*)
-(*declare collection_type\<^sub>N_left_simps [simp]
-declare collection_type\<^sub>N_right_simps [simp]*)
-declare collection_type_left_simps [simp]
-declare collection_type_right_simps [simp]
-
-lemma map_type\<^sub>T_left_simps:
-  "map_type\<^sub>T (Map \<tau> \<sigma>) \<rho> \<upsilon> = (\<tau> = \<rho> \<and> \<sigma> = \<upsilon>)"
-  by (auto simp add: map_type\<^sub>T.simps)
-
-lemma map_type\<^sub>N_left_simps:
-  "map_type\<^sub>N (Required \<tau>) \<sigma> \<rho> n = (n = False \<and> map_type\<^sub>T \<tau> \<sigma> \<rho>)"
-  "map_type\<^sub>N (Optional \<tau>) \<sigma> \<rho> n = (n = True \<and> map_type\<^sub>T \<tau> \<sigma> \<rho>)"
-  by (auto simp add: map_type\<^sub>N.simps)
-
-lemma map_type_left_simps:
-  "map_type (ErrorFree \<tau>) \<sigma> \<rho> n =
-   (\<exists>\<upsilon> \<psi>. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
-  "map_type (Errorable \<tau>) \<sigma> \<rho> n =
-   (\<exists>\<upsilon> \<psi>. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
-  "Ex (map_type (ErrorFree \<tau>) \<sigma> \<rho>) =
-   (\<exists>\<upsilon> \<psi> n. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
-  "Ex (map_type (Errorable \<tau>) \<sigma> \<rho>) =
-   (\<exists>\<upsilon> \<psi> n. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> Ex (map_type\<^sub>N \<tau> \<upsilon> \<psi>))"
-  by (auto simp add: map_type.simps) auto
-
-(*declare map_type\<^sub>T_left_simps [simp]*)
-declare map_type\<^sub>T.simps [simp]
-declare map_type\<^sub>N_left_simps [simp]
-declare map_type_left_simps [simp]
-
-thm map_type\<^sub>T.simps
-
-declare is_iterable_type.simps [simp]
-declare iterable_type.simps []
-
-thm iterable_type.simps
-
-thm typing_alt_simps(30)
-
-declare mk_iterator_def [simp]
-declare to_nonunique_collection_type\<^sub>T.simps [simp]
-declare to_nonunique_collection_type\<^sub>N.simps [simp]
-declare to_nonunique_collection_type.simps []
-
-declare update_element_type\<^sub>T.simps [simp]
-declare update_element_type\<^sub>N.simps [simp]
-declare update_element_type.simps [simp]
-
-
-lemma to_nonunique_collection_type_left_simps:
-  "to_nonunique_collection_type (ErrorFree \<tau>) \<sigma> =
-   (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
-  "to_nonunique_collection_type (Errorable \<tau>) \<sigma> =
-   (\<exists>\<rho>. \<sigma> = Errorable \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
-  by (simp_all add: to_nonunique_collection_type.simps)
-
-lemma iterable_type_left_simps:
-  "iterable_type (ErrorFree \<tau>) \<sigma> =
-   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
-      (collection_type (ErrorFree \<tau>) k \<rho> n \<or>
-       map_type (ErrorFree \<tau>) \<rho> \<upsilon> n))"
-  "iterable_type (Errorable \<tau>) \<sigma> =
-   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
-      (collection_type (Errorable \<tau>) k \<rho> n \<or>
-       map_type (Errorable \<tau>) \<rho> \<upsilon> n))"
-  by (auto simp add: iterable_type.simps; blast)+
-
-lemma ex_iterable_type_left_simps:
+lemma ex_iterable_type_simps:
   "Ex (iterable_type (ErrorFree \<tau>)) =
    (\<exists>k \<rho> \<upsilon> n.
       (collection_type (ErrorFree \<tau>) k \<rho> n \<or>
@@ -577,73 +561,50 @@ lemma ex_iterable_type_left_simps:
    (\<exists>k \<rho> \<upsilon> n.
       (collection_type (Errorable \<tau>) k \<rho> n \<or>
        map_type (Errorable \<tau>) \<rho> \<upsilon> n))"
-  using iterable_type_left_simps by blast+
+  by (auto simp add: iterable_type.simps; blast)+
 
-
-declare iterable_type_left_simps [simp]
-declare ex_iterable_type_left_simps [simp]
-
-declare op_type_alt_simps [simp]
-declare op_result_type_is_errorable_def [simp]
-
-
-declare numeral_eq_enat [simp]
-
-declare assoc_end_class_def [simp]
-declare assoc_end_min_def [simp]
-declare assoc_end_max_def [simp]
-declare assoc_end_ordered_def [simp]
-declare assoc_end_unique_def [simp]
-
-declare oper_name_def [simp]
-declare oper_context_def [simp]
-declare oper_params_def [simp]
-declare oper_result_def [simp]
-declare oper_static_def [simp]
-declare oper_body_def [simp]
-
-declare oper_in_params_def [simp]
-declare oper_out_params_def [simp]
-
-declare assoc_end_type_def [simp]
-declare oper_type_def [simp]
-
-declare is_collection_type.simps [simp]
-declare to_single_type.simps []
-
-thm to_single_type.simps
-
-text \<open>
-  The first argument gets simpler, so the following simplification rules
-  does not get stuck.\<close>
-
-lemma to_single_type_left_simps [simp]:
-  "to_single_type (ErrorFree \<tau>) \<sigma> =
-   ((\<not> is_collection_type (ErrorFree \<tau>) \<and> (ErrorFree \<tau>) = \<sigma>) \<or>
-    (\<exists>k \<upsilon> n. collection_type (ErrorFree \<tau>) k \<upsilon> n \<and> to_single_type \<upsilon> \<sigma>))"
-  "to_single_type (Errorable \<tau>) \<sigma> =
-   ((\<not> is_collection_type (Errorable \<tau>) \<and> (Errorable \<tau>) = \<sigma>) \<or>
-    (\<exists>k \<upsilon> n. collection_type (Errorable \<tau>) k \<upsilon> n \<and> to_single_type \<upsilon> \<sigma>))"
-  by (subst to_single_type.simps; auto)+
-
-declare to_nonunique_collection_type_left_simps []
-declare to_nonunique_collection_type.simps [simp]
+declare ex_iterable_type_simps []
+*)
 
 
 
 
-declare mk_iterate_def [simp]
 
 
-declare to_unique_collection_type\<^sub>T.simps [simp]
-declare to_unique_collection_type\<^sub>N.simps [simp]
-declare to_unique_collection_type.simps [simp]
 
-abbreviation "name \<equiv> Attribute STR ''name''"
-abbreviation "projects \<equiv> AssociationEnd None STR ''projects''"
-abbreviation "members \<equiv> AssociationEnd None STR ''members''"
-abbreviation "allProjects \<equiv> STR ''allProjects''"
 
+
+nonterminal map_part and map_parts
+
+syntax
+  "_map_part" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> map_part" ("_ <- _")
+  "_map_parts_single" :: "map_part \<Rightarrow> map_parts" ("_")
+  "_map_parts_cons" :: "map_part \<Rightarrow> map_parts \<Rightarrow> map_parts" ("_,/ _")
+
+  "_map" :: "'a literal_expr" ("Map({ })")
+  "_map" :: "'a literal_expr" ("Map({})")
+  "_map" :: "map_parts \<Rightarrow> 'a literal_expr" ("Map({_})")
+
+
+translations
+  "_map_part x y" == "(x, y)"
+  "_map_parts_single x" == "[x]"
+  "_map_parts_cons x (y # xs)" == "x # y # xs"
+
+  "_map" == "CONST MapLiteral []"
+  "_map xs" == "CONST MapLiteral xs"
+
+
+
+term "Map {\<^bold>1 <- ''asd''}"
+
+term "Map{}"
+term "Map {}"
+term "Map { }"
+term "Map{ }"
+term "Map { \<^bold>1 <- \<^bold>2}"
+term "Map{\<^bold>1 <- \<^bold>2, \<^bold>2 <- \<^bold>3 }"
+term "Map{\<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2}"
 
 
 
@@ -678,7 +639,7 @@ lemma
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5}\<^bold>-\<^bold>>product(Set{StringLiteral ''a''\<^bold>, StringLiteral ''b''}) :
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5}\<^bold>-\<^bold>>product(Set{''a''\<^bold>, ''b''}) :
     (Set (Tuple(STR ''first'' \<^bold>: Integer[\<^bold>1]\<^bold>, STR ''second'' \<^bold>: String[\<^bold>1]))[\<^bold>1])[1]"
   by simp
 
@@ -692,13 +653,13 @@ lemma
 
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
-          Sequence{StringLiteral ''abc''\<^bold>, StringLiteral ''zxc''} \<^bold>i\<^bold>n
+          Sequence{''abc''\<^bold>, ''zxc''} \<^bold>i\<^bold>n
    \<lparr>x\<rparr>\<^bold>-\<^bold>>any(it \<^bold>| \<lparr>it\<rparr> \<^bold>= StringLiteral ''test'') : String[?!]"
   by simp
 
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
-          Sequence{StringLiteral ''abc''\<^bold>, StringLiteral ''zxc''} \<^bold>i\<^bold>n
+          Sequence{''abc''\<^bold>, ''zxc''} \<^bold>i\<^bold>n
    \<lparr>x\<rparr>\<^bold>?\<^bold>-\<^bold>>closure(it \<^bold>| \<lparr>it\<rparr>) : (OrderedSet String[\<^bold>1])[1]"
   by simp
 
@@ -734,7 +695,7 @@ lemma
 
 lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
-    Sequence{StringLiteral ''abc''\<^bold>, StringLiteral ''zxc''} \<^bold>i\<^bold>n
+    Sequence{''abc''\<^bold>, ''zxc''} \<^bold>i\<^bold>n
     \<lparr>x\<rparr>\<^bold>-\<^bold>>closure(it \<^bold>| \<^bold>1) : \<tau>"
   by simp
 

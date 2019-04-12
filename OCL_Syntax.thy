@@ -160,11 +160,11 @@ and 'a literal_expr =
 | IntegerLiteral (integer_symbol : int)
 | UnlimitedNaturalLiteral (unlimited_natural_symbol : unat)
 | StringLiteral (string_symbol : string)
-| EnumLiteral (enum_type : "'a enum") (enum_literal : elit)
+| EnumLiteral (enum_type : "'a enum_type") (enum_literal : elit)
+| TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N\<^sub>E option \<times> 'a expr) list")
 | CollectionLiteral (collection_kind : collection_kind)
     (collection_parts : "'a collection_literal_part_expr list")
 | MapLiteral (map_elements : "('a expr \<times> 'a expr) list")
-| TupleLiteral (tuple_elements : "(telem \<times> 'a type\<^sub>N\<^sub>E option \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
 | CollectionRange (first : "'a expr") (last : "'a expr")
@@ -293,8 +293,8 @@ translations
   "_collection_item x" == "CONST CollectionItem x"
   "_collection_range x y" == "CONST CollectionRange x y"
 
-  "_collection_part x" == "[x]"
-  "_collection_parts x (y # xs)" == "x # y # xs"
+  "_collection_part x" \<rightharpoonup> "[x]"
+  "_collection_parts x (y # xs)" \<rightharpoonup> "x # y # xs"
 
   "_set" == "CONST CollectionLiteral CONST SetKind []"
   "_set xs" == "CONST CollectionLiteral CONST SetKind xs"
@@ -320,10 +320,10 @@ syntax
   "_tuple_type" :: "tuple_type_elements \<Rightarrow> 'a type" ("Tuple'(_')")
 
 translations
-  "_tuple_type_element elem \<tau>" == "(elem, \<tau>)"
+  "_tuple_type_element elem \<tau>" \<rightharpoonup> "(elem, \<tau>)"
 
-  "_tuple_type_element x" == "[x]"
-  "_tuple_type_elements x (y # xs)" == "x # y # xs"
+  "_tuple_type_element x" \<rightharpoonup> "[x]"
+  "_tuple_type_elements x (y # xs)" \<rightharpoonup> "x # y # xs"
 
   "_tuple_type" == "CONST Tuple CONST fmempty"
   "_tuple_type \<pi>" == "CONST Tuple (CONST fmap_of_list \<pi>)"
@@ -361,9 +361,9 @@ syntax
   "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>-\<^bold>>" 500)
 
 translations
-  "_op_empty_args" == "[]"
-  "_op_single_arg x" == "[x]"
-  "_op_args x (y # xs)" == "x # y # xs"
+  "_op_empty_args" \<rightharpoonup> "[]"
+  "_op_single_arg x" \<rightharpoonup> "[x]"
+  "_op_args x (y # xs)" \<rightharpoonup> "x # y # xs"
 
   "_staticOpCall src op args" == "CONST StaticOperationCall src op args"
   "src\<^bold>.call" == "CONST Call src (CONST DotCall) call"
@@ -647,8 +647,8 @@ syntax
   "_sortedByIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("'sortedBy'(_')")
 
 translations
-  "_iterator x" == "[x]"
-  "_iterators x (y # xs)" == "x # y # xs"
+  "_iterator x" \<rightharpoonup> "[x]"
+  "_iterators x (y # xs)" \<rightharpoonup> "x # y # xs"
   "_imp_typed_iterators xs" == "CONST Iterators xs CONST None"
   "_exp_typed_iterators xs t" == "CONST Iterators xs (CONST Some t)"
   "_col_iterators xs" == "CONST CoIterators xs CONST None"

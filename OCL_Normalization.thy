@@ -82,27 +82,6 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
-inductive iterable_type where
-  "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
-   iterable_type \<tau> \<sigma>"
-| "map_type \<tau> \<sigma> _ _ \<Longrightarrow>
-   iterable_type \<tau> \<sigma>"
-
-lemma iterable_type_det:
-  "iterable_type \<tau> \<sigma> \<Longrightarrow>
-   iterable_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  apply (auto simp add: iterable_type.simps collection_type_det(1) map_type_det(1))
-  using collection_type_and_map_type_distinct by blast+
-
-
-
-inductive is_iterable_type where
-  "iterable_type \<tau> _ \<Longrightarrow> is_iterable_type \<tau>"
-
-abbreviation "non_iterable_type \<tau> \<equiv> \<not> is_iterable_type \<tau>"
-
-code_pred [show_modes] iterable_type .
-
 
 inductive normalize
     :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
@@ -415,10 +394,6 @@ inductive_simps normalize_alt_simps:
 
 section \<open>Determinism\<close>
 
-lemma iterable_type_and_non_iterable_type_distinct:
-  "iterable_type \<tau> \<sigma> \<Longrightarrow> non_iterable_type \<tau> \<Longrightarrow> False"
-  by (simp add: is_iterable_type.intros)
-
 lemma
   normalize_det:
     "\<Gamma> \<turnstile> expr \<Rrightarrow> expr\<^sub>1 \<Longrightarrow>
@@ -535,10 +510,9 @@ next
     using CollectionArrowCallN.hyps typing_det by auto
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>2\<^bold>-\<^bold>>call\<^sub>2 = expr\<^sub>2"
     apply (erule ArrowCallNE)
-    using CollectionArrowCallN.hyps(4) is_iterable_type.intros
-          src_type_det apply auto[1]
-    by (simp add: CollectionArrowCallN.hyps(2)
-        CollectionArrowCallN.hyps(6) src_type_det)
+    using CollectionArrowCallN.hyps(2) CollectionArrowCallN.hyps(4)
+          CollectionArrowCallN.hyps(6) is_iterable_type.intros
+          src_type_det by auto
   thus ?case by (simp add: CollectionArrowCallN.prems)
 next
   case (CollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2)
@@ -617,10 +591,18 @@ next
   case (NullableNullableCollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2)
   have src_type_det: "\<And>src\<^sub>2' \<tau>'. \<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2' \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E src\<^sub>2' : \<tau>' \<Longrightarrow> \<tau> = \<tau>'"
     using NullableNullableCollectionSafeArrowCallN.hyps typing_det by auto
-  have src_det: "\<And>src\<^sub>2' src\<^sub>3'. \<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2' \<Longrightarrow>
-      src\<^sub>3' = src\<^sub>2'\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>selectByKind(to_required_type \<sigma>) \<Longrightarrow>
-      src\<^sub>3 = src\<^sub>3'"
-    using NullableNullableCollectionSafeArrowCallN.hyps by auto
+  have src_type_det':
+    "\<And>src\<^sub>2' \<tau>' \<sigma>' \<rho>'. \<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2' \<Longrightarrow>
+     \<Gamma> \<turnstile>\<^sub>E src\<^sub>2' : \<tau>' \<Longrightarrow>
+     iterable_type \<tau>' \<sigma>' \<Longrightarrow>
+     optional_type \<tau>' \<Longrightarrow>
+     optional_type \<sigma>' \<Longrightarrow>
+     \<Gamma> \<turnstile>\<^sub>E src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>')\<^bold>-\<^bold>>
+            selectByKind(to_required_type \<sigma>') : \<rho>' \<Longrightarrow> \<rho> = \<rho>'"
+    using NullableNullableCollectionSafeArrowCallN.hyps(4)
+          NullableNullableCollectionSafeArrowCallN.hyps(7)
+          NullableNullableCollectionSafeArrowCallN.hyps(8)
+          iterable_type_det src_type_det typing_det by blast
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
         \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
         \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>3\<^bold>-\<^bold>>call\<^sub>2
@@ -631,52 +613,12 @@ next
     using NullableNullableCollectionSafeArrowCallN.hyps(4)
           NullableNullableCollectionSafeArrowCallN.hyps(6)
           iterable_type_det src_type_det apply blast
-    apply auto[1]
-    apply (simp add: NullableNullableCollectionSafeArrowCallN.hyps(2))
     using NullableNullableCollectionSafeArrowCallN.hyps(2)
           NullableNullableCollectionSafeArrowCallN.hyps(4)
           NullableNullableCollectionSafeArrowCallN.hyps(7)
-          iterable_type_det src_type_det apply auto[1]
-    by (metis NullableNullableCollectionSafeArrowCallN.hyps(10)
-        NullableNullableCollectionSafeArrowCallN.hyps(2)
-        NullableNullableCollectionSafeArrowCallN.hyps(4)
-        NullableNullableCollectionSafeArrowCallN.hyps(7)
-        NullableNullableCollectionSafeArrowCallN.hyps(8)
-        iterable_type_det src_type_det typing_det)
+          NullableNullableCollectionSafeArrowCallN.hyps(10)
+          iterable_type_det src_type_det src_type_det' by fastforce
   thus ?case by (simp add: NullableNullableCollectionSafeArrowCallN.prems)
-(*
-  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
-        \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
-        \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>selectByKind(to_required_type \<sigma>)\<^bold>-\<^bold>>call\<^sub>2
-        \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f = expr\<^sub>2"
-    apply (erule SafeArrowCallNE)
-    using NullableNullableCollectionSafeArrowCallN.hyps(5) src_type_det
-          apply auto[1]
-    using NullableNullableCollectionSafeArrowCallN.hyps(4)
-          NullableNullableCollectionSafeArrowCallN.hyps(6)
-          iterable_type_det src_type_det apply blast
-    apply auto[1]
-    apply (simp add: NullableNullableCollectionSafeArrowCallN.hyps(2))
-    apply (simp add: src_type_det)
-    using NullableNullableCollectionSafeArrowCallN.hyps(4) iterable_type_det src_type_det apply auto[1]
-    by (metis NullableNullableCollectionSafeArrowCallN.hyps(10) NullableNullableCollectionSafeArrowCallN.hyps(2) NullableNullableCollectionSafeArrowCallN.hyps(4) NullableNullableCollectionSafeArrowCallN.hyps(7) NullableNullableCollectionSafeArrowCallN.hyps(8) iterable_type_det src_type_det typing_det)
-  thus ?case by (simp add: NullableNullableCollectionSafeArrowCallN.prems)
-*)
-(*
-|NullableNullableCollectionSafeArrowCallN:
-  "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   iterable_type \<tau> \<sigma> \<Longrightarrow>
-   optional_type \<tau> \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   src\<^sub>3 = src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>-\<^bold>>selectByKind(to_required_type \<sigma>) \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
-   (\<Gamma>, \<rho>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1\<^bold>?\<^bold>-\<^bold>>call\<^sub>1 \<Rrightarrow>
-      \<^bold>i\<^bold>f src\<^sub>2 <> \<^bold>n\<^bold>u\<^bold>l\<^bold>l
-      \<^bold>t\<^bold>h\<^bold>e\<^bold>n src\<^sub>3\<^bold>-\<^bold>>call\<^sub>2
-      \<^bold>e\<^bold>l\<^bold>s\<^bold>e \<^bold>n\<^bold>u\<^bold>l\<^bold>l \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f"
-*)
 next
   case (TypeOperationN \<Gamma> \<tau> op ty) thus ?case by auto
 next
@@ -703,12 +645,7 @@ next
   have "\<And>call\<^sub>2. (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
        Iterator iter its its_ty\<^sub>2 body\<^sub>3 = call\<^sub>2"
     apply (erule IterationCallNE)
-    apply auto
-    using ClosureIterationN.hyps(3) apply auto[1]
-    using ClosureIterationN.hyps(3) ClosureIterationN.hyps(4)
-          ClosureIterationN.hyps(6) apply blast
-    apply (simp add: ClosureIterationN.hyps(1))
-    by (simp add: ClosureIterationN.hyps(1))
+    using ClosureIterationN.hyps by blast+
   thus ?case by (simp add: ClosureIterationN.prems)
 next
   case (IterationN iter \<Gamma> \<tau> its its_ty\<^sub>1 body\<^sub>1 its_ty\<^sub>2 body\<^sub>2 k)
@@ -797,53 +734,51 @@ next
 next
   case (ExplicitlyTypedCollectionLoopN \<tau> uv uw ux \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
-       (its, (Some \<sigma>, None), body\<^sub>2) = ns"
-    apply (erule LoopNE, auto)
-    apply (simp add: ExplicitlyTypedCollectionLoopN.hyps(3))
-    using ExplicitlyTypedCollectionLoopN.hyps(1) collection_type_and_map_type_distinct by blast
+        (its, (Some \<sigma>, None), body\<^sub>2) = ns"
+    apply (erule LoopNE)
+    using ExplicitlyTypedCollectionLoopN.hyps(1)
+          ExplicitlyTypedCollectionLoopN.hyps(3)
+          collection_type_and_map_type_distinct by blast+
   thus ?case by (simp add: ExplicitlyTypedCollectionLoopN.prems)
 next
   case (ImplicitlyTypedCollectionLoopN \<tau> uy \<sigma> uz \<Gamma> its body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
        (its, (Some \<sigma>, None), body\<^sub>2) = ns"
-    apply (erule LoopNE, auto)
-    using ImplicitlyTypedCollectionLoopN.hyps(1) collection_type_det(1) apply blast
-    using ImplicitlyTypedCollectionLoopN.hyps(1) ImplicitlyTypedCollectionLoopN.hyps(3) collection_type_det(1) apply blast
-    using ImplicitlyTypedCollectionLoopN.hyps(1) collection_type_and_map_type_distinct by blast
+    apply (erule LoopNE)
+    using ImplicitlyTypedCollectionLoopN.hyps(1)
+          ImplicitlyTypedCollectionLoopN.hyps(3) collection_type_det(1)
+          collection_type_and_map_type_distinct by blast+
   thus ?case by (simp add: ImplicitlyTypedCollectionLoopN.prems)
 next
   case (ExplicitlyTypedMapLoopN \<tau> va vb vc \<Gamma> its \<sigma> \<rho> body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, Some \<rho>), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
-       (its, (Some \<sigma>, Some \<rho>), body\<^sub>2) = ns"
-(*    by (smt fst_conv local.ExplicitlyTypedMapLoopN(3) map_eq_conv normalize_loop.cases option.distinct(1) option.sel snd_conv)*)
-    apply (erule LoopNE)
-    apply auto[1]
-    apply auto[1]
-    sorry
+        (its, (Some \<sigma>, Some \<rho>), body\<^sub>2) = ns"
+    using ExplicitlyTypedMapLoopN.hyps(3) by auto
   thus ?case by (simp add: ExplicitlyTypedMapLoopN.prems)
 next
   case (ImplicitlyTypedMapKeyLoopN \<tau> \<sigma> vd ve \<Gamma> its \<rho> body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, Some \<rho>), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
         (its, (Some \<sigma>, Some \<rho>), body\<^sub>2) = ns"
-    sorry
+    using ImplicitlyTypedMapKeyLoopN.hyps(1)
+          ImplicitlyTypedMapKeyLoopN.hyps(3) map_type_det(1) by blast
   thus ?case by (simp add: ImplicitlyTypedMapKeyLoopN.prems)
 next
   case (ImplicitlyTypedMapValueLoopN \<tau> vf \<rho> vg \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
         (its, (Some \<sigma>, Some \<rho>), body\<^sub>2) = ns"
-    sorry
+    apply (erule LoopNE)
+    using ImplicitlyTypedMapValueLoopN.hyps(1)
+          ImplicitlyTypedMapValueLoopN.hyps(3) map_type_det(1)
+          collection_type_and_map_type_distinct by blast+
   thus ?case by (simp add: ImplicitlyTypedMapValueLoopN.prems)
 next
   case (ImplicitlyTypedMapLoopN \<tau> \<sigma> \<rho> vh \<Gamma> its body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
         (its, (Some \<sigma>, Some \<rho>), body\<^sub>2) = ns"
     apply (erule LoopNE)
-    apply auto[1]
-    using ImplicitlyTypedMapLoopN.hyps(1) collection_type_and_map_type_distinct apply blast
-    apply auto[1]
-    apply auto[1]
-    apply auto[1]
-    sorry
+    using ImplicitlyTypedMapLoopN.hyps(1)
+          ImplicitlyTypedMapLoopN.hyps(3) map_type_det(1)
+          collection_type_and_map_type_distinct by blast+
   thus ?case by (simp add: ImplicitlyTypedMapLoopN.prems)
 next
   case (ExprListNilN \<Gamma>) thus ?case by auto

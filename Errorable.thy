@@ -3,8 +3,8 @@
     Maintainer:  Denis Nikiforov <denis.nikif at gmail.com>
     License:     LGPL
 *)
-section \<open>Errorable Type\<close>
-theory Errorable_Type
+section \<open>Errorable\<close>
+theory Errorable
   imports Main "HOL-Library.FSet"
 begin
 
@@ -127,7 +127,7 @@ notation sup (infixl "\<squnion>" 65)
 instantiation errorable :: (semilattice_sup) semilattice_sup
 begin
 
-fun sup_errorable where
+primrec sup_errorable where
   "ErrorFree \<tau> \<squnion> \<sigma> = (case \<sigma>
     of ErrorFree \<rho> \<Rightarrow> ErrorFree (\<tau> \<squnion> \<rho>)
      | Errorable \<rho> \<Rightarrow> Errorable (\<tau> \<squnion> \<rho>))"
@@ -158,21 +158,21 @@ instance
 
 end
 
-fun unwrap_errorable_type where
+primrec unwrap_errorable_type where
   "unwrap_errorable_type (ErrorFree \<tau>) = \<tau>"
 | "unwrap_errorable_type (Errorable \<tau>) = \<tau>"
 
-fun errorable_type where
+primrec errorable_type where
   "errorable_type (ErrorFree \<tau>) = False"
 | "errorable_type (Errorable \<tau>) = True"
 
 abbreviation "error_free_type \<tau> \<equiv> \<not> errorable_type \<tau>"
 
-fun to_error_free_type where
+primrec to_error_free_type where
   "to_error_free_type (ErrorFree \<tau>) = (ErrorFree \<tau>)"
 | "to_error_free_type (Errorable \<tau>) = (ErrorFree \<tau>)"
 
-fun to_errorable_type where
+primrec to_errorable_type where
   "to_errorable_type (ErrorFree \<tau>) = (Errorable \<tau>)"
 | "to_errorable_type (Errorable \<tau>) = (Errorable \<tau>)"
 
