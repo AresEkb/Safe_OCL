@@ -5,7 +5,7 @@
 *)
 section \<open>Object Model\<close>
 theory Object_Model
-  imports "HOL-Library.Extended_Nat" Finite_Map_Ext
+  imports Finite_Map_Ext "HOL-Library.Extended_Nat" "HOL-Library.Phantom_Type"
 begin
 
 text \<open>
@@ -21,6 +21,8 @@ type_synonym role = String.literal
 type_synonym oper = String.literal
 type_synonym param = String.literal
 type_synonym elit = String.literal
+
+type_synonym 'a enum_type = "('a, String.literal) phantom"
 
 datatype param_dir = In | Out | InOut
 
@@ -255,7 +257,7 @@ locale object_model =
     and associations :: "assoc \<rightharpoonup>\<^sub>f role \<rightharpoonup>\<^sub>f 'a assoc_end"
     and association_classes :: "'a \<rightharpoonup>\<^sub>f assoc"
     and operations :: "('t, 'e) oper_spec list"
-    and literals :: "'n \<rightharpoonup>\<^sub>f elit fset"
+    and literals :: "'a enum_type \<rightharpoonup>\<^sub>f elit fset"
   assumes assoc_end_min_less_eq_max:
     "assoc |\<in>| fmdom associations \<Longrightarrow>
      fmlookup associations assoc = Some ends \<Longrightarrow>
@@ -369,14 +371,14 @@ lemma (in object_model) static_operation_det:
 
 subsection \<open>Notation\<close>
 
-datatype ('a, 't, 'n, 'e) model_element_spec =
-  EnumSpec 'n "elit list"
+datatype ('a, 't, 'e) model_element_spec =
+  EnumSpec "'a enum_type" "elit list"
 | ClassSpec 'a "attr \<rightharpoonup>\<^sub>f 't"
 | AssociationSpec assoc "role \<rightharpoonup>\<^sub>f 'a assoc_end"
 | ContextSpec 't "('t, 'e) oper_def list"
 
-datatype ('a, 't, 'n, 'e) model_spec =
-  ModelSpec (model_spec_elements: "('a, 't, 'n, 'e) model_element_spec list")
+datatype ('a, 't, 'e) model_spec =
+  ModelSpec (model_spec_elements: "('a, 't, 'e) model_element_spec list")
 
 primrec model_spec_classes where
   "model_spec_classes [] = []"
@@ -509,7 +511,7 @@ translations
   "_oper_signature_no_params op ty" \<rightharpoonup> "(op, [], ty)"
 
 syntax
-  "_model" :: "model_elements \<Rightarrow> ('a, 't, 'n, 'e) model_spec" ("_" 10)
+  "_model" :: "model_elements \<Rightarrow> ('a, 't, 'e) model_spec" ("_" 10)
   "_model_element_single" :: "model_element \<Rightarrow> model_elements" (" _")
   "_model_element_cons" :: "model_element \<Rightarrow> model_elements \<Rightarrow> model_elements" ("_ _")
 

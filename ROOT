@@ -6,7 +6,7 @@ session "Safe_OCL" (AFP) = "HOL-Library" +
     Transitive_Closure_Ext
     Finite_Map_Ext
     Tuple
-    Errorable_Type
+    Errorable
     Object_Model
     OCL_Examples
   document_files

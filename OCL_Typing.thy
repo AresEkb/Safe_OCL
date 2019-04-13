@@ -1471,7 +1471,7 @@ lemma TupleLiteral_has_Tuple_type:
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
-
+(*
 code_pred [show_modes] mataop_type .
 code_pred [show_modes] typeop_type .
 code_pred [show_modes] non_strict_op .
@@ -1479,5 +1479,5 @@ code_pred [show_modes] op_type .
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] iterator_typing .
-
+*)
 end

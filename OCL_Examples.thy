@@ -8,39 +8,179 @@ theory OCL_Examples
   imports OCL_Normalization
 begin
 
+term "src\<^sub>1\<^bold>.call\<^sub>1"
+term "src\<^sub>1 \<^bold>.call\<^sub>1"
+term "src\<^sub>1\<^bold>. call\<^sub>1"
+term "src\<^sub>1?.call\<^sub>1"
+term "src\<^sub>1->call\<^sub>1"
+term "src\<^sub>1?->call\<^sub>1"
 
 
-term "context Project
-  def: zxcv(out a : b) : zxca = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
-"
+term "x?.oclAsType(q)"
+term "x?.oclAsType(q)\<^bold>.oclIsTypeOf (q)"
 
-term "
-enum E1 {A}
-enum E1 {A, B}
+term "x?.oclAsType(q)->oclAsSet( )"
+term "x?.oclAsType(q)->oclAsSet()"
+term "x?.oclAsType(q)->oclAsSet ()"
+term "x?.oclAsType(q)->oclAsSet(z, a)"
 
-association as
-  ww : zx[1..2]
-  ww : zx[1..2] {unique}
+term "Set{}"
+term "Set{ }"
+term "Set{null}"
+term "Set{null, Bag{\<^bold>3}, \<^bold>1}"
+term "Set{null, \<^bold>1..\<^bold>2, Sequence{}}"
 
-enum E2 {C, D, E}
+(*
+instantiation expr :: (type) numeral
+begin
 
-class Z
-  q : bqz
-  q : bq
+definition "one_expr \<equiv> Literal (IntegerLiteral 1)"
 
-association as
-  ww : zx[1..2]
-  ww : zx[1..2] {unique}
+fun plus_expr :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" where
+  "plus_expr (Literal (IntegerLiteral x)) (Literal (IntegerLiteral y)) =
+      (Literal (IntegerLiteral (x + y)))"
+| "plus_expr _ _ = Literal NullLiteral"
 
-context Project
-  def: zxcv(out a : b) : zxca = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
-  def: zxcv(out a : b) : zxca
-  def: zxcv(out a : b) : zxca = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
-"
+lemma literal_expr_add_assoc:
+  "(Literal a + Literal b) + Literal c = Literal a + (Literal b + Literal c)"
+  for a b c :: "'a literal_expr"
+  by (cases a; simp; cases b; simp; cases c; simp)
 
-(*** Classes ****************************************************************)
+lemma expr_add_assoc:
+  "(a + b) + c = a + (b + c)"
+  for a b c :: "'a expr"
+  by (cases a; simp; cases b; simp; cases c; simp add: literal_expr_add_assoc)
 
-section \<open>Classes\<close>
+instance
+  apply standard
+  by (simp add: expr_add_assoc)
+end
+
+term "Set{}"
+term "Set{\<^bold>1..\<^bold>2, \<^bold>3, 3}"
+term "Set{\<^bold>1, \<^bold>2}"
+
+term "Set{\<^bold>1 .. \<^bold>2, \<^bold>3}"
+
+term "Set Integer[\<^bold>1]"
+*)
+
+term "Map{\<^bold>1 <- StringLiteral ''asd''}"
+
+term "Map{}"
+term "Map{ }"
+term "Map{ \<^bold>1 <- \<^bold>2}"
+term "Map{\<^bold>1 <- \<^bold>2, \<^bold>2 <- \<^bold>3 }"
+term "Map{\<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2}"
+
+
+term "src->any(x \<^bold>= y)"
+term "src->any(STR ''x'' | x \<^bold>= y)"
+term "src->any(STR ''x'', STR ''y'' | x \<^bold>= y)"
+term "src->any(STR ''x'', STR ''y'' : Real[1] | x \<^bold>= y)"
+term "src->any(STR ''x'', STR ''y'', STR ''z'' : Real[1] | x \<^bold>= y)"
+term "src->any(STR ''x'', STR ''y'' <- STR ''z'', STR ''w'' | x \<^bold>= y)"
+term "src->any(STR ''x'', STR ''y'' <- STR ''z'' | x \<^bold>= y)"
+term "src->any(STR ''x'', STR ''y'' : Real[1] <- STR ''z'' | x \<^bold>= y)"
+term "src->any(STR ''x'', STR ''y'' : Real[1] <- STR ''z'': Boolean[1] | x \<^bold>= y)"
+
+term "src->iterate(STR ''acc'' = z | x \<^bold>= y)"
+term "src->iterate(STR ''acc'' : Real[1] = z | x \<^bold>= y)"
+term "src->iterate(STR ''x''; STR ''acc'' = z | x \<^bold>= y)"
+term "src->iterate(STR ''x''; STR ''acc'' : Real[1] = z | x \<^bold>= y)"
+
+term "src->any(x \<^bold>= y)"
+term "src->any(STR ''x'' | x \<^bold>= y)"
+term "src->any(STR ''x'' : Boolean[1] | x \<^bold>= y)"
+term "src->any(STR ''x'' <- STR ''y'' | x \<^bold>= y)"
+term "src->any(STR ''x'' <- STR ''y'' : Boolean[1] | x \<^bold>= y)"
+term "src->closure(STR ''x'' <- STR ''y'' | x \<^bold>= y)"
+
+(*
+term "x \<^bold>- a / IntegerLiteral 1 \<^bold>+ z"
+
+term "src->\<tau>.allInstances()"
+term "src->src.oclAsSet()"
+term "x \<^bold>= y"
+term "src->src.abs()"
+term "\<^bold>- (src\<^bold>.abs())"
+*)
+term "TypeOperationCall src ArrowCall SelectByKindOp \<tau>"
+term "Call src k (TypeOperation op ty)"
+term "Call src k (Iterator SelectIter its its_ty body)"
+term "src->selectByKind(\<tau>)"
+term "src\<^bold>.selectByKind(\<tau>)"
+
+
+
+
+(*** Symbols ****************************************************************)
+
+section \<open>Symbols\<close>
+
+abbreviation "self \<equiv> STR ''self''"
+abbreviation "it \<equiv> STR ''it''"
+
+abbreviation "name \<equiv> STR ''name''"
+abbreviation "position \<equiv> STR ''position''"
+abbreviation "vip \<equiv> STR ''vip''"
+abbreviation "cost \<equiv> STR ''cost''"
+abbreviation "description \<equiv> STR ''description''"
+abbreviation "priority \<equiv> STR ''priority''"
+
+abbreviation "Priority \<equiv> STR ''Priority''"
+abbreviation "Low \<equiv> STR ''Low''"
+abbreviation "Medium \<equiv> STR ''Medium''"
+abbreviation "High \<equiv> STR ''High''"
+
+abbreviation "ProjectManager \<equiv> STR ''ProjectManager''"
+abbreviation "projects \<equiv> STR ''projects''"
+abbreviation "manager \<equiv>  STR ''manager''"
+abbreviation "ProjectMember \<equiv>  STR ''ProjectMember''"
+abbreviation "memberOf \<equiv>  STR ''memberOf''"
+abbreviation "members \<equiv>  STR ''members''"
+abbreviation "ManagerEmployee \<equiv>  STR ''ManagerEmployee''"
+abbreviation "lineManager \<equiv>  STR ''lineManager''"
+abbreviation "projectManager \<equiv>  STR ''projectManager''"
+abbreviation "employees \<equiv>  STR ''employees''"
+abbreviation "ProjectCustomer \<equiv>  STR ''ProjectCustomer''"
+abbreviation "customer \<equiv>  STR ''customer''"
+abbreviation "ProjectTask \<equiv>  STR ''ProjectTask''"
+abbreviation "project \<equiv>  STR ''project''"
+abbreviation "tasks \<equiv>  STR ''tasks''"
+abbreviation "SprintTaskAssignee \<equiv>  STR ''SprintTaskAssignee''"
+abbreviation "sprint \<equiv>  STR ''sprint''"
+abbreviation "assignee \<equiv>  STR ''assignee''"
+
+abbreviation "membersCount \<equiv>  STR ''membersCount''"
+abbreviation "membersByName \<equiv>  STR ''membersByName''"
+abbreviation "allProjects \<equiv>  STR ''allProjects''"
+
+definition "literal_to_call_expr_map \<equiv> fmap_of_list [
+  (name, Attribute STR ''name''),
+  (position, Attribute STR ''position''),
+  (vip, Attribute STR ''vip''),
+  (cost, Attribute STR ''cost''),
+  (description, Attribute STR ''description''),
+  (priority, Attribute STR ''priority''),
+  (projects, AssociationEnd None STR ''projects''),
+  (members, AssociationEnd None STR ''members''),
+  (memberOf, AssociationEnd None STR ''memberOf''),
+  (manager, AssociationEnd None STR ''manager''),
+  (lineManager, AssociationEnd None STR ''lineManager''),
+  (projectManager, AssociationEnd None STR ''projectManager''),
+  (employees, AssociationEnd None STR ''employees''),
+  (customer, AssociationEnd None STR ''customer''),
+  (project, AssociationEnd None STR ''project''),
+  (tasks, AssociationEnd None STR ''tasks''),
+  (sprint, AssociationEnd None STR ''sprint''),
+  (assignee, AssociationEnd None STR ''assignee'')]"
+
+definition "literal_to_call_expr lit \<equiv> the (fmlookup literal_to_call_expr_map lit)"
+
+(*** Model ******************************************************************)
+
+section \<open>Model\<close>
 
 datatype classes1 =
   Object | Person | Employee | Customer | Project | Task | Sprint
@@ -50,6 +190,75 @@ inductive subclass1 where
    subclass1 c Object"
 | "subclass1 Employee Person"
 | "subclass1 Customer Person"
+
+abbreviation "\<Gamma>\<^sub>0 \<equiv> fmempty :: classes1 type\<^sub>N\<^sub>E env"
+
+declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 type"]]
+declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum_type"]]
+declare [[coercion "Enum :: classes1 enum_type \<Rightarrow> classes1 type"]]
+declare [[coercion "StringLiteral :: string \<Rightarrow> classes1 literal_expr"]]
+declare [[coercion "literal_to_call_expr :: String.literal \<Rightarrow> classes1 call_expr"]]
+
+definition "model_spec \<equiv>
+
+  enum Priority { Low, Medium, High }
+
+  class Person
+    name : String[1]
+  
+  class Employee
+    name : String[1]
+    position : String[1]
+  
+  class Customer
+    vip : Boolean[1]
+  
+  class Project
+    name : String[1]
+    cost : Real[?]
+  
+  class Task
+    description : String[1]
+    priority : Priority[1]
+
+  association ProjectManager
+    projects : Project[0..\<infinity>] {unique}
+    manager : Employee[1..1]
+  
+  association ProjectMember
+    memberOf : Project[0..\<infinity>]
+    members : Employee[1..20] {ordered,unique}
+  
+  association ManagerEmployee
+    lineManager : Employee[0..1]
+    projectManager : Employee[0..\<infinity>]
+    employees : Employee[3..7]
+  
+  association ProjectCustomer
+    projects : Project[0..\<infinity>] {unique}
+    customer : Customer[1..1]
+  
+  association ProjectTask
+    project : Project[1..1]
+    tasks : Task[0..\<infinity>] {ordered,unique}
+  
+  association SprintTaskAssignee
+    sprint : Sprint[0..10] {unique}
+    tasks : Task[0..5] {unique}
+    assignee : Employee[0..1]
+
+  context Project[1]
+    def: membersCount() : Integer[1] = \<lparr>self\<rparr>\<^bold>.members->size()
+
+    def: membersByName(name : String[1]) : (Set Employee[\<^bold>1])[1] =
+         \<lparr>self\<rparr>\<^bold>.members->select(it | \<lparr>it\<rparr>\<^bold>.name \<^bold>= \<lparr>name\<rparr>)
+
+    static def: allProjects() : (Set Project[\<^bold>1])[1] =
+         (MetaOperationCall Project[1] AllInstancesOp)"
+
+(*** Upper Semilattice of Classes *******************************************)
+
+section \<open>Upper Semilattice of Classes\<close>
 
 instantiation classes1 :: semilattice_sup
 begin
@@ -151,139 +360,31 @@ lemma less_eq_classes1_code [code]:
 
 section \<open>Object Model\<close>
 
-abbreviation "self \<equiv> STR ''self''"
-abbreviation "it \<equiv> STR ''it''"
-
-abbreviation "name \<equiv> STR ''name''"
-abbreviation "position \<equiv> STR ''position''"
-abbreviation "vip \<equiv> STR ''vip''"
-abbreviation "cost \<equiv> STR ''cost''"
-abbreviation "description \<equiv> STR ''description''"
-
-abbreviation "ProjectManager \<equiv> STR ''ProjectManager''"
-abbreviation "projects \<equiv> STR ''projects''"
-abbreviation "manager \<equiv>  STR ''manager''"
-abbreviation "ProjectMember \<equiv>  STR ''ProjectMember''"
-abbreviation "member_of \<equiv>  STR ''member_of''"
-abbreviation "members \<equiv>  STR ''members''"
-abbreviation "ManagerEmployee \<equiv>  STR ''ManagerEmployee''"
-abbreviation "line_manager \<equiv>  STR ''line_manager''"
-abbreviation "project_manager \<equiv>  STR ''project_manager''"
-abbreviation "employees \<equiv>  STR ''employees''"
-abbreviation "ProjectCustomer \<equiv>  STR ''ProjectCustomer''"
-abbreviation "customer \<equiv>  STR ''customer''"
-abbreviation "ProjectTask \<equiv>  STR ''ProjectTask''"
-abbreviation "project \<equiv>  STR ''project''"
-abbreviation "tasks \<equiv>  STR ''tasks''"
-abbreviation "SprintTaskAssignee \<equiv>  STR ''SprintTaskAssignee''"
-abbreviation "sprint \<equiv>  STR ''sprint''"
-abbreviation "assignee \<equiv>  STR ''assignee''"
-
-abbreviation "membersCount \<equiv>  STR ''membersCount''"
-abbreviation "membersByName \<equiv>  STR ''membersByName''"
-abbreviation "allProjects \<equiv>  STR ''allProjects''"
-
-definition "literal_to_expr_map \<equiv> fmap_of_list [
-  (name, Attribute STR ''name''),
-  (position, Attribute STR ''position''),
-  (vip, Attribute STR ''vip''),
-  (cost, Attribute STR ''cost''),
-  (description, Attribute STR ''description''),
-  (projects, AssociationEnd None STR ''projects''),
-  (members, AssociationEnd None STR ''members''),
-  (member_of, AssociationEnd None STR ''member_of''),
-  (manager, AssociationEnd None STR ''manager''),
-  (line_manager, AssociationEnd None STR ''line_manager''),
-  (project_manager, AssociationEnd None STR ''project_manager''),
-  (employees, AssociationEnd None STR ''employees''),
-  (customer, AssociationEnd None STR ''customer''),
-  (project, AssociationEnd None STR ''project''),
-  (tasks, AssociationEnd None STR ''tasks''),
-  (sprint, AssociationEnd None STR ''sprint''),
-  (assignee, AssociationEnd None STR ''assignee'')]"
-
-definition "literal_to_expr lit \<equiv> the (fmlookup literal_to_expr_map lit)"
-
-declare [[coercion "StringLiteral :: string \<Rightarrow> classes1 literal_expr"]]
-declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 type"]]
-declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum_type"]]
-declare [[coercion "literal_to_expr :: String.literal \<Rightarrow> classes1 call_expr"]]
-
-definition "model_spec \<equiv>
-
-  class Person
-    name : String[1]
-  
-  class Employee
-    name : String[1]
-    position : String[1]
-  
-  class Customer
-    vip : Boolean[1]
-  
-  class Project
-    name : String[1]
-    cost : Real[?]
-  
-  class Task
-    description : String[1]
-
-  association ProjectManager
-    projects : Project[0..\<infinity>] {unique}
-    manager : Employee[1..1]
-  
-  association ProjectMember
-    member_of : Project[0..\<infinity>]
-    members : Employee[1..20] {ordered,unique}
-  
-  association ManagerEmployee
-    line_manager : Employee[0..1]
-    project_manager : Employee[0..\<infinity>]
-    employees : Employee[3..7]
-  
-  association ProjectCustomer
-    projects : Project[0..\<infinity>] {unique}
-    customer : Customer[1..1]
-  
-  association ProjectTask
-    project : Project[1..1]
-    tasks : Task[0..\<infinity>] {ordered,unique}
-  
-  association SprintTaskAssignee
-    sprint : Sprint[0..10] {unique}
-    tasks : Task[0..5] {unique}
-    assignee : Employee[0..1]
-
-  context Project[1]
-    def: membersCount() : Integer[1] = \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>size()
-
-    def: membersByName(name : String[1]) : (Set Employee[\<^bold>1])[1] =
-         \<lparr>self\<rparr>\<^bold>.members\<^bold>-\<^bold>>select(it \<^bold>| \<lparr>it\<rparr>\<^bold>.name \<^bold>= \<lparr>name\<rparr>)
-
-    static def: allProjects() : (Set Project[\<^bold>1])[1] =
-         (MetaOperationCall Project[1] AllInstancesOp)"
-
-
 instantiation classes1 :: ocl_object_model
 begin
 
 definition "classes_classes1 \<equiv>
   {|Object, Person, Employee, Customer, Project, Task, Sprint|}"
 
+
+primrec model_spec_enums where
+  "model_spec_enums [] = []"
+| "model_spec_enums (x # xs) = (case x
+    of EnumSpec enm lits \<Rightarrow> (enm, fset_of_list lits) # (model_spec_enums xs)
+     | _ \<Rightarrow> (model_spec_enums xs))"
+
+definition "model_spec_enum_literals m \<equiv>
+  fmap_of_list (model_spec_enums (model_spec_elements m))"
+
 definition "attributes_classes1 \<equiv> model_spec_attributes model_spec"
-abbreviation "assocs \<equiv> model_spec_assoc_ens model_spec"
-definition "associations_classes1 \<equiv> assocs"
+definition "associations_classes1 \<equiv> model_spec_assoc_ens model_spec"
 definition "association_classes_classes1 \<equiv> fmempty :: classes1 \<rightharpoonup>\<^sub>f assoc"
 definition "operations_classes1 \<equiv> model_spec_operations model_spec"
-
-definition "literals_classes1 \<equiv> fmap_of_list [
-  (STR ''E1'' :: classes1 enum_type, {|STR ''A'', STR ''B''|}),
-  (STR ''E2'', {|STR ''C'', STR ''D'', STR ''E''|})]"
-
+definition "literals_classes1 \<equiv> model_spec_enum_literals model_spec"
 
 lemma assoc_end_min_less_eq_max:
-  "assoc |\<in>| fmdom assocs \<Longrightarrow>
-   fmlookup assocs assoc = Some ends \<Longrightarrow>
+  "assoc |\<in>| fmdom (model_spec_assoc_ens model_spec) \<Longrightarrow>
+   fmlookup (model_spec_assoc_ens model_spec) assoc = Some ends \<Longrightarrow>
    role |\<in>| fmdom ends  \<Longrightarrow>
    fmlookup ends role = Some end \<Longrightarrow>
    assoc_end_min end \<le> assoc_end_max end"
@@ -293,11 +394,11 @@ lemma assoc_end_min_less_eq_max:
   by (metis enat_ord_number(1) numeral_One one_le_numeral)
 
 lemma association_ends_unique:
-  assumes "association_ends' classes assocs \<C> from role end\<^sub>1"
-      and "association_ends' classes assocs \<C> from role end\<^sub>2"
+  assumes "association_ends' classes (model_spec_assoc_ens model_spec) \<C> from role end\<^sub>1"
+      and "association_ends' classes (model_spec_assoc_ens model_spec) \<C> from role end\<^sub>2"
     shows "end\<^sub>1 = end\<^sub>2"
 proof -
-  have "\<not> association_ends_not_unique' classes assocs" by eval
+  have "\<not> association_ends_not_unique' classes (model_spec_assoc_ens model_spec)" by eval
   with assms show ?thesis
     using association_ends_not_unique'.simps by blast
 qed
@@ -310,14 +411,6 @@ instance
 
 end
 
-abbreviation "\<Gamma>\<^sub>0 \<equiv> fmempty :: classes1 type\<^sub>N\<^sub>E env"
-
-(*
-abbreviation "name \<equiv> Attribute STR ''name''"
-abbreviation "projects \<equiv> AssociationEnd None STR ''projects''"
-abbreviation "members \<equiv> AssociationEnd None STR ''members''"
-abbreviation "allProjects \<equiv> STR ''allProjects''"
-*)
 (*** Simplification Rules ***************************************************)
 
 section \<open>Simplification Rules\<close>
@@ -430,6 +523,10 @@ declare normalize_alt_simps [simp]
 declare nf_typing.simps [simp]
 declare typing_alt_simps [simp]
 
+
+declare model_spec_enum_literals_def [simp]
+declare model_spec_def [simp]
+
 (*
 lemma to_nonunique_collection_type_left_simps:
   "to_nonunique_collection_type (ErrorFree \<tau>) \<sigma> =
@@ -458,8 +555,8 @@ lemma iterable_type_left_simps:
 declare subclass1.intros [intro]
 declare less_classes1_def [simp]
 
-declare literal_to_expr_def [simp]
-declare literal_to_expr_map_def [simp]
+declare literal_to_call_expr_def [simp]
+declare literal_to_call_expr_map_def [simp]
 declare literals_classes1_def [simp]
 
 lemma attribute_Employee_name [simp]:
@@ -569,98 +666,57 @@ declare ex_iterable_type_simps []
 
 
 
-
-
-
-
-
-nonterminal map_part and map_parts
-
-syntax
-  "_map_part" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> map_part" ("_ <- _")
-  "_map_parts_single" :: "map_part \<Rightarrow> map_parts" ("_")
-  "_map_parts_cons" :: "map_part \<Rightarrow> map_parts \<Rightarrow> map_parts" ("_,/ _")
-
-  "_map" :: "'a literal_expr" ("Map({ })")
-  "_map" :: "'a literal_expr" ("Map({})")
-  "_map" :: "map_parts \<Rightarrow> 'a literal_expr" ("Map({_})")
-
-
-translations
-  "_map_part x y" == "(x, y)"
-  "_map_parts_single x" == "[x]"
-  "_map_parts_cons x (y # xs)" == "x # y # xs"
-
-  "_map" == "CONST MapLiteral []"
-  "_map xs" == "CONST MapLiteral xs"
-
-
-
-term "Map {\<^bold>1 <- ''asd''}"
-
-term "Map{}"
-term "Map {}"
-term "Map { }"
-term "Map{ }"
-term "Map { \<^bold>1 <- \<^bold>2}"
-term "Map{\<^bold>1 <- \<^bold>2, \<^bold>2 <- \<^bold>3 }"
-term "Map{\<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2}"
-
-
-
-text \<open>
-\<^verbatim>\<open>E1::A : E1[1]\<close>\<close>
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> EnumLiteral STR ''E1'' STR ''A'' : (Enum STR ''E1'')[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Priority\<^bold>:\<^bold>:High : Priority[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>t\<^bold>r\<^bold>u\<^bold>e or \<^bold>f\<^bold>a\<^bold>l\<^bold>s\<^bold>e : Boolean[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> true or false : Boolean[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>n\<^bold>u\<^bold>l\<^bold>l and \<^bold>t\<^bold>r\<^bold>u\<^bold>e : Boolean[?]"
+  "\<Gamma>\<^sub>0 \<turnstile> null and true : Boolean[?]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: Real[1] \<^bold>= \<^bold>5 \<^bold>i\<^bold>n \<lparr>x\<rparr> / \<^bold>7 : Real[1!]"
+  "\<Gamma>\<^sub>0 \<turnstile> let x : Real[1] = \<^bold>5 in \<lparr>x\<rparr> \<^bold>/ \<^bold>7 : Real[1!]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>n\<^bold>u\<^bold>l\<^bold>l\<^bold>.oclIsUndefined() : Boolean[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> null\<^bold>.oclIsUndefined() : Boolean[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l} : (Sequence Integer[\<^bold>?])[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null} : (Sequence Integer[\<^bold>?])[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>.oclIsUndefined() : (Sequence Boolean[\<^bold>1])[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}\<^bold>.oclIsUndefined() : (Sequence Boolean[\<^bold>1])[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5}\<^bold>-\<^bold>>product(Set{''a''\<^bold>, ''b''}) :
-    (Set (Tuple(STR ''first'' \<^bold>: Integer[\<^bold>1]\<^bold>, STR ''second'' \<^bold>: String[\<^bold>1]))[\<^bold>1])[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5}->product(Set{''a'', ''b''}) :
+    (Set (Tuple(STR ''first'' : Integer[\<^bold>1], STR ''second'' : String[\<^bold>1]))[\<^bold>1])[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>?\<^bold>-\<^bold>>iterate(x\<^bold>; acc \<^bold>: Real[1] \<^bold>= \<^bold>0 \<^bold>| \<lparr>acc\<rparr> \<^bold>+ \<lparr>x\<rparr>) : Real[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}?->iterate(x; acc : Real[1] = \<^bold>0 | \<lparr>acc\<rparr> \<^bold>+ \<lparr>x\<rparr>) : Real[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>?\<^bold>-\<^bold>>max() : Integer[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}?->max() : Integer[1]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
-          Sequence{''abc''\<^bold>, ''zxc''} \<^bold>i\<^bold>n
-   \<lparr>x\<rparr>\<^bold>-\<^bold>>any(it \<^bold>| \<lparr>it\<rparr> \<^bold>= StringLiteral ''test'') : String[?!]"
+  "\<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] =
+          Sequence{''abc'', ''zxc''} in
+   \<lparr>x\<rparr>->any(it | \<lparr>it\<rparr> \<^bold>= StringLiteral ''test'') : String[?!]"
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
-          Sequence{''abc''\<^bold>, ''zxc''} \<^bold>i\<^bold>n
-   \<lparr>x\<rparr>\<^bold>?\<^bold>-\<^bold>>closure(it \<^bold>| \<lparr>it\<rparr>) : (OrderedSet String[\<^bold>1])[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] =
+          Sequence{''abc'', ''zxc''} in
+   \<lparr>x\<rparr>?->closure(it | \<lparr>it\<rparr>) : (OrderedSet String[\<^bold>1])[1]"
   by simp
 
 lemma
@@ -680,27 +736,27 @@ lemma
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Project[1]\<^bold>:\<^bold>:allProjects( ) : (Set Project[\<^bold>1])[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Project[1]::allProjects ( ) : (Set Project[\<^bold>1])[1]"
   by simp
 
 subsection \<open>Negative Cases\<close>
 
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> \<^bold>t\<^bold>r\<^bold>u\<^bold>e \<^bold>= \<^bold>n\<^bold>u\<^bold>l\<^bold>l : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> true \<^bold>= null : \<tau>"
   by simp
 
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: Boolean[1] \<^bold>= \<^bold>5 \<^bold>i\<^bold>n \<lparr>x\<rparr> and \<^bold>t\<^bold>r\<^bold>u\<^bold>e : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> let x : Boolean[1] = \<^bold>5 in \<lparr>x\<rparr> and true : \<tau>"
   by simp
 
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> \<^bold>l\<^bold>e\<^bold>t x \<^bold>: (Sequence String[\<^bold>?])[1] \<^bold>=
-    Sequence{''abc''\<^bold>, ''zxc''} \<^bold>i\<^bold>n
-    \<lparr>x\<rparr>\<^bold>-\<^bold>>closure(it \<^bold>| \<^bold>1) : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] =
+    Sequence{''abc'', ''zxc''} in
+    \<lparr>x\<rparr>->closure(it | \<^bold>1) : \<tau>"
   by simp
 
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>-\<^bold>>max() : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}->max() : \<tau>"
 proof -
   have "\<not> operation_defined (Integer[?] :: classes1 type\<^sub>N\<^sub>E) STR ''max'' [Integer[?]]"
     by eval
@@ -715,7 +771,7 @@ subsection \<open>Positive Cases\<close>
 
 values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
 values "{(\<D>, end). association_end Employee None STR ''employees'' \<D> end}"
-values "{(\<D>, end). association_end Employee (Some STR ''project_manager'')
+values "{(\<D>, end). association_end Employee (Some STR ''projectManager'')
   STR ''employees'' \<D> end}"
 values "{op. operation Project[1] STR ''membersCount'' [] op}"
 values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
@@ -724,12 +780,12 @@ value "has_literal STR ''E1'' STR ''A''"
 text \<open>
 \<^verbatim>\<open>context Employee:
 projects.members : Bag(Employee[1])[1]\<close>\<close>
-values "{\<tau>. \<Gamma>\<^sub>0(STR ''self'' \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>STR ''self''\<rparr>\<^bold>.projects\<^bold>.members : \<tau>}"
+values "{\<tau>. \<Gamma>\<^sub>0(self \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>self\<rparr>\<^bold>.projects\<^bold>.members : \<tau>}"
 
 subsection \<open>Negative Cases\<close>
 
 value "has_literal STR ''E1'' STR ''C''"
 values "{(\<D>, \<tau>). attribute Employee STR ''name2'' \<D> \<tau>}"
-values "{\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>.\<^bold>.\<^bold>5\<^bold>, \<^bold>n\<^bold>u\<^bold>l\<^bold>l}\<^bold>-\<^bold>>max() : \<tau>}"
+values "{\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}->max() : \<tau>}"
 
 end

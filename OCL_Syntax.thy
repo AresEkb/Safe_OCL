@@ -240,10 +240,11 @@ section \<open>Notation\<close>
 
 subsection \<open>Literals\<close>
 
+abbreviation "null \<equiv> Literal NullLiteral"
+abbreviation "true \<equiv> Literal (BooleanLiteral True)"
+abbreviation "false \<equiv> Literal (BooleanLiteral False)"
+
 syntax
-  "_null" :: "'a expr" ("\<^bold>n\<^bold>u\<^bold>l\<^bold>l")
-  "_true" :: "'a expr" ("\<^bold>t\<^bold>r\<^bold>u\<^bold>e")
-  "_false" :: "'a expr" ("\<^bold>f\<^bold>a\<^bold>l\<^bold>s\<^bold>e")
   "_int0" :: "'a expr" ("\<^bold>0")
   "_int1" :: "'a expr" ("\<^bold>1")
   "_int2" :: "'a expr" ("\<^bold>2")
@@ -256,9 +257,6 @@ syntax
   "_int9" :: "'a expr" ("\<^bold>9")
 
 translations
-  "\<^bold>n\<^bold>u\<^bold>l\<^bold>l" == "CONST Literal CONST NullLiteral"
-  "\<^bold>t\<^bold>r\<^bold>u\<^bold>e" == "CONST Literal (CONST BooleanLiteral CONST True)"
-  "\<^bold>f\<^bold>a\<^bold>l\<^bold>s\<^bold>e" == "CONST Literal (CONST BooleanLiteral CONST False)"
   "\<^bold>0" == "CONST Literal (CONST IntegerLiteral 0)"
   "\<^bold>1" == "CONST Literal (CONST IntegerLiteral 1)"
   "\<^bold>2" == "CONST Literal (CONST IntegerLiteral 2)"
@@ -270,63 +268,79 @@ translations
   "\<^bold>8" == "CONST Literal (CONST IntegerLiteral 8)"
   "\<^bold>9" == "CONST Literal (CONST IntegerLiteral 9)"
 
-nonterminal collection_part and collection_parts
-
 syntax
-  "_collection_item" :: "'a expr \<Rightarrow> collection_part" ("_")
-  "_collection_range" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> collection_part" ("_ \<^bold>.\<^bold>. _")
-
-  "_collection_part" :: "collection_part \<Rightarrow> collection_parts" ("_")
-  "_collection_parts" ::
-      "collection_part \<Rightarrow> collection_parts \<Rightarrow> collection_parts" ("_\<^bold>, _")
-
-  "_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Set{}")
-  "_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Set{_}")
-  "_ordered_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("OrderedSet{}")
-  "_ordered_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("OrderedSet{_}")
-  "_bag" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Bag{}")
-  "_bag" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Bag{_}")
-  "_sequence" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Sequence{}")
-  "_sequence" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Sequence{_}")
+  "_enum_literal" :: "'a \<Rightarrow> 'a \<Rightarrow> 'a expr" ("_\<^bold>:\<^bold>:_")
 
 translations
+  "_enum_literal enm lit" \<rightharpoonup> "CONST EnumLiteral enm lit"
+
+nonterminal collection_parts and collection_part
+
+syntax
+  "_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Set{_}")
+  "_ordered_set" :: "collection_parts \<Rightarrow> 'a literal_expr" ("OrderedSet{_}")
+  "_bag" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Bag{_}")
+  "_sequence" :: "collection_parts \<Rightarrow> 'a literal_expr" ("Sequence{_}")
+
+  "_collection_parts" ::
+      "collection_part \<Rightarrow> collection_parts \<Rightarrow> collection_parts" ("_, _")
+  "_collection_empty_parts" :: "collection_parts" ("")
+  "_collection_single_part" :: "collection_part \<Rightarrow> collection_parts" ("_")
+
+  "_collection_item" :: "'a expr \<Rightarrow> collection_part" ("_")
+  "_collection_range" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> collection_part" ("_.._")
+
+translations
+  "_set xs" == "CONST CollectionLiteral CONST SetKind xs"
+  "_ordered_set xs" == "CONST CollectionLiteral CONST OrderedSetKind xs"
+  "_bag xs" == "CONST CollectionLiteral CONST BagKind xs"
+  "_sequence xs" == "CONST CollectionLiteral CONST SequenceKind xs"
+
+  "_collection_parts x xs" \<rightharpoonup> "x # xs"
+  "_collection_empty_parts" \<rightharpoonup> "[]"
+  "_collection_single_part x" \<rightharpoonup> "[x]"
+
   "_collection_item x" == "CONST CollectionItem x"
   "_collection_range x y" == "CONST CollectionRange x y"
 
-  "_collection_part x" \<rightharpoonup> "[x]"
-  "_collection_parts x (y # xs)" \<rightharpoonup> "x # y # xs"
+nonterminal map_parts and map_part
 
-  "_set" == "CONST CollectionLiteral CONST SetKind []"
-  "_set xs" == "CONST CollectionLiteral CONST SetKind xs"
-  "_ordered_set" == "CONST CollectionLiteral CONST OrderedSetKind []"
-  "_ordered_set xs" == "CONST CollectionLiteral CONST OrderedSetKind xs"
-  "_bag" == "CONST CollectionLiteral CONST BagKind []"
-  "_bag xs" == "CONST CollectionLiteral CONST BagKind xs"
-  "_sequence" == "CONST CollectionLiteral CONST SequenceKind []"
-  "_sequence xs" == "CONST CollectionLiteral CONST SequenceKind xs"
+syntax
+  "_map" :: "map_parts \<Rightarrow> 'a literal_expr" ("Map{_}")
+  "_map_parts" :: "map_part \<Rightarrow> map_parts \<Rightarrow> map_parts" ("_,/ _")
+  "_map_empty_parts" :: "map_parts" ("")
+  "_map_single_part" :: "map_part \<Rightarrow> map_parts" ("_")
+  "_map_part" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> map_part" ("_ <- _")
+
+translations
+  "_map xs" == "CONST MapLiteral xs"
+  "_map_parts x xs" \<rightharpoonup> "x # xs"
+  "_map_empty_parts" \<rightharpoonup> "[]"
+  "_map_single_part x" \<rightharpoonup> "[x]"
+  "_map_part x y" \<rightharpoonup> "(x, y)"
 
 subsection \<open>Types\<close>
 
 nonterminal tuple_type_element and tuple_type_elements
 
 syntax
-  "_tuple_type_element" :: "vname \<Rightarrow> 'a type\<^sub>N \<Rightarrow> tuple_type_element" ("_ \<^bold>: _")
-
-  "_tuple_type_element" :: "tuple_type_element \<Rightarrow> tuple_type_elements" ("_")
-  "_tuple_type_elements" ::
-      "tuple_type_element \<Rightarrow> tuple_type_elements \<Rightarrow> tuple_type_elements" ("_\<^bold>, _")
-
-  "_tuple_type" :: "'a type" ("Tuple'(')")
   "_tuple_type" :: "tuple_type_elements \<Rightarrow> 'a type" ("Tuple'(_')")
 
+  "_tuple_type_elements" ::
+      "tuple_type_element \<Rightarrow> tuple_type_elements \<Rightarrow> tuple_type_elements" ("_, _")
+  "_tuple_type_empty_elements" :: "tuple_type_elements" ("")
+  "_tuple_type_single_element" :: "tuple_type_element \<Rightarrow> tuple_type_elements" ("_")
+
+  "_tuple_type_element" :: "vname \<Rightarrow> 'a type\<^sub>N \<Rightarrow> tuple_type_element" ("_ : _")
+
 translations
-  "_tuple_type_element elem \<tau>" \<rightharpoonup> "(elem, \<tau>)"
-
-  "_tuple_type_element x" \<rightharpoonup> "[x]"
-  "_tuple_type_elements x (y # xs)" \<rightharpoonup> "x # y # xs"
-
-  "_tuple_type" == "CONST Tuple CONST fmempty"
   "_tuple_type \<pi>" == "CONST Tuple (CONST fmap_of_list \<pi>)"
+
+  "_tuple_type_elements x xs" \<rightharpoonup> "x # xs"
+  "_tuple_type_empty_elements" \<rightharpoonup> "[]"
+  "_tuple_type_single_element x" \<rightharpoonup> "[x]"
+
+  "_tuple_type_element elem \<tau>" \<rightharpoonup> "(elem, \<tau>)"
 
 subsection \<open>Misc Expressions\<close>
 
@@ -334,81 +348,98 @@ notation Var ("\<lparr>_\<rparr>")
 
 syntax
   "_let" :: "vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr"
-                ("\<^bold>l\<^bold>e\<^bold>t _ \<^bold>= _ \<^bold>i\<^bold>n _" [101,101,101] 100)
+                ("let _ = _ in _" [101,101,101] 100)
   "_typed_let" :: "vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr"
-                ("\<^bold>l\<^bold>e\<^bold>t _ \<^bold>: _ \<^bold>= _ \<^bold>i\<^bold>n _" [101,101,101,101] 100)
+                ("let _ : _ = _ in _" [101,101,101,101] 100)
   "_if" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr"
-                ("\<^bold>i\<^bold>f _ \<^bold>t\<^bold>h\<^bold>e\<^bold>n _ \<^bold>e\<^bold>l\<^bold>s\<^bold>e _ \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f")
+                ("if _ then _ else _ endif")
 
 translations
-  "\<^bold>l\<^bold>e\<^bold>t v \<^bold>= init \<^bold>i\<^bold>n body" == "CONST Let v CONST None init body"
-  "\<^bold>l\<^bold>e\<^bold>t v \<^bold>: \<tau> \<^bold>= init \<^bold>i\<^bold>n body" == "CONST Let v (CONST Some \<tau>) init body"
-  "\<^bold>i\<^bold>f cnd \<^bold>t\<^bold>h\<^bold>e\<^bold>n thn \<^bold>e\<^bold>l\<^bold>s\<^bold>e els \<^bold>e\<^bold>n\<^bold>d\<^bold>i\<^bold>f" == "CONST If cnd thn els"
+  "_let v init body" == "CONST Let v CONST None init body"
+  "_typed_let v \<tau> init body" == "CONST Let v (CONST Some \<tau>) init body"
+  "_if cnd thn els" == "CONST If cnd thn els"
 
 subsection \<open>Call Expressions\<close>
 
 nonterminal op_args
 
 syntax
+  "_op_args" :: "'a expr \<Rightarrow> op_args \<Rightarrow> op_args" ("_, _")
   "_op_empty_args" :: "op_args" ("")
   "_op_single_arg" :: "'a expr \<Rightarrow> op_args" ("_")
-  "_op_args" :: "'a expr \<Rightarrow> op_args \<Rightarrow> op_args" ("_\<^bold>, _")
-
-  "_staticOpCall" :: "'a expr \<Rightarrow> oper \<Rightarrow> op_args \<Rightarrow> 'a expr" ("_\<^bold>:\<^bold>:_'(_')" [501,501,501] 500)
-  "_dotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>." 500)
-  "_safeDotCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>." 500)
-  "_arrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>-\<^bold>>" 500)
-  "_safeArrowCall" :: "'a expr \<Rightarrow> 'a call_expr \<Rightarrow> 'a expr" (infixl "\<^bold>?\<^bold>-\<^bold>>" 500)
 
 translations
+  "_op_args x xs" \<rightharpoonup> "x # xs"
   "_op_empty_args" \<rightharpoonup> "[]"
   "_op_single_arg x" \<rightharpoonup> "[x]"
-  "_op_args x (y # xs)" \<rightharpoonup> "x # y # xs"
 
+nonterminal call and nav_call and op_call and type_op_call and loop_call and op_name
+
+syntax
+  "_call" :: "nav_call \<Rightarrow> call" ("_")
+  "_call" :: "op_call \<Rightarrow> call" ("_")
+  "_call" :: "type_op_call \<Rightarrow> call" ("_")
+  "_call" :: "loop_call \<Rightarrow> call" ("_")
+  "_nav_call" :: "'a \<Rightarrow> nav_call" ("_" [1000] 300)
+  "_op_call" :: "op_name \<Rightarrow> op_args \<Rightarrow> op_call" ("_('(_'))" [1000,100] 200)
+  "_op_call_no_args" :: "op_name \<Rightarrow> op_call" ("_('('))" [1000] 200)
+
+translations
+  "_call call" \<rightharpoonup> "call"
+  "_nav_call call" \<rightharpoonup> "call"
+  "_op_call op args" \<rightharpoonup> "op args"
+  "_op_call_no_args op" \<rightharpoonup> "op []"
+
+syntax
+  "_dotCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "\<^bold>." 300)
+  "_safeDotCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "?." 300)
+  "_arrowCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "->" 300)
+  "_safeArrowCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "?->" 300)
+  "_staticOpCall" :: "'a expr \<Rightarrow> op_call \<Rightarrow> 'a expr" ("_::_" [1000,1000] 300)
+
+translations
+  "_dotCall src call" == "CONST Call src (CONST DotCall) call"
+  "_safeDotCall src call" == "CONST Call src (CONST SafeDotCall) call"
+  "_arrowCall src call" == "CONST Call src (CONST ArrowCall) call"
+  "_safeArrowCall src call" == "CONST Call src (CONST SafeArrowCall) call"
   "_staticOpCall src op args" == "CONST StaticOperationCall src op args"
-  "src\<^bold>.call" == "CONST Call src (CONST DotCall) call"
-  "src\<^bold>?\<^bold>.call" == "CONST Call src (CONST SafeDotCall) call"
-  "src\<^bold>-\<^bold>>call" == "CONST Call src (CONST ArrowCall) call"
-  "src\<^bold>?\<^bold>-\<^bold>>call" == "CONST Call src (CONST SafeArrowCall) call"
 
 subsection \<open>Operations\<close>
 
 \<comment> \<open>Meta Operations\<close>
 syntax
-  "_allInstances" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("_\<^bold>. allInstances'(')")
+  "_allInstances" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr" ("_\<^bold>.allInstances'(')")
 
 translations
-  "\<tau>\<^bold>.allInstances()" == "CONST MetaOperationCall \<tau> (CONST AllInstancesOp)"
+  "_allInstances \<tau>" == "CONST MetaOperationCall \<tau> (CONST AllInstancesOp)"
 
 \<comment> \<open>Type Operations\<close>
 syntax
-  "_oclAsType" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("oclAsType'(_')")
-  "_oclIsTypeOf" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("oclIsTypeOf'(_')")
-  "_oclIsKindOf" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("oclIsKindOf'(_')")
-  "_selectByType" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("selectByType'(_')")
-  "_selectByKind" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a call_expr" ("selectByKind'(_')")
+  "_oclAsType" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> type_op_call" ("oclAsType('(_'))")
+  "_oclIsTypeOf" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> type_op_call" ("oclIsTypeOf('(_'))")
+  "_oclIsKindOf" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> type_op_call" ("oclIsKindOf('(_'))")
+  "_selectByType" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> type_op_call" ("selectByType('(_'))")
+  "_selectByKind" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> type_op_call" ("selectByKind('(_'))")
 
 translations
-  "oclAsType(\<tau>)" == "CONST TypeOperation (CONST OclAsTypeOp) \<tau>"
-  "oclIsTypeOf(\<tau>)" == "CONST TypeOperation (CONST OclIsTypeOfOp) \<tau>"
-  "oclIsKindOf(\<tau>)" == "CONST TypeOperation (CONST OclIsKindOfOp) \<tau>"
-  "selectByType(\<tau>)" == "CONST TypeOperation (CONST SelectByTypeOp) \<tau>"
-  "selectByKind(\<tau>)" == "CONST TypeOperation (CONST SelectByKindOp) \<tau>"
+  "_oclAsType \<tau>" == "CONST TypeOperation (CONST OclAsTypeOp) \<tau>"
+  "_oclIsTypeOf \<tau>" == "CONST TypeOperation (CONST OclIsTypeOfOp) \<tau>"
+  "_oclIsKindOf \<tau>" == "CONST TypeOperation (CONST OclIsKindOfOp) \<tau>"
+  "_selectByType \<tau>" == "CONST TypeOperation (CONST SelectByTypeOp) \<tau>"
+  "_selectByKind \<tau>" == "CONST TypeOperation (CONST SelectByKindOp) \<tau>"
 
 syntax
   \<comment> \<open>OclAny Operations\<close>
-  "_oclAsSet" :: "'a call_expr" ("oclAsSet'(')")
-  "_oclIsNew" :: "'a call_expr" ("oclIsNew'(')")
-  "_oclIsUndefined" :: "'a call_expr" ("oclIsUndefined'(')")
-  "_oclIsInvalid" :: "'a call_expr" ("oclIsInvalid'(')")
-  "_toString" :: "'a call_expr" ("toString'(')")
-
+  "_oclAsSet" :: "op_name" ("oclAsSet")
+  "_oclIsNew" :: "op_name" ("oclIsNew")
+  "_oclIsUndefined" :: "op_name" ("oclIsUndefined")
+  "_oclIsInvalid" :: "op_name" ("oclIsInvalid")
+  "_toString" :: "op_name" ("toString")
   "_equal" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>=" 250)
   "_notEqual" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "<>" 250)
 
   \<comment> \<open>Boolean Operations\<close>
   "_not" :: "'a expr \<Rightarrow> 'a expr" ("not _" [240] 240)
-
   "_and" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "and" 235)
   "_or" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "or" 230)
   "_xor" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixr "xor" 230)
@@ -416,160 +447,148 @@ syntax
 
   \<comment> \<open>Numeric Operations\<close>
   "_uminus" :: "'a expr \<Rightarrow> 'a expr" ("\<^bold>- _" [281] 280)
-  "_absOp" :: "'a call_expr" ("abs'(')") (* Should not be named _abs. It could cause strange exceptions *)
-  "_floor" :: "'a call_expr" ("floor'(')")
-  "_round" :: "'a call_expr" ("round'(')")
-  "_toInteger" :: "'a call_expr" ("toInteger'(')")
-
+  "_absOp" :: "op_name" ("abs") (* Should not be named _abs. It could cause strange exceptions *)
+  "_floor" :: "op_name" ("floor")
+  "_round" :: "op_name" ("round")
+  "_toInteger" :: "op_name" ("toInteger")
   "_plus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>+" 265)
   "_minus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>-" 265)
   "_mult" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>*" 270)
   "_divide" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>/" 270)
-  "_div" :: "'a expr \<Rightarrow> 'a call_expr" ("div'(_')")
-  "_mod" :: "'a expr \<Rightarrow> 'a call_expr" ("mod'(_')")
-  "_max" :: "'a expr \<Rightarrow> 'a call_expr" ("max\<^sub>N'(_')")
-  "_min" :: "'a expr \<Rightarrow> 'a call_expr" ("min\<^sub>N'(_')")
+  "_div" :: "op_name" ("div")
+  "_mod" :: "op_name" ("mod")
+  "_max" :: "op_name" ("max\<^sub>N")
+  "_min" :: "op_name" ("min\<^sub>N")
   "_less" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><" 250)
-  "_lessEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><=" 250)
+  "_lessEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><\<^bold>=" 250)
   "_greater" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>" 250)
-  "_greaterEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>=" 250)
+  "_greaterEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>\<^bold>=" 250)
 
   \<comment> \<open>String Operations\<close>
-  "_size" :: "'a call_expr" ("size\<^sub>S'(')")
-  "_toUpperCase" :: "'a call_expr" ("toUpperCase'(')")
-  "_toLowerCase" :: "'a call_expr" ("toLowerCase'(')")
-  "_characters" :: "'a call_expr" ("characters'(')")
-  "_toBoolean" :: "'a call_expr" ("toBoolean'(')")
-  "_toInteger" :: "'a call_expr" ("toInteger'(')")
-  "_toReal" :: "'a call_expr" ("toReal'(')")
-
-  "_concat" :: "'a expr \<Rightarrow> 'a call_expr" ("concat'(_')")
-  "_indexOf" :: "'a expr \<Rightarrow> 'a call_expr" ("indexOf\<^sub>S'(_')")
-  "_equalsIgnoreCase" :: "'a expr \<Rightarrow> 'a call_expr" ("equalsIgnoreCase'(_')")
-  "_at" :: "'a expr \<Rightarrow> 'a call_expr" ("at\<^sub>S'(_')")
-
-  "_substring" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a call_expr" ("substring'(_, _')")
+  "_size" :: "op_name" ("size\<^sub>S")
+  "_toUpperCase" :: "op_name" ("toUpperCase")
+  "_toLowerCase" :: "op_name" ("toLowerCase")
+  "_characters" :: "op_name" ("characters")
+  "_toBoolean" :: "op_name" ("toBoolean")
+  "_toInteger" :: "op_name" ("toInteger")
+  "_toReal" :: "op_name" ("toReal")
+  "_concat" :: "op_name" ("concat")
+  "_indexOf" :: "op_name" ("indexOf\<^sub>S")
+  "_equalsIgnoreCase" :: "op_name" ("equalsIgnoreCase")
+  "_at" :: "op_name" ("at\<^sub>S")
+  "_substring" :: "op_name" ("substring")
 
   \<comment> \<open>Collection Operations\<close>
-  "_collectionSize" :: "'a call_expr" ("size'(')")
-  "_isEmpty" :: "'a call_expr" ("isEmpty'(')")
-  "_notEmpty" :: "'a call_expr" ("notEmpty'(')")
-  "_collectionMax" :: "'a call_expr" ("max'(')")
-  "_collectionMin" :: "'a call_expr" ("min'(')")
-  "_sum" :: "'a call_expr" ("sum'(')")
-  "_asSet" :: "'a call_expr" ("asSet'(')")
-  "_asOrderdSet" :: "'a call_expr" ("asOrderedSet'(')")
-  "_asBag" :: "'a call_expr" ("asBag'(')")
-  "_asSequence" :: "'a call_expr" ("asSequence'(')")
-  "_flatten" :: "'a call_expr" ("flatten'(')")
-  "_first" :: "'a call_expr" ("first'(')")
-  "_last" :: "'a call_expr" ("last'(')")
-  "_reverse" :: "'a call_expr" ("reverse'(')")
-
-  "_includes" :: "'a expr \<Rightarrow> 'a call_expr" ("includes'(_')")
-  "_excludes" :: "'a expr \<Rightarrow> 'a call_expr" ("excludes'(_')")
-  "_count" :: "'a expr \<Rightarrow> 'a call_expr" ("count'(_')")
-  "_includesAll" :: "'a expr \<Rightarrow> 'a call_expr" ("includesAll'(_')")
-  "_excludesAll" :: "'a expr \<Rightarrow> 'a call_expr" ("excludesAll'(_')")
-  "_product" :: "'a expr \<Rightarrow> 'a call_expr" ("product'(_')")
-  "_union" :: "'a expr \<Rightarrow> 'a call_expr" ("union'(_')")
-  "_intersection" :: "'a expr \<Rightarrow> 'a call_expr" ("intersection'(_')")
-  "_setMinus" :: "'a expr \<Rightarrow> 'a call_expr" ("setMinus'(_')")
-  "_symmetricDifference" :: "'a expr \<Rightarrow> 'a call_expr" ("symmetricDifference'(_')")
-  "_including" :: "'a expr \<Rightarrow> 'a call_expr" ("including'(_')")
-  "_excluding" :: "'a expr \<Rightarrow> 'a call_expr" ("excluding'(_')")
-  "_append" :: "'a expr \<Rightarrow> 'a call_expr" ("append'(_')")
-  "_prepend" :: "'a expr \<Rightarrow> 'a call_expr" ("prepend'(_')")
-  "_collectionAt" :: "'a expr \<Rightarrow> 'a call_expr" ("at'(_')")
-  "_collectionIndexOf" :: "'a expr \<Rightarrow> 'a call_expr" ("indexOf'(_')")
-
-  "_insertAt" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a call_expr" ("insertAt'(_, _')")
-  "_subOrderedSet" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a call_expr" ("subOrderedSet'(_, _')")
-  "_subSequence" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a call_expr" ("subSequence'(_, _')")
+  "_collectionSize" :: "op_name" ("size")
+  "_isEmpty" :: "op_name" ("isEmpty")
+  "_notEmpty" :: "op_name" ("notEmpty")
+  "_collectionMax" :: "op_name" ("max")
+  "_collectionMin" :: "op_name" ("min")
+  "_sum" :: "op_name" ("sum")
+  "_asSet" :: "op_name" ("asSet")
+  "_asOrderedSet" :: "op_name" ("asOrderedSet")
+  "_asBag" :: "op_name" ("asBag")
+  "_asSequence" :: "op_name" ("asSequence")
+  "_flatten" :: "op_name" ("flatten")
+  "_first" :: "op_name" ("first")
+  "_last" :: "op_name" ("last")
+  "_reverse" :: "op_name" ("reverse")
+  "_includes" :: "op_name" ("includes")
+  "_excludes" :: "op_name" ("excludes")
+  "_count" :: "op_name" ("count")
+  "_includesAll" :: "op_name" ("includesAll")
+  "_excludesAll" :: "op_name" ("excludesAll")
+  "_product" :: "op_name" ("product")
+  "_union" :: "op_name" ("union")
+  "_intersection" :: "op_name" ("intersection")
+  "_setMinus" :: "op_name" ("setMinus")
+  "_symmetricDifference" :: "op_name" ("symmetricDifference")
+  "_including" :: "op_name" ("including")
+  "_excluding" :: "op_name" ("excluding")
+  "_append" :: "op_name" ("append")
+  "_prepend" :: "op_name" ("prepend")
+  "_collectionAt" :: "op_name" ("at")
+  "_collectionIndexOf" :: "op_name" ("indexOf")
+  "_insertAt" :: "op_name" ("insertAt")
+  "_subOrderedSet" :: "op_name" ("subOrderedSet")
+  "_subSequence" :: "op_name" ("subSequence")
 
 translations
   \<comment> \<open>OclAny Operations\<close>
-  "oclAsSet()" == "CONST Operation (CONST OclAsSetOp) []"
-  "oclIsNew()" == "CONST Operation (CONST OclIsNewOp) []"
-  "oclIsUndefined()" == "CONST Operation (CONST OclIsUndefinedOp) []"
-  "oclIsInvalid()" == "CONST Operation (CONST OclIsInvalidOp) []"
-  "toString()" == "CONST Operation (CONST ToStringOp) []"
-
-  "x \<^bold>= y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST EqualOp) [y])"
-  "x <> y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST NotEqualOp) [y])"
+  "_oclAsSet" == "CONST Operation (CONST OclAsSetOp)"
+  "_oclIsNew" == "CONST Operation (CONST OclIsNewOp)"
+  "_oclIsUndefined" == "CONST Operation (CONST OclIsUndefinedOp)"
+  "_oclIsInvalid" == "CONST Operation (CONST OclIsInvalidOp)"
+  "_toString" == "CONST Operation (CONST ToStringOp)"
+  "_equal x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST EqualOp) [y])"
+  "_notEqual x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST NotEqualOp) [y])"
 
   \<comment> \<open>Boolean Operations\<close>
-  "not x" == "CONST Call x (CONST DotCall) (CONST Operation (CONST NotOp) [])"
-
-  "x and y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST AndOp) [y])"
-  "x or y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST OrOp) [y])"
-  "x xor y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST XorOp) [y])"
-  "x implies y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST ImpliesOp) [y])"
+  "_not x" == "CONST Call x (CONST DotCall) (CONST Operation (CONST NotOp) [])"
+  "_and x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST AndOp) [y])"
+  "_or x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST OrOp) [y])"
+  "_xor x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST XorOp) [y])"
+  "_implies x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST ImpliesOp) [y])"
 
   \<comment> \<open>Numeric Operations\<close>
-  "\<^bold>- x" == "CONST Call x (CONST DotCall) (CONST Operation (CONST UMinusOp) [])"
-  "abs()" == "CONST Operation (CONST AbsOp) []"
-  "floor()" == "CONST Operation (CONST FloorOp) []"
-  "round()" == "CONST Operation (CONST RoundOp) []"
-  "toInteger()" == "CONST Operation (CONST ToIntegerOp) []"
-
-  "x \<^bold>+ y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST PlusOp) [y])"
-  "x \<^bold>- y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MinusOp) [y])"
-  "x \<^bold>* y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MultOp) [y])"
-  "x / y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST DivideOp) [y])"
+  "_uminus x" == "CONST Call x (CONST DotCall) (CONST Operation (CONST UMinusOp) [])"
+  "_absOp" == "CONST Operation (CONST AbsOp)"
+  "_floor" == "CONST Operation (CONST FloorOp)"
+  "_round" == "CONST Operation (CONST RoundOp)"
+  "_toInteger" == "CONST Operation (CONST ToIntegerOp)"
+  "_plus x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST PlusOp) [y])"
+  "_minus x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MinusOp) [y])"
+  "_mult x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MultOp) [y])"
+  "_divide x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST DivideOp) [y])"
 
   \<comment> \<open>String Operations\<close>
-  "size\<^sub>S()" == "CONST Operation (CONST SizeOp) []"
-  "toUpperCase()" == "CONST Operation (CONST ToUpperCaseOp) []"
-  "toLowerCase()" == "CONST Operation (CONST ToLowerCaseOp) []"
-  "characters()" == "CONST Operation (CONST CharactersOp) []"
-  "toBoolean()" == "CONST Operation (CONST ToBooleanOp) []"
-  "toInteger()" == "CONST Operation (CONST ToIntegerOp) []"
-  "toReal()" == "CONST Operation (CONST ToRealOp) []"
-
-  "concat(x)" == "CONST Operation (CONST ConcatOp) [x]"
-  "indexOf\<^sub>S(x)" == "CONST Operation (CONST IndexOfOp) [x]"
-  "equalsIgnoreCase(x)" == "CONST Operation (CONST EqualsIgnoreCaseOp) [x]"
-  "at\<^sub>S(x)" == "CONST Operation (CONST AtOp) [x]"
-
-  "substring(x, y)" == "CONST Operation (CONST SubstringOp) [x, y]"
+  "_size" == "CONST Operation (CONST SizeOp)"
+  "_toUpperCase" == "CONST Operation (CONST ToUpperCaseOp)"
+  "_toLowerCase" == "CONST Operation (CONST ToLowerCaseOp)"
+  "_characters" == "CONST Operation (CONST CharactersOp)"
+  "_toBoolean" == "CONST Operation (CONST ToBooleanOp)"
+  "_toInteger" == "CONST Operation (CONST ToIntegerOp)"
+  "_toReal" == "CONST Operation (CONST ToRealOp)"
+  "_concat" == "CONST Operation (CONST ConcatOp)"
+  "_indexOf" == "CONST Operation (CONST IndexOfOp)"
+  "_equalsIgnoreCase" == "CONST Operation (CONST EqualsIgnoreCaseOp)"
+  "_at" == "CONST Operation (CONST AtOp)"
+  "_substring" == "CONST Operation (CONST SubstringOp)"
 
   \<comment> \<open>Collection Operations\<close>
-  "size()" == "CONST Operation (CONST CollectionSizeOp) []"
-  "isEmpty()" == "CONST Operation (CONST IsEmptyOp) []"
-  "notEmpty()" == "CONST Operation (CONST NotEmptyOp) []"
-  "max()" == "CONST Operation (CONST CollectionMaxOp) []"
-  "min()" == "CONST Operation (CONST CollectionMinOp) []"
-  "sum()" == "CONST Operation (CONST SumOp) []"
-  "asSet()" == "CONST Operation (CONST AsSetOp) []"
-  "asOrderedSet()" == "CONST Operation (CONST AsOrderedSetOp) []"
-  "asBag()" == "CONST Operation (CONST AsBagOp) []"
-  "asSequence()" == "CONST Operation (CONST AsSequenceOp) []"
-  "flatten()" == "CONST Operation (CONST FlattenOp) []"
-  "first()" == "CONST Operation (CONST FirstOp) []"
-  "last()" == "CONST Operation (CONST LastOp) []"
-  "reverse()" == "CONST Operation (CONST ReverseOp) []"
-
-  "includes(x)" == "CONST Operation (CONST IncludesOp) [x]"
-  "excludes(x)" == "CONST Operation (CONST ExcludesOp) [x]"
-  "count(x)" == "CONST Operation (CONST CountOp) [x]"
-  "includesAll(x)" == "CONST Operation (CONST IncludesAllOp) [x]"
-  "excludesAll(x)" == "CONST Operation (CONST ExcludesAllOp) [x]"
-  "product(x)" == "CONST Operation (CONST ProductOp) [x]"
-  "union(x)" == "CONST Operation (CONST UnionOp) [x]"
-  "intersection(x)" == "CONST Operation (CONST IntersectionOp) [x]"
-  "setMinus(x)" == "CONST Operation (CONST SetMinusOp) [x]"
-  "symmetricDifference(x)" == "CONST Operation (CONST SymmetricDifferenceOp) [x]"
-  "including(x)" == "CONST Operation (CONST IncludingOp) [x]"
-  "excluding(x)" == "CONST Operation (CONST ExcludingOp) [x]"
-  "append(x)" == "CONST Operation (CONST AppendOp) [x]"
-  "prepend(x)" == "CONST Operation (CONST PrependOp) [x]"
-  "at(x)" == "CONST Operation (CONST CollectionAtOp) [x]"
-  "indexOf(x)" == "CONST Operation (CONST CollectionIndexOfOp) [x]"
-
-  "insertAt(x, y)" == "CONST Operation (CONST InsertAtOp) [x, y]"
-  "subOrderedSet(x, y)" == "CONST Operation (CONST SubOrderedSetOp) [x, y]"
-  "subSequence(x, y)" == "CONST Operation (CONST SubSequenceOp) [x, y]"
+  "_collectionSize" == "CONST Operation (CONST CollectionSizeOp)"
+  "_isEmpty" == "CONST Operation (CONST IsEmptyOp)"
+  "_notEmpty" == "CONST Operation (CONST NotEmptyOp)"
+  "_collectionMax" == "CONST Operation (CONST CollectionMaxOp)"
+  "_collectionMin" == "CONST Operation (CONST CollectionMinOp)"
+  "_sum" == "CONST Operation (CONST SumOp)"
+  "_asSet" == "CONST Operation (CONST AsSetOp)"
+  "_asOrderedSet" == "CONST Operation (CONST AsOrderedSetOp)"
+  "_asBag" == "CONST Operation (CONST AsBagOp)"
+  "_asSequence" == "CONST Operation (CONST AsSequenceOp)"
+  "_flatten" == "CONST Operation (CONST FlattenOp)"
+  "_first" == "CONST Operation (CONST FirstOp)"
+  "_last" == "CONST Operation (CONST LastOp)"
+  "_reverse" == "CONST Operation (CONST ReverseOp)"
+  "_includes" == "CONST Operation (CONST IncludesOp)"
+  "_excludes" == "CONST Operation (CONST ExcludesOp)"
+  "_count" == "CONST Operation (CONST CountOp)"
+  "_includesAll" == "CONST Operation (CONST IncludesAllOp)"
+  "_excludesAll" == "CONST Operation (CONST ExcludesAllOp)"
+  "_product" == "CONST Operation (CONST ProductOp)"
+  "_union" == "CONST Operation (CONST UnionOp)"
+  "_intersection" == "CONST Operation (CONST IntersectionOp)"
+  "_setMinus" == "CONST Operation (CONST SetMinusOp)"
+  "_symmetricDifference" == "CONST Operation (CONST SymmetricDifferenceOp)"
+  "_including" == "CONST Operation (CONST IncludingOp)"
+  "_excluding" == "CONST Operation (CONST ExcludingOp)"
+  "_append" == "CONST Operation (CONST AppendOp)"
+  "_prepend" == "CONST Operation (CONST PrependOp)"
+  "_collectionAt" == "CONST Operation (CONST CollectionAtOp)"
+  "_collectionIndexOf" == "CONST Operation (CONST CollectionIndexOfOp)"
+  "_insertAt" == "CONST Operation (CONST InsertAtOp)"
+  "_subOrderedSet" == "CONST Operation (CONST SubOrderedSetOp)"
+  "_subSequence" == "CONST Operation (CONST SubSequenceOp)"
 
 subsection \<open>Iterators\<close>
 
@@ -617,50 +636,49 @@ nonterminal iterator_list and typed_iterators and lambda_iterators
 nonterminal iteration_lambda and iterate_lambda
 
 syntax
-  "_iterator" :: "vname \<Rightarrow> iterator_list" ("_")
-  "_iterators" :: "vname \<Rightarrow> iterator_list \<Rightarrow> iterator_list" ("_\<^bold>, _")
-  "_imp_typed_iterators" :: "iterator_list \<Rightarrow> typed_iterators" ("_")
-  "_exp_typed_iterators" :: "iterator_list \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> typed_iterators" ("_ \<^bold>: _")
+  "_iterate" :: "iterate_lambda \<Rightarrow> loop_call" ("iterate('(_'))")
+
+  "_anyIter" :: "iteration_lambda \<Rightarrow> loop_call" ("any('(_'))")
+  "_closureIter" :: "iteration_lambda \<Rightarrow> loop_call" ("closure('(_'))")
+  "_collectIter" :: "iteration_lambda \<Rightarrow> loop_call" ("collect('(_'))")
+  "_collectByIter" :: "iteration_lambda \<Rightarrow> loop_call" ("collectBy('(_'))")
+  "_collectNestedIter" :: "iteration_lambda \<Rightarrow> loop_call" ("collectNested('(_'))")
+  "_existsIter" :: "iteration_lambda \<Rightarrow> loop_call" ("exists('(_'))")
+  "_forAllIter" :: "iteration_lambda \<Rightarrow> loop_call" ("forAll('(_'))")
+  "_oneIter" :: "iteration_lambda \<Rightarrow> loop_call" ("one('(_'))")
+  "_isUniqueIter" :: "iteration_lambda \<Rightarrow> loop_call" ("isUnique('(_'))")
+  "_selectIter" :: "iteration_lambda \<Rightarrow> loop_call" ("select('(_'))")
+  "_rejectIter" :: "iteration_lambda \<Rightarrow> loop_call" ("reject('(_'))")
+  "_sortedByIter" :: "iteration_lambda \<Rightarrow> loop_call" ("'sortedBy('(_'))")
+
+  "_iterate_lambda1" ::
+      "vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda"
+      ("_ = _ | _" [1000,1000,100] 100)
+  "_iterate_lambda2" ::
+      "vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda"
+      ("_ : _ = _ | _" [1000,1000,100,100] 100)
+  "_iterate_lambda3" ::
+      "lambda_iterators \<Rightarrow> vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda"
+      ("_; _ = _ | _" [100,1000,100,100] 100)
+  "_iterate_lambda4" ::
+      "lambda_iterators \<Rightarrow> vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda"
+      ("_; _ : _ = _ | _" [100,1000,1000,100,100] 100)
+
+  "_iteration_lambda1" ::
+      "'a expr \<Rightarrow> iteration_lambda" ("_" [200] 200)
+  "_iteration_lambda2" ::
+      "lambda_iterators \<Rightarrow> 'a expr \<Rightarrow> iteration_lambda" ("_ | _" [200, 200] 200)
+
   "_col_iterators" :: "typed_iterators \<Rightarrow> lambda_iterators" ("_")
   "_map_iterators" :: "typed_iterators \<Rightarrow> typed_iterators \<Rightarrow> lambda_iterators" ("_ <- _")
 
-  "_iterate_lambda1" :: "vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda" ("_ \<^bold>= _ \<^bold>| _")
-  "_iterate_lambda2" :: "vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda" ("_ \<^bold>: _ \<^bold>= _ \<^bold>| _")
-  "_iterate_lambda3" :: "lambda_iterators \<Rightarrow> vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda" ("_\<^bold>; _ \<^bold>= _ \<^bold>| _")
-  "_iterate_lambda4" :: "lambda_iterators \<Rightarrow> vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda" ("_\<^bold>; _ \<^bold>: _ \<^bold>= _ \<^bold>| _")
-  "_iteration_lambda1" :: "'a expr \<Rightarrow> iteration_lambda" ("_")
-  "_iteration_lambda2" :: "lambda_iterators \<Rightarrow> 'a expr \<Rightarrow> iteration_lambda" ("_ \<^bold>| _")
+  "_imp_typed_iterators" :: "iterator_list \<Rightarrow> typed_iterators" ("_")
+  "_exp_typed_iterators" :: "iterator_list \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> typed_iterators" ("_ : _")
 
-  "_iterate" :: "iterate_lambda \<Rightarrow> 'a call_expr" ("iterate'(_')")
-
-  "_anyIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("any'(_')")
-  "_closureIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("closure'(_')")
-  "_collectIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("collect'(_')")
-  "_collectByIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("collectBy'(_')")
-  "_collectNestedIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("collectNested'(_')")
-  "_existsIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("exists'(_')")
-  "_forAllIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("forAll'(_')")
-  "_oneIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("one'(_')")
-  "_isUniqueIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("isUnique'(_')")
-  "_selectIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("select'(_')")
-  "_rejectIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("reject'(_')")
-  "_sortedByIter" :: "iteration_lambda \<Rightarrow> 'a call_expr" ("'sortedBy'(_')")
+  "_iterators" :: "vname \<Rightarrow> iterator_list \<Rightarrow> iterator_list" ("_, _")
+  "_iterator" :: "vname \<Rightarrow> iterator_list" ("_" [1000] 100)
 
 translations
-  "_iterator x" \<rightharpoonup> "[x]"
-  "_iterators x (y # xs)" \<rightharpoonup> "x # y # xs"
-  "_imp_typed_iterators xs" == "CONST Iterators xs CONST None"
-  "_exp_typed_iterators xs t" == "CONST Iterators xs (CONST Some t)"
-  "_col_iterators xs" == "CONST CoIterators xs CONST None"
-  "_map_iterators xs ys" == "CONST CoIterators xs (CONST Some ys)"
-
-  "_iterate_lambda1 acc init body" == "CONST IterateLambda (CONST CoIterators (CONST Iterators [] CONST None) CONST None) acc CONST None init body"
-  "_iterate_lambda2 acc ty init body" == "CONST IterateLambda (CONST CoIterators (CONST Iterators [] CONST None) CONST None) acc (CONST Some ty) init body"
-  "_iterate_lambda3 iters acc init body" == "CONST IterateLambda iters acc CONST None init body"
-  "_iterate_lambda4 iters acc ty init body" == "CONST IterateLambda iters acc (CONST Some ty) init body"
-  "_iteration_lambda1 body" == "CONST NoIteratorsLambda body"
-  "_iteration_lambda2 k body" == "CONST IterationLambda k body"
-
   "_iterate lambda" == "CONST mk_iterate lambda"
 
   "_anyIter lambda" == "CONST mk_iterator (CONST AnyIter) lambda"
@@ -676,41 +694,21 @@ translations
   "_rejectIter lambda" == "CONST mk_iterator (CONST RejectIter) lambda"
   "_sortedByIter lambda" == "CONST mk_iterator (CONST SortedByIter) lambda"
 
-term "src\<^bold>-\<^bold>>any(x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x'' \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x''\<^bold>, STR ''y'' \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x''\<^bold>, STR ''y'' \<^bold>: Real[1] \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x''\<^bold>, STR ''y''\<^bold>, STR ''z'' \<^bold>: Real[1] \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x''\<^bold>, STR ''y'' <- STR ''z''\<^bold>, STR ''w'' \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x''\<^bold>, STR ''y'' <- STR ''z'' \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x''\<^bold>, STR ''y'' \<^bold>: Real[1] <- STR ''z'' \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x''\<^bold>, STR ''y'' \<^bold>: Real[1] <- STR ''z''\<^bold>: Boolean[1] \<^bold>| x \<^bold>= y)"
+  "_iterate_lambda1 acc init body" == "CONST IterateLambda (CONST CoIterators (CONST Iterators [] CONST None) CONST None) acc CONST None init body"
+  "_iterate_lambda2 acc ty init body" == "CONST IterateLambda (CONST CoIterators (CONST Iterators [] CONST None) CONST None) acc (CONST Some ty) init body"
+  "_iterate_lambda3 iters acc init body" == "CONST IterateLambda iters acc CONST None init body"
+  "_iterate_lambda4 iters acc ty init body" == "CONST IterateLambda iters acc (CONST Some ty) init body"
 
-term "src\<^bold>-\<^bold>>iterate(STR ''acc'' \<^bold>= z \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>iterate(STR ''acc'' \<^bold>: Real[1] \<^bold>= z \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>iterate(STR ''x''\<^bold>; STR ''acc'' \<^bold>= z \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>iterate(STR ''x''\<^bold>; STR ''acc'' \<^bold>: Real[1] \<^bold>= z \<^bold>| x \<^bold>= y)"
+  "_iteration_lambda1 body" == "CONST NoIteratorsLambda body"
+  "_iteration_lambda2 k body" == "CONST IterationLambda k body"
 
-term "src\<^bold>-\<^bold>>any(x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x'' \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x'' \<^bold>: Boolean[1] \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x'' <- STR ''y'' \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>any(STR ''x'' <- STR ''y'' \<^bold>: Boolean[1] \<^bold>| x \<^bold>= y)"
-term "src\<^bold>-\<^bold>>closure(STR ''x'' <- STR ''y'' \<^bold>| x \<^bold>= y)"
+  "_col_iterators xs" == "CONST CoIterators xs CONST None"
+  "_map_iterators xs ys" == "CONST CoIterators xs (CONST Some ys)"
 
+  "_imp_typed_iterators xs" == "CONST Iterators xs CONST None"
+  "_exp_typed_iterators xs t" == "CONST Iterators xs (CONST Some t)"
 
-term "x \<^bold>- a / IntegerLiteral 1 \<^bold>+ z"
-
-term "\<tau>\<^bold>.allInstances()"
-term "src\<^bold>.oclAsSet()"
-term "x \<^bold>= y"
-term "src\<^bold>.abs()"
-term "\<^bold>- (src\<^bold>.abs())"
-
-term "TypeOperationCall src ArrowCall SelectByKindOp \<tau>"
-term "Call src k (TypeOperation op ty)"
-term "Call src k (Iterator SelectIter its its_ty body)"
-term "src\<^bold>-\<^bold>>selectByKind(\<tau>)"
-term "src\<^bold>.selectByKind(\<tau>)"
+  "_iterators x (y # xs)" \<rightharpoonup> "x # y # xs"
+  "_iterator x" \<rightharpoonup> "[x]"
 
 end
