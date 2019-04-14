@@ -736,7 +736,7 @@ lemma
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Project[1]::allProjects ( ) : (Set Project[\<^bold>1])[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Project[1]::allProjects() : (Set Project[\<^bold>1])[1]"
   by simp
 
 subsection \<open>Negative Cases\<close>
@@ -776,10 +776,6 @@ values "{(\<D>, end). association_end Employee (Some STR ''projectManager'')
 values "{op. operation Project[1] STR ''membersCount'' [] op}"
 values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
 value "has_literal STR ''E1'' STR ''A''"
-
-text \<open>
-\<^verbatim>\<open>context Employee:
-projects.members : Bag(Employee[1])[1]\<close>\<close>
 values "{\<tau>. \<Gamma>\<^sub>0(self \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>self\<rparr>\<^bold>.projects\<^bold>.members : \<tau>}"
 
 subsection \<open>Negative Cases\<close>

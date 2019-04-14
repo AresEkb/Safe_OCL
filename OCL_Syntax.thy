@@ -395,7 +395,8 @@ syntax
   "_safeDotCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "?." 300)
   "_arrowCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "->" 300)
   "_safeArrowCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "?->" 300)
-  "_staticOpCall" :: "'a expr \<Rightarrow> op_call \<Rightarrow> 'a expr" ("_::_" [1000,1000] 300)
+  "_staticOpCall" :: "'a expr \<Rightarrow> 'b \<Rightarrow> op_args \<Rightarrow> 'a expr" ("_::_('(_'))"  [1000,1000,100] 300)
+  "_staticOpCall_no_args" :: "'a expr \<Rightarrow> 'b \<Rightarrow> 'a expr" ("_::_('('))"  [1000,1000] 300)
 
 translations
   "_dotCall src call" == "CONST Call src (CONST DotCall) call"
@@ -403,6 +404,7 @@ translations
   "_arrowCall src call" == "CONST Call src (CONST ArrowCall) call"
   "_safeArrowCall src call" == "CONST Call src (CONST SafeArrowCall) call"
   "_staticOpCall src op args" == "CONST StaticOperationCall src op args"
+  "_staticOpCall_no_args src op" == "CONST StaticOperationCall src op []"
 
 subsection \<open>Operations\<close>
 
@@ -429,6 +431,9 @@ translations
   "_selectByKind \<tau>" == "CONST TypeOperation (CONST SelectByKindOp) \<tau>"
 
 syntax
+  \<comment> \<open>User-defined Operations\<close>
+  "_user_defined_op" :: "'a \<Rightarrow> op_name" ("_")
+
   \<comment> \<open>OclAny Operations\<close>
   "_oclAsSet" :: "op_name" ("oclAsSet")
   "_oclIsNew" :: "op_name" ("oclIsNew")
@@ -454,7 +459,7 @@ syntax
   "_plus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>+" 265)
   "_minus" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>-" 265)
   "_mult" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>*" 270)
-  "_divide" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>/" 270)
+  "_divide" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>'/" 270)
   "_div" :: "op_name" ("div")
   "_mod" :: "op_name" ("mod")
   "_max" :: "op_name" ("max\<^sub>N")
@@ -514,6 +519,9 @@ syntax
   "_subSequence" :: "op_name" ("subSequence")
 
 translations
+  \<comment> \<open>User-defined Operations\<close>
+  "_user_defined_op op" == "CONST Operation op"
+
   \<comment> \<open>OclAny Operations\<close>
   "_oclAsSet" == "CONST Operation (CONST OclAsSetOp)"
   "_oclIsNew" == "CONST Operation (CONST OclIsNewOp)"

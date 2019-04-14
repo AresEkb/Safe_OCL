@@ -806,24 +806,11 @@ lemma nf_typing_det:
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
-(*
+
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_loop .
 
 code_pred [show_modes] nf_typing .
-*)
-(*
-definition "check_type \<Gamma> expr \<tau> \<equiv>
-  Predicate.eval (nf_typing_i_i_i \<Gamma> expr \<tau>) ()"
 
-definition "synthesize_type \<Gamma> expr \<equiv>
-  Predicate.singleton (\<lambda>_. OclInvalid)
-    (Predicate.map errorable (nf_typing_i_i_o \<Gamma> expr))"
-
-text \<open>
-  It is the only usage of the @{text OclInvalid} type.
-  This type is not required to define typing rules.
-  It is only required to make the typing function total.\<close>
-*)
 end
