@@ -89,6 +89,14 @@ lemmas association_class_end_det = base.association_class_end_det
 lemmas operation_det = base.operation_det
 lemmas static_operation_det = base.static_operation_det
 
+lemmas ocl_object_model_simps =
+  object_model_simps
+  object_model_notation_simps
+  assoc_end_type_def
+  class_assoc_type_def
+  class_assoc_end_type_def
+  oper_type_def
+
 end
 
 end

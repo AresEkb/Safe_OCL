@@ -8,28 +8,6 @@ theory OCL_Examples
   imports OCL_Normalization
 begin
 
-term "src\<^sub>1\<^bold>.call\<^sub>1"
-term "src\<^sub>1 \<^bold>.call\<^sub>1"
-term "src\<^sub>1\<^bold>. call\<^sub>1"
-term "src\<^sub>1?.call\<^sub>1"
-term "src\<^sub>1->call\<^sub>1"
-term "src\<^sub>1?->call\<^sub>1"
-
-
-term "x?.oclAsType(q)"
-term "x?.oclAsType(q)\<^bold>.oclIsTypeOf (q)"
-
-term "x?.oclAsType(q)->oclAsSet( )"
-term "x?.oclAsType(q)->oclAsSet()"
-term "x?.oclAsType(q)->oclAsSet ()"
-term "x?.oclAsType(q)->oclAsSet(z, a)"
-
-term "Set{}"
-term "Set{ }"
-term "Set{null}"
-term "Set{null, Bag{\<^bold>3}, \<^bold>1}"
-term "Set{null, \<^bold>1..\<^bold>2, Sequence{}}"
-
 (*
 instantiation expr :: (type) numeral
 begin
@@ -64,55 +42,6 @@ term "Set{\<^bold>1 .. \<^bold>2, \<^bold>3}"
 
 term "Set Integer[\<^bold>1]"
 *)
-
-term "Map{\<^bold>1 <- StringLiteral ''asd''}"
-
-term "Map{}"
-term "Map{ }"
-term "Map{ \<^bold>1 <- \<^bold>2}"
-term "Map{\<^bold>1 <- \<^bold>2, \<^bold>2 <- \<^bold>3 }"
-term "Map{\<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2, \<^bold>1 <- \<^bold>2}"
-
-
-term "src->any(x \<^bold>= y)"
-term "src->any(STR ''x'' | x \<^bold>= y)"
-term "src->any(STR ''x'', STR ''y'' | x \<^bold>= y)"
-term "src->any(STR ''x'', STR ''y'' : Real[1] | x \<^bold>= y)"
-term "src->any(STR ''x'', STR ''y'', STR ''z'' : Real[1] | x \<^bold>= y)"
-term "src->any(STR ''x'', STR ''y'' <- STR ''z'', STR ''w'' | x \<^bold>= y)"
-term "src->any(STR ''x'', STR ''y'' <- STR ''z'' | x \<^bold>= y)"
-term "src->any(STR ''x'', STR ''y'' : Real[1] <- STR ''z'' | x \<^bold>= y)"
-term "src->any(STR ''x'', STR ''y'' : Real[1] <- STR ''z'': Boolean[1] | x \<^bold>= y)"
-
-term "src->iterate(STR ''acc'' = z | x \<^bold>= y)"
-term "src->iterate(STR ''acc'' : Real[1] = z | x \<^bold>= y)"
-term "src->iterate(STR ''x''; STR ''acc'' = z | x \<^bold>= y)"
-term "src->iterate(STR ''x''; STR ''acc'' : Real[1] = z | x \<^bold>= y)"
-
-term "src->any(x \<^bold>= y)"
-term "src->any(STR ''x'' | x \<^bold>= y)"
-term "src->any(STR ''x'' : Boolean[1] | x \<^bold>= y)"
-term "src->any(STR ''x'' <- STR ''y'' | x \<^bold>= y)"
-term "src->any(STR ''x'' <- STR ''y'' : Boolean[1] | x \<^bold>= y)"
-term "src->closure(STR ''x'' <- STR ''y'' | x \<^bold>= y)"
-
-(*
-term "x \<^bold>- a / IntegerLiteral 1 \<^bold>+ z"
-
-term "src->\<tau>.allInstances()"
-term "src->src.oclAsSet()"
-term "x \<^bold>= y"
-term "src->src.abs()"
-term "\<^bold>- (src\<^bold>.abs())"
-*)
-term "TypeOperationCall src ArrowCall SelectByKindOp \<tau>"
-term "Call src k (TypeOperation op ty)"
-term "Call src k (Iterator SelectIter its its_ty body)"
-term "src->selectByKind(\<tau>)"
-term "src\<^bold>.selectByKind(\<tau>)"
-
-
-
 
 (*** Symbols ****************************************************************)
 
@@ -366,16 +295,6 @@ begin
 definition "classes_classes1 \<equiv>
   {|Object, Person, Employee, Customer, Project, Task, Sprint|}"
 
-
-primrec model_spec_enums where
-  "model_spec_enums [] = []"
-| "model_spec_enums (x # xs) = (case x
-    of EnumSpec enm lits \<Rightarrow> (enm, fset_of_list lits) # (model_spec_enums xs)
-     | _ \<Rightarrow> (model_spec_enums xs))"
-
-definition "model_spec_enum_literals m \<equiv>
-  fmap_of_list (model_spec_enums (model_spec_elements m))"
-
 definition "attributes_classes1 \<equiv> model_spec_attributes model_spec"
 definition "associations_classes1 \<equiv> model_spec_assoc_ens model_spec"
 definition "association_classes_classes1 \<equiv> fmempty :: classes1 \<rightharpoonup>\<^sub>f assoc"
@@ -388,8 +307,7 @@ lemma assoc_end_min_less_eq_max:
    role |\<in>| fmdom ends  \<Longrightarrow>
    fmlookup ends role = Some end \<Longrightarrow>
    assoc_end_min end \<le> assoc_end_max end"
-  unfolding assoc_end_min_def assoc_end_max_def model_spec_assoc_ens_def
-    model_spec_elements_def model_spec_assocs_def model_spec_def
+  unfolding object_model_simps object_model_notation_simps model_spec_def
   using zero_enat_def one_enat_def numeral_eq_enat apply auto
   by (metis enat_ord_number(1) numeral_One one_le_numeral)
 
@@ -425,134 +343,15 @@ lemma ex_alt_simps [simp]:
 
 declare numeral_eq_enat [simp]
 
-lemmas object_model_simps =
-  assoc_end_class_def
-  assoc_end_min_def
-  assoc_end_max_def
-  assoc_end_ordered_def
-  assoc_end_unique_def
-  oper_name_def
-  oper_context_def
-  oper_params_def
-  oper_result_def
-  oper_static_def
-  oper_body_def
-  oper_in_params_def
-  oper_out_params_def
-
-lemmas ocl_object_model_simps =
-  object_model_simps
-  assoc_end_type_def
-  class_assoc_type_def
-  class_assoc_end_type_def
-  oper_type_def
-
+declare ocl_syntax_simps [simp]
 declare ocl_object_model_simps [simp]
+declare ocl_type_helper_simps [simp]
+declare ocl_typing_simps [simp]
+declare ocl_normalization_simps [simp]
 
-
-lemmas type_helpers_simps =
-  collection_type\<^sub>T.simps
-  collection_type\<^sub>N.simps
-  collection_type_left_simps
-  collection_type_right_simps
-  to_unique_collection_type\<^sub>T.simps
-  to_unique_collection_type\<^sub>N.simps
-  to_unique_collection_type.simps
-  to_nonunique_collection_type\<^sub>T.simps
-  to_nonunique_collection_type\<^sub>N.simps
-  to_nonunique_collection_type.simps
-  is_collection_type.simps
-  to_single_type_left_simps
-  update_element_type\<^sub>T.simps
-  update_element_type\<^sub>N.simps
-  update_element_type.simps
-
-declare collection_type\<^sub>T.simps [simp]
-declare collection_type\<^sub>N.simps [simp]
-declare collection_type_left_simps [simp]
-declare collection_type_right_simps [simp]
-
-declare to_unique_collection_type\<^sub>T.simps [simp]
-declare to_unique_collection_type\<^sub>N.simps [simp]
-declare to_unique_collection_type.simps [simp]
-
-declare to_nonunique_collection_type\<^sub>T.simps [simp]
-declare to_nonunique_collection_type\<^sub>N.simps [simp]
-declare to_nonunique_collection_type.simps [simp]
-
-declare is_collection_type.simps [simp]
-declare to_single_type_left_simps [simp]
-
-declare update_element_type\<^sub>T.simps [simp]
-declare update_element_type\<^sub>N.simps [simp]
-declare update_element_type.simps [simp]
-
-(*
-lemma map_type_left_simps:
-  "map_type (ErrorFree \<tau>) \<sigma> \<rho> n =
-   (\<exists>\<upsilon> \<psi>. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
-  "map_type (Errorable \<tau>) \<sigma> \<rho> n =
-   (\<exists>\<upsilon> \<psi>. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
-  "Ex (map_type (ErrorFree \<tau>) \<sigma> \<rho>) =
-   (\<exists>\<upsilon> \<psi> n. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<psi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<psi> n)"
-  "Ex (map_type (Errorable \<tau>) \<sigma> \<rho>) =
-   (\<exists>\<upsilon> \<psi> n. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<psi> \<and> Ex (map_type\<^sub>N \<tau> \<upsilon> \<psi>))"
-  by (auto simp add: map_type.simps) auto
-*)
-declare map_type\<^sub>T.simps [simp]
-(*declare map_type\<^sub>N_left_simps [simp]
-declare map_type_left_simps [simp]*)
-declare map_type\<^sub>N.simps [simp]
-declare map_type.simps [simp]
-
-declare iterable_type.simps [simp]
-declare is_iterable_type.simps [simp]
-
-
-declare op_type_alt_simps [simp]
-declare op_result_type_is_errorable_def [simp]
-
-declare mk_iterate_def [simp]
-declare mk_iterator_def [simp]
-
-declare iterators_def [simp]
-declare coiterators_def [simp]
-
-
-declare normalize_alt_simps [simp]
-declare nf_typing.simps [simp]
-declare typing_alt_simps [simp]
-
-
-declare model_spec_enum_literals_def [simp]
 declare model_spec_def [simp]
 
-(*
-lemma to_nonunique_collection_type_left_simps:
-  "to_nonunique_collection_type (ErrorFree \<tau>) \<sigma> =
-   (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
-  "to_nonunique_collection_type (Errorable \<tau>) \<sigma> =
-   (\<exists>\<rho>. \<sigma> = Errorable \<rho> \<and> to_nonunique_collection_type\<^sub>N \<tau> \<rho>)"
-  by (simp_all add: to_nonunique_collection_type.simps)
-*)
-
-
-
-(*
-lemma iterable_type_left_simps:
-  "iterable_type (ErrorFree \<tau>) \<sigma> =
-   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
-      (collection_type (ErrorFree \<tau>) k \<rho> n \<or>
-       map_type (ErrorFree \<tau>) \<rho> \<upsilon> n))"
-  "iterable_type (Errorable \<tau>) \<sigma> =
-   (\<exists>k \<rho> \<upsilon> n. \<sigma> = \<rho> \<and>
-      (collection_type (Errorable \<tau>) k \<rho> n \<or>
-       map_type (Errorable \<tau>) \<rho> \<upsilon> n))"
-  by (auto simp add: iterable_type.simps; blast)+
-*)
-(*declare iterable_type_left_simps [simp]*)
-
-declare subclass1.intros [intro]
+declare subclass1.simps [simp]
 declare less_classes1_def [simp]
 
 declare literal_to_call_expr_def [simp]
@@ -647,24 +446,6 @@ lemma "\<not> (OrderedSet Boolean[\<^bold>1])[1] < (Set (Boolean[\<^bold>1] :: c
 section \<open>Typing\<close>
 
 subsection \<open>Positive Cases\<close>
-
-(*
-lemma ex_iterable_type_simps:
-  "Ex (iterable_type (ErrorFree \<tau>)) =
-   (\<exists>k \<rho> \<upsilon> n.
-      (collection_type (ErrorFree \<tau>) k \<rho> n \<or>
-       map_type (ErrorFree \<tau>) \<rho> \<upsilon> n))"
-  "Ex (iterable_type (Errorable \<tau>)) =
-   (\<exists>k \<rho> \<upsilon> n.
-      (collection_type (Errorable \<tau>) k \<rho> n \<or>
-       map_type (Errorable \<tau>) \<rho> \<upsilon> n))"
-  by (auto simp add: iterable_type.simps; blast)+
-
-declare ex_iterable_type_simps []
-*)
-
-
-
 
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> Priority\<^bold>:\<^bold>:High : Priority[1]"
@@ -775,12 +556,10 @@ values "{(\<D>, end). association_end Employee (Some STR ''projectManager'')
   STR ''employees'' \<D> end}"
 values "{op. operation Project[1] STR ''membersCount'' [] op}"
 values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
-value "has_literal STR ''E1'' STR ''A''"
 values "{\<tau>. \<Gamma>\<^sub>0(self \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>self\<rparr>\<^bold>.projects\<^bold>.members : \<tau>}"
 
 subsection \<open>Negative Cases\<close>
 
-value "has_literal STR ''E1'' STR ''C''"
 values "{(\<D>, \<tau>). attribute Employee STR ''name2'' \<D> \<tau>}"
 values "{\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}->max() : \<tau>}"
 

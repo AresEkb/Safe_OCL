@@ -352,6 +352,28 @@ lemma to_nonunique_collection_type_and_map_type_distinct:
       to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T.simps
       map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
 
+lemmas ocl_type_helper_simps =
+  collection_type\<^sub>T.simps
+  collection_type\<^sub>N.simps
+  collection_type_left_simps
+  collection_type_right_simps
+  to_unique_collection_type\<^sub>T.simps
+  to_unique_collection_type\<^sub>N.simps
+  to_unique_collection_type.simps
+  to_nonunique_collection_type\<^sub>T.simps
+  to_nonunique_collection_type\<^sub>N.simps
+  to_nonunique_collection_type.simps
+  is_collection_type.simps
+  to_single_type_left_simps
+  update_element_type\<^sub>T.simps
+  update_element_type\<^sub>N.simps
+  update_element_type.simps
+  map_type\<^sub>T.simps
+  map_type\<^sub>N.simps
+  map_type.simps
+  iterable_type.simps
+  is_iterable_type.simps
+
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
@@ -529,27 +551,5 @@ code_pred to_unique_collection_type .
 code_pred to_nonunique_collection_type .
 code_pred to_ordered_collection_type .
 code_pred is_iterable_type .
-(*
-values "{(x, y, n). map_type (Map (Boolean[\<^bold>1] :: nat type\<^sub>N) Integer[\<^bold>?])[1] x y n}"
-values "{(x, y, n). map_type (Map (Boolean[\<^bold>1] :: nat type\<^sub>N) Integer[\<^bold>?])[1!] x y n}"
-values "{(x, y, n). map_type (Map (Boolean[\<^bold>1] :: nat type\<^sub>N) Integer[\<^bold>?])[?] x y n}"
-values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?] False}"
-values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?] True}"
-values "{x. map_type' x (Boolean[1!] :: nat type\<^sub>N\<^sub>E) Integer[?!] True}"
-values "{x. map_type' x (Boolean[1] :: nat type\<^sub>N\<^sub>E) Integer[?!] True}"
 
-values "{(k, x, n). collection_type (Set (Boolean[\<^bold>1] :: nat type\<^sub>N))[1] k x n}"
-values "{(k, x, n). collection_type (Set (Boolean[\<^bold>1] :: nat type\<^sub>N))[?!] k x n}"
-values "{x. collection_type x BagKind (Boolean[?] :: nat type\<^sub>N\<^sub>E) False}"
-values "{x. collection_type x SetKind (Boolean[1!] :: nat type\<^sub>N\<^sub>E) True}"
-
-values "{x. tuple_type' x (fmempty(STR ''a'' \<mapsto>\<^sub>f Boolean[1] :: nat type\<^sub>N\<^sub>E)
-  (STR ''b'' \<mapsto>\<^sub>f Real[1] :: nat type\<^sub>N\<^sub>E)) False}"
-values "{x. tuple_type' x (fmempty(STR ''a'' \<mapsto>\<^sub>f Boolean[1!] :: nat type\<^sub>N\<^sub>E)
-  (STR ''b'' \<mapsto>\<^sub>f Real[?] :: nat type\<^sub>N\<^sub>E)) False}"
-values "{(x, n). tuple_type (Tuple (fmap_of_list
-  [(STR ''a'', Boolean[\<^bold>1] :: nat type\<^sub>N), (STR ''b'', Real[\<^bold>1])]))[1] x n}"
-values "{(x, n). tuple_type (Tuple (fmap_of_list
-  [(STR ''a'', Boolean[\<^bold>1] :: nat type\<^sub>N), (STR ''b'', Real[\<^bold>1])]))[?!] x n}"
-*)
 end

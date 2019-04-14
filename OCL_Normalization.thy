@@ -803,6 +803,10 @@ lemma nf_typing_det:
    \<Gamma> \<turnstile> expr : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
   by (metis nf_typing.cases normalize_det typing_det)
 
+lemmas ocl_normalization_simps =
+  normalize_alt_simps
+  nf_typing.simps
+
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>

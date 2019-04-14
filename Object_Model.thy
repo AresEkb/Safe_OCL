@@ -307,10 +307,21 @@ abbreviation "has_literal \<equiv>
 
 end
 
-declare operation_defined'.simps [simp]
-declare static_operation_defined'.simps [simp]
-
-declare has_literal'.simps [simp]
+lemmas object_model_simps =
+  assoc_end_class_def
+  assoc_end_min_def
+  assoc_end_max_def
+  assoc_end_ordered_def
+  assoc_end_unique_def
+  oper_name_def
+  oper_context_def
+  oper_params_def
+  oper_result_def
+  oper_static_def
+  oper_body_def
+  oper_in_params_def
+  oper_out_params_def
+  has_literal'.simps
 
 (*** Properties *************************************************************)
 
@@ -398,6 +409,12 @@ primrec model_spec_contexts where
     of ContextSpec ctx opers \<Rightarrow> (ctx, opers) # (model_spec_contexts xs)
      | _ \<Rightarrow> (model_spec_contexts xs))"
 
+primrec model_spec_enums where
+  "model_spec_enums [] = []"
+| "model_spec_enums (x # xs) = (case x
+    of EnumSpec enm lits \<Rightarrow> (enm, fset_of_list lits) # (model_spec_enums xs)
+     | _ \<Rightarrow> (model_spec_enums xs))"
+
 definition "model_spec_attributes m \<equiv>
   fmap_of_list (model_spec_classes (model_spec_elements m))"
 
@@ -407,6 +424,15 @@ definition "model_spec_assoc_ens m \<equiv>
 definition "model_spec_operations m \<equiv>
   concat (map (\<lambda>ctx. map (\<lambda>op. (fst ctx, op)) (snd ctx))
       (model_spec_contexts (model_spec_elements m)))"
+
+definition "model_spec_enum_literals m \<equiv>
+  fmap_of_list (model_spec_enums (model_spec_elements m))"
+
+lemmas object_model_notation_simps =
+  model_spec_elements_def
+  model_spec_assocs_def
+  model_spec_assoc_ens_def
+  model_spec_enum_literals_def
 
 nonterminal model_elements and model_element
 

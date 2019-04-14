@@ -1096,6 +1096,13 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>L [] : \<pi>"
 "\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
 
+lemmas ocl_typing_simps =
+  op_type_alt_simps
+  op_result_type_is_errorable_def
+  iterators_def
+  coiterators_def
+  typing_alt_simps
+
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>

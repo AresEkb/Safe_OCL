@@ -719,4 +719,8 @@ translations
   "_iterators x (y # xs)" \<rightharpoonup> "x # y # xs"
   "_iterator x" \<rightharpoonup> "[x]"
 
+lemmas ocl_syntax_simps =
+  mk_iterate_def
+  mk_iterator_def
+
 end
