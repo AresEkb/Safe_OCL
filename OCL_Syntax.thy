@@ -51,46 +51,51 @@ datatype boolean_binop = AndOp | OrOp | XorOp | ImpliesOp
 
 datatype numeric_unop = UMinusOp | AbsOp | FloorOp | RoundOp | ToIntegerOp
 datatype numeric_binop = PlusOp | MinusOp | MultOp | DivideOp
-| DivOp | ModOp | MaxOp | MinOp
-| LessOp | LessEqOp | GreaterOp | GreaterEqOp
+| DivOp | ModOp | NumericMaxOp | NumericMinOp
+| NumericLessOp | NumericLessEqOp | NumericGreaterOp | NumericGreaterEqOp
 
-datatype string_unop = SizeOp | ToUpperCaseOp | ToLowerCaseOp | CharactersOp
+datatype string_unop = StringSizeOp | ToUpperCaseOp | ToLowerCaseOp | CharactersOp
 | ToBooleanOp | ToIntegerOp | ToRealOp
-datatype string_binop = ConcatOp | IndexOfOp | EqualsIgnoreCaseOp | AtOp
-| LessOp | LessEqOp | GreaterOp | GreaterEqOp
+datatype string_binop = ConcatOp | StringIndexOfOp | EqualsIgnoreCaseOp | StringAtOp
+| StringLessOp | StringLessEqOp | StringGreaterOp | StringGreaterEqOp
 datatype string_ternop = SubstringOp
 
-datatype collection_unop = CollectionSizeOp | IsEmptyOp | NotEmptyOp
-| CollectionMaxOp | CollectionMinOp | SumOp
-| AsSetOp | AsOrderedSetOp | AsSequenceOp | AsBagOp | FlattenOp
+datatype iterable_unop = SizeOp | IsEmptyOp | NotEmptyOp
+| MaxOp | MinOp | SumOp
+| AsSetOp | AsOrderedSetOp | AsBagOp | AsSequenceOp | FlattenOp
 | FirstOp | LastOp | ReverseOp
-datatype collection_binop = IncludesOp | ExcludesOp
-| CountOp| IncludesAllOp | ExcludesAllOp | ProductOp
+| KeysOp | ValuesOp
+datatype iterable_binop = CountOp
+| IncludesOp | ExcludesOp | IncludesValueOp | ExcludesValueOp
+| IncludesAllOp | ExcludesAllOp | IncludesMapOp | ExcludesMapOp
+| ProductOp
 | UnionOp | IntersectionOp | SetMinusOp | SymmetricDifferenceOp
 | IncludingOp | ExcludingOp
-| AppendOp | PrependOp | CollectionAtOp | CollectionIndexOfOp
-datatype collection_ternop = InsertAtOp | SubOrderedSetOp | SubSequenceOp
+| IncludingAllOp | ExcludingAllOp | IncludingMapOp | ExcludingMapOp
+| AppendOp | PrependOp | AppendAllOp | PrependAllOp | AtOp | IndexOfOp
+datatype iterable_ternop = InsertAtOp | SubOrderedSetOp | SubSequenceOp
+| IncludesPairOp | ExcludesPairOp| IncludingPairOp | ExcludingPairOp
 
-type_synonym unop = "any_unop + boolean_unop + numeric_unop + string_unop + collection_unop"
+type_synonym unop = "any_unop + boolean_unop + numeric_unop + string_unop + iterable_unop"
 
 declare [[coercion "Inl :: any_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> unop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> unop"]]
-declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> unop"]]
+declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: iterable_unop \<Rightarrow> unop"]]
 
-type_synonym binop = "any_binop + boolean_binop + numeric_binop + string_binop + collection_binop"
+type_synonym binop = "any_binop + boolean_binop + numeric_binop + string_binop + iterable_binop"
 
 declare [[coercion "Inl :: any_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inl :: boolean_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> binop"]]
 declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> binop"]]
-declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_binop \<Rightarrow> binop"]]
+declare [[coercion "Inr \<circ> Inr \<circ> Inr \<circ> Inr :: iterable_binop \<Rightarrow> binop"]]
 
-type_synonym ternop = "string_ternop + collection_ternop"
+type_synonym ternop = "string_ternop + iterable_ternop"
 
 declare [[coercion "Inl :: string_ternop \<Rightarrow> ternop"]]
-declare [[coercion "Inr :: collection_ternop \<Rightarrow> ternop"]]
+declare [[coercion "Inr :: iterable_ternop \<Rightarrow> ternop"]]
 
 type_synonym op = "unop + binop + ternop + oper"
 
@@ -98,16 +103,16 @@ declare [[coercion "Inl \<circ> Inl :: any_unop \<Rightarrow> op"]]
 declare [[coercion "Inl \<circ> Inr \<circ> Inl :: boolean_unop \<Rightarrow> op"]]
 declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_unop \<Rightarrow> op"]]
 declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_unop \<Rightarrow> op"]]
-declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_unop \<Rightarrow> op"]]
+declare [[coercion "Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: iterable_unop \<Rightarrow> op"]]
 
 declare [[coercion "Inr \<circ> Inl \<circ> Inl :: any_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inl :: boolean_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inl :: numeric_binop \<Rightarrow> op"]]
 declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inl :: string_binop \<Rightarrow> op"]]
-declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: collection_binop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inl \<circ> Inr \<circ> Inr \<circ> Inr \<circ> Inr :: iterable_binop \<Rightarrow> op"]]
 
 declare [[coercion "Inr \<circ> Inr \<circ> Inl \<circ> Inl :: string_ternop \<Rightarrow> op"]]
-declare [[coercion "Inr \<circ> Inr \<circ> Inl \<circ> Inr :: collection_ternop \<Rightarrow> op"]]
+declare [[coercion "Inr \<circ> Inr \<circ> Inl \<circ> Inr :: iterable_ternop \<Rightarrow> op"]]
 
 declare [[coercion "Inr \<circ> Inr \<circ> Inr :: oper \<Rightarrow> op"]]
 
@@ -167,7 +172,7 @@ and 'a literal_expr =
 | MapLiteral (map_elements : "('a expr \<times> 'a expr) list")
 and 'a collection_literal_part_expr =
   CollectionItem (item : "'a expr")
-| CollectionRange (first : "'a expr") (last : "'a expr")
+| CollectionRange (range_first : "'a expr") (range_last : "'a expr")
 and 'a call_expr =
   TypeOperation typeop (type : "'a type\<^sub>N\<^sub>E")
 | Attribute attr
@@ -462,15 +467,15 @@ syntax
   "_divide" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infixl "\<^bold>'/" 270)
   "_div" :: "op_name" ("div")
   "_mod" :: "op_name" ("mod")
-  "_max" :: "op_name" ("max\<^sub>N")
-  "_min" :: "op_name" ("min\<^sub>N")
-  "_less" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><" 250)
-  "_lessEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><\<^bold>=" 250)
-  "_greater" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>" 250)
-  "_greaterEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>\<^bold>=" 250)
+  "_numericMax" :: "op_name" ("max\<^sub>N")
+  "_numericMin" :: "op_name" ("min\<^sub>N")
+  "_numericLess" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><" 250)
+  "_numericLessEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><\<^bold>=" 250)
+  "_numericGreater" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>" 250)
+  "_numericGreaterEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>\<^bold>=" 250)
 
   \<comment> \<open>String Operations\<close>
-  "_size" :: "op_name" ("size\<^sub>S")
+  "_stringSize" :: "op_name" ("size\<^sub>S")
   "_toUpperCase" :: "op_name" ("toUpperCase")
   "_toLowerCase" :: "op_name" ("toLowerCase")
   "_characters" :: "op_name" ("characters")
@@ -478,17 +483,21 @@ syntax
   "_toInteger" :: "op_name" ("toInteger")
   "_toReal" :: "op_name" ("toReal")
   "_concat" :: "op_name" ("concat")
-  "_indexOf" :: "op_name" ("indexOf\<^sub>S")
+  "_stringIndexOf" :: "op_name" ("indexOf\<^sub>S")
   "_equalsIgnoreCase" :: "op_name" ("equalsIgnoreCase")
-  "_at" :: "op_name" ("at\<^sub>S")
+  "_stringAt" :: "op_name" ("at\<^sub>S")
+  "_stringLess" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><\<^sub>S" 250)
+  "_stringLessEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold><\<^bold>=\<^sub>S" 250)
+  "_stringGreater" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>\<^sub>S" 250)
+  "_stringGreaterEq" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> 'a expr" (infix "\<^bold>>\<^bold>=\<^sub>S" 250)
   "_substring" :: "op_name" ("substring")
 
-  \<comment> \<open>Collection Operations\<close>
-  "_collectionSize" :: "op_name" ("size")
+  \<comment> \<open>Iterable Operations\<close>
+  "_size" :: "op_name" ("size")
   "_isEmpty" :: "op_name" ("isEmpty")
   "_notEmpty" :: "op_name" ("notEmpty")
-  "_collectionMax" :: "op_name" ("max")
-  "_collectionMin" :: "op_name" ("min")
+  "_max" :: "op_name" ("max")
+  "_min" :: "op_name" ("min")
   "_sum" :: "op_name" ("sum")
   "_asSet" :: "op_name" ("asSet")
   "_asOrderedSet" :: "op_name" ("asOrderedSet")
@@ -498,11 +507,17 @@ syntax
   "_first" :: "op_name" ("first")
   "_last" :: "op_name" ("last")
   "_reverse" :: "op_name" ("reverse")
+  "_keys" :: "op_name" ("keys")
+  "_values" :: "op_name" ("values")
+  "_count" :: "op_name" ("count")
   "_includes" :: "op_name" ("includes")
   "_excludes" :: "op_name" ("excludes")
-  "_count" :: "op_name" ("count")
+  "_includesValue" :: "op_name" ("includesValue")
+  "_excludesValue" :: "op_name" ("excludesValue")
   "_includesAll" :: "op_name" ("includesAll")
   "_excludesAll" :: "op_name" ("excludesAll")
+  "_includesMap" :: "op_name" ("includesMap")
+  "_excludesMap" :: "op_name" ("excludesMap")
   "_product" :: "op_name" ("product")
   "_union" :: "op_name" ("union")
   "_intersection" :: "op_name" ("intersection")
@@ -510,13 +525,23 @@ syntax
   "_symmetricDifference" :: "op_name" ("symmetricDifference")
   "_including" :: "op_name" ("including")
   "_excluding" :: "op_name" ("excluding")
+  "_includingAll" :: "op_name" ("includingAll")
+  "_excludingAll" :: "op_name" ("excludingAll")
+  "_includingMap" :: "op_name" ("includingMap")
+  "_excludingMap" :: "op_name" ("excludingMap")
   "_append" :: "op_name" ("append")
   "_prepend" :: "op_name" ("prepend")
-  "_collectionAt" :: "op_name" ("at")
-  "_collectionIndexOf" :: "op_name" ("indexOf")
+  "_appendAll" :: "op_name" ("appendAll")
+  "_prependAll" :: "op_name" ("prependAll")
+  "_at" :: "op_name" ("at")
+  "_indexOf" :: "op_name" ("indexOf")
   "_insertAt" :: "op_name" ("insertAt")
   "_subOrderedSet" :: "op_name" ("subOrderedSet")
   "_subSequence" :: "op_name" ("subSequence")
+  "_includesPair" :: "op_name" ("includes\<^sub>P")
+  "_excludesPair" :: "op_name" ("excludes\<^sub>P")
+  "_includingPair" :: "op_name" ("including\<^sub>P")
+  "_excludingPair" :: "op_name" ("excluding\<^sub>P")
 
 translations
   \<comment> \<open>User-defined Operations\<close>
@@ -548,9 +573,17 @@ translations
   "_minus x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MinusOp) [y])"
   "_mult x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MultOp) [y])"
   "_divide x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST DivideOp) [y])"
+  "_div" == "CONST Operation (CONST DivOp)"
+  "_mod" == "CONST Operation (CONST ModOp)"
+  "_numericMax" == "CONST Operation (CONST NumericMaxOp)"
+  "_numericMin" == "CONST Operation (CONST NumericMinOp)"
+  "_numericLess" == "CONST Operation (CONST NumericLessOp)"
+  "_numericLessEq" == "CONST Operation (CONST NumericLessEqOp)"
+  "_numericGreater" == "CONST Operation (CONST NumericGreaterOp)"
+  "_numericGreaterEq" == "CONST Operation (CONST NumericGreaterEqOp)"
 
   \<comment> \<open>String Operations\<close>
-  "_size" == "CONST Operation (CONST SizeOp)"
+  "_stringSize" == "CONST Operation (CONST StringSizeOp)"
   "_toUpperCase" == "CONST Operation (CONST ToUpperCaseOp)"
   "_toLowerCase" == "CONST Operation (CONST ToLowerCaseOp)"
   "_characters" == "CONST Operation (CONST CharactersOp)"
@@ -558,17 +591,21 @@ translations
   "_toInteger" == "CONST Operation (CONST ToIntegerOp)"
   "_toReal" == "CONST Operation (CONST ToRealOp)"
   "_concat" == "CONST Operation (CONST ConcatOp)"
-  "_indexOf" == "CONST Operation (CONST IndexOfOp)"
+  "_stringIndexOf" == "CONST Operation (CONST StringIndexOfOp)"
   "_equalsIgnoreCase" == "CONST Operation (CONST EqualsIgnoreCaseOp)"
-  "_at" == "CONST Operation (CONST AtOp)"
+  "_stringAt" == "CONST Operation (CONST StringAtOp)"
+  "_stringLess" == "CONST Operation (CONST StringLessOp)"
+  "_stringLessEq" == "CONST Operation (CONST StringLessEqOp)"
+  "_stringGreater" == "CONST Operation (CONST StringGreaterOp)"
+  "_stringGreaterEq" == "CONST Operation (CONST StringGreaterEqOp)"
   "_substring" == "CONST Operation (CONST SubstringOp)"
 
-  \<comment> \<open>Collection Operations\<close>
-  "_collectionSize" == "CONST Operation (CONST CollectionSizeOp)"
+  \<comment> \<open>Iterable Operations\<close>
+  "_size" == "CONST Operation (CONST SizeOp)"
   "_isEmpty" == "CONST Operation (CONST IsEmptyOp)"
   "_notEmpty" == "CONST Operation (CONST NotEmptyOp)"
-  "_collectionMax" == "CONST Operation (CONST CollectionMaxOp)"
-  "_collectionMin" == "CONST Operation (CONST CollectionMinOp)"
+  "_max" == "CONST Operation (CONST MaxOp)"
+  "_min" == "CONST Operation (CONST MinOp)"
   "_sum" == "CONST Operation (CONST SumOp)"
   "_asSet" == "CONST Operation (CONST AsSetOp)"
   "_asOrderedSet" == "CONST Operation (CONST AsOrderedSetOp)"
@@ -578,11 +615,17 @@ translations
   "_first" == "CONST Operation (CONST FirstOp)"
   "_last" == "CONST Operation (CONST LastOp)"
   "_reverse" == "CONST Operation (CONST ReverseOp)"
+  "_keys" == "CONST Operation (CONST KeysOp)"
+  "_values" == "CONST Operation (CONST ValuesOp)"
+  "_count" == "CONST Operation (CONST CountOp)"
   "_includes" == "CONST Operation (CONST IncludesOp)"
   "_excludes" == "CONST Operation (CONST ExcludesOp)"
-  "_count" == "CONST Operation (CONST CountOp)"
+  "_includesValue" == "CONST Operation (CONST IncludesValueOp)"
+  "_excludesValue" == "CONST Operation (CONST ExcludesValueOp)"
   "_includesAll" == "CONST Operation (CONST IncludesAllOp)"
   "_excludesAll" == "CONST Operation (CONST ExcludesAllOp)"
+  "_includesMap" == "CONST Operation (CONST IncludesMapOp)"
+  "_excludesMap" == "CONST Operation (CONST ExcludesMapOp)"
   "_product" == "CONST Operation (CONST ProductOp)"
   "_union" == "CONST Operation (CONST UnionOp)"
   "_intersection" == "CONST Operation (CONST IntersectionOp)"
@@ -590,13 +633,23 @@ translations
   "_symmetricDifference" == "CONST Operation (CONST SymmetricDifferenceOp)"
   "_including" == "CONST Operation (CONST IncludingOp)"
   "_excluding" == "CONST Operation (CONST ExcludingOp)"
+  "_includingAll" == "CONST Operation (CONST IncludingAllOp)"
+  "_excludingAll" == "CONST Operation (CONST ExcludingAllOp)"
+  "_includingMap" == "CONST Operation (CONST IncludingMapOp)"
+  "_excludingMap" == "CONST Operation (CONST ExcludingMapOp)"
   "_append" == "CONST Operation (CONST AppendOp)"
   "_prepend" == "CONST Operation (CONST PrependOp)"
-  "_collectionAt" == "CONST Operation (CONST CollectionAtOp)"
-  "_collectionIndexOf" == "CONST Operation (CONST CollectionIndexOfOp)"
+  "_appendAll" == "CONST Operation (CONST AppendAllOp)"
+  "_prependAll" == "CONST Operation (CONST PrependAllOp)"
+  "_at" == "CONST Operation (CONST AtOp)"
+  "_indexOf" == "CONST Operation (CONST IndexOfOp)"
   "_insertAt" == "CONST Operation (CONST InsertAtOp)"
   "_subOrderedSet" == "CONST Operation (CONST SubOrderedSetOp)"
   "_subSequence" == "CONST Operation (CONST SubSequenceOp)"
+  "_includesPair" == "CONST Operation (CONST IncludesPairOp)"
+  "_excludesPair" == "CONST Operation (CONST ExcludesPairOp)"
+  "_includingPair" == "CONST Operation (CONST IncludingPairOp)"
+  "_excludingPair" == "CONST Operation (CONST ExcludingPairOp)"
 
 subsection \<open>Iterators\<close>
 

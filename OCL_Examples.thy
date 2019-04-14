@@ -338,6 +338,8 @@ lemma ex_alt_simps [simp]:
   "\<exists>a. \<not> a"
   "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
   "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
+  "(\<exists>a. \<not> a \<and> P \<and> \<not> a) = P"
+  "(\<exists>a. a \<and> P \<and> \<not> a) = False"
   "(\<forall>x. x) = False"
   by auto
 
@@ -471,6 +473,26 @@ lemma
   "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null} : (Sequence Integer[\<^bold>?])[1]"
   by simp
 
+(*values "{x. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}\<^bold>.oclIsUndefined() : x}"*)
+
+(*
+lemma map_type_right_simps:
+  "map_type \<tau> (ErrorFree \<sigma>) (ErrorFree \<rho>) n =
+   (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> map_type\<^sub>N \<rho> k \<sigma> n)"
+  "map_type \<tau> k (Errorable \<sigma>) n =
+   (\<exists>\<rho>. \<tau> = Errorable \<rho> \<and> map_type\<^sub>N \<rho> k \<sigma> n)"
+  by (auto simp: map_type.simps)
+*)
+(*
+lemma map_type_left_simps2:
+  "Ex (map_type (ErrorFree \<tau>) \<sigma> \<rho>) =
+   (\<exists>\<upsilon> \<phi> n. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
+  "Ex (map_type (Errorable \<tau>) \<sigma> \<rho>) =
+   (\<exists>\<upsilon> \<phi> n. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
+  using ocl_type_helper_simps(23) apply blast
+  using ocl_type_helper_simps(24) apply blast
+  done
+*)
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}\<^bold>.oclIsUndefined() : (Sequence Boolean[\<^bold>1])[1]"
   by simp

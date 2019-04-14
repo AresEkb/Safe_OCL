@@ -92,6 +92,11 @@ inductive tuple_type' where
    fBex (fmran \<pi>) errorable_type \<Longrightarrow>
    tuple_type' (Errorable \<tau>) \<pi> n"
 
+abbreviation "required_tuple_type \<tau> \<pi> \<equiv> tuple_type \<tau> \<pi> False"
+abbreviation "optional_tuple_type \<tau> \<pi> \<equiv> tuple_type \<tau> \<pi> True"
+abbreviation "required_tuple_type' \<tau> \<pi> \<equiv> tuple_type' \<tau> \<pi> False"
+abbreviation "optional_tuple_type' \<tau> \<pi> \<equiv> tuple_type' \<tau> \<pi> True"
+
 subsection \<open>Collection Types\<close>
 
 inductive collection_type\<^sub>T where
@@ -245,18 +250,26 @@ inductive map_type' where
 | "map_type\<^sub>N \<tau> \<sigma> \<rho> n \<Longrightarrow>
    map_type' (Errorable \<tau>) (Errorable \<sigma>) (Errorable \<rho>) n"
 
+abbreviation "required_map_type \<tau> \<sigma> \<rho> \<equiv> map_type \<tau> \<sigma> \<rho> False"
+abbreviation "optional_map_type \<tau> \<sigma> \<rho> \<equiv> map_type \<tau> \<sigma> \<rho> True"
+abbreviation "required_map_type' \<tau> \<sigma> \<rho> \<equiv> map_type' \<tau> \<sigma> \<rho> False"
+abbreviation "optional_map_type' \<tau> \<sigma> \<rho> \<equiv> map_type' \<tau> \<sigma> \<rho> True"
+
 subsection \<open>Iterable Types\<close>
 
 inductive iterable_type where
-  "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
-   iterable_type \<tau> \<sigma>"
-| "map_type \<tau> \<sigma> _ _ \<Longrightarrow>
-   iterable_type \<tau> \<sigma>"
+  "collection_type \<tau> _ \<sigma> n \<Longrightarrow>
+   iterable_type \<tau> \<sigma> n"
+| "map_type \<tau> \<sigma> _ n \<Longrightarrow>
+   iterable_type \<tau> \<sigma> n"
 
 inductive is_iterable_type where
-  "iterable_type \<tau> _ \<Longrightarrow> is_iterable_type \<tau>"
+  "iterable_type \<tau> _ _ \<Longrightarrow> is_iterable_type \<tau>"
 
 abbreviation "non_iterable_type \<tau> \<equiv> \<not> is_iterable_type \<tau>"
+
+abbreviation "required_iterable_type \<tau> \<sigma> \<equiv> iterable_type \<tau> \<sigma> False"
+abbreviation "optional_iterable_type \<tau> \<sigma> \<equiv> iterable_type \<tau> \<sigma> True"
 
 subsection \<open>Nullable and Null-free Types\<close>
 
@@ -351,7 +364,14 @@ lemma to_nonunique_collection_type_and_map_type_distinct:
   by (auto simp: to_nonunique_collection_type.simps
       to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T.simps
       map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
-
+(*
+lemma map_type_left_simps:
+  "map_type (ErrorFree \<tau>) \<sigma> \<rho> n =
+   (\<exists>\<upsilon> \<phi>. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
+  "map_type (Errorable \<tau>) \<sigma> \<rho> n =
+   (\<exists>\<upsilon> \<phi>. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
+  by (simp_all add: map_type.simps)
+*)
 lemmas ocl_type_helper_simps =
   collection_type\<^sub>T.simps
   collection_type\<^sub>N.simps
@@ -528,10 +548,11 @@ lemma map_type_det:
 
 
 lemma iterable_type_det:
-  "iterable_type \<tau> \<sigma> \<Longrightarrow>
-   iterable_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
+  "iterable_type \<tau> \<sigma> n\<^sub>1 \<Longrightarrow>
+   iterable_type \<tau> \<rho> n\<^sub>2 \<Longrightarrow> \<sigma> = \<rho> \<and> n\<^sub>1 = n\<^sub>2"
   apply (auto simp add: iterable_type.simps collection_type_det(1) map_type_det(1))
-  using collection_type_and_map_type_distinct by blast+
+  using collection_type_det collection_type_and_map_type_distinct apply blast+
+  using map_type_det(1) by blast+
 
 (*** Code Setup *************************************************************)
 
