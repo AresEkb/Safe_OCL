@@ -96,10 +96,10 @@ proof (rule fmap_ext)
     P\<^sup>*\<^sup>* a b \<Longrightarrow> P b a \<or> a = b \<Longrightarrow> a = b"
     by (meson Nitpick.tranclp_unfold fmran'I rtranclp_into_tranclp1)
   moreover from fmdom_eq assms(2) have "fmrel P\<^sup>*\<^sup>* xm ym"
-    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    unfolding fmrel_on_fset_fmrel_restrict apply simp
     by (metis fmrestrict_fset_dom)
   moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. P x y \<or> x = y) ym xm"
-    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    unfolding fmrel_on_fset_fmrel_restrict apply simp
     by (metis fmrestrict_fset_dom)
   ultimately show "fmlookup xm x = fmlookup ym x"
     apply (erule_tac ?x="x" in fmrel_cases)
@@ -122,10 +122,10 @@ proof (rule fmap_ext)
     P\<^sup>*\<^sup>* a b \<Longrightarrow> P b a \<or> a = b \<Longrightarrow> a = b"
     by (meson Nitpick.tranclp_unfold fmran'I rtranclp_into_tranclp2)
   moreover from fmdom_eq assms(2) have "fmrel P\<^sup>*\<^sup>* xm ym"
-    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    unfolding fmrel_on_fset_fmrel_restrict apply simp
     by (metis fmrestrict_fset_dom)
   moreover from fmdom_eq assms(3) have "fmrel (\<lambda>x y. P x y \<or> x = y) ym xm"
-    unfolding fmrel_on_fset_fmrel_restrict apply auto
+    unfolding fmrel_on_fset_fmrel_restrict apply simp
     by (metis fmrestrict_fset_dom)
   ultimately show "fmlookup xm x = fmlookup ym x"
     apply (erule_tac ?x="x" in fmrel_cases)

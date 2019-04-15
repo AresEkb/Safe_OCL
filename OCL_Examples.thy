@@ -344,6 +344,7 @@ lemma ex_alt_simps [simp]:
   by auto
 
 declare numeral_eq_enat [simp]
+declare fmrel_on_fset_alt_def [simp]
 
 declare ocl_syntax_simps [simp]
 declare ocl_object_model_simps [simp]
@@ -430,8 +431,8 @@ lemma "(Collection Real[\<^bold>?])[1] < (OclAny[1] :: classes1 type\<^sub>N\<^s
 lemma "(Set (Collection Boolean[\<^bold>1])[\<^bold>1])[1] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)" by simp
 lemma "(Set (Bag Boolean[\<^bold>1])[\<^bold>1])[1] < (Set (Collection (Boolean[\<^bold>?] :: classes1 type\<^sub>N))[\<^bold>1])[?]"
   by simp
-lemma "(Tuple (fmap_of_list [(STR ''a'', Boolean[\<^bold>1]), (STR ''b'', Integer[\<^bold>1])]))[1] <
-       (Tuple (fmap_of_list [(STR ''a'', Boolean[\<^bold>?] :: classes1 type\<^sub>N)]))[1!]" by code_simp
+lemma "Tuple(STR ''a'' : Boolean[\<^bold>1], STR ''b'' : Integer[\<^bold>1])[1] <
+       Tuple(STR ''a'' : Boolean[\<^bold>?] :: classes1 type\<^sub>N)[1!]" by simp
 
 lemma "Integer[1] \<squnion> (Real[?] :: classes1 type\<^sub>N\<^sub>E) = Real[?]" by simp
 lemma "Set Integer[\<^bold>1] \<squnion> Set (Real[\<^bold>1] :: classes1 type\<^sub>N) = Set Real[\<^bold>1]" by simp
@@ -473,26 +474,6 @@ lemma
   "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null} : (Sequence Integer[\<^bold>?])[1]"
   by simp
 
-(*values "{x. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}\<^bold>.oclIsUndefined() : x}"*)
-
-(*
-lemma map_type_right_simps:
-  "map_type \<tau> (ErrorFree \<sigma>) (ErrorFree \<rho>) n =
-   (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> map_type\<^sub>N \<rho> k \<sigma> n)"
-  "map_type \<tau> k (Errorable \<sigma>) n =
-   (\<exists>\<rho>. \<tau> = Errorable \<rho> \<and> map_type\<^sub>N \<rho> k \<sigma> n)"
-  by (auto simp: map_type.simps)
-*)
-(*
-lemma map_type_left_simps2:
-  "Ex (map_type (ErrorFree \<tau>) \<sigma> \<rho>) =
-   (\<exists>\<upsilon> \<phi> n. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
-  "Ex (map_type (Errorable \<tau>) \<sigma> \<rho>) =
-   (\<exists>\<upsilon> \<phi> n. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
-  using ocl_type_helper_simps(23) apply blast
-  using ocl_type_helper_simps(24) apply blast
-  done
-*)
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}\<^bold>.oclIsUndefined() : (Sequence Boolean[\<^bold>1])[1]"
   by simp
@@ -573,6 +554,9 @@ section \<open>Code\<close>
 subsection \<open>Positive Cases\<close>
 
 values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
+(* TODO: Тут ошибка. Потому, что если выражение имеет тип,
+   то должно иметь и значение. А, нет норм для 1-го варианта
+   будут все значения без фильтрации. Но это нужно явно отметить *)
 values "{(\<D>, end). association_end Employee None STR ''employees'' \<D> end}"
 values "{(\<D>, end). association_end Employee (Some STR ''projectManager'')
   STR ''employees'' \<D> end}"

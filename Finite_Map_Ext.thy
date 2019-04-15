@@ -93,9 +93,10 @@ proof -
       by (metis fmran'I fmrel_on_fsetD option.rel_inject(2))
     ultimately have
       "rel_option f (fmlookup (fmmerge g xm ym) x) (fmlookup zm x)"
-      unfolding fmmerge_def fmlookup_of_list apply auto
+      unfolding fmmerge_def fmlookup_of_list apply simp
       unfolding option_rel_Some2 apply (rule_tac ?x="g a b" in exI)
-      by (auto simp add: map_of_map_restrict fmdom.rep_eq domI)
+      unfolding map_of_map_restrict restrict_map_def
+      by (auto simp: fmember.rep_eq)
   }
   with assms(2) assms(3) show ?thesis
     by (meson fmdomE fmrel_on_fsetI fmrel_on_fset_fmdom)
@@ -111,12 +112,12 @@ proof -
        and "fmlookup xm x = Some a"
        and "fmlookup ym x = Some b"
     hence "rel_option f (fmlookup xm x) (fmlookup (fmmerge g xm ym) x)"
-      unfolding fmmerge_def fmlookup_of_list apply auto
+      unfolding fmmerge_def fmlookup_of_list apply simp
       unfolding option_rel_Some1 apply (rule_tac ?x="g a b" in exI)
       by (auto simp add: map_of_map_restrict fmember.rep_eq assms fmran'I)
   }
   with assms show ?thesis
-    apply auto
+    apply simp
     apply (rule fmrel_on_fsetI)
     by (metis (full_types) finterD1 fmdomE fmdom_fmmerge fmdom_notD rel_option_None2)
 qed
@@ -194,7 +195,7 @@ lemma fmrel_on_fset_trans:
    fmrel_on_fset (fmdom zm) Q ym zm \<Longrightarrow>
    fmrel_on_fset (fmdom zm) R xm zm"
   apply (rule fmrel_on_fsetI)
-  unfolding option.rel_sel apply auto
+  unfolding option.rel_sel apply simp
   apply (meson fmdom_notI fmrel_on_fset_fmdom)
   by (metis fmdom_notI fmran'I fmrel_on_fsetD fmrel_on_fset_fmdom
             option.rel_sel option.sel)
@@ -224,11 +225,11 @@ lemma fmupd_fmdrop:
 
 lemma fmap_eqdom_Cons1:
   assumes "fmlookup xm i = None"
-      and "fmdom (fmupd i x xm) = fmdom ym"  
-      and "fmrel R (fmupd i x xm) ym" 
+      and "fmdom (fmupd i x xm) = fmdom ym"
+      and "fmrel R (fmupd i x xm) ym"
     shows "(\<exists>z zm. fmlookup zm i = None \<and> ym = (fmupd i z zm) \<and>
                    R x z \<and> fmrel R xm zm)"
-proof - 
+proof -
   from assms(2) obtain y where "fmlookup ym i = Some y" by force
   then obtain z zm where z_zm: "ym = fmupd i z zm \<and> fmlookup zm i = None"
     using fmupd_fmdrop by force
@@ -240,7 +241,7 @@ proof -
   with assms(3) moreover have "R x z" by auto
   {
     assume "\<not> fmrel R xm zm"
-    with assms(1) have "\<not> fmrel R (fmupd i x xm) ym" 
+    with assms(1) have "\<not> fmrel R (fmupd i x xm) ym"
       by (metis fmrel_iff fmupd_lookup option.rel_sel z_zm)
   }
   with assms(3) moreover have "fmrel R xm zm" by auto
@@ -257,9 +258,9 @@ lemma fmap_eqdom_induct [consumes 2, case_names nil step]:
   assumes R: "fmrel R xm ym"
     and dom_eq: "fmdom xm = fmdom ym"
     and nil: "P (fmap_of_list []) (fmap_of_list [])"
-    and step: 
-    "\<And>x xm y ym i. 
-    \<lbrakk>R x y; fmrel R xm ym; fmdom xm = fmdom ym; P xm ym\<rbrakk> \<Longrightarrow> 
+    and step:
+    "\<And>x xm y ym i.
+    \<lbrakk>R x y; fmrel R xm ym; fmdom xm = fmdom ym; P xm ym\<rbrakk> \<Longrightarrow>
     P (fmupd i x xm) (fmupd i y ym)"
   shows "P xm ym"
   using R dom_eq
@@ -327,7 +328,7 @@ proof -
         case (step ya za) show ?case
         proof -
           from step.hyps(2) as_r have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)"
-            by (simp add: fmrel_upd r_into_rtranclp reflp_def) 
+            by (simp add: fmrel_upd r_into_rtranclp reflp_def)
           with step.hyps(3) show ?thesis by simp
         qed
       qed
@@ -394,7 +395,7 @@ text \<open>
 abbreviation "tcf \<equiv> (\<lambda> v::('a \<times> nat). (\<lambda> r::nat. snd v + r))"
 
 interpretation tcf: comp_fun_commute tcf
-proof 
+proof
   fix x y :: "'a \<times> nat"
   show "tcf y \<circ> tcf x = tcf x \<circ> tcf y"
   proof -
@@ -409,7 +410,7 @@ qed
 lemma ffold_rec_exp:
   assumes "k |\<in>| fmdom x"
     and "ky = (k, the (fmlookup (fmmap f x) k))"
-  shows "ffold tcf 0 (fset_of_fmap (fmmap f x)) = 
+  shows "ffold tcf 0 (fset_of_fmap (fmmap f x)) =
         tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap f x)) |-| {|ky|}))"
 proof -
   have "ky |\<in>| (fset_of_fmap (fmmap f x))"
