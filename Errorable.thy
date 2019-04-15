@@ -176,4 +176,13 @@ primrec to_errorable_type where
   "to_errorable_type (ErrorFree \<tau>) = (Errorable \<tau>)"
 | "to_errorable_type (Errorable \<tau>) = (Errorable \<tau>)"
 
+
+lemma unwrap_errorable_type_ErrorFree [simp]:
+  "unwrap_errorable_type \<circ> ErrorFree = id"
+  using comp_def by auto
+
+lemma unwrap_errorable_type_Errorable [simp]:
+  "unwrap_errorable_type \<circ> Errorable = id"
+  using comp_def by auto
+
 end

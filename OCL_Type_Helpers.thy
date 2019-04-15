@@ -323,6 +323,40 @@ abbreviation "to_optional_type_nested \<equiv> map_errorable to_optional_type_ne
 
 section \<open>Misc Properties\<close>
 
+lemma tuple_type_implies_tuple_type':
+  "tuple_type \<tau> \<pi> n \<Longrightarrow> \<pi> \<noteq> fmempty \<Longrightarrow> tuple_type' \<tau> \<pi> n"
+  apply (erule tuple_type.cases;
+         simp add: tuple_type'.simps fmap.map_comp fmap.map_id0)
+  using not_fmempty_eq_fmran_not_fempty by fastforce
+
+lemma tuple_type'_implies_ex_tuple_type:
+  "tuple_type' \<tau> \<pi> n \<Longrightarrow> \<exists>\<xi>. tuple_type \<tau> \<xi> n"
+  by (erule tuple_type'.cases; auto simp add: tuple_type.simps)
+
+lemma tuple_type\<^sub>T_sup:
+  "tuple_type\<^sub>T \<tau> \<pi> \<Longrightarrow>
+   tuple_type\<^sub>T \<sigma> \<xi> \<Longrightarrow>
+   tuple_type\<^sub>T (\<tau> \<squnion> \<sigma>) (fmmerge (\<squnion>) \<pi> \<xi>)"
+  for \<tau> \<sigma> :: "('a :: semilattice_sup) type"
+  by (simp add: tuple_type\<^sub>T.simps)
+
+lemma tuple_type\<^sub>N_sup:
+  "tuple_type\<^sub>N \<tau> \<pi> n \<Longrightarrow>
+   tuple_type\<^sub>N \<sigma> \<xi> n \<Longrightarrow>
+   tuple_type\<^sub>N (\<tau> \<squnion> \<sigma>) (fmmerge (\<squnion>) \<pi> \<xi>) n"
+  for \<tau> \<sigma> :: "('a :: semilattice_sup) type\<^sub>N"
+  by (auto simp add: tuple_type\<^sub>N.simps tuple_type\<^sub>T.simps)
+
+(* TODO: Show a concrete value of \<pi> *)
+lemma tuple_type_sup:
+  "tuple_type \<tau> \<pi> n \<Longrightarrow>
+   tuple_type \<sigma> \<xi> n \<Longrightarrow>
+   \<exists>\<pi>. tuple_type (\<tau> \<squnion> \<sigma>) \<pi> n"
+  for \<tau> \<sigma> :: "('a :: semilattice_sup) type\<^sub>N\<^sub>E"
+  by (cases \<tau>; cases \<sigma>; auto simp add: tuple_type.simps
+      tuple_type\<^sub>N.simps tuple_type\<^sub>T.simps)
+
+
 lemma collection_type_left_simps:
   "collection_type (ErrorFree \<tau>) k \<sigma> n =
    (\<exists>\<rho>. \<sigma> = ErrorFree \<rho> \<and> collection_type\<^sub>N \<tau> k \<rho> n)"
@@ -354,6 +388,15 @@ lemma to_single_type_left_simps:
     (\<exists>k \<upsilon> n. collection_type (Errorable \<tau>) k \<upsilon> n \<and> to_single_type \<upsilon> \<sigma>))"
   by (subst to_single_type.simps; auto)+
 
+
+lemma collection_type_sup:
+  "collection_type \<tau> k \<rho> n \<Longrightarrow>
+   collection_type \<sigma> k \<upsilon> n \<Longrightarrow>
+   collection_type (\<tau> \<squnion> \<sigma>) k (\<rho> \<squnion> \<upsilon>) n"
+  by (auto simp add: collection_type.simps
+      collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
+
+
 lemma collection_type_and_map_type_distinct:
   "collection_type \<tau> k \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
   by (auto simp: collection_type.simps collection_type\<^sub>N.simps
@@ -364,14 +407,33 @@ lemma to_nonunique_collection_type_and_map_type_distinct:
   by (auto simp: to_nonunique_collection_type.simps
       to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T.simps
       map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
-(*
-lemma map_type_left_simps:
-  "map_type (ErrorFree \<tau>) \<sigma> \<rho> n =
-   (\<exists>\<upsilon> \<phi>. \<sigma> = ErrorFree \<upsilon> \<and> \<rho> = ErrorFree \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
-  "map_type (Errorable \<tau>) \<sigma> \<rho> n =
-   (\<exists>\<upsilon> \<phi>. \<sigma> = Errorable \<upsilon> \<and> \<rho> = Errorable \<phi> \<and> map_type\<^sub>N \<tau> \<upsilon> \<phi> n)"
-  by (simp_all add: map_type.simps)
-*)
+
+
+lemma map_type_implies_map_type':
+  "map_type \<tau> \<sigma> \<rho> n \<Longrightarrow> map_type' \<tau> \<sigma> \<rho> n"
+  by (erule map_type.cases; simp add: map_type'.simps)
+
+lemma map_type'_implies_ex_map_type:
+  "map_type' \<tau> \<sigma> \<rho> n \<Longrightarrow> \<exists>\<upsilon> \<phi>. map_type \<tau> \<upsilon> \<phi> n"
+  by (erule map_type'.cases; auto simp add: map_type.simps)
+
+lemma map_type_sup:
+  "map_type \<tau> \<rho> \<phi> n \<Longrightarrow>
+   map_type \<sigma> \<upsilon> \<psi> n \<Longrightarrow>
+   map_type (\<tau> \<squnion> \<sigma>) (\<rho> \<squnion> \<upsilon>) (\<phi> \<squnion> \<psi>) n"
+  for \<tau> \<sigma> \<rho> \<upsilon> :: "('a :: semilattice_sup) type\<^sub>N\<^sub>E"
+  apply (cases \<rho>; cases \<phi>)
+  by (auto simp add: map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
+lemma map_type'_sup:
+  "map_type' \<tau> \<rho> \<phi> n \<Longrightarrow>
+   map_type \<sigma> \<upsilon> \<psi> n \<Longrightarrow>
+   map_type' (\<tau> \<squnion> \<sigma>) (\<rho> \<squnion> \<upsilon>) (\<phi> \<squnion> \<psi>) n"
+  for \<tau> \<sigma> \<rho> \<upsilon> :: "('a :: semilattice_sup) type\<^sub>N\<^sub>E"
+  apply (cases \<rho>; cases \<phi>)
+  by (auto simp add: map_type'.simps map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
+
 lemmas ocl_type_helper_simps =
   collection_type\<^sub>T.simps
   collection_type\<^sub>N.simps

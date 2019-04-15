@@ -41,6 +41,12 @@ lemma fmrel_on_fset_fmdom:
    k |\<in>| fmdom xm"
   by (metis fmdom_notD fmdom_notI fmrel_on_fsetD option.rel_sel)
 
+lemma not_fmempty_eq_fmran_not_fempty:
+  "(xm \<noteq> fmempty) = (fmran xm \<noteq> fempty)"
+  apply (induct xm)
+  apply simp
+  by (metis fempty_iff fmranI fmran_empty fmupd_lookup)
+
 (*** Finite Map Merge *******************************************************)
 
 subsection \<open>Merge Operation\<close>

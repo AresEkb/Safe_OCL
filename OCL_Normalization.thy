@@ -806,11 +806,11 @@ lemmas ocl_normalization_simps =
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
-(*
+
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_loop .
 
 code_pred [show_modes] nf_typing .
-*)
+
 end

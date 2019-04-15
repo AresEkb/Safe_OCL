@@ -1204,6 +1204,49 @@ lemmas ocl_typing_simps =
   coiterators_def
   typing_alt_simps
 
+(*** Misc Properties ********************************************************)
+
+section \<open>Misc Properties\<close>
+
+lemma TupleLiteral_has_Tuple_type:
+  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral prts : \<tau> \<Longrightarrow> \<exists>\<pi>. required_tuple_type \<tau> \<pi>"
+proof (induct prts arbitrary: \<tau>)
+  case Nil show ?case
+    apply (insert Nil)
+    apply (erule TupleLiteralNilTE)
+    by (auto simp add: tuple_type.simps tuple_type\<^sub>N.simps tuple_type\<^sub>T.simps)
+next
+  case (Cons a prts) show ?case
+    apply (insert Cons)
+    apply (erule TupleLiteralConsTE)
+    using tuple_type_sup tuple_type'_implies_ex_tuple_type by blast
+qed
+
+lemma CollectionLiteral_has_Collection_type:
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. required_collection_type \<tau> k \<sigma>"
+proof (induct prts arbitrary: \<tau>)
+  case Nil thus ?case by blast
+next
+  case (Cons a prts) show ?case
+    apply (insert Cons)
+    apply (erule CollectionLiteralConsTE)
+    using collection_type_sup by blast
+qed
+
+lemma MapLiteral_has_Map_type:
+  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<exists>\<sigma> \<rho>. required_map_type \<tau> \<sigma> \<rho>"
+proof (induct prts arbitrary: \<tau>)
+  case Nil show ?case
+    apply (insert Nil)
+    apply (erule MapLiteralNilTE)
+    by (cases \<tau>; simp add: map_type'_implies_ex_map_type)
+next
+  case (Cons a prts) show ?case
+    apply (insert Cons)
+    apply (erule MapLiteralConsTE)
+    using map_type'_sup map_type'_implies_ex_map_type by blast
+qed
+
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
@@ -1442,184 +1485,6 @@ next
 next
   case (ExprListConsT \<Gamma> expr \<tau> exprs \<pi>) thus ?case by blast
 qed
-
-(*
-lemma q:
-  "\<exists>\<sigma>. \<rho> = (Set \<sigma>)[1] \<Longrightarrow>
-   (*collection_type \<sigma> SetKind \<tau>' False \<Longrightarrow>*)
-   \<exists>\<sigma>'. \<sigma> = (Set \<sigma>')[1] \<Longrightarrow>
-   \<exists>\<sigma>'. \<sigma> \<squnion> \<rho> = (Set \<sigma>')[1]"
-  apply auto
-*)
-(*
-declare collection_type\<^sub>T.intros [intro]
-declare collection_type\<^sub>N.intros [intro]
-declare collection_type.intros [intro]
-
-declare collection_type\<^sub>T.simps [simp]
-declare collection_type\<^sub>N.simps [simp]
-declare collection_type.simps [simp]
-*)
-(*
-lemma q:
-  "collection_type \<tau> SetKind \<sigma> False \<Longrightarrow>
-   collection_type \<rho> SetKind \<upsilon> False \<Longrightarrow>
-   collection_type (\<tau> \<squnion> \<rho>) SetKind (\<sigma> \<squnion> \<upsilon>) False"
-  by (auto simp: collection_type.simps collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
-(*  apply (elim collection_type.cases collection_type\<^sub>N.cases
-    collection_type\<^sub>T.cases, auto)*)
-
-lemma q:
-  "    \<exists>\<sigma>. collection_type \<rho> SetKind \<sigma> False \<Longrightarrow>
-       collection_type \<sigma> SetKind \<tau>' False \<Longrightarrow>
-       \<exists>\<sigma>'. collection_type (\<sigma> \<squnion> \<rho>) SetKind \<sigma>' False"
-
-lemma CollectionLiteral_has_Collection_type:
-  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SetKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. collection_type \<tau> SetKind \<sigma> False"
-(*  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral OrderedSetKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (OrderedSet \<sigma>)[1]"
-  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral BagKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Bag \<sigma>)[1]"
-  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral SequenceKind prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> = (Sequence \<sigma>)[1]"*)
-  apply (induct prts arbitrary: \<tau>, auto)
-  apply auto[1]
-  using collection_type.intros(1) collection_type\<^sub>N.intros(1) collection_type\<^sub>T.intros(2) collection_type_det(2) apply blast
-  by auto
-*)
-(*
-lemma q11:
-  "       (\<And>\<tau>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<tau> \<Longrightarrow>
-             \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]) \<Longrightarrow>
-       \<tau> =
-       (case \<rho> of
-        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)
-        | Errorable \<rho> \<Rightarrow>
-            Errorable ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)) \<Longrightarrow>
-       \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<rho> \<Longrightarrow>
-       \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]"
-  apply auto
-
-lemma MapLiteral_has_Map_type:
-  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<exists>\<sigma> \<rho>. \<tau> = (Map \<sigma> \<rho>)[1]"
-  apply (induct prts arbitrary: \<tau>)
-  apply auto[1]
-  apply (erule MapLiteralTE)
-  apply auto[1]
-
-  thm MapLiteralTE
-  thm TupleLiteralTE
-
-
-lemma type\<^sub>N_less_right_simps [simp]:
-  "\<tau> < Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> < \<upsilon>)"
-  "\<tau> < Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> < \<upsilon>)"
-  by auto
-
-lemma type\<^sub>N_less_eq_right_simps [simp]:
-  "\<tau> \<le> Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon>)"
-  "\<tau> \<le> Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> \<le> \<upsilon>)"
-  by auto
-*)
-(*
-lemma q11:
-  "ErrorFree \<rho> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1] \<Longrightarrow>
-   \<tau> = ErrorFree ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>) \<Longrightarrow>
-   \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]"
-  by (smt less_eq_errorable_type.simps(1) sup.boundedI sup.orderI sup_ge1
-          type.inject(8) type\<^sub>N_less_eq_left_simps(2) type\<^sub>N_less_eq_right_simps(1)
-          type_less_eq_left_simps(1) type_less_eq_x_Map_intro)
-
-lemma q12:
-  "       (\<And>\<tau>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<tau> \<Longrightarrow>
-             \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]) \<Longrightarrow>
-       \<tau> =
-       (case \<rho> of
-        ErrorFree \<rho> \<Rightarrow> ErrorFree ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)
-        | Errorable \<rho> \<Rightarrow>
-            Errorable ((Map \<tau>' \<sigma>)[\<^bold>1] \<squnion> \<rho>)) \<Longrightarrow>
-       \<Gamma> \<turnstile>\<^sub>E map_literal_element_key x : ErrorFree \<tau>' \<Longrightarrow>
-       \<Gamma> \<turnstile>\<^sub>E map_literal_element_value x : ErrorFree \<sigma> \<Longrightarrow>
-       \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral xs) : \<rho> \<Longrightarrow>
-       \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]"
-  by (metis (no_types, lifting) OCL_Typing.q11 errorable_type.simps(5)
-        type\<^sub>N\<^sub>E_less_eq_right_simps(1))
-
-lemma q13:
-  "a # prts = x # xs \<Longrightarrow> prts = xs"
-  by auto
-
-lemma MapLiteral_has_Map_type:
-  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<tau> \<le> (Map OclAny[\<^bold>?] OclAny[\<^bold>?])[1]"
-  apply (induct prts arbitrary: \<tau>)
-  apply auto[1]
-  apply (erule MapLiteralTE)
-  apply auto[1]
-*)
-(*
-lemma TupleLiteral_has_Tuple_type:
-  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral prts : \<tau> \<Longrightarrow> \<exists>\<pi>. \<tau> = (Tuple \<pi>)[1]"
-  by auto
-*)
-
-lemma tuple_type_sup:
-  "tuple_type \<tau> \<pi> n \<Longrightarrow>
-   tuple_type \<sigma> \<xi> n \<Longrightarrow>
-   tuple_type (\<tau> \<squnion> \<sigma>) (fmmerge (\<squnion>) \<pi> \<xi>) n"
-  apply (auto simp add: tuple_type.simps tuple_type'.simps
-         tuple_type\<^sub>N.simps tuple_type\<^sub>T.simps)
-  sorry
-
-lemma tuple_type'_sup:
-  "tuple_type \<tau> \<pi> n \<Longrightarrow>
-   tuple_type' \<sigma> \<xi> n \<Longrightarrow>
-   tuple_type (\<tau> \<squnion> \<sigma>) (fmmerge (\<squnion>) \<pi> \<xi>) n"
-  apply (auto simp add: tuple_type.simps tuple_type'.simps
-         tuple_type\<^sub>N.simps tuple_type\<^sub>T.simps)
-
-lemma collection_type_sup:
-  "required_tuple_type \<tau> \<pi> \<Longrightarrow>
-   required_tuple_type' \<sigma> \<xi> \<Longrightarrow>
-   required_tuple_type (\<tau> \<squnion> \<sigma>) (\<pi> ++\<^sub>f \<xi>)"
-
-lemma CollectionLiteral_has_Collection_type:
-  "\<Gamma> \<turnstile>\<^sub>E TupleLiteral prts : \<tau> \<Longrightarrow>
-   \<exists>\<pi>. required_tuple_type \<tau> \<pi>"
-  apply (induct prts arbitrary: \<tau>)
-  apply (erule TupleLiteralNilTE)
-  apply (auto simp add: tuple_type.simps tuple_type\<^sub>N.simps tuple_type\<^sub>T.simps)[1]
-  apply (erule TupleLiteralConsTE)
-  apply auto[1]
-
-
-
-lemma collection_type_sup:
-  "collection_type \<tau> k \<rho> n \<Longrightarrow>
-   collection_type \<sigma> k \<upsilon> n \<Longrightarrow>
-   collection_type (\<tau> \<squnion> \<sigma>) k (\<rho> \<squnion> \<upsilon>) n"
-  by (auto simp add: collection_type.simps collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
-
-lemma CollectionLiteral_has_Collection_type:
-  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau> \<Longrightarrow>
-   \<exists>\<sigma>. required_collection_type \<tau> k \<sigma>"
-proof (induct prts arbitrary: \<tau>)
-  case Nil thus ?case by blast
-next
-  case (Cons a prts) show ?case
-    apply (insert Cons)
-    apply (erule CollectionLiteralConsTE)
-    using collection_type_sup by blast
-qed
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (*** Code Setup *************************************************************)
 
