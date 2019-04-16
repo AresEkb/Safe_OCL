@@ -491,7 +491,8 @@ next
   case (ExplicitlyTypedLetN \<Gamma> init\<^sub>1 init\<^sub>2 v \<tau> body\<^sub>1 body\<^sub>2) thus ?case by blast
 next
   case (ImplicitlyTypedLetN \<Gamma> init\<^sub>1 init\<^sub>2 \<tau> v body\<^sub>1 body\<^sub>2)
-  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> let v = init\<^sub>1 in body\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> let v : \<tau> = init\<^sub>2 in body\<^sub>2 = expr\<^sub>2"
+  have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> let v = init\<^sub>1 in body\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
+        let v : \<tau> = init\<^sub>2 in body\<^sub>2 = expr\<^sub>2"
     apply (erule LetNE)
     using ImplicitlyTypedLetN.hyps typing_det by blast+
   thus ?case by (simp add: ImplicitlyTypedLetN.prems)
@@ -531,10 +532,8 @@ next
     apply (erule SafeDotCallNE)
     apply (simp add: SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(7)
           src_type_det)
-    using SingleSafeDotCallN.hyps(4) is_iterable_type.intros src_type_det apply blast
     using SingleSafeDotCallN.hyps(4) is_iterable_type.intros
-          src_type_det apply blast
-    using SingleSafeDotCallN.hyps(4) is_iterable_type.intros src_type_det by blast
+          src_type_det by blast+
   thus ?case by (simp add: SingleSafeDotCallN.prems)
 next
   case (SingleArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2)
@@ -662,7 +661,8 @@ next
           iterable_type_det src_type_det by blast
   thus ?case by (simp add: NullableCollectionSafeArrowCallN.prems)
 next
-  case (NullableNullableCollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho> call\<^sub>1 call\<^sub>2)
+  case (NullableNullableCollectionSafeArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> \<sigma> src\<^sub>3 \<rho>
+                                                 call\<^sub>1 call\<^sub>2)
   have src_type_det: "\<And>src\<^sub>2' \<tau>'. \<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2' \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E src\<^sub>2' : \<tau>' \<Longrightarrow> \<tau> = \<tau>'"
     using NullableNullableCollectionSafeArrowCallN.hyps typing_det by auto
   have src_type_det':
@@ -707,9 +707,11 @@ next
 next
   case (TupleElementN \<Gamma> \<tau> elem) thus ?case by auto
 next
-  case (IterateN \<Gamma> res_init\<^sub>1 res_init\<^sub>2 \<tau> its its_ty\<^sub>1 res res_t\<^sub>1 body\<^sub>1 its_ty\<^sub>2 res_t\<^sub>2 body\<^sub>2 k)
-  have "\<And>call\<^sub>2. (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterate its its_ty\<^sub>1 res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
-       Iterate its its_ty\<^sub>2 res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2 = call\<^sub>2"
+  case (IterateN \<Gamma> res_init\<^sub>1 res_init\<^sub>2 \<tau> its its_ty\<^sub>1 res res_t\<^sub>1 body\<^sub>1
+                 its_ty\<^sub>2 res_t\<^sub>2 body\<^sub>2 k)
+  have
+    "\<And>call\<^sub>2. (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterate its its_ty\<^sub>1 res res_t\<^sub>1 res_init\<^sub>1 body\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+     Iterate its its_ty\<^sub>2 res res_t\<^sub>2 res_init\<^sub>2 body\<^sub>2 = call\<^sub>2"
     apply (erule IterateCallNE)
     using IterateN.hyps(4) by blast
   thus ?case by (simp add: IterateN.prems)

@@ -5,7 +5,7 @@
 *)
 section \<open>Errorable\<close>
 theory Errorable
-  imports Main "HOL-Library.FSet"
+  imports Main
 begin
 
 datatype 'a errorable ("_\<^sub>E" [21] 21) =

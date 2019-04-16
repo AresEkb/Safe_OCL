@@ -5,7 +5,8 @@
 *)
 section \<open>Object Model\<close>
 theory Object_Model
-  imports Finite_Map_Ext "HOL-Library.Extended_Nat" "HOL-Library.Phantom_Type"
+  imports Finite_Map_Ext "HOL-Library.Extended_Nat"
+          "HOL-Library.Phantom_Type"
 begin
 
 text \<open>
@@ -469,26 +470,33 @@ nonterminal assoc_defs and assoc_def
 nonterminal assoc_end_defs and assoc_end_def
 
 syntax
-  "_assoc_def" :: "'a \<Rightarrow> assoc_end_defs \<Rightarrow> model_element" ("association _ _" [1000,100] 10)
+  "_assoc_def" :: "'a \<Rightarrow> assoc_end_defs \<Rightarrow> model_element"
+      ("association _ _" [1000,100] 10)
   "_assoc_end_defs_single" :: "assoc_end_def \<Rightarrow> assoc_end_defs" ("_")
-  "_assoc_end_defs_cons" :: "assoc_end_def \<Rightarrow> assoc_end_defs \<Rightarrow> assoc_end_defs" ("_ _")
-  "_assoc_end_def" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._]" [100,100,100,100] 100)
-  "_assoc_end_def_o" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._] {ordered}" [100,100,100,100] 100)
-  "_assoc_end_def_u" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._] {unique}" [100,100,100,100] 100)
-  "_assoc_end_def_ou" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def" ("_ : _ [_.._] {ordered,unique}" [100,100,100,100] 100)
+  "_assoc_end_defs_cons" :: "assoc_end_def \<Rightarrow> assoc_end_defs \<Rightarrow> assoc_end_defs"
+      ("_ _")
+  "_assoc_end_def" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def"
+      ("_ : _ [_.._]" [100,100,100,100] 100)
+  "_assoc_end_def_o" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def"
+      ("_ : _ [_.._] {ordered}" [100,100,100,100] 100)
+  "_assoc_end_def_u" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def"
+      ("_ : _ [_.._] {unique}" [100,100,100,100] 100)
+  "_assoc_end_def_ou" :: "'a \<Rightarrow> 'b \<Rightarrow> 'c \<Rightarrow> 'c \<Rightarrow> assoc_end_def"
+      ("_ : _ [_.._] {ordered,unique}" [100,100,100,100] 100)
 
 translations
-  "_assoc_def assoc ends" \<rightharpoonup> "CONST AssociationSpec assoc (CONST fmap_of_list ends)"
+  "_assoc_def assoc ends" \<rightharpoonup>
+      "CONST AssociationSpec assoc (CONST fmap_of_list ends)"
   "_assoc_end_defs_single x" \<rightharpoonup> "[x]"
   "_assoc_end_defs_cons x (y # xs)" \<rightharpoonup> "x # y # xs"
   "_assoc_end_def name cls lower upper" \<rightharpoonup>
-    "(name, cls, lower :: nat, upper :: enat, CONST False, CONST False)"
+      "(name, cls, lower :: nat, upper :: enat, CONST False, CONST False)"
   "_assoc_end_def_o name cls lower upper" \<rightharpoonup>
-    "(name, cls, lower :: nat, upper :: enat, CONST True, CONST False)"
+      "(name, cls, lower :: nat, upper :: enat, CONST True, CONST False)"
   "_assoc_end_def_u name cls lower upper" \<rightharpoonup>
-    "(name, cls, lower :: nat, upper :: enat, CONST False, CONST True)"
+      "(name, cls, lower :: nat, upper :: enat, CONST False, CONST True)"
   "_assoc_end_def_ou name cls lower upper" \<rightharpoonup>
-    "(name, cls, lower :: nat, upper :: enat, CONST True, CONST True)"
+      "(name, cls, lower :: nat, upper :: enat, CONST True, CONST True)"
 
 nonterminal context_defs and context_def
 nonterminal oper_defs and oper_def_const and oper_signature
@@ -513,15 +521,22 @@ translations
   "_oper_params_cons x xs" \<rightharpoonup> "x # xs"
 
 syntax
-  "_context_def" :: "'a \<Rightarrow> oper_defs \<Rightarrow> model_element" ("context _ _" [1000,100] 10)
-  "_oper_def" :: "oper_signature \<Rightarrow> 'a \<Rightarrow> oper_def_const" ("def : _ = _" [100,100] 100)
-  "_oper_def_no_body" :: "oper_signature \<Rightarrow> oper_def_const" ("def : _" [100] 100)
-  "_oper_def_static" :: "oper_signature \<Rightarrow> 'a \<Rightarrow> oper_def_const" ("static def : _ = _" [100,100] 100)
-  "_oper_def_static_no_body" :: "oper_signature \<Rightarrow> oper_def_const" ("static def : _" [100] 100)
+  "_context_def" :: "'a \<Rightarrow> oper_defs \<Rightarrow> model_element"
+      ("context _ _" [1000,100] 10)
+  "_oper_def" :: "oper_signature \<Rightarrow> 'a \<Rightarrow> oper_def_const"
+      ("def : _ = _" [100,100] 100)
+  "_oper_def_no_body" :: "oper_signature \<Rightarrow> oper_def_const"
+      ("def : _" [100] 100)
+  "_oper_def_static" :: "oper_signature \<Rightarrow> 'a \<Rightarrow> oper_def_const"
+      ("static def : _ = _" [100,100] 100)
+  "_oper_def_static_no_body" :: "oper_signature \<Rightarrow> oper_def_const"
+      ("static def : _" [100] 100)
   "_oper_defs_nil" :: "oper_defs" ("")
   "_oper_defs_cons" :: "oper_def_const \<Rightarrow> oper_defs \<Rightarrow> oper_defs" ("_ _")
-  "_oper_signature" :: "'a \<Rightarrow> oper_params \<Rightarrow> 'b \<Rightarrow> oper_signature" ("_'(_') : _" [1000,100,100] 100)
-  "_oper_signature_no_params" :: "'a \<Rightarrow> 'b \<Rightarrow> oper_signature" ("_'(') : _" [1000,100] 100)
+  "_oper_signature" :: "'a \<Rightarrow> oper_params \<Rightarrow> 'b \<Rightarrow> oper_signature"
+      ("_'(_') : _" [1000,100,100] 100)
+  "_oper_signature_no_params" :: "'a \<Rightarrow> 'b \<Rightarrow> oper_signature"
+      ("_'(') : _" [1000,100] 100)
 
 definition "mk_oper_spec op st body \<equiv> (fst op, fst (snd op), snd (snd op), st, body)"
 
@@ -529,17 +544,22 @@ translations
   "_context_def ctx ops" \<rightharpoonup> "CONST ContextSpec ctx ops"
   "_oper_defs_nil" \<rightharpoonup> "[]"
   "_oper_defs_cons x xs" \<rightharpoonup> "x # xs"
-  "_oper_def sign body" \<rightharpoonup> "CONST mk_oper_spec sign CONST False (CONST Some body)"
-  "_oper_def_no_body sign" \<rightharpoonup> "CONST mk_oper_spec sign CONST False CONST None"
-  "_oper_def_static sign body" \<rightharpoonup> "CONST mk_oper_spec sign CONST True (CONST Some body)"
-  "_oper_def_static_no_body sign" \<rightharpoonup> "CONST mk_oper_spec sign CONST True (CONST None)"
+  "_oper_def sign body" \<rightharpoonup>
+      "CONST mk_oper_spec sign CONST False (CONST Some body)"
+  "_oper_def_no_body sign" \<rightharpoonup>
+      "CONST mk_oper_spec sign CONST False CONST None"
+  "_oper_def_static sign body" \<rightharpoonup>
+      "CONST mk_oper_spec sign CONST True (CONST Some body)"
+  "_oper_def_static_no_body sign" \<rightharpoonup>
+      "CONST mk_oper_spec sign CONST True (CONST None)"
   "_oper_signature op params ty" \<rightharpoonup> "(op, params, ty)"
   "_oper_signature_no_params op ty" \<rightharpoonup> "(op, [], ty)"
 
 syntax
   "_model" :: "model_elements \<Rightarrow> ('a, 't, 'e) model_spec" ("_" 10)
   "_model_element_single" :: "model_element \<Rightarrow> model_elements" (" _")
-  "_model_element_cons" :: "model_element \<Rightarrow> model_elements \<Rightarrow> model_elements" ("_ _")
+  "_model_element_cons" ::
+      "model_element \<Rightarrow> model_elements \<Rightarrow> model_elements" ("_ _")
 
 translations
   "_model xs" \<rightharpoonup> "CONST ModelSpec xs"

@@ -400,8 +400,10 @@ syntax
   "_safeDotCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "?." 300)
   "_arrowCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "->" 300)
   "_safeArrowCall" :: "'a expr \<Rightarrow> call \<Rightarrow> 'a expr" (infixl "?->" 300)
-  "_staticOpCall" :: "'a expr \<Rightarrow> 'b \<Rightarrow> op_args \<Rightarrow> 'a expr" ("_::_('(_'))"  [1000,1000,100] 300)
-  "_staticOpCall_no_args" :: "'a expr \<Rightarrow> 'b \<Rightarrow> 'a expr" ("_::_('('))"  [1000,1000] 300)
+  "_staticOpCall" :: "'a expr \<Rightarrow> 'b \<Rightarrow> op_args \<Rightarrow> 'a expr"
+      ("_::_('(_'))"  [1000,1000,100] 300)
+  "_staticOpCall_no_args" :: "'a expr \<Rightarrow> 'b \<Rightarrow> 'a expr"
+      ("_::_('('))"  [1000,1000] 300)
 
 translations
   "_dotCall src call" == "CONST Call src (CONST DotCall) call"
@@ -553,26 +555,38 @@ translations
   "_oclIsUndefined" == "CONST Operation (CONST OclIsUndefinedOp)"
   "_oclIsInvalid" == "CONST Operation (CONST OclIsInvalidOp)"
   "_toString" == "CONST Operation (CONST ToStringOp)"
-  "_equal x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST EqualOp) [y])"
-  "_notEqual x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST NotEqualOp) [y])"
+  "_equal x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST EqualOp) [y])"
+  "_notEqual x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST NotEqualOp) [y])"
 
   \<comment> \<open>Boolean Operations\<close>
-  "_not x" == "CONST Call x (CONST DotCall) (CONST Operation (CONST NotOp) [])"
-  "_and x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST AndOp) [y])"
-  "_or x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST OrOp) [y])"
-  "_xor x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST XorOp) [y])"
-  "_implies x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST ImpliesOp) [y])"
+  "_not x" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST NotOp) [])"
+  "_and x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST AndOp) [y])"
+  "_or x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST OrOp) [y])"
+  "_xor x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST XorOp) [y])"
+  "_implies x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST ImpliesOp) [y])"
 
   \<comment> \<open>Numeric Operations\<close>
-  "_uminus x" == "CONST Call x (CONST DotCall) (CONST Operation (CONST UMinusOp) [])"
+  "_uminus x" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST UMinusOp) [])"
   "_absOp" == "CONST Operation (CONST AbsOp)"
   "_floor" == "CONST Operation (CONST FloorOp)"
   "_round" == "CONST Operation (CONST RoundOp)"
   "_toInteger" == "CONST Operation (CONST ToIntegerOp)"
-  "_plus x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST PlusOp) [y])"
-  "_minus x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MinusOp) [y])"
-  "_mult x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST MultOp) [y])"
-  "_divide x y" == "CONST Call x (CONST DotCall) (CONST Operation (CONST DivideOp) [y])"
+  "_plus x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST PlusOp) [y])"
+  "_minus x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST MinusOp) [y])"
+  "_mult x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST MultOp) [y])"
+  "_divide x y" ==
+      "CONST Call x (CONST DotCall) (CONST Operation (CONST DivideOp) [y])"
   "_div" == "CONST Operation (CONST DivOp)"
   "_mod" == "CONST Operation (CONST ModOp)"
   "_numericMax" == "CONST Operation (CONST NumericMaxOp)"
@@ -630,7 +644,8 @@ translations
   "_union" == "CONST Operation (CONST UnionOp)"
   "_intersection" == "CONST Operation (CONST IntersectionOp)"
   "_setMinus" == "CONST Operation (CONST SetMinusOp)"
-  "_symmetricDifference" == "CONST Operation (CONST SymmetricDifferenceOp)"
+  "_symmetricDifference" ==
+      "CONST Operation (CONST SymmetricDifferenceOp)"
   "_including" == "CONST Operation (CONST IncludingOp)"
   "_excluding" == "CONST Operation (CONST ExcludingOp)"
   "_includingAll" == "CONST Operation (CONST IncludingAllOp)"
@@ -722,7 +737,8 @@ syntax
       "lambda_iterators \<Rightarrow> vname \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda"
       ("_; _ = _ | _" [100,1000,100,100] 100)
   "_iterate_lambda4" ::
-      "lambda_iterators \<Rightarrow> vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> iterate_lambda"
+      "lambda_iterators \<Rightarrow> vname \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow>
+            iterate_lambda"
       ("_; _ : _ = _ | _" [100,1000,1000,100,100] 100)
 
   "_iteration_lambda1" ::
@@ -731,7 +747,8 @@ syntax
       "lambda_iterators \<Rightarrow> 'a expr \<Rightarrow> iteration_lambda" ("_ | _" [200, 200] 200)
 
   "_col_iterators" :: "typed_iterators \<Rightarrow> lambda_iterators" ("_")
-  "_map_iterators" :: "typed_iterators \<Rightarrow> typed_iterators \<Rightarrow> lambda_iterators" ("_ <- _")
+  "_map_iterators" :: "typed_iterators \<Rightarrow> typed_iterators \<Rightarrow> lambda_iterators"
+      ("_ <- _")
 
   "_imp_typed_iterators" :: "iterator_list \<Rightarrow> typed_iterators" ("_")
   "_exp_typed_iterators" :: "iterator_list \<Rightarrow> 'a type\<^sub>N\<^sub>E \<Rightarrow> typed_iterators" ("_ : _")
@@ -746,7 +763,8 @@ translations
   "_closureIter lambda" == "CONST mk_iterator (CONST ClosureIter) lambda"
   "_collectIter lambda" == "CONST mk_iterator (CONST CollectIter) lambda"
   "_collectByIter lambda" == "CONST mk_iterator (CONST CollectByIter) lambda"
-  "_collectNestedIter lambda" == "CONST mk_iterator (CONST CollectNestedIter) lambda"
+  "_collectNestedIter lambda" ==
+      "CONST mk_iterator (CONST CollectNestedIter) lambda"
   "_existsIter lambda" == "CONST mk_iterator (CONST ExistsIter) lambda"
   "_forAllIter lambda" == "CONST mk_iterator (CONST ForAllIter) lambda"
   "_oneIter lambda" == "CONST mk_iterator (CONST OneIter) lambda"
@@ -755,10 +773,18 @@ translations
   "_rejectIter lambda" == "CONST mk_iterator (CONST RejectIter) lambda"
   "_sortedByIter lambda" == "CONST mk_iterator (CONST SortedByIter) lambda"
 
-  "_iterate_lambda1 acc init body" == "CONST IterateLambda (CONST CoIterators (CONST Iterators [] CONST None) CONST None) acc CONST None init body"
-  "_iterate_lambda2 acc ty init body" == "CONST IterateLambda (CONST CoIterators (CONST Iterators [] CONST None) CONST None) acc (CONST Some ty) init body"
-  "_iterate_lambda3 iters acc init body" == "CONST IterateLambda iters acc CONST None init body"
-  "_iterate_lambda4 iters acc ty init body" == "CONST IterateLambda iters acc (CONST Some ty) init body"
+  "_iterate_lambda1 acc init body" ==
+      "CONST IterateLambda
+          (CONST CoIterators (CONST Iterators [] CONST None) CONST None)
+          acc CONST None init body"
+  "_iterate_lambda2 acc ty init body" ==
+      "CONST IterateLambda
+          (CONST CoIterators (CONST Iterators [] CONST None) CONST None)
+          acc (CONST Some ty) init body"
+  "_iterate_lambda3 iters acc init body" ==
+      "CONST IterateLambda iters acc CONST None init body"
+  "_iterate_lambda4 iters acc ty init body" ==
+      "CONST IterateLambda iters acc (CONST Some ty) init body"
 
   "_iteration_lambda1 body" == "CONST NoIteratorsLambda body"
   "_iteration_lambda2 k body" == "CONST IterationLambda k body"

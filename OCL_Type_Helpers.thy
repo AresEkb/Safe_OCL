@@ -304,15 +304,22 @@ and to_optional_type_nested\<^sub>N where
 
 | "to_optional_type_nested\<^sub>T (Enum \<E>) = Enum \<E>"
 | "to_optional_type_nested\<^sub>T (ObjectType \<C>) = ObjectType \<C>"
-| "to_optional_type_nested\<^sub>T (Tuple \<pi>) = Tuple (fmmap to_optional_type_nested\<^sub>N \<pi>)"
+| "to_optional_type_nested\<^sub>T (Tuple \<pi>) =
+      Tuple (fmmap to_optional_type_nested\<^sub>N \<pi>)"
 
-| "to_optional_type_nested\<^sub>T (Collection \<tau>) = Collection (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (Set \<tau>) = Set (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (OrderedSet \<tau>) = OrderedSet (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (Bag \<tau>) = Bag (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (Sequence \<tau>) = Sequence (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (Collection \<tau>) =
+      Collection (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (Set \<tau>) =
+      Set (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (OrderedSet \<tau>) =
+      OrderedSet (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (Bag \<tau>) =
+      Bag (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (Sequence \<tau>) =
+      Sequence (to_optional_type_nested\<^sub>N \<tau>)"
 
-| "to_optional_type_nested\<^sub>T (Map \<tau> \<sigma>) = Map (to_optional_type_nested\<^sub>N \<tau>) (to_optional_type_nested\<^sub>N \<sigma>)"
+| "to_optional_type_nested\<^sub>T (Map \<tau> \<sigma>) =
+      Map (to_optional_type_nested\<^sub>N \<tau>) (to_optional_type_nested\<^sub>N \<sigma>)"
 
 | "to_optional_type_nested\<^sub>N (Required \<tau>) = Optional (to_optional_type_nested\<^sub>T \<tau>)"
 | "to_optional_type_nested\<^sub>N (Optional \<tau>) = Optional (to_optional_type_nested\<^sub>T \<tau>)"
@@ -431,7 +438,8 @@ lemma map_type'_sup:
    map_type' (\<tau> \<squnion> \<sigma>) (\<rho> \<squnion> \<upsilon>) (\<phi> \<squnion> \<psi>) n"
   for \<tau> \<sigma> \<rho> \<upsilon> :: "('a :: semilattice_sup) type\<^sub>N\<^sub>E"
   apply (cases \<rho>; cases \<phi>)
-  by (auto simp add: map_type'.simps map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+  by (auto simp add: map_type'.simps map_type.simps
+      map_type\<^sub>N.simps map_type\<^sub>T.simps)
 
 
 lemmas ocl_type_helper_simps =

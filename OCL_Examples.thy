@@ -301,9 +301,11 @@ definition "association_classes_classes1 \<equiv> fmempty :: classes1 \<righthar
 definition "operations_classes1 \<equiv> model_spec_operations model_spec"
 definition "literals_classes1 \<equiv> model_spec_enum_literals model_spec"
 
+abbreviation "assoc_ends \<equiv> model_spec_assoc_ens model_spec"
+
 lemma assoc_end_min_less_eq_max:
-  "assoc |\<in>| fmdom (model_spec_assoc_ens model_spec) \<Longrightarrow>
-   fmlookup (model_spec_assoc_ens model_spec) assoc = Some ends \<Longrightarrow>
+  "assoc |\<in>| fmdom assoc_ends \<Longrightarrow>
+   fmlookup assoc_ends assoc = Some ends \<Longrightarrow>
    role |\<in>| fmdom ends  \<Longrightarrow>
    fmlookup ends role = Some end \<Longrightarrow>
    assoc_end_min end \<le> assoc_end_max end"
@@ -312,11 +314,11 @@ lemma assoc_end_min_less_eq_max:
   by (metis enat_ord_number(1) numeral_One one_le_numeral)
 
 lemma association_ends_unique:
-  assumes "association_ends' classes (model_spec_assoc_ens model_spec) \<C> from role end\<^sub>1"
-      and "association_ends' classes (model_spec_assoc_ens model_spec) \<C> from role end\<^sub>2"
+  assumes "association_ends' classes assoc_ends \<C> from role end\<^sub>1"
+      and "association_ends' classes assoc_ends \<C> from role end\<^sub>2"
     shows "end\<^sub>1 = end\<^sub>2"
 proof -
-  have "\<not> association_ends_not_unique' classes (model_spec_assoc_ens model_spec)" by eval
+  have "\<not> association_ends_not_unique' classes assoc_ends" by eval
   with assms show ?thesis
     using association_ends_not_unique'.simps by blast
 qed
@@ -426,23 +428,49 @@ section \<open>Types\<close>
 
 subsection \<open>Positive Cases\<close>
 
-lemma "Integer[?] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)" by simp
-lemma "(Collection Real[\<^bold>?])[1] < (OclAny[1] :: classes1 type\<^sub>N\<^sub>E)" by simp
-lemma "(Set (Collection Boolean[\<^bold>1])[\<^bold>1])[1] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)" by simp
-lemma "(Set (Bag Boolean[\<^bold>1])[\<^bold>1])[1] < (Set (Collection (Boolean[\<^bold>?] :: classes1 type\<^sub>N))[\<^bold>1])[?]"
+lemma
+  "Integer[?] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)"
   by simp
-lemma "Tuple(STR ''a'' : Boolean[\<^bold>1], STR ''b'' : Integer[\<^bold>1])[1] <
-       Tuple(STR ''a'' : Boolean[\<^bold>?] :: classes1 type\<^sub>N)[1!]" by simp
 
-lemma "Integer[1] \<squnion> (Real[?] :: classes1 type\<^sub>N\<^sub>E) = Real[?]" by simp
-lemma "Set Integer[\<^bold>1] \<squnion> Set (Real[\<^bold>1] :: classes1 type\<^sub>N) = Set Real[\<^bold>1]" by simp
-lemma "Set Integer[\<^bold>1] \<squnion> Bag (Boolean[\<^bold>?] :: classes1 type\<^sub>N) =
-  Collection OclAny[\<^bold>?]" by simp
-lemma "(Set Integer[\<^bold>1])[1] \<squnion> (Real[1!] :: classes1 type\<^sub>N\<^sub>E) = OclAny[1!]" by simp
+lemma
+  "(Collection Real[\<^bold>?])[1] < (OclAny[1] :: classes1 type\<^sub>N\<^sub>E)"
+  by simp
+
+lemma
+  "(Set (Collection Boolean[\<^bold>1])[\<^bold>1])[1] < (OclAny[?] :: classes1 type\<^sub>N\<^sub>E)"
+  by simp
+
+lemma
+  "(Set (Bag Boolean[\<^bold>1])[\<^bold>1])[1] <
+   (Set (Collection (Boolean[\<^bold>?] :: classes1 type\<^sub>N))[\<^bold>1])[?]"
+  by simp
+
+lemma
+  "Tuple(STR ''a'' : Boolean[\<^bold>1], STR ''b'' : Integer[\<^bold>1])[1] <
+   Tuple(STR ''a'' : Boolean[\<^bold>?] :: classes1 type\<^sub>N)[1!]"
+  by simp
+
+lemma
+  "Integer[1] \<squnion> (Real[?] :: classes1 type\<^sub>N\<^sub>E) = Real[?]"
+  by simp
+
+lemma
+  "Set Integer[\<^bold>1] \<squnion> Set (Real[\<^bold>1] :: classes1 type\<^sub>N) = Set Real[\<^bold>1]"
+  by simp
+
+lemma
+  "Set Integer[\<^bold>1] \<squnion> Bag (Boolean[\<^bold>?] :: classes1 type\<^sub>N) = Collection OclAny[\<^bold>?]"
+  by simp
+
+lemma
+  "(Set Integer[\<^bold>1])[1] \<squnion> (Real[1!] :: classes1 type\<^sub>N\<^sub>E) = OclAny[1!]"
+  by simp
 
 subsection \<open>Negative Cases\<close>
 
-lemma "\<not> (OrderedSet Boolean[\<^bold>1])[1] < (Set (Boolean[\<^bold>1] :: classes1 type\<^sub>N))[1]" by simp
+lemma
+  "\<not> (OrderedSet Boolean[\<^bold>1])[1] < (Set (Boolean[\<^bold>1] :: classes1 type\<^sub>N))[1]"
+  by simp
 
 (*** Typing *****************************************************************)
 
@@ -484,7 +512,8 @@ lemma
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}?->iterate(x; acc : Real[1] = \<^bold>0 | \<lparr>acc\<rparr> \<^bold>+ \<lparr>x\<rparr>) : Real[1]"
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}?->
+            iterate(x; acc : Real[1] = \<^bold>0 | \<lparr>acc\<rparr> \<^bold>+ \<lparr>x\<rparr>) : Real[1]"
   by simp
 
 lemma
@@ -492,8 +521,7 @@ lemma
   by simp
 
 lemma
-  "\<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] =
-          Sequence{''abc'', ''zxc''} in
+  "\<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] = Sequence{''abc'', ''zxc''} in
    \<lparr>x\<rparr>->any(it | \<lparr>it\<rparr> \<^bold>= StringLiteral ''test'') : String[?!]"
   by simp
 
@@ -534,15 +562,15 @@ lemma
   by simp
 
 lemma
-  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] =
-    Sequence{''abc'', ''zxc''} in
-    \<lparr>x\<rparr>->closure(it | \<^bold>1) : \<tau>"
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] = Sequence{''abc'', ''zxc''} in
+   \<lparr>x\<rparr>->closure(it | \<^bold>1) : \<tau>"
   by simp
 
 lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5, null}->max() : \<tau>"
 proof -
-  have "\<not> operation_defined (Integer[?] :: classes1 type\<^sub>N\<^sub>E) STR ''max'' [Integer[?]]"
+  have
+    "\<not> operation_defined (Integer[?] :: classes1 type\<^sub>N\<^sub>E) STR ''max'' [Integer[?]]"
     by eval
   thus ?thesis by simp
 qed

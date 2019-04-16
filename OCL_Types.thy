@@ -255,7 +255,8 @@ lemma subtype_tranclp_x_Map_key:
   "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow>
    ((\<And>\<tau>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
     (\<And>\<sigma>'. \<tau> = \<rho> \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
-    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow>
+          (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
    ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
    (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<tau> \<Longrightarrow> P"
   by (metis tranclp_trans)
@@ -264,7 +265,8 @@ lemma subtype_tranclp_x_Map_value:
   "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow>
    ((\<And>\<tau>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
     (\<And>\<sigma>'. \<tau> = \<rho> \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
-    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow>
+          (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
    ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
    (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<sigma> \<Longrightarrow> P"
   by (metis tranclp_trans)
@@ -606,6 +608,7 @@ lemma type_less_x_Map_intro [intro]:
   apply (rule preserve_tranclp;
          simp add: subtype_subtype\<^sub>N.intros(33) subtype_subtype\<^sub>N.intros(34))+
   by (simp add: type_less_x_Map_intro')
+
 
 lemma type_less_x_Required_intro [intro]:
   "\<tau> = Required \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Required \<sigma>"

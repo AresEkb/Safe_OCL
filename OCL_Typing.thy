@@ -637,10 +637,12 @@ inductive op_type where
    \<not> op_result_type_is_errorable (Inr (Inl op)) {|\<tau>, \<sigma>|} \<Longrightarrow>
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>"
 
-| "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
+| "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>)
+        (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>[!]"
-| "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
+| "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>)
+        (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
    \<not> op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>"
 
@@ -1321,13 +1323,15 @@ next
     by (meson MetaOperationCallTE mataop_type_det)
 next
   case (StaticOperationCallT \<Gamma> params \<pi> \<tau> op oper)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : \<sigma> \<Longrightarrow> oper_type oper = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : \<sigma> \<Longrightarrow>
+        oper_type oper = \<sigma>"
     apply (erule StaticOperationCallTE)
     using StaticOperationCallT.hyps static_operation_det by blast+
   thus ?case by (simp add: StaticOperationCallT.prems)
 next
   case (ErrorableStaticOperationCallT \<Gamma> params \<pi> \<tau> op oper)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : \<sigma> \<Longrightarrow> (oper_type oper)[!] = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : \<sigma> \<Longrightarrow>
+        (oper_type oper)[!] = \<sigma>"
     apply (erule StaticOperationCallTE)
     using ErrorableStaticOperationCallT.hyps static_operation_det by blast+
   thus ?case by (simp add: ErrorableStaticOperationCallT.prems)
@@ -1351,39 +1355,47 @@ next
   thus ?case by (simp add: ErrorableAttributeCallT.prems)
 next
   case (AssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow> assoc_end_type end = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow>
+        assoc_end_type end = \<sigma>"
     apply (erule AssociationEndCallTE)
     using AssociationEndCallT.hyps association_end_det by blast+
   thus ?case by (simp add: AssociationEndCallT.prems)
 next
   case (ErrorableAssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow> (assoc_end_type end)[!] = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow>
+        (assoc_end_type end)[!] = \<sigma>"
     apply (erule AssociationEndCallTE)
     using ErrorableAssociationEndCallT.hyps association_end_det by blast+
   thus ?case by (simp add: ErrorableAssociationEndCallT.prems)
 next
   case (AssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow> class_assoc_type \<A> = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow>
+        class_assoc_type \<A> = \<sigma>"
     apply (erule AssociationClassCallTE)
     using AssociationClassCallT.hyps by blast+
   thus ?case by (simp add: AssociationClassCallT.prems)
 next
   case (ErrorableAssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow> (class_assoc_type \<A>)[!] = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow>
+        (class_assoc_type \<A>)[!] = \<sigma>"
     apply (erule AssociationClassCallTE)
     using ErrorableAssociationClassCallT.hyps by blast+
   thus ?case by (simp add: ErrorableAssociationClassCallT.prems)
 next
   case (AssociationClassEndCallT \<Gamma> src \<A> role "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow> class_assoc_end_type end = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow>
+        class_assoc_end_type end = \<sigma>"
     apply (erule AssociationClassEndCallTE)
-    using AssociationClassEndCallT.hyps association_class_end_det by blast+
+    using AssociationClassEndCallT.hyps
+          association_class_end_det by blast+
   thus ?case by (simp add: AssociationClassEndCallT.prems)
 next
   case (ErrorableAssociationClassEndCallT \<Gamma> src \<A> role "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow> (class_assoc_end_type end)[!] = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow>
+        (class_assoc_end_type end)[!] = \<sigma>"
     apply (erule AssociationClassEndCallTE)
-    using ErrorableAssociationClassEndCallT.hyps association_class_end_det by blast+
+    using ErrorableAssociationClassEndCallT.hyps
+          association_class_end_det by blast+
   thus ?case by (simp add: ErrorableAssociationClassEndCallT.prems)
 next
   case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>)
@@ -1399,13 +1411,16 @@ next
   thus ?case by (simp add: ErrorableTupleElementCallT.prems)
 next
   case (CollectionLoopT \<Gamma> src \<tau> uu \<sigma> its_ty its body \<rho>)
-  have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : ys \<Longrightarrow> (\<tau>, \<sigma>, \<rho>) = ys"
+  have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : ys \<Longrightarrow>
+        (\<tau>, \<sigma>, \<rho>) = ys"
     apply (erule LoopTE, auto simp add: CollectionLoopT.hyps)
-    using CollectionLoopT.hyps(2) CollectionLoopT.hyps(3) collection_type_det(1) by blast
+    using CollectionLoopT.hyps(2) CollectionLoopT.hyps(3)
+          collection_type_det(1) by blast
   thus ?case by (simp add: CollectionLoopT.prems)
 next
   case (MapLoopT \<Gamma> src \<tau> \<sigma> \<upsilon> its_key_ty its_val_ty its body \<rho>)
-  have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_key_ty, Some its_val_ty), body) : ys \<Longrightarrow> (\<tau>, \<sigma>, \<rho>) = ys"
+  have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_key_ty, Some its_val_ty), body) : ys \<Longrightarrow>
+        (\<tau>, \<sigma>, \<rho>) = ys"
     apply (erule LoopTE, auto simp add: MapLoopT.hyps)
     using MapLoopT.hyps(2) MapLoopT.hyps(3) map_type_det(1) by blast
   thus ?case by (simp add: MapLoopT.prems)
@@ -1455,7 +1470,8 @@ next
     apply (erule CollectNestedIterationTE)
     using MapCollectNestedIterationT.hyps
         to_nonunique_collection_type_and_map_type_distinct apply fastforce
-    using MapCollectNestedIterationT.hyps map_type_det(1) map_type_det(2) by fastforce
+    using MapCollectNestedIterationT.hyps map_type_det(1)
+          map_type_det(2) by fastforce
   thus ?case by (simp add: MapCollectNestedIterationT.prems)
 next
   case (ExistsIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
