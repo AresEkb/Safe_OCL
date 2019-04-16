@@ -213,6 +213,11 @@ lemma
 
 section \<open>Constructors Bijectivity on Transitive Closures\<close>
 
+lemma Tuple_bij_on_trancl [simp]:
+  "bij_on_trancl (\<sqsubset>) Tuple"
+  unfolding inj_def
+  using tranclp.cases by fastforce
+
 lemma subtype_tranclp_Collection_x:
   "(\<sqsubset>)\<^sup>+\<^sup>+ (Collection \<tau>) \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<sigma> = Collection \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho> \<Longrightarrow> P) \<Longrightarrow>
@@ -223,44 +228,72 @@ lemma subtype_tranclp_Collection_x:
 
 lemma Collection_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>) Collection"
-  apply (auto simp add: inj_def)
+  unfolding inj_def
   using subtype_tranclp_Collection_x by auto
 
 lemma Set_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>) Set"
-  apply (auto simp add: inj_def)
+  unfolding inj_def
   using tranclp.cases by fastforce
 
 lemma OrderedSet_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>) OrderedSet"
-  apply (auto simp add: inj_def)
+  unfolding inj_def
   using tranclp.cases by fastforce
 
 lemma Bag_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>) Bag"
-  apply (auto simp add: inj_def)
+  unfolding inj_def
   using tranclp.cases by fastforce
 
 lemma Sequence_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>) Sequence"
-  apply (auto simp add: inj_def)
+  unfolding inj_def
   using tranclp.cases by fastforce
 
-lemma Tuple_bij_on_trancl [simp]:
-  "bij_on_trancl (\<sqsubset>) Tuple"
-  apply (auto simp add: inj_def)
-  using tranclp.cases by fastforce
-(*
-lemma Map_bij_on_trancl [simp]:
-  "bij_on_trancl (\<sqsubset>) (\<lambda>\<tau>. Map (fst \<tau>) (snd \<tau>))"
-  apply (auto simp add: inj_def)
-  using tranclp.cases apply fastforce
+lemma subtype_tranclp_x_Map_key:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow>
+   ((\<And>\<tau>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<sigma>'. \<tau> = \<rho> \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
+   ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<tau> \<Longrightarrow> P"
+  by (metis tranclp_trans)
 
-lemma Map_bij_on_trancl [simp]:
-  "bij_on_trancl (\<sqsubset>) (Map \<tau>)"
+lemma subtype_tranclp_x_Map_value:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow>
+   ((\<And>\<tau>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<sigma>'. \<tau> = \<rho> \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
+   ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+   (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<sigma> \<Longrightarrow> P"
+  by (metis tranclp_trans)
+
+lemma subtype_tranclp_x_Map:
+  "(\<sqsubset>)\<^sup>+\<^sup>+ \<phi> (Map \<tau> \<sigma>) \<Longrightarrow>
+   (\<And>\<rho>. \<phi> = Map \<rho> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<upsilon>. \<phi> = Map \<tau> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   (\<And>\<rho> \<upsilon>. \<phi> = Map \<rho> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
+   (\<phi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  apply (induct rule: converse_tranclp_induct)
+  apply auto[1]
+  apply (erule subtype.cases; simp)
+  apply (drule subtype_tranclp_x_Map_value; auto)
+  apply (drule subtype_tranclp_x_Map_key; auto)
+  done
+
+lemma Map_key_bij_on_trancl [simp]:
+  "((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<sigma> \<Longrightarrow> False) \<Longrightarrow> bij_on_trancl (\<sqsubset>) (\<lambda>\<tau>. Map \<tau> \<sigma>)"
   apply (auto simp add: inj_def)
   using tranclp.cases apply fastforce
-*)
+  by (erule subtype_tranclp_x_Map; simp add: tranclp.trancl_into_trancl)
+
+lemma Map_value_bij_on_trancl [simp]:
+  "((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<tau> \<Longrightarrow> False) \<Longrightarrow> bij_on_trancl (\<sqsubset>) (\<lambda>\<sigma>. Map \<tau> \<sigma>)"
+  apply (auto simp add: inj_def)
+  using tranclp.cases apply fastforce
+  by (erule subtype_tranclp_x_Map; simp add: tranclp.trancl_into_trancl)
+
 lemma Required_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>\<^sub>N) Required"
   by (auto simp add: inj_def)
@@ -271,7 +304,7 @@ lemma not_subtype_Optional_Required:
 
 lemma Optional_bij_on_trancl [simp]:
   "bij_on_trancl (\<sqsubset>\<^sub>N) Optional"
-  apply (auto simp add: inj_def)
+  unfolding inj_def
   using not_subtype_Optional_Required by blast
 
 (*** Partial Order of Types *************************************************)
@@ -528,10 +561,7 @@ lemma type_less_x_Collection_intro [intro]:
   unfolding less_type_def less_type\<^sub>N_def less_eq_type\<^sub>N_def
   apply simp_all
   apply (rule_tac ?f="Collection" in preserve_tranclp; auto)
-  apply (rule preserve_rtranclp''; auto)
-  apply (rule preserve_rtranclp''; auto)
-  apply (rule preserve_rtranclp''; auto)
-  by (rule preserve_rtranclp''; auto)
+  by (rule preserve_rtranclp''; auto)+
 
 lemma type_less_x_Set_intro [intro]:
   "\<tau> = Set \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Set \<sigma>"
@@ -553,6 +583,7 @@ lemma type_less_x_Sequence_intro [intro]:
   unfolding less_type_def less_type\<^sub>N_def
   by simp (rule preserve_tranclp; auto)
 
+
 lemma type_less_x_Map_intro':
   assumes "(\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau> \<rho>"
       and "(\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma> \<upsilon>"
@@ -567,9 +598,9 @@ proof -
 qed
 
 lemma type_less_x_Map_intro [intro]:
-  "\<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> = \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> \<psi> < Map \<rho> \<upsilon>"
-  "\<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> \<psi> < Map \<rho> \<upsilon>"
-  "\<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> \<psi> < Map \<rho> \<upsilon>"
+  "\<phi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> = \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> \<phi> < Map \<rho> \<upsilon>"
+  "\<phi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> \<phi> < Map \<rho> \<upsilon>"
+  "\<phi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> \<phi> < Map \<rho> \<upsilon>"
   unfolding less_type\<^sub>N_def less_type_def
   apply simp_all
   apply (rule preserve_tranclp;
@@ -749,46 +780,15 @@ proof -
     using assms by auto
 qed
 
-lemma subtype_tranclp_x_Map_value:
-  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow>
-   ((\<And>\<tau>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
-    (\<And>\<sigma>'. \<tau> = \<rho> \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
-    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
-   ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
-   (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<sigma> \<Longrightarrow> P"
-  by (metis tranclp_trans)
-
-lemma subtype_tranclp_x_Map_key:
-  "(\<sqsubset>)\<^sup>+\<^sup>+ (Map \<tau> \<sigma>) (Map \<rho> \<upsilon>) \<Longrightarrow>
-   ((\<And>\<tau>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
-    (\<And>\<sigma>'. \<tau> = \<rho> \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
-    (\<And>\<tau>' \<sigma>'. \<tau> = \<tau>' \<Longrightarrow> \<sigma> = \<sigma>' \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<sigma>' \<upsilon> \<Longrightarrow> P) \<Longrightarrow> P) \<Longrightarrow>
-   ((\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<rho> \<Longrightarrow> P) \<Longrightarrow>
-   (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<tau>' \<tau> \<Longrightarrow> P"
-  by (metis tranclp_trans)
-
-lemma subtype_tranclp_x_Map:
-  "(\<sqsubset>)\<^sup>+\<^sup>+ \<psi> (Map \<tau> \<sigma>) \<Longrightarrow>
-   (\<And>\<rho>. \<psi> = Map \<rho> \<sigma> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<upsilon>. \<psi> = Map \<tau> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
-   (\<And>\<rho> \<upsilon>. \<psi> = Map \<rho> \<upsilon> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<rho> \<tau> \<Longrightarrow> (\<sqsubset>\<^sub>N)\<^sup>+\<^sup>+ \<upsilon> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
-   (\<psi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
-  apply (induct rule: converse_tranclp_induct)
-  apply auto[1]
-  apply (erule subtype.cases; simp)
-  apply (drule subtype_tranclp_x_Map_value; auto)
-  apply (drule subtype_tranclp_x_Map_key; auto)
-  done
-
 lemma type_less_x_Map [elim!]:
-  assumes "\<psi> < Map \<rho> \<upsilon>"
-      and "\<And>\<sigma>. \<psi> = Map \<rho> \<sigma> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
-      and "\<And>\<tau>. \<psi> = Map \<tau> \<upsilon> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> P"
-      and "\<And>\<tau> \<sigma>. \<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
-      and "\<psi> = OclVoid \<Longrightarrow> P"
+  assumes "\<phi> < Map \<rho> \<upsilon>"
+      and "\<And>\<sigma>. \<phi> = Map \<rho> \<sigma> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
+      and "\<And>\<tau>. \<phi> = Map \<tau> \<upsilon> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> P"
+      and "\<And>\<tau> \<sigma>. \<phi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> < \<rho> \<Longrightarrow> \<sigma> < \<upsilon> \<Longrightarrow> P"
+      and "\<phi> = OclVoid \<Longrightarrow> P"
     shows "P"
 proof -
-  from assms(1) obtain \<tau> \<sigma> where "\<psi> = Map \<tau> \<sigma> \<or> \<psi> = OclVoid"
+  from assms(1) obtain \<tau> \<sigma> where "\<phi> = Map \<tau> \<sigma> \<or> \<phi> = OclVoid"
     unfolding less_type_def
     by (induct rule: converse_tranclp_induct; auto)
   moreover have
@@ -1000,7 +1000,7 @@ lemma type_less_eq_x_Sequence_intro [intro]:
   unfolding order.order_iff_strict by auto
 
 lemma type_less_eq_x_Map_intro [intro]:
-  "\<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> \<psi> \<le> Map \<rho> \<upsilon>"
+  "\<phi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> \<phi> \<le> Map \<rho> \<upsilon>"
   by (metis eq_iff le_imp_less_or_eq order.strict_implies_order type_less_x_Map_intro)
 
 lemma type_less_eq_x_Required_intro [intro]:
@@ -1114,9 +1114,9 @@ lemma type_less_eq_x_Sequence [elim!]:
   by (drule le_imp_less_or_eq; auto)
 
 lemma type_less_eq_x_Map [elim!]:
-  "\<psi> \<le> Map \<rho> \<upsilon> \<Longrightarrow>
-   (\<And>\<tau> \<sigma>. \<psi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
-   (\<psi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
+  "\<phi> \<le> Map \<rho> \<upsilon> \<Longrightarrow>
+   (\<And>\<tau> \<sigma>. \<phi> = Map \<tau> \<sigma> \<Longrightarrow> \<tau> \<le> \<rho> \<Longrightarrow> \<sigma> \<le> \<upsilon> \<Longrightarrow> P) \<Longrightarrow>
+   (\<phi> = OclVoid \<Longrightarrow> P) \<Longrightarrow> P"
   by (drule le_imp_less_or_eq; auto)
 
 lemma type_less_eq_x_Required [elim!]:
@@ -1175,11 +1175,11 @@ lemma type_less_left_simps [simp]:
       \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
       \<sigma> = Sequence \<phi> \<and> \<tau> < \<phi>)"
 
-  "Map \<tau> \<psi> < \<sigma> = (\<exists>\<rho> \<upsilon>.
+  "Map \<tau> \<phi> < \<sigma> = (\<exists>\<rho> \<upsilon>.
       \<sigma> = OclAny \<or>
-      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> = \<rho> \<and> \<psi> < \<upsilon> \<or>
-      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> < \<rho> \<and> \<psi> = \<upsilon> \<or>
-      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> < \<rho> \<and> \<psi> < \<upsilon>)"
+      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> = \<rho> \<and> \<phi> < \<upsilon> \<or>
+      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> < \<rho> \<and> \<phi> = \<upsilon> \<or>
+      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> < \<rho> \<and> \<phi> < \<upsilon>)"
   by (induct \<sigma>; auto)+
 
 lemma type_less_eq_left_simps [simp]:
@@ -1218,9 +1218,9 @@ lemma type_less_eq_left_simps [simp]:
       \<sigma> = Collection \<phi> \<and> \<tau> \<le> \<phi> \<or>
       \<sigma> = Sequence \<phi> \<and> \<tau> \<le> \<phi>)"
 
-  "Map \<tau> \<psi> \<le> \<sigma> = (\<exists>\<rho> \<upsilon>.
+  "Map \<tau> \<phi> \<le> \<sigma> = (\<exists>\<rho> \<upsilon>.
       \<sigma> = OclAny \<or>
-      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> \<le> \<rho> \<and> \<psi> \<le> \<upsilon>)"
+      \<sigma> = Map \<rho> \<upsilon> \<and> \<tau> \<le> \<rho> \<and> \<phi> \<le> \<upsilon>)"
   by (auto simp: order.order_iff_strict reflpI)
 
 lemma type\<^sub>N_less_left_simps [simp]:
@@ -1265,10 +1265,10 @@ lemma type_less_right_simps [simp]:
   "\<tau> < Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
   "\<tau> < Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
 
-  "\<tau> < Map \<rho> \<upsilon> = (\<exists>\<psi> \<sigma>.
-      \<tau> = Map \<psi> \<sigma> \<and> \<psi> = \<rho> \<and> \<sigma> < \<upsilon> \<or>
-      \<tau> = Map \<psi> \<sigma> \<and> \<psi> < \<rho> \<and> \<sigma> = \<upsilon> \<or>
-      \<tau> = Map \<psi> \<sigma> \<and> \<psi> < \<rho> \<and> \<sigma> < \<upsilon> \<or>
+  "\<tau> < Map \<rho> \<upsilon> = (\<exists>\<phi> \<sigma>.
+      \<tau> = Map \<phi> \<sigma> \<and> \<phi> = \<rho> \<and> \<sigma> < \<upsilon> \<or>
+      \<tau> = Map \<phi> \<sigma> \<and> \<phi> < \<rho> \<and> \<sigma> = \<upsilon> \<or>
+      \<tau> = Map \<phi> \<sigma> \<and> \<phi> < \<rho> \<and> \<sigma> < \<upsilon> \<or>
       \<tau> = OclVoid)"
   by auto
 
@@ -1298,8 +1298,8 @@ lemma type_less_eq_right_simps [simp]:
   "\<tau> \<le> Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or> \<tau> = OclVoid)"
   "\<tau> \<le> Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma> \<or> \<tau> = OclVoid)"
 
-  "\<tau> \<le> Map \<rho> \<upsilon> = (\<exists>\<psi> \<sigma>.
-      \<tau> = Map \<psi> \<sigma> \<and> \<psi> \<le> \<rho> \<and> \<sigma> \<le> \<upsilon> \<or>
+  "\<tau> \<le> Map \<rho> \<upsilon> = (\<exists>\<phi> \<sigma>.
+      \<tau> = Map \<phi> \<sigma> \<and> \<phi> \<le> \<rho> \<and> \<sigma> \<le> \<upsilon> \<or>
       \<tau> = OclVoid)"
   by (auto simp: order.order_iff_strict reflpI)
 
@@ -1401,7 +1401,7 @@ and type_sup\<^sub>N (infixl "\<squnion>\<^sub>N" 65) where
      | OclVoid \<Rightarrow> Sequence \<tau>
      | _ \<Rightarrow> OclAny)"
 
-| "Map \<tau> \<sigma> \<squnion>\<^sub>T \<psi> = (case \<psi>
+| "Map \<tau> \<sigma> \<squnion>\<^sub>T \<phi> = (case \<phi>
     of Map \<rho> \<upsilon> \<Rightarrow> Map (\<tau> \<squnion>\<^sub>N \<rho>) (\<sigma> \<squnion>\<^sub>N \<upsilon>)
      | OclVoid \<Rightarrow> Map \<tau> \<sigma>
      | _ \<Rightarrow> OclAny)"
@@ -1450,7 +1450,7 @@ next
 next
   case (Sequence \<tau>) thus ?case by (cases \<sigma>; auto)
 next
-  case (Map \<tau> \<psi>) thus ?case by (cases \<sigma>; auto)
+  case (Map \<tau> \<phi>) thus ?case by (cases \<sigma>; auto)
 next
   case (Required \<tau>) thus ?case by (cases \<sigma>\<^sub>N; auto)
 next
@@ -1494,7 +1494,7 @@ next
 next
   case (Sequence \<tau>) thus ?case by (cases \<sigma>; simp)
 next
-  case (Map \<tau> \<psi>) thus ?case by (cases \<sigma>; simp)
+  case (Map \<tau> \<phi>) thus ?case by (cases \<sigma>; simp)
 next
   case (Required \<tau>) thus ?case by (cases \<sigma>\<^sub>N; simp)
 next
@@ -1597,7 +1597,7 @@ function subtype\<^sub>T_fun :: "'a::order type \<Rightarrow> 'a type \<Rightarr
      | Sequence \<rho> \<Rightarrow> subtype\<^sub>N_fun \<tau> \<rho>
      | _ \<Rightarrow> False)"
 
-| "subtype\<^sub>T_fun (Map \<tau> \<sigma>) \<psi> = (case \<psi>
+| "subtype\<^sub>T_fun (Map \<tau> \<sigma>) \<phi> = (case \<phi>
     of OclAny \<Rightarrow> True
      | Map \<rho> \<upsilon> \<Rightarrow>
         \<tau> = \<rho> \<and> subtype\<^sub>N_fun \<sigma> \<upsilon> \<or>
@@ -1681,7 +1681,7 @@ next
 next
   case (Sequence \<tau>) thus ?case by (cases \<sigma>; auto simp: less_imp_le)
 next
-  case (Map \<tau> \<psi>) thus ?case by (cases \<sigma>; auto)
+  case (Map \<tau> \<phi>) thus ?case by (cases \<sigma>; auto)
 next
   case (Required \<tau>) thus ?case by (cases \<sigma>\<^sub>N; auto simp: order.strict_implies_order)
 next

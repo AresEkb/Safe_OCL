@@ -183,16 +183,17 @@ lemma fmrel_on_fset_acyclic':
 
 subsection \<open>Transitive Closures\<close>
 
-lemma fmrel_trans:
-  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
-   fmrel P xm ym \<Longrightarrow> fmrel Q ym zm \<Longrightarrow> fmrel R xm zm"
+lemma fmrel_trans [trans]:
+  "fmrel P xm ym \<Longrightarrow> fmrel Q ym zm \<Longrightarrow>
+   (\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
+   fmrel R xm zm"
   unfolding fmrel_iff
   by (metis fmdomE fmdom_notD fmran'I option.rel_inject(2) option.rel_sel)
 
-lemma fmrel_on_fset_trans:
-  "(\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
-   fmrel_on_fset (fmdom ym) P xm ym \<Longrightarrow>
+lemma fmrel_on_fset_trans [trans]:
+  "fmrel_on_fset (fmdom ym) P xm ym \<Longrightarrow>
    fmrel_on_fset (fmdom zm) Q ym zm \<Longrightarrow>
+   (\<And>x y z. x \<in> fmran' xm \<Longrightarrow> P x y \<Longrightarrow> Q y z \<Longrightarrow> R x z) \<Longrightarrow>
    fmrel_on_fset (fmdom zm) R xm zm"
   apply (rule fmrel_on_fsetI)
   unfolding option.rel_sel apply simp
@@ -204,7 +205,7 @@ lemma trancl_to_fmrel:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel f\<^sup>+\<^sup>+ xm ym"
   apply (induct rule: tranclp_induct)
   apply (simp add: fmap.rel_mono_strong)
-  by (rule fmrel_trans; auto)
+  by (rule_tac ?P="f\<^sup>+\<^sup>+" and ?Q="f" in fmrel_trans; auto)
 
 lemma fmrel_trancl_fmdom_eq:
   "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"

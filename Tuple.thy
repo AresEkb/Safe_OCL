@@ -140,41 +140,80 @@ lemma subtuple_acyclic'':
    xm = ym"
   by (metis (no_types, lifting) subtuple_acyclic' subtuple_mono tranclp_eq_rtranclp)
 
-lemma strict_subtuple_trans:
-  "acyclicP_on (fmran' xm) P \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y) ym zm \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm zm"
-  apply auto
-  apply (rule fmrel_on_fset_trans, auto)
-  by (drule_tac ?ym="ym" in subtuple_acyclic; auto)
+lemma strict_subtuple_trans [trans]:
+  assumes "strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm ym"
+      and "strict_subtuple (\<lambda>x y. P x y \<or> x = y) ym zm"
+      and "acyclicP_on (fmran' xm) P"
+    shows "strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm zm"
+proof -
+  from assms(1) have
+    "subtuple P\<^sup>*\<^sup>* xm ym" by simp
+  also from assms(2) have
+    "subtuple (\<lambda>x y. P x y \<or> x = y) ym zm" by simp
+  finally have
+    "subtuple P\<^sup>*\<^sup>* xm zm" by (metis rtranclp.simps)
+  moreover from assms(2) have
+    "acyclicP_on (fmran' zm) P \<Longrightarrow> subtuple P\<^sup>*\<^sup>* zm ym \<Longrightarrow> ym = zm"
+    by (drule_tac ?ym="ym" in subtuple_acyclic; auto)
+  ultimately show ?thesis using assms by auto
+qed
 
-lemma strict_subtuple_trans':
-  "acyclicP_on (fmran' zm) P \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y) xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ ym zm \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm zm"
-  apply auto
-  apply (rule fmrel_on_fset_trans, auto)
-  by (drule_tac ?xm="ym" in subtuple_acyclic'; auto)
+lemma strict_subtuple_trans' [trans]:
+  assumes "strict_subtuple (\<lambda>x y. P x y \<or> x = y) xm ym"
+      and "strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ ym zm"
+      and "acyclicP_on (fmran' zm) P"
+    shows "strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>+\<^sup>+ xm zm"
+proof -
+  from assms(1) have
+    "subtuple (\<lambda>x y. P x y \<or> x = y) xm ym" by simp
+  also from assms(2) have
+    "subtuple P\<^sup>*\<^sup>* ym zm" by simp
+  finally have
+    "subtuple P\<^sup>*\<^sup>* xm zm"
+    by (metis converse_rtranclp_into_rtranclp)
+  moreover from assms(2) have
+    "acyclicP_on (fmran' zm) P \<Longrightarrow>
+     subtuple (\<lambda>x y. P x y \<or> x = y) zm ym \<Longrightarrow> ym = zm"
+    by (drule_tac ?ym="zm" in subtuple_acyclic'; auto)
+  ultimately show ?thesis using assms by auto
+qed
 
-lemma strict_subtuple_trans'':
-  "acyclicP_on (fmran' zm) R \<Longrightarrow>
-   strict_subtuple R xm ym \<Longrightarrow>
-   strict_subtuple R\<^sup>*\<^sup>* ym zm \<Longrightarrow>
-   strict_subtuple R\<^sup>*\<^sup>* xm zm"
-  apply auto
-  apply (rule fmrel_on_fset_trans, auto)
-  by (drule_tac ?xm="ym" in subtuple_acyclic''; auto)
+lemma strict_subtuple_trans'' [trans]:
+  assumes "strict_subtuple P xm ym"
+      and "strict_subtuple P\<^sup>*\<^sup>* ym zm"
+      and "acyclicP_on (fmran' zm) P"
+    shows "strict_subtuple P\<^sup>*\<^sup>* xm zm"
+proof -
+  from assms(1) have
+    "subtuple P xm ym" by simp
+  also from assms(2) have
+    "subtuple P\<^sup>*\<^sup>* ym zm" by simp
+  finally have
+    "subtuple P\<^sup>*\<^sup>* xm zm" by simp
+  moreover from assms(2) have
+    "acyclicP_on (fmran' zm) P \<Longrightarrow> subtuple P zm ym \<Longrightarrow> ym = zm"
+    using subtuple_acyclic'' by auto
+  ultimately show ?thesis using assms by auto
+qed
 
-lemma strict_subtuple_trans''':
-  "acyclicP_on (fmran' zm) P \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y) xm ym \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* ym zm \<Longrightarrow>
-   strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* xm zm"
-  apply auto
-  apply (rule fmrel_on_fset_trans, auto)
-  by (drule_tac ?xm="ym" in subtuple_acyclic'; auto)
+lemma strict_subtuple_trans''' [trans]:
+  assumes "strict_subtuple (\<lambda>x y. P x y \<or> x = y) xm ym"
+      and "strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* ym zm"
+      and "acyclicP_on (fmran' zm) P"
+    shows "strict_subtuple (\<lambda>x y. P x y \<or> x = y)\<^sup>*\<^sup>* xm zm"
+proof -
+  from assms(1) have
+    "subtuple (\<lambda>x y. P x y \<or> x = y) xm ym" by simp
+  also from assms(2) have
+    "subtuple P\<^sup>*\<^sup>* ym zm" by simp
+  finally have
+    "subtuple P\<^sup>*\<^sup>* xm zm" by (metis converse_rtranclp_into_rtranclp)
+  moreover from assms(2) have
+    "acyclicP_on (fmran' zm) P \<Longrightarrow>
+     subtuple (\<lambda>x y. P x y \<or> x = y) zm ym \<Longrightarrow> ym = zm"
+    by (drule_tac ?xm="ym" in subtuple_acyclic'; auto)
+  ultimately show ?thesis using assms by auto
+qed
 
 lemma subtuple_fmmerge2 [intro]:
   "(\<And>x y. x \<in> fmran' xm \<Longrightarrow> f x (g x y)) \<Longrightarrow>
@@ -188,16 +227,28 @@ subsection \<open>Transitive Closures\<close>
 lemma trancl_to_subtuple:
   "(subtuple r)\<^sup>+\<^sup>+ xm ym \<Longrightarrow>
    subtuple r\<^sup>+\<^sup>+ xm ym"
-  apply (induct rule: tranclp_induct)
-  apply (metis subtuple_mono tranclp.r_into_trancl)
-  by (rule fmrel_on_fset_trans; auto)
+proof (induct rule: tranclp_induct)
+  case (base y) thus ?case
+    by (metis subtuple_mono tranclp.r_into_trancl)
+next
+  case (step y z)
+  from step.hyps(3) have "subtuple r\<^sup>+\<^sup>+ xm y" by simp
+  also from step.hyps(2) have "subtuple r y z" by simp
+  finally show ?case by simp
+qed
 
 lemma rtrancl_to_subtuple:
   "(subtuple r)\<^sup>*\<^sup>* xm ym \<Longrightarrow>
    subtuple r\<^sup>*\<^sup>* xm ym"
-  apply (induct rule: rtranclp_induct)
-  apply (simp add: fmap.rel_refl_strong fmrel_to_subtuple)
-  by (rule fmrel_on_fset_trans; auto)
+proof (induct rule: rtranclp_induct)
+  case base show ?case
+    by (simp add: fmrel_on_fset_refl_strong)
+next
+  case (step y z)
+  from step.hyps(3) have "subtuple r\<^sup>*\<^sup>* xm y" by simp
+  also from step.hyps(2) have "subtuple r y z" by simp
+  finally show ?case by simp
+qed
 
 lemma fmrel_to_subtuple_trancl:
   "reflp r \<Longrightarrow>

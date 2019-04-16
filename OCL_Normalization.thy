@@ -82,13 +82,47 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
+inductive normalize_closure_body ("_ \<turnstile>\<^sub>B _ \<Rrightarrow>/ _" [51,51,51] 50) where
+ SingleClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   \<not> is_collection_type \<tau> \<Longrightarrow>
+   (\<Gamma>, _) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1\<^bold>.oclAsSet()"
+|CollectionClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
+   (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
+|NullFreeNullFreeClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
+   required_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
+|NullFreeNullableClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
+   optional_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1->selectByKind(to_required_type \<sigma>)"
+|NullableNullFreeClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   optional_collection_type \<tau> k \<sigma> \<Longrightarrow>
+   required_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
+      if body\<^sub>1 <> null
+      then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)
+      else CollectionLiteral k [] endif"
+|NullableNullableClosureBodyN:
+  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
+   optional_collection_type \<tau> k \<sigma> \<Longrightarrow>
+   optional_type \<sigma> \<Longrightarrow>
+   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
+      if body\<^sub>1 <> null
+      then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>)
+      else CollectionLiteral k [] endif"
 
 inductive normalize
     :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightarrow> 'a expr \<Rightarrow> 'a expr \<Rightarrow> bool"
     ("_ \<turnstile> _ \<Rrightarrow>/ _" [51,51,51] 50) and
     normalize_call ("_ \<turnstile>\<^sub>C _ \<Rrightarrow>/ _" [51,51,51] 50) and
     normalize_loop ("_ \<turnstile>\<^sub>I _ \<Rrightarrow>/ _" [51,51,51] 50) and
-    normalize_closure_body ("_ \<turnstile>\<^sub>B _ \<Rrightarrow>/ _" [51,51,51] 50) and
     normalize_expr_list ("_ \<turnstile>\<^sub>L _ \<Rrightarrow>/ _" [51,51,51] 50)
     where
  LiteralN:
@@ -253,41 +287,6 @@ inductive normalize
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, its_ty\<^sub>1, body\<^sub>1) \<Rrightarrow> (its, its_ty\<^sub>2, body\<^sub>2) \<Longrightarrow>
    (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> Iterator iter its its_ty\<^sub>2 body\<^sub>2"
 
-|SingleClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<not> is_collection_type \<tau> \<Longrightarrow>
-   (\<Gamma>, _) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1\<^bold>.oclAsSet()"
-|CollectionClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
-   (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
-|NullFreeNullFreeClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
-   required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
-|NullFreeNullableClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1->selectByKind(to_required_type \<sigma>)"
-|NullableNullFreeClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   optional_collection_type \<tau> k \<sigma> \<Longrightarrow>
-   required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
-      if body\<^sub>1 <> null
-      then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)
-      else CollectionLiteral k [] endif"
-|NullableNullableClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   optional_collection_type \<tau> k \<sigma> \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
-      if body\<^sub>1 <> null
-      then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>)
-      else CollectionLiteral k [] endif"
-
 |ExplicitlyTypedCollectionLoopN:
   "collection_type \<tau> _ _ _ \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its \<sigma> \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
@@ -387,6 +386,87 @@ inductive_simps normalize_alt_simps:
 
 section \<open>Determinism\<close>
 
+lemma normalize_closure_body_det:
+  "\<Gamma>_k \<turnstile>\<^sub>B body \<Rrightarrow> body\<^sub>1 \<Longrightarrow>
+   \<Gamma>_k \<turnstile>\<^sub>B body \<Rrightarrow> body\<^sub>2 \<Longrightarrow> body\<^sub>1 = body\<^sub>2"
+proof (induct rule: normalize_closure_body.inducts)
+  case (SingleClosureBodyN \<Gamma> body\<^sub>1 \<tau> k)
+  have "\<And>body\<^sub>2. (\<Gamma>, k) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
+        body\<^sub>1\<^bold>.oclAsSet() = body\<^sub>2"
+    apply (erule ClosureBodyNE)
+    apply simp
+    using SingleClosureBodyN.hyps is_collection_type.intros typing_det by blast+
+  thus ?case by (simp add: SingleClosureBodyN.prems)
+next
+  case (CollectionClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma> n)
+  have "\<And>body\<^sub>2. (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
+        body\<^sub>1 = body\<^sub>2"
+    apply (erule ClosureBodyNE)
+    using CollectionClosureBodyN.hyps is_collection_type.intros
+      typing_det by blast+
+  thus ?case by (simp add: CollectionClosureBodyN.prems)
+next
+  case (NullFreeNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
+  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
+        body\<^sub>1 = body\<^sub>2"
+    apply (erule ClosureBodyNE)
+    using NullFreeNullFreeClosureBodyN.hyps is_collection_type.intros
+      collection_type_det(1) typing_det by blast+
+  thus ?case by (simp add: NullFreeNullFreeClosureBodyN.prems)
+next
+  case (NullFreeNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
+  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
+        body\<^sub>1->selectByKind(to_required_type \<sigma>) = body\<^sub>2"
+    apply (erule ClosureBodyNE)
+    using NullFreeNullableClosureBodyN.hyps is_collection_type.intros
+      collection_type_det(1) typing_det by blast+
+  thus ?case by (simp add: NullFreeNullableClosureBodyN.prems)
+next
+  case (NullableNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
+  have body_type_det: "\<And>\<tau>'. \<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau>' \<Longrightarrow> \<tau>' = \<tau>"
+    by (simp add: NullableNullFreeClosureBodyN.hyps(1) typing_det)
+  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
+        if body\<^sub>1 <> null
+        then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)
+        else CollectionLiteral k [] endif = body\<^sub>2"
+    apply (erule ClosureBodyNE)
+    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
+          is_collection_type.intros apply blast
+    apply auto[1]
+    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
+          collection_type_det(1) apply blast
+    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
+          collection_type_det(1) apply blast
+    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
+          collection_type_det(1) apply fastforce
+    using NullableNullFreeClosureBodyN.hyps(2)
+          NullableNullFreeClosureBodyN.hyps(3)
+          body_type_det collection_type_det(1) by blast
+  thus ?case by (simp add: NullableNullFreeClosureBodyN.prems)
+next
+  case (NullableNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
+  have body_type_det: "\<And>\<tau>'. \<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau>' \<Longrightarrow> \<tau>' = \<tau>"
+    by (simp add: NullableNullableClosureBodyN.hyps(1) typing_det)
+  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
+        if body\<^sub>1 <> null
+        then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>)
+        else CollectionLiteral k [] endif = body\<^sub>2"
+    apply (erule ClosureBodyNE)
+    using NullableNullableClosureBodyN.hyps(2) body_type_det
+          is_collection_type.intros apply blast
+    apply simp
+    using NullableNullableClosureBodyN.hyps(2) body_type_det
+          collection_type_det(1) apply blast
+    using NullableNullableClosureBodyN.hyps(2) body_type_det
+          collection_type_det(1) apply blast
+    using NullableNullableClosureBodyN.hyps(2)
+          NullableNullableClosureBodyN.hyps(3)
+          body_type_det collection_type_det(1) apply blast
+    using NullableNullableClosureBodyN.hyps(2)
+          body_type_det collection_type_det(1) by fastforce
+  thus ?case by (simp add: NullableNullableClosureBodyN.prems)
+qed
+
 lemma
   normalize_det:
     "\<Gamma> \<turnstile> expr \<Rrightarrow> expr\<^sub>1 \<Longrightarrow>
@@ -397,9 +477,6 @@ lemma
   normalize_loop_det:
     "\<Gamma>_\<tau> \<turnstile>\<^sub>I (its, its_ty, body) \<Rrightarrow> ms \<Longrightarrow>
      \<Gamma>_\<tau> \<turnstile>\<^sub>I (its, its_ty, body) \<Rrightarrow> ns \<Longrightarrow> ms = ns" and
-  normalize_closure_body_det:
-    "\<Gamma>_k \<turnstile>\<^sub>B body \<Rrightarrow> body\<^sub>1 \<Longrightarrow>
-     \<Gamma>_k \<turnstile>\<^sub>B body \<Rrightarrow> body\<^sub>2 \<Longrightarrow> body\<^sub>1 = body\<^sub>2" and
   normalize_expr_list_det:
     "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> ys \<Longrightarrow>
      \<Gamma> \<turnstile>\<^sub>L xs \<Rrightarrow> zs \<Longrightarrow> ys = zs"
@@ -407,8 +484,8 @@ lemma
   and \<Gamma>_\<tau> :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<times> 'a type\<^sub>N\<^sub>E"
   and \<Gamma>_\<tau>_k :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<times> 'a type\<^sub>N\<^sub>E \<times> call_kind"
   and \<Gamma>_k :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<times> call_kind"
-proof (induct arbitrary: expr\<^sub>2 and call\<^sub>2 and ns and body\<^sub>2 and zs
-       rule: normalize_normalize_call_normalize_loop_normalize_closure_body_normalize_expr_list.inducts)
+proof (induct arbitrary: expr\<^sub>2 and call\<^sub>2 and ns and zs
+       rule: normalize_normalize_call_normalize_loop_normalize_expr_list.inducts)
   case (LiteralN \<Gamma> a) thus ?case by auto
 next
   case (ExplicitlyTypedLetN \<Gamma> init\<^sub>1 init\<^sub>2 v \<tau> body\<^sub>1 body\<^sub>2) thus ?case by blast
@@ -641,7 +718,7 @@ next
   have "\<And>call\<^sub>2. (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
        Iterator iter its its_ty\<^sub>2 body\<^sub>3 = call\<^sub>2"
     apply (erule IterationCallNE)
-    using ClosureIterationN.hyps by blast+
+    using ClosureIterationN.hyps normalize_closure_body_det by fastforce+
   thus ?case by (simp add: ClosureIterationN.prems)
 next
   case (IterationN iter \<Gamma> \<tau> its its_ty\<^sub>1 body\<^sub>1 its_ty\<^sub>2 body\<^sub>2 k)
@@ -651,82 +728,6 @@ next
     apply (simp add: IterationN.hyps(1))
     using IterationN.hyps(3) by blast
   thus ?case by (simp add: IterationN.prems)
-next
-  case (SingleClosureBodyN \<Gamma> body\<^sub>1 \<tau> k)
-  have "\<And>body\<^sub>2. (\<Gamma>, k) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
-        body\<^sub>1\<^bold>.oclAsSet() = body\<^sub>2"
-    apply (erule ClosureBodyNE)
-    apply simp
-    using SingleClosureBodyN.hyps is_collection_type.intros typing_det by blast+
-  thus ?case by (simp add: SingleClosureBodyN.prems)
-next
-  case (CollectionClosureBodyN \<Gamma> body\<^sub>1 \<tau> uw \<sigma> ux)
-  have "\<And>body\<^sub>2. (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
-        body\<^sub>1 = body\<^sub>2"
-    apply (erule ClosureBodyNE)
-    using CollectionClosureBodyN.hyps is_collection_type.intros
-      typing_det by blast+
-  thus ?case by (simp add: CollectionClosureBodyN.prems)
-next
-  case (NullFreeNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> uy \<sigma>)
-  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
-        body\<^sub>1 = body\<^sub>2"
-    apply (erule ClosureBodyNE)
-    using NullFreeNullFreeClosureBodyN.hyps is_collection_type.intros
-      collection_type_det(1) typing_det by blast+
-  thus ?case by (simp add: NullFreeNullFreeClosureBodyN.prems)
-next
-  case (NullFreeNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> uz \<sigma>)
-  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
-        body\<^sub>1->selectByKind(to_required_type \<sigma>) = body\<^sub>2"
-    apply (erule ClosureBodyNE)
-    using NullFreeNullableClosureBodyN.hyps is_collection_type.intros
-      collection_type_det(1) typing_det by blast+
-  thus ?case by (simp add: NullFreeNullableClosureBodyN.prems)
-next
-  case (NullableNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
-  have body_type_det: "\<And>\<tau>'. \<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau>' \<Longrightarrow> \<tau>' = \<tau>"
-    by (simp add: NullableNullFreeClosureBodyN.hyps(1) typing_det)
-  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
-        if body\<^sub>1 <> null
-        then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)
-        else CollectionLiteral k [] endif = body\<^sub>2"
-    apply (erule ClosureBodyNE)
-    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
-          is_collection_type.intros apply blast
-    apply auto[1]
-    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply blast
-    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply blast
-    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply fastforce
-    using NullableNullFreeClosureBodyN.hyps(2)
-          NullableNullFreeClosureBodyN.hyps(3)
-          body_type_det collection_type_det(1) by blast
-  thus ?case by (simp add: NullableNullFreeClosureBodyN.prems)
-next
-  case (NullableNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
-  have body_type_det: "\<And>\<tau>'. \<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau>' \<Longrightarrow> \<tau>' = \<tau>"
-    by (simp add: NullableNullableClosureBodyN.hyps(1) typing_det)
-  have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
-        if body\<^sub>1 <> null
-        then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>)
-        else CollectionLiteral k [] endif = body\<^sub>2"
-    apply (erule ClosureBodyNE)
-    using NullableNullableClosureBodyN.hyps(2) body_type_det
-          is_collection_type.intros apply blast
-    apply simp
-    using NullableNullableClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply blast
-    using NullableNullableClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply blast
-    using NullableNullableClosureBodyN.hyps(2)
-          NullableNullableClosureBodyN.hyps(3)
-          body_type_det collection_type_det(1) apply blast
-    using NullableNullableClosureBodyN.hyps(2)
-          body_type_det collection_type_det(1) by fastforce
-  thus ?case by (simp add: NullableNullableClosureBodyN.prems)
 next
   case (ExplicitlyTypedCollectionLoopN \<tau> uv uw ux \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
@@ -809,8 +810,12 @@ section \<open>Code Setup\<close>
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_loop .
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) normalize_closure_body .
 
-code_pred [show_modes] nf_typing .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) normalize_loop .
+
+code_pred nf_typing .
 
 end

@@ -647,9 +647,6 @@ inductive op_type where
 | "operation \<tau> op \<pi> oper \<Longrightarrow>
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
 
-(* TODO: Remove *)
-(*code_pred [show_modes] op_type .*)
-
 (*** Simplification Rules ***************************************************)
 
 subsection \<open>Simplification Rules\<close>
@@ -1490,12 +1487,14 @@ qed
 
 section \<open>Code Setup\<close>
 
-code_pred [show_modes] mataop_type .
-code_pred [show_modes] typeop_type .
-code_pred [show_modes] non_strict_op .
-code_pred [show_modes] op_type .
+code_pred mataop_type .
+code_pred typeop_type .
+code_pred non_strict_op .
+code_pred op_type .
 code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] iterator_typing .
+    typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
+    iterator_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
+    expr_list_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
+    collection_part_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) typing .
 
 end
