@@ -85,7 +85,7 @@ abbreviation "membersCount \<equiv>  STR ''membersCount''"
 abbreviation "membersByName \<equiv>  STR ''membersByName''"
 abbreviation "allProjects \<equiv>  STR ''allProjects''"
 
-definition "literal_to_call_expr_map \<equiv> fmap_of_list [
+definition "symbol_kinds \<equiv> fmap_of_list [
   (name, Attribute),
   (position, Attribute),
   (vip, Attribute),
@@ -105,7 +105,7 @@ definition "literal_to_call_expr_map \<equiv> fmap_of_list [
   (sprint, AssociationEnd None),
   (assignee, AssociationEnd None)]"
 
-definition "literal_to_call_expr lit \<equiv> the (fmlookup literal_to_call_expr_map lit) lit"
+definition "symbol_to_call_expr lit \<equiv> the (fmlookup symbol_kinds lit) lit"
 
 (*** Model ******************************************************************)
 
@@ -126,7 +126,7 @@ declare [[coercion "ObjectType :: classes1 \<Rightarrow> classes1 type"]]
 declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum_type"]]
 declare [[coercion "Enum :: classes1 enum_type \<Rightarrow> classes1 type"]]
 declare [[coercion "StringLiteral :: string \<Rightarrow> classes1 literal_expr"]]
-declare [[coercion "literal_to_call_expr :: String.literal \<Rightarrow> classes1 call_expr"]]
+declare [[coercion "symbol_to_call_expr :: String.literal \<Rightarrow> classes1 call_expr"]]
 
 (* TODO: Заменить бесконечность на звездочку *)
 
@@ -361,8 +361,8 @@ declare model_spec_def [simp]
 declare subclass1.simps [simp]
 declare less_classes1_def [simp]
 
-declare literal_to_call_expr_def [simp]
-declare literal_to_call_expr_map_def [simp]
+declare symbol_to_call_expr_def [simp]
+declare symbol_kinds_def [simp]
 declare literals_classes1_def [simp]
 
 lemma attribute_Employee_name [simp]:
