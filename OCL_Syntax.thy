@@ -202,18 +202,18 @@ declare [[coercion "Literal :: 'a literal_expr \<Rightarrow> 'a expr"]]
 
 abbreviation "TypeOperationCall src k op ty \<equiv>
   Call src k (TypeOperation op ty)"
-abbreviation "AttributeCall src k attr \<equiv>
-  Call src k (Attribute attr)"
-abbreviation "AssociationEndCall src k from role \<equiv>
-  Call src k (AssociationEnd from role)"
-abbreviation "AssociationClassCall src k from cls \<equiv>
-  Call src k (AssociationClass from cls)"
-abbreviation "AssociationClassEndCall src k role \<equiv>
-  Call src k (AssociationClassEnd role)"
+abbreviation "AttributeCall src attr \<equiv>
+  Call src DotCall (Attribute attr)"
+abbreviation "AssociationEndCall src from role \<equiv>
+  Call src DotCall (AssociationEnd from role)"
+abbreviation "AssociationClassCall src from cls \<equiv>
+  Call src DotCall (AssociationClass from cls)"
+abbreviation "AssociationClassEndCall src role \<equiv>
+  Call src DotCall (AssociationClassEnd role)"
 abbreviation "OperationCall src k op as \<equiv>
   Call src k (Operation op as)"
-abbreviation "TupleElementCall src k elem \<equiv>
-  Call src k (TupleElement elem)"
+abbreviation "TupleElementCall src elem \<equiv>
+  Call src DotCall (TupleElement elem)"
 abbreviation "IterateCall src its its_ty v ty init body \<equiv>
   Call src ArrowCall (Iterate its its_ty v ty init body)"
 abbreviation "AnyIterationCall src its its_ty body \<equiv>
@@ -262,16 +262,16 @@ syntax
   "_int9" :: "'a expr" ("\<^bold>9")
 
 translations
-  "\<^bold>0" == "CONST Literal (CONST IntegerLiteral 0)"
-  "\<^bold>1" == "CONST Literal (CONST IntegerLiteral 1)"
-  "\<^bold>2" == "CONST Literal (CONST IntegerLiteral 2)"
-  "\<^bold>3" == "CONST Literal (CONST IntegerLiteral 3)"
-  "\<^bold>4" == "CONST Literal (CONST IntegerLiteral 4)"
-  "\<^bold>5" == "CONST Literal (CONST IntegerLiteral 5)"
-  "\<^bold>6" == "CONST Literal (CONST IntegerLiteral 6)"
-  "\<^bold>7" == "CONST Literal (CONST IntegerLiteral 7)"
-  "\<^bold>8" == "CONST Literal (CONST IntegerLiteral 8)"
-  "\<^bold>9" == "CONST Literal (CONST IntegerLiteral 9)"
+  "\<^bold>0" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 0)"
+  "\<^bold>1" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 1)"
+  "\<^bold>2" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 2)"
+  "\<^bold>3" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 3)"
+  "\<^bold>4" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 4)"
+  "\<^bold>5" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 5)"
+  "\<^bold>6" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 6)"
+  "\<^bold>7" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 7)"
+  "\<^bold>8" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 8)"
+  "\<^bold>9" \<rightleftharpoons> "CONST Literal (CONST IntegerLiteral 9)"
 
 syntax
   "_enum_literal" :: "'a \<Rightarrow> 'a \<Rightarrow> 'a expr" ("_\<^bold>:\<^bold>:_")
@@ -296,17 +296,17 @@ syntax
   "_collection_range" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> collection_part" ("_.._")
 
 translations
-  "_set xs" == "CONST CollectionLiteral CONST SetKind xs"
-  "_ordered_set xs" == "CONST CollectionLiteral CONST OrderedSetKind xs"
-  "_bag xs" == "CONST CollectionLiteral CONST BagKind xs"
-  "_sequence xs" == "CONST CollectionLiteral CONST SequenceKind xs"
+  "_set xs" \<rightleftharpoons> "CONST CollectionLiteral CONST SetKind xs"
+  "_ordered_set xs" \<rightleftharpoons> "CONST CollectionLiteral CONST OrderedSetKind xs"
+  "_bag xs" \<rightleftharpoons> "CONST CollectionLiteral CONST BagKind xs"
+  "_sequence xs" \<rightleftharpoons> "CONST CollectionLiteral CONST SequenceKind xs"
 
   "_collection_parts x xs" \<rightharpoonup> "x # xs"
   "_collection_empty_parts" \<rightharpoonup> "[]"
   "_collection_single_part x" \<rightharpoonup> "[x]"
 
-  "_collection_item x" == "CONST CollectionItem x"
-  "_collection_range x y" == "CONST CollectionRange x y"
+  "_collection_item x" \<rightleftharpoons> "CONST CollectionItem x"
+  "_collection_range x y" \<rightleftharpoons> "CONST CollectionRange x y"
 
 nonterminal map_parts and map_part
 
@@ -318,7 +318,7 @@ syntax
   "_map_part" :: "'a expr \<Rightarrow> 'a expr \<Rightarrow> map_part" ("_ <- _")
 
 translations
-  "_map xs" == "CONST MapLiteral xs"
+  "_map xs" \<rightleftharpoons> "CONST MapLiteral xs"
   "_map_parts x xs" \<rightharpoonup> "x # xs"
   "_map_empty_parts" \<rightharpoonup> "[]"
   "_map_single_part x" \<rightharpoonup> "[x]"
@@ -339,7 +339,7 @@ syntax
   "_tuple_type_element" :: "vname \<Rightarrow> 'a type\<^sub>N \<Rightarrow> tuple_type_element" ("_ : _")
 
 translations
-  "_tuple_type \<pi>" == "CONST Tuple (CONST fmap_of_list \<pi>)"
+  "_tuple_type \<pi>" \<rightleftharpoons> "CONST Tuple (CONST fmap_of_list \<pi>)"
 
   "_tuple_type_elements x xs" \<rightharpoonup> "x # xs"
   "_tuple_type_empty_elements" \<rightharpoonup> "[]"
@@ -360,9 +360,9 @@ syntax
                 ("if _ then _ else _ endif")
 
 translations
-  "_let v init body" == "CONST Let v CONST None init body"
-  "_typed_let v \<tau> init body" == "CONST Let v (CONST Some \<tau>) init body"
-  "_if cnd thn els" == "CONST If cnd thn els"
+  "_let v init body" \<rightleftharpoons> "CONST Let v CONST None init body"
+  "_typed_let v \<tau> init body" \<rightleftharpoons> "CONST Let v (CONST Some \<tau>) init body"
+  "_if cnd thn els" \<rightleftharpoons> "CONST If cnd thn els"
 
 subsection \<open>Call Expressions\<close>
 
@@ -406,12 +406,12 @@ syntax
       ("_::_('('))"  [1000,1000] 300)
 
 translations
-  "_dotCall src call" == "CONST Call src (CONST DotCall) call"
-  "_safeDotCall src call" == "CONST Call src (CONST SafeDotCall) call"
-  "_arrowCall src call" == "CONST Call src (CONST ArrowCall) call"
-  "_safeArrowCall src call" == "CONST Call src (CONST SafeArrowCall) call"
-  "_staticOpCall src op args" == "CONST StaticOperationCall src op args"
-  "_staticOpCall_no_args src op" == "CONST StaticOperationCall src op []"
+  "_dotCall src call" \<rightleftharpoons> "CONST Call src (CONST DotCall) call"
+  "_safeDotCall src call" \<rightleftharpoons> "CONST Call src (CONST SafeDotCall) call"
+  "_arrowCall src call" \<rightleftharpoons> "CONST Call src (CONST ArrowCall) call"
+  "_safeArrowCall src call" \<rightleftharpoons> "CONST Call src (CONST SafeArrowCall) call"
+  "_staticOpCall src op args" \<rightleftharpoons> "CONST StaticOperationCall src op args"
+  "_staticOpCall_no_args src op" \<rightleftharpoons> "CONST StaticOperationCall src op []"
 
 subsection \<open>Operations\<close>
 
@@ -420,7 +420,7 @@ syntax
   "_allInstances" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> 'a expr" ("_\<^bold>.allInstances'(')")
 
 translations
-  "_allInstances \<tau>" == "CONST MetaOperationCall \<tau> (CONST AllInstancesOp)"
+  "_allInstances \<tau>" \<rightleftharpoons> "CONST MetaOperationCall \<tau> (CONST AllInstancesOp)"
 
 \<comment> \<open>Type Operations\<close>
 syntax
@@ -431,11 +431,11 @@ syntax
   "_selectByKind" :: "'a type\<^sub>N\<^sub>E \<Rightarrow> type_op_call" ("selectByKind('(_'))")
 
 translations
-  "_oclAsType \<tau>" == "CONST TypeOperation (CONST OclAsTypeOp) \<tau>"
-  "_oclIsTypeOf \<tau>" == "CONST TypeOperation (CONST OclIsTypeOfOp) \<tau>"
-  "_oclIsKindOf \<tau>" == "CONST TypeOperation (CONST OclIsKindOfOp) \<tau>"
-  "_selectByType \<tau>" == "CONST TypeOperation (CONST SelectByTypeOp) \<tau>"
-  "_selectByKind \<tau>" == "CONST TypeOperation (CONST SelectByKindOp) \<tau>"
+  "_oclAsType \<tau>" \<rightleftharpoons> "CONST TypeOperation (CONST OclAsTypeOp) \<tau>"
+  "_oclIsTypeOf \<tau>" \<rightleftharpoons> "CONST TypeOperation (CONST OclIsTypeOfOp) \<tau>"
+  "_oclIsKindOf \<tau>" \<rightleftharpoons> "CONST TypeOperation (CONST OclIsKindOfOp) \<tau>"
+  "_selectByType \<tau>" \<rightleftharpoons> "CONST TypeOperation (CONST SelectByTypeOp) \<tau>"
+  "_selectByKind \<tau>" \<rightleftharpoons> "CONST TypeOperation (CONST SelectByKindOp) \<tau>"
 
 syntax
   \<comment> \<open>User-defined Operations\<close>
@@ -547,130 +547,132 @@ syntax
 
 translations
   \<comment> \<open>User-defined Operations\<close>
-  "_user_defined_op op" == "CONST Operation op"
+  "_user_defined_op op" \<rightleftharpoons> "CONST Operation op"
 
   \<comment> \<open>OclAny Operations\<close>
-  "_oclAsSet" == "CONST Operation (CONST OclAsSetOp)"
-  "_oclIsNew" == "CONST Operation (CONST OclIsNewOp)"
-  "_oclIsUndefined" == "CONST Operation (CONST OclIsUndefinedOp)"
-  "_oclIsInvalid" == "CONST Operation (CONST OclIsInvalidOp)"
-  "_toString" == "CONST Operation (CONST ToStringOp)"
-  "_equal x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST EqualOp) [y])"
-  "_notEqual x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST NotEqualOp) [y])"
+  "_oclAsSet" \<rightleftharpoons> "CONST Operation (CONST OclAsSetOp)"
+  "_oclIsNew" \<rightleftharpoons> "CONST Operation (CONST OclIsNewOp)"
+  "_oclIsUndefined" \<rightleftharpoons> "CONST Operation (CONST OclIsUndefinedOp)"
+  "_oclIsInvalid" \<rightleftharpoons> "CONST Operation (CONST OclIsInvalidOp)"
+  "_toString" \<rightleftharpoons> "CONST Operation (CONST ToStringOp)"
+  "_equal x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST EqualOp) [y])"
+  "_notEqual x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST NotEqualOp) [y])"
 
   \<comment> \<open>Boolean Operations\<close>
-  "_not x" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST NotOp) [])"
-  "_and x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST AndOp) [y])"
-  "_or x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST OrOp) [y])"
-  "_xor x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST XorOp) [y])"
-  "_implies x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST ImpliesOp) [y])"
+  "_not x" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST NotOp) [])"
+  "_and x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST AndOp) [y])"
+  "_or x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST OrOp) [y])"
+  "_xor x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST XorOp) [y])"
+  "_implies x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST ImpliesOp) [y])"
 
   \<comment> \<open>Numeric Operations\<close>
-  "_uminus x" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST UMinusOp) [])"
-  "_absOp" == "CONST Operation (CONST AbsOp)"
-  "_floor" == "CONST Operation (CONST FloorOp)"
-  "_round" == "CONST Operation (CONST RoundOp)"
-  "_toInteger" == "CONST Operation (CONST ToIntegerOp)"
-  "_plus x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST PlusOp) [y])"
-  "_minus x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST MinusOp) [y])"
-  "_mult x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST MultOp) [y])"
-  "_divide x y" ==
-      "CONST Call x (CONST DotCall) (CONST Operation (CONST DivideOp) [y])"
-  "_div" == "CONST Operation (CONST DivOp)"
-  "_mod" == "CONST Operation (CONST ModOp)"
-  "_numericMax" == "CONST Operation (CONST NumericMaxOp)"
-  "_numericMin" == "CONST Operation (CONST NumericMinOp)"
-  "_numericLess" == "CONST Operation (CONST NumericLessOp)"
-  "_numericLessEq" == "CONST Operation (CONST NumericLessEqOp)"
-  "_numericGreater" == "CONST Operation (CONST NumericGreaterOp)"
-  "_numericGreaterEq" == "CONST Operation (CONST NumericGreaterEqOp)"
+  "_uminus x" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST UMinusOp) [])"
+  "_absOp" \<rightleftharpoons> "CONST Operation (CONST AbsOp)"
+  "_floor" \<rightleftharpoons> "CONST Operation (CONST FloorOp)"
+  "_round" \<rightleftharpoons> "CONST Operation (CONST RoundOp)"
+  "_toInteger" \<rightleftharpoons> "CONST Operation (CONST ToIntegerOp)"
+  "_plus x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST PlusOp) [y])"
+  "_minus x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST MinusOp) [y])"
+  "_mult x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST MultOp) [y])"
+  "_divide x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST DivideOp) [y])"
+  "_div" \<rightleftharpoons> "CONST Operation (CONST DivOp)"
+  "_mod" \<rightleftharpoons> "CONST Operation (CONST ModOp)"
+  "_numericMax" \<rightleftharpoons> "CONST Operation (CONST NumericMaxOp)"
+  "_numericMin" \<rightleftharpoons> "CONST Operation (CONST NumericMinOp)"
+  "_numericLess" \<rightleftharpoons> "CONST Operation (CONST NumericLessOp)"
+  "_numericLessEq" \<rightleftharpoons> "CONST Operation (CONST NumericLessEqOp)"
+  "_numericGreater" \<rightleftharpoons> "CONST Operation (CONST NumericGreaterOp)"
+  "_numericGreaterEq" \<rightleftharpoons> "CONST Operation (CONST NumericGreaterEqOp)"
 
   \<comment> \<open>String Operations\<close>
-  "_stringSize" == "CONST Operation (CONST StringSizeOp)"
-  "_toUpperCase" == "CONST Operation (CONST ToUpperCaseOp)"
-  "_toLowerCase" == "CONST Operation (CONST ToLowerCaseOp)"
-  "_characters" == "CONST Operation (CONST CharactersOp)"
-  "_toBoolean" == "CONST Operation (CONST ToBooleanOp)"
-  "_toInteger" == "CONST Operation (CONST ToIntegerOp)"
-  "_toReal" == "CONST Operation (CONST ToRealOp)"
-  "_concat" == "CONST Operation (CONST ConcatOp)"
-  "_stringIndexOf" == "CONST Operation (CONST StringIndexOfOp)"
-  "_equalsIgnoreCase" == "CONST Operation (CONST EqualsIgnoreCaseOp)"
-  "_stringAt" == "CONST Operation (CONST StringAtOp)"
-  "_stringLess" == "CONST Operation (CONST StringLessOp)"
-  "_stringLessEq" == "CONST Operation (CONST StringLessEqOp)"
-  "_stringGreater" == "CONST Operation (CONST StringGreaterOp)"
-  "_stringGreaterEq" == "CONST Operation (CONST StringGreaterEqOp)"
-  "_substring" == "CONST Operation (CONST SubstringOp)"
+  "_stringSize" \<rightleftharpoons> "CONST Operation (CONST StringSizeOp)"
+  "_toUpperCase" \<rightleftharpoons> "CONST Operation (CONST ToUpperCaseOp)"
+  "_toLowerCase" \<rightleftharpoons> "CONST Operation (CONST ToLowerCaseOp)"
+  "_characters" \<rightleftharpoons> "CONST Operation (CONST CharactersOp)"
+  "_toBoolean" \<rightleftharpoons> "CONST Operation (CONST ToBooleanOp)"
+  "_toInteger" \<rightleftharpoons> "CONST Operation (CONST ToIntegerOp)"
+  "_toReal" \<rightleftharpoons> "CONST Operation (CONST ToRealOp)"
+  "_concat" \<rightleftharpoons> "CONST Operation (CONST ConcatOp)"
+  "_stringIndexOf" \<rightleftharpoons> "CONST Operation (CONST StringIndexOfOp)"
+  "_equalsIgnoreCase" \<rightleftharpoons> "CONST Operation (CONST EqualsIgnoreCaseOp)"
+  "_stringAt" \<rightleftharpoons> "CONST Operation (CONST StringAtOp)"
+  "_stringLess" \<rightleftharpoons> "CONST Operation (CONST StringLessOp)"
+  "_stringLessEq" \<rightleftharpoons> "CONST Operation (CONST StringLessEqOp)"
+  "_stringGreater" \<rightleftharpoons> "CONST Operation (CONST StringGreaterOp)"
+  "_stringGreaterEq" \<rightleftharpoons> "CONST Operation (CONST StringGreaterEqOp)"
+  "_substring" \<rightleftharpoons> "CONST Operation (CONST SubstringOp)"
 
   \<comment> \<open>Iterable Operations\<close>
-  "_size" == "CONST Operation (CONST SizeOp)"
-  "_isEmpty" == "CONST Operation (CONST IsEmptyOp)"
-  "_notEmpty" == "CONST Operation (CONST NotEmptyOp)"
-  "_max" == "CONST Operation (CONST MaxOp)"
-  "_min" == "CONST Operation (CONST MinOp)"
-  "_sum" == "CONST Operation (CONST SumOp)"
-  "_asSet" == "CONST Operation (CONST AsSetOp)"
-  "_asOrderedSet" == "CONST Operation (CONST AsOrderedSetOp)"
-  "_asBag" == "CONST Operation (CONST AsBagOp)"
-  "_asSequence" == "CONST Operation (CONST AsSequenceOp)"
-  "_flatten" == "CONST Operation (CONST FlattenOp)"
-  "_first" == "CONST Operation (CONST FirstOp)"
-  "_last" == "CONST Operation (CONST LastOp)"
-  "_reverse" == "CONST Operation (CONST ReverseOp)"
-  "_keys" == "CONST Operation (CONST KeysOp)"
-  "_values" == "CONST Operation (CONST ValuesOp)"
-  "_count" == "CONST Operation (CONST CountOp)"
-  "_includes" == "CONST Operation (CONST IncludesOp)"
-  "_excludes" == "CONST Operation (CONST ExcludesOp)"
-  "_includesValue" == "CONST Operation (CONST IncludesValueOp)"
-  "_excludesValue" == "CONST Operation (CONST ExcludesValueOp)"
-  "_includesAll" == "CONST Operation (CONST IncludesAllOp)"
-  "_excludesAll" == "CONST Operation (CONST ExcludesAllOp)"
-  "_includesMap" == "CONST Operation (CONST IncludesMapOp)"
-  "_excludesMap" == "CONST Operation (CONST ExcludesMapOp)"
-  "_product" == "CONST Operation (CONST ProductOp)"
-  "_union" == "CONST Operation (CONST UnionOp)"
-  "_intersection" == "CONST Operation (CONST IntersectionOp)"
-  "_setMinus" == "CONST Operation (CONST SetMinusOp)"
-  "_symmetricDifference" ==
+  "_size" \<rightleftharpoons> "CONST Operation (CONST SizeOp)"
+  "_isEmpty" \<rightleftharpoons> "CONST Operation (CONST IsEmptyOp)"
+  "_notEmpty" \<rightleftharpoons> "CONST Operation (CONST NotEmptyOp)"
+  "_max" \<rightleftharpoons> "CONST Operation (CONST MaxOp)"
+  "_min" \<rightleftharpoons> "CONST Operation (CONST MinOp)"
+  "_sum" \<rightleftharpoons> "CONST Operation (CONST SumOp)"
+  "_asSet" \<rightleftharpoons> "CONST Operation (CONST AsSetOp)"
+  "_asOrderedSet" \<rightleftharpoons> "CONST Operation (CONST AsOrderedSetOp)"
+  "_asBag" \<rightleftharpoons> "CONST Operation (CONST AsBagOp)"
+  "_asSequence" \<rightleftharpoons> "CONST Operation (CONST AsSequenceOp)"
+  "_flatten" \<rightleftharpoons> "CONST Operation (CONST FlattenOp)"
+  "_first" \<rightleftharpoons> "CONST Operation (CONST FirstOp)"
+  "_last" \<rightleftharpoons> "CONST Operation (CONST LastOp)"
+  "_reverse" \<rightleftharpoons> "CONST Operation (CONST ReverseOp)"
+  "_keys" \<rightleftharpoons> "CONST Operation (CONST KeysOp)"
+  "_values" \<rightleftharpoons> "CONST Operation (CONST ValuesOp)"
+  "_count" \<rightleftharpoons> "CONST Operation (CONST CountOp)"
+  "_includes" \<rightleftharpoons> "CONST Operation (CONST IncludesOp)"
+  "_excludes" \<rightleftharpoons> "CONST Operation (CONST ExcludesOp)"
+  "_includesValue" \<rightleftharpoons> "CONST Operation (CONST IncludesValueOp)"
+  "_excludesValue" \<rightleftharpoons> "CONST Operation (CONST ExcludesValueOp)"
+  "_includesAll" \<rightleftharpoons> "CONST Operation (CONST IncludesAllOp)"
+  "_excludesAll" \<rightleftharpoons> "CONST Operation (CONST ExcludesAllOp)"
+  "_includesMap" \<rightleftharpoons> "CONST Operation (CONST IncludesMapOp)"
+  "_excludesMap" \<rightleftharpoons> "CONST Operation (CONST ExcludesMapOp)"
+  "_product" \<rightleftharpoons> "CONST Operation (CONST ProductOp)"
+  "_union" \<rightleftharpoons> "CONST Operation (CONST UnionOp)"
+  "_intersection" \<rightleftharpoons> "CONST Operation (CONST IntersectionOp)"
+  "_setMinus" \<rightleftharpoons> "CONST Operation (CONST SetMinusOp)"
+  "_symmetricDifference" \<rightleftharpoons>
       "CONST Operation (CONST SymmetricDifferenceOp)"
-  "_including" == "CONST Operation (CONST IncludingOp)"
-  "_excluding" == "CONST Operation (CONST ExcludingOp)"
-  "_includingAll" == "CONST Operation (CONST IncludingAllOp)"
-  "_excludingAll" == "CONST Operation (CONST ExcludingAllOp)"
-  "_includingMap" == "CONST Operation (CONST IncludingMapOp)"
-  "_excludingMap" == "CONST Operation (CONST ExcludingMapOp)"
-  "_append" == "CONST Operation (CONST AppendOp)"
-  "_prepend" == "CONST Operation (CONST PrependOp)"
-  "_appendAll" == "CONST Operation (CONST AppendAllOp)"
-  "_prependAll" == "CONST Operation (CONST PrependAllOp)"
-  "_at" == "CONST Operation (CONST AtOp)"
-  "_indexOf" == "CONST Operation (CONST IndexOfOp)"
-  "_insertAt" == "CONST Operation (CONST InsertAtOp)"
-  "_subOrderedSet" == "CONST Operation (CONST SubOrderedSetOp)"
-  "_subSequence" == "CONST Operation (CONST SubSequenceOp)"
-  "_includesPair" == "CONST Operation (CONST IncludesPairOp)"
-  "_excludesPair" == "CONST Operation (CONST ExcludesPairOp)"
-  "_includingPair" == "CONST Operation (CONST IncludingPairOp)"
-  "_excludingPair" == "CONST Operation (CONST ExcludingPairOp)"
+  "_including" \<rightleftharpoons> "CONST Operation (CONST IncludingOp)"
+  "_excluding" \<rightleftharpoons> "CONST Operation (CONST ExcludingOp)"
+  "_includingAll" \<rightleftharpoons> "CONST Operation (CONST IncludingAllOp)"
+  "_excludingAll" \<rightleftharpoons> "CONST Operation (CONST ExcludingAllOp)"
+  "_includingMap" \<rightleftharpoons> "CONST Operation (CONST IncludingMapOp)"
+  "_excludingMap" \<rightleftharpoons> "CONST Operation (CONST ExcludingMapOp)"
+  "_append" \<rightleftharpoons> "CONST Operation (CONST AppendOp)"
+  "_prepend" \<rightleftharpoons> "CONST Operation (CONST PrependOp)"
+  "_appendAll" \<rightleftharpoons> "CONST Operation (CONST AppendAllOp)"
+  "_prependAll" \<rightleftharpoons> "CONST Operation (CONST PrependAllOp)"
+  "_at" \<rightleftharpoons> "CONST Operation (CONST AtOp)"
+  "_indexOf" \<rightleftharpoons> "CONST Operation (CONST IndexOfOp)"
+  "_insertAt" \<rightleftharpoons> "CONST Operation (CONST InsertAtOp)"
+  "_subOrderedSet" \<rightleftharpoons> "CONST Operation (CONST SubOrderedSetOp)"
+  "_subSequence" \<rightleftharpoons> "CONST Operation (CONST SubSequenceOp)"
+  "_includesPair" \<rightleftharpoons> "CONST Operation (CONST IncludesPairOp)"
+  "_excludesPair" \<rightleftharpoons> "CONST Operation (CONST ExcludesPairOp)"
+  "_includingPair" \<rightleftharpoons> "CONST Operation (CONST IncludingPairOp)"
+  "_excludingPair" \<rightleftharpoons> "CONST Operation (CONST ExcludingPairOp)"
 
 subsection \<open>Iterators\<close>
 
+(* TODO: Нужно использовать эти типы выше в AST *)
+
 datatype ('a, 'b) iterators = Iterators
   (iterator_names: "'a list")
-  (iterator_types: "'b option")
+  (iterator_type: "'b option")
 
 datatype ('a, 'b) coiterators = CoIterators
   "('a, 'b) iterators"
@@ -683,8 +685,8 @@ primrec coiterator_names where
 
 primrec coiterator_types where
   "coiterator_types (CoIterators xs ys) = (case ys
-      of None \<Rightarrow> (iterator_types xs, None)
-       | Some zs \<Rightarrow> (iterator_types xs, iterator_types zs))"
+      of None \<Rightarrow> (iterator_type xs, None)
+       | Some zs \<Rightarrow> (iterator_type xs, iterator_type zs))"
 
 datatype ('a, 'b, 'c) lambda_spec =
   NoIteratorsLambda
@@ -757,43 +759,43 @@ syntax
   "_iterator" :: "vname \<Rightarrow> iterator_list" ("_" [1000] 100)
 
 translations
-  "_iterate lambda" == "CONST mk_iterate lambda"
+  "_iterate lambda" \<rightleftharpoons> "CONST mk_iterate lambda"
 
-  "_anyIter lambda" == "CONST mk_iterator (CONST AnyIter) lambda"
-  "_closureIter lambda" == "CONST mk_iterator (CONST ClosureIter) lambda"
-  "_collectIter lambda" == "CONST mk_iterator (CONST CollectIter) lambda"
-  "_collectByIter lambda" == "CONST mk_iterator (CONST CollectByIter) lambda"
-  "_collectNestedIter lambda" ==
+  "_anyIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST AnyIter) lambda"
+  "_closureIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST ClosureIter) lambda"
+  "_collectIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST CollectIter) lambda"
+  "_collectByIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST CollectByIter) lambda"
+  "_collectNestedIter lambda" \<rightleftharpoons>
       "CONST mk_iterator (CONST CollectNestedIter) lambda"
-  "_existsIter lambda" == "CONST mk_iterator (CONST ExistsIter) lambda"
-  "_forAllIter lambda" == "CONST mk_iterator (CONST ForAllIter) lambda"
-  "_oneIter lambda" == "CONST mk_iterator (CONST OneIter) lambda"
-  "_isUniqueIter lambda" == "CONST mk_iterator (CONST IsUniqueIter) lambda"
-  "_selectIter lambda" == "CONST mk_iterator (CONST SelectIter) lambda"
-  "_rejectIter lambda" == "CONST mk_iterator (CONST RejectIter) lambda"
-  "_sortedByIter lambda" == "CONST mk_iterator (CONST SortedByIter) lambda"
+  "_existsIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST ExistsIter) lambda"
+  "_forAllIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST ForAllIter) lambda"
+  "_oneIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST OneIter) lambda"
+  "_isUniqueIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST IsUniqueIter) lambda"
+  "_selectIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST SelectIter) lambda"
+  "_rejectIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST RejectIter) lambda"
+  "_sortedByIter lambda" \<rightleftharpoons> "CONST mk_iterator (CONST SortedByIter) lambda"
 
-  "_iterate_lambda1 acc init body" ==
+  "_iterate_lambda1 acc init body" \<rightleftharpoons>
       "CONST IterateLambda
           (CONST CoIterators (CONST Iterators [] CONST None) CONST None)
           acc CONST None init body"
-  "_iterate_lambda2 acc ty init body" ==
+  "_iterate_lambda2 acc ty init body" \<rightleftharpoons>
       "CONST IterateLambda
           (CONST CoIterators (CONST Iterators [] CONST None) CONST None)
           acc (CONST Some ty) init body"
-  "_iterate_lambda3 iters acc init body" ==
+  "_iterate_lambda3 iters acc init body" \<rightleftharpoons>
       "CONST IterateLambda iters acc CONST None init body"
-  "_iterate_lambda4 iters acc ty init body" ==
+  "_iterate_lambda4 iters acc ty init body" \<rightleftharpoons>
       "CONST IterateLambda iters acc (CONST Some ty) init body"
 
-  "_iteration_lambda1 body" == "CONST NoIteratorsLambda body"
-  "_iteration_lambda2 k body" == "CONST IterationLambda k body"
+  "_iteration_lambda1 body" \<rightleftharpoons> "CONST NoIteratorsLambda body"
+  "_iteration_lambda2 k body" \<rightleftharpoons> "CONST IterationLambda k body"
 
-  "_col_iterators xs" == "CONST CoIterators xs CONST None"
-  "_map_iterators xs ys" == "CONST CoIterators xs (CONST Some ys)"
+  "_col_iterators xs" \<rightleftharpoons> "CONST CoIterators xs CONST None"
+  "_map_iterators xs ys" \<rightleftharpoons> "CONST CoIterators xs (CONST Some ys)"
 
-  "_imp_typed_iterators xs" == "CONST Iterators xs CONST None"
-  "_exp_typed_iterators xs t" == "CONST Iterators xs (CONST Some t)"
+  "_imp_typed_iterators xs" \<rightleftharpoons> "CONST Iterators xs CONST None"
+  "_exp_typed_iterators xs t" \<rightleftharpoons> "CONST Iterators xs (CONST Some t)"
 
   "_iterators x (y # xs)" \<rightharpoonup> "x # y # xs"
   "_iterator x" \<rightharpoonup> "[x]"

@@ -119,7 +119,8 @@ proof -
   with assms show ?thesis
     apply simp
     apply (rule fmrel_on_fsetI)
-    by (metis (full_types) finterD1 fmdomE fmdom_fmmerge fmdom_notD rel_option_None2)
+    by (metis (full_types) finterD1 fmdomE fmdom_fmmerge
+        fmdom_notD rel_option_None2)
 qed
 
 (*** Acyclicity *************************************************************)
@@ -202,13 +203,13 @@ lemma fmrel_on_fset_trans [trans]:
             option.rel_sel option.sel)
 
 lemma trancl_to_fmrel:
-  "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel f\<^sup>+\<^sup>+ xm ym"
+  "(fmrel R)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmrel R\<^sup>+\<^sup>+ xm ym"
   apply (induct rule: tranclp_induct)
   apply (simp add: fmap.rel_mono_strong)
-  by (rule_tac ?P="f\<^sup>+\<^sup>+" and ?Q="f" in fmrel_trans; auto)
+  by (rule_tac ?P="R\<^sup>+\<^sup>+" and ?Q="R" in fmrel_trans; auto)
 
 lemma fmrel_trancl_fmdom_eq:
-  "(fmrel f)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"
+  "(fmrel R)\<^sup>+\<^sup>+ xm ym \<Longrightarrow> fmdom xm = fmdom ym"
   by (induct rule: tranclp_induct; simp add: fmrel_fmdom_eq)
 
 text \<open>
@@ -297,38 +298,38 @@ text \<open>
   and provided with the permission of the author of the answer.\<close>
 
 lemma fmrel_to_rtrancl:
-  assumes as_r: "reflp r"
-      and rel_rpp_xm_ym: "fmrel r\<^sup>*\<^sup>* xm ym"
-    shows "(fmrel r)\<^sup>*\<^sup>* xm ym"
+  assumes as_r: "reflp R"
+      and rel_rpp_xm_ym: "fmrel R\<^sup>*\<^sup>* xm ym"
+    shows "(fmrel R)\<^sup>*\<^sup>* xm ym"
 proof -
   from rel_rpp_xm_ym have "fmdom xm = fmdom ym"
     using fmrel_fmdom_eq by blast
-  with rel_rpp_xm_ym show "(fmrel r)\<^sup>*\<^sup>* xm ym"
+  with rel_rpp_xm_ym show "(fmrel R)\<^sup>*\<^sup>* xm ym"
   proof (induct rule: fmap_eqdom_induct)
     case nil show ?case by auto
   next
     case (step x xm y ym i) show ?case
     proof -
-      from step.hyps(1) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
+      from step.hyps(1) have "(fmrel R)\<^sup>*\<^sup>* (fmupd i x xm) (fmupd i y xm)"
       proof (induct rule: rtranclp_induct)
         case base show ?case by simp
       next
         case (step y z) show ?case
         proof -
-          from as_r have "fmrel r xm xm"
+          from as_r have "fmrel R xm xm"
             by (simp add: fmap.rel_reflp reflpD)
-          with step.hyps(2) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i z xm)"
+          with step.hyps(2) have "(fmrel R)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i z xm)"
             by (simp add: fmrel_upd r_into_rtranclp)
           with step.hyps(3) show ?thesis by simp
         qed
       qed
-      also from step.hyps(4) have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i y ym)"
+      also from step.hyps(4) have "(fmrel R)\<^sup>*\<^sup>* (fmupd i y xm) (fmupd i y ym)"
       proof (induct rule: rtranclp_induct)
         case base show ?case by simp
       next
         case (step ya za) show ?case
         proof -
-          from step.hyps(2) as_r have "(fmrel r)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)"
+          from step.hyps(2) as_r have "(fmrel R)\<^sup>*\<^sup>* (fmupd i y ya) (fmupd i y za)"
             by (simp add: fmrel_upd r_into_rtranclp reflp_def)
           with step.hyps(3) show ?thesis by simp
         qed
@@ -345,39 +346,39 @@ text \<open>
   and provided with the permission of the author of the answer.\<close>
 
 lemma fmrel_to_trancl:
-  assumes "reflp r"
-      and "fmrel r\<^sup>+\<^sup>+ xm ym"
-    shows "(fmrel r)\<^sup>+\<^sup>+ xm ym"
+  assumes "reflp R"
+      and "fmrel R\<^sup>+\<^sup>+ xm ym"
+    shows "(fmrel R)\<^sup>+\<^sup>+ xm ym"
 proof -
-  from assms(2) have "fmrel r\<^sup>*\<^sup>* xm ym"
-    by (drule_tac ?Ra="r\<^sup>*\<^sup>*" in fmap.rel_mono_strong; auto)
-  with assms(1) have "(fmrel r)\<^sup>*\<^sup>* xm ym"
+  from assms(2) have "fmrel R\<^sup>*\<^sup>* xm ym"
+    by (drule_tac ?Ra="R\<^sup>*\<^sup>*" in fmap.rel_mono_strong; auto)
+  with assms(1) have "(fmrel R)\<^sup>*\<^sup>* xm ym"
     by (simp add: fmrel_to_rtrancl)
   with assms(1) show ?thesis
     by (metis fmap.rel_reflp reflpD rtranclpD tranclp.r_into_trancl)
 qed
 
 lemma fmrel_tranclp_induct:
-  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
-   reflp r \<Longrightarrow>
-   (\<And>y. fmrel r a y \<Longrightarrow> P y) \<Longrightarrow>
-   (\<And>y z. (fmrel r)\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel r y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
+  "fmrel R\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   reflp R \<Longrightarrow>
+   (\<And>y. fmrel R a y \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z. (fmrel R)\<^sup>+\<^sup>+ a y \<Longrightarrow> fmrel R y z \<Longrightarrow> P y \<Longrightarrow> P z) \<Longrightarrow> P b"
   apply (drule fmrel_to_trancl, simp)
   by (erule tranclp_induct; simp)
 
 lemma fmrel_converse_tranclp_induct:
-  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
-   reflp r \<Longrightarrow>
-   (\<And>y. fmrel r y b \<Longrightarrow> P y) \<Longrightarrow>
-   (\<And>y z. fmrel r y z \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ z b \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow> P a"
+  "fmrel R\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   reflp R \<Longrightarrow>
+   (\<And>y. fmrel R y b \<Longrightarrow> P y) \<Longrightarrow>
+   (\<And>y z. fmrel R y z \<Longrightarrow> fmrel R\<^sup>+\<^sup>+ z b \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow> P a"
   apply (drule fmrel_to_trancl, simp)
   by (erule converse_tranclp_induct; simp add: trancl_to_fmrel)
 
 lemma fmrel_tranclp_trans_induct:
-  "fmrel r\<^sup>+\<^sup>+ a b \<Longrightarrow>
-   reflp r \<Longrightarrow>
-   (\<And>x y. fmrel r x y \<Longrightarrow> P x y) \<Longrightarrow>
-   (\<And>x y z. fmrel r\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> fmrel r\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z) \<Longrightarrow>
+  "fmrel R\<^sup>+\<^sup>+ a b \<Longrightarrow>
+   reflp R \<Longrightarrow>
+   (\<And>x y. fmrel R x y \<Longrightarrow> P x y) \<Longrightarrow>
+   (\<And>x y z. fmrel R\<^sup>+\<^sup>+ x y \<Longrightarrow> P x y \<Longrightarrow> fmrel R\<^sup>+\<^sup>+ y z \<Longrightarrow> P y z \<Longrightarrow> P x z) \<Longrightarrow>
    P a b"
   apply (drule fmrel_to_trancl, simp)
   apply (erule tranclp_trans_induct, simp)
@@ -409,25 +410,25 @@ proof
 qed
 
 lemma ffold_rec_exp:
-  assumes "k |\<in>| fmdom x"
-    and "ky = (k, the (fmlookup (fmmap f x) k))"
-  shows "ffold tcf 0 (fset_of_fmap (fmmap f x)) =
-        tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap f x)) |-| {|ky|}))"
+  assumes "k |\<in>| fmdom xm"
+    and "ky = (k, the (fmlookup (fmmap f xm) k))"
+  shows "ffold tcf 0 (fset_of_fmap (fmmap f xm)) =
+        tcf ky (ffold tcf 0 ((fset_of_fmap (fmmap f xm)) |-| {|ky|}))"
 proof -
-  have "ky |\<in>| (fset_of_fmap (fmmap f x))"
+  have "ky |\<in>| (fset_of_fmap (fmmap f xm))"
     using assms by auto
   thus ?thesis
     by (simp add: tcf.ffold_rec)
 qed
 
 lemma elem_le_ffold [intro]:
-  "k |\<in>| fmdom x \<Longrightarrow>
-   f (the (fmlookup x k)) < Suc (ffold tcf 0 (fset_of_fmap (fmmap f x)))"
+  "k |\<in>| fmdom xm \<Longrightarrow>
+   f (the (fmlookup xm k)) < Suc (ffold tcf 0 (fset_of_fmap (fmmap f xm)))"
   by (subst ffold_rec_exp, auto)
 
 lemma elem_le_ffold' [intro]:
-  "z \<in> fmran' x \<Longrightarrow>
-   f z < Suc (ffold tcf 0 (fset_of_fmap (fmmap f x)))"
+  "z \<in> fmran' xm \<Longrightarrow>
+   f z < Suc (ffold tcf 0 (fset_of_fmap (fmmap f xm)))"
   apply (erule fmran'E)
   apply (frule fmdomI)
   by (subst ffold_rec_exp, auto)

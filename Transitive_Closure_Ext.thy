@@ -81,7 +81,9 @@ lemma tranclp_tranclp_to_tranclp_r:
 proof -
   have "(\<And>x y z. R\<^sup>+\<^sup>+ x y \<Longrightarrow> R y z \<Longrightarrow> P x \<Longrightarrow> P z \<Longrightarrow> P y) \<Longrightarrow>
          R\<^sup>+\<^sup>+ y z \<Longrightarrow> R\<^sup>+\<^sup>+ x y \<Longrightarrow> P x \<longrightarrow> P z \<longrightarrow> P y"
-    by (erule tranclp_induct, auto) (meson tranclp_trans)
+    apply (erule tranclp_induct)
+    apply simp
+    by (meson tranclp_trans)
   thus ?thesis using assms by auto
 qed
 

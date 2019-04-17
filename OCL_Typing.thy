@@ -934,47 +934,47 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |AttributeCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    attribute \<C> prop \<D> \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<tau>"
 |ErrorableAttributeCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    attribute \<C> prop \<D> \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<tau>[!]"
+   \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<tau>[!]"
 
 |AssociationEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    association_end \<C> from role \<D> end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : assoc_end_type end"
+   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src from role : assoc_end_type end"
 |ErrorableAssociationEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    association_end \<C> from role \<D> end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : (assoc_end_type end)[!]"
+   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src from role : (assoc_end_type end)[!]"
 
 |AssociationClassCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    referred_by_association_class \<C> from \<A> \<D> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : class_assoc_type \<A>"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src from \<A> : class_assoc_type \<A>"
 |ErrorableAssociationClassCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    referred_by_association_class \<C> from \<A> \<D> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : (class_assoc_type \<A>)[!]"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src from \<A> : (class_assoc_type \<A>)[!]"
 
 |AssociationClassEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
    association_class_end \<A> role end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : class_assoc_end_type end"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : class_assoc_end_type end"
 |ErrorableAssociationClassEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    association_class_end \<A> role end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : (class_assoc_end_type end)[!]"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : (class_assoc_end_type end)[!]"
 
 |TupleElementCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : (Tuple \<pi>)[1] \<Longrightarrow>
    fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : ErrorFree \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src elem : ErrorFree \<tau>"
 |ErrorableTupleElementCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : (Tuple \<pi>)[1!] \<Longrightarrow>
    fmlookup \<pi> elem = Some \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : Errorable \<tau>"
+   \<Gamma> \<turnstile>\<^sub>E TupleElementCall src elem : Errorable \<tau>"
 
 \<comment> \<open>Iterator Expressions\<close>
 
@@ -1116,12 +1116,12 @@ inductive_cases MetaOperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E MetaO
 inductive_cases StaticOperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op as : \<sigma>"
 
 inductive_cases TypeOperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<tau>"
-inductive_cases AttributeCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AttributeCall src k prop : \<tau>"
-inductive_cases AssociationEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src k role from : \<tau>"
-inductive_cases AssociationClassCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src k a from : \<tau>"
-inductive_cases AssociationClassEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src k role : \<tau>"
+inductive_cases AttributeCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<tau>"
+inductive_cases AssociationEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src role from : \<tau>"
+inductive_cases AssociationClassCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src a from : \<tau>"
+inductive_cases AssociationClassEndCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : \<tau>"
 inductive_cases OperationCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
-inductive_cases TupleElementCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
+inductive_cases TupleElementCallTE [elim]: "\<Gamma> \<turnstile>\<^sub>E TupleElementCall src elem : \<tau>"
 
 inductive_cases LoopTE [elim]: "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
 inductive_cases IterateTE [elim]: "\<Gamma> \<turnstile>\<^sub>E IterateCall src its its_ty res res_t res_init body : \<tau>"
@@ -1171,12 +1171,12 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op as : \<sigma>"
 
 "\<Gamma> \<turnstile>\<^sub>E TypeOperationCall a k op \<sigma> : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AttributeCall src k prop : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src k role from : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src k a from : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src k role : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AssociationEndCall src role from : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AssociationClassCall src a from : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : \<tau>"
 "\<Gamma> \<turnstile>\<^sub>E OperationCall src k op params : \<tau>"
-"\<Gamma> \<turnstile>\<^sub>E TupleElementCall src k elem : \<tau>"
+"\<Gamma> \<turnstile>\<^sub>E TupleElementCall src elem : \<tau>"
 
 "\<Gamma> \<turnstile>\<^sub>I (src, its, body) : ys"
 "\<Gamma> \<turnstile>\<^sub>E IterateCall src its its_ty res res_t res_init body : \<tau>"
@@ -1343,47 +1343,47 @@ next
     by (metis OperationCallTE op_type_det)
 next
   case (AttributeCallT \<Gamma> src \<C> "prop" \<D> \<tau>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<sigma> \<Longrightarrow> \<tau> = \<sigma>"
     apply (erule AttributeCallTE)
     using AttributeCallT.hyps attribute_det by blast+
   thus ?case by (simp add: AttributeCallT.prems)
 next
   case (ErrorableAttributeCallT \<Gamma> src \<C> "prop" \<D> \<tau>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src DotCall prop : \<sigma> \<Longrightarrow> \<tau>[!] = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<sigma> \<Longrightarrow> \<tau>[!] = \<sigma>"
     apply (erule AttributeCallTE)
     using ErrorableAttributeCallT.hyps attribute_det by blast+
   thus ?case by (simp add: ErrorableAttributeCallT.prems)
 next
   case (AssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow>
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src from role : \<sigma> \<Longrightarrow>
         assoc_end_type end = \<sigma>"
     apply (erule AssociationEndCallTE)
     using AssociationEndCallT.hyps association_end_det by blast+
   thus ?case by (simp add: AssociationEndCallT.prems)
 next
   case (ErrorableAssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src DotCall from role : \<sigma> \<Longrightarrow>
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src from role : \<sigma> \<Longrightarrow>
         (assoc_end_type end)[!] = \<sigma>"
     apply (erule AssociationEndCallTE)
     using ErrorableAssociationEndCallT.hyps association_end_det by blast+
   thus ?case by (simp add: ErrorableAssociationEndCallT.prems)
 next
   case (AssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow>
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src from \<A> : \<sigma> \<Longrightarrow>
         class_assoc_type \<A> = \<sigma>"
     apply (erule AssociationClassCallTE)
     using AssociationClassCallT.hyps by blast+
   thus ?case by (simp add: AssociationClassCallT.prems)
 next
   case (ErrorableAssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src DotCall from \<A> : \<sigma> \<Longrightarrow>
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src from \<A> : \<sigma> \<Longrightarrow>
         (class_assoc_type \<A>)[!] = \<sigma>"
     apply (erule AssociationClassCallTE)
     using ErrorableAssociationClassCallT.hyps by blast+
   thus ?case by (simp add: ErrorableAssociationClassCallT.prems)
 next
   case (AssociationClassEndCallT \<Gamma> src \<A> role "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow>
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : \<sigma> \<Longrightarrow>
         class_assoc_end_type end = \<sigma>"
     apply (erule AssociationClassEndCallTE)
     using AssociationClassEndCallT.hyps
@@ -1391,7 +1391,7 @@ next
   thus ?case by (simp add: AssociationClassEndCallT.prems)
 next
   case (ErrorableAssociationClassEndCallT \<Gamma> src \<A> role "end")
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src DotCall role : \<sigma> \<Longrightarrow>
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : \<sigma> \<Longrightarrow>
         (class_assoc_end_type end)[!] = \<sigma>"
     apply (erule AssociationClassEndCallTE)
     using ErrorableAssociationClassEndCallT.hyps
@@ -1399,13 +1399,13 @@ next
   thus ?case by (simp add: ErrorableAssociationClassEndCallT.prems)
 next
   case (TupleElementCallT \<Gamma> src \<pi> elem \<tau>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<sigma> \<Longrightarrow> ErrorFree \<tau> = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E TupleElementCall src elem : \<sigma> \<Longrightarrow> ErrorFree \<tau> = \<sigma>"
     apply (erule TupleElementCallTE)
     using TupleElementCallT.hyps by force+
   thus ?case by (simp add: TupleElementCallT.prems)
 next
   case (ErrorableTupleElementCallT \<Gamma> src \<pi> elem \<tau>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E TupleElementCall src DotCall elem : \<sigma> \<Longrightarrow> Errorable \<tau> = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E TupleElementCall src elem : \<sigma> \<Longrightarrow> Errorable \<tau> = \<sigma>"
     apply (erule TupleElementCallTE)
     using ErrorableTupleElementCallT.hyps by force+
   thus ?case by (simp add: ErrorableTupleElementCallT.prems)

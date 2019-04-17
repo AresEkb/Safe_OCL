@@ -56,47 +56,47 @@ instance
 
 end
 
-lemma type_less_x_ErrorFree_intro [intro]:
+lemma less_x_ErrorFree_intro [intro]:
   "\<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < ErrorFree \<sigma>"
   by simp
 
-lemma type_less_eq_x_ErrorFree_intro [intro]:
+lemma less_eq_x_ErrorFree_intro [intro]:
   "\<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> ErrorFree \<sigma>"
   by simp
 
-lemma type_less_x_Errorable_intro [intro]:
+lemma less_x_Errorable_intro [intro]:
   "\<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> < Errorable \<sigma>"
   "\<tau> = Errorable \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> \<tau> < Errorable \<sigma>"
   by simp_all
 
-lemma type_less_eq_x_Errorable_intro [intro]:
+lemma less_eq_x_Errorable_intro [intro]:
   "\<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Errorable \<sigma>"
   "\<tau> = Errorable \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> \<tau> \<le> Errorable \<sigma>"
   by simp_all
 
-lemma type_less_x_ErrorFree [elim!]:
+lemma less_x_ErrorFree [elim!]:
   "\<tau> < ErrorFree \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   by (erule less_errorable.elims; auto)
 
-lemma type_less_eq_x_ErrorFree [elim!]:
+lemma less_eq_x_ErrorFree [elim!]:
   "\<tau> \<le> ErrorFree \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   by (erule less_eq_errorable.elims; auto)
 
-lemma type_less_x_Errorable [elim!]:
+lemma less_x_Errorable [elim!]:
   "\<tau> < Errorable \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> 
    (\<And>\<rho>. \<tau> = Errorable \<rho> \<Longrightarrow> \<rho> < \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   by (erule less_errorable.elims; auto)
 
-lemma type_less_eq_x_Errorable [elim!]:
+lemma less_eq_x_Errorable [elim!]:
   "\<tau> \<le> Errorable \<sigma> \<Longrightarrow>
    (\<And>\<rho>. \<tau> = ErrorFree \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow>
    (\<And>\<rho>. \<tau> = Errorable \<rho> \<Longrightarrow> \<rho> \<le> \<sigma> \<Longrightarrow> P) \<Longrightarrow> P"
   by (erule less_eq_errorable.elims; auto)
 
-lemma type\<^sub>N\<^sub>E_less_left_simps [simp]:
+lemma errorable_less_left_simps [simp]:
   "ErrorFree \<rho> < \<sigma> = (\<exists>\<upsilon>.
       \<sigma> = ErrorFree \<upsilon> \<and> \<rho> < \<upsilon> \<or>
       \<sigma> = Errorable \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
@@ -104,7 +104,7 @@ lemma type\<^sub>N\<^sub>E_less_left_simps [simp]:
       \<sigma> = Errorable \<upsilon> \<and> \<rho> < \<upsilon>)"
   by (induct \<sigma>; auto)+
 
-lemma type\<^sub>N\<^sub>E_less_eq_left_simps [simp]:
+lemma errorable_less_eq_left_simps [simp]:
   "ErrorFree \<rho> \<le> \<sigma> = (\<exists>\<upsilon>.
       \<sigma> = ErrorFree \<upsilon> \<and> \<rho> \<le> \<upsilon> \<or>
       \<sigma> = Errorable \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
@@ -112,12 +112,12 @@ lemma type\<^sub>N\<^sub>E_less_eq_left_simps [simp]:
       \<sigma> = Errorable \<upsilon> \<and> \<rho> \<le> \<upsilon>)"
   by (auto simp: dual_order.order_iff_strict)
 
-lemma type\<^sub>N\<^sub>E_less_right_simps [simp]:
+lemma errorable_less_right_simps [simp]:
   "\<tau> < ErrorFree \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> < \<upsilon>)"
   "\<tau> < Errorable \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Errorable \<rho> \<and> \<rho> < \<upsilon>)"
   by auto
 
-lemma type\<^sub>N\<^sub>E_less_eq_right_simps [simp]:
+lemma errorable_less_eq_right_simps [simp]:
   "\<tau> \<le> ErrorFree \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon>)"
   "\<tau> \<le> Errorable \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Errorable \<rho> \<and> \<rho> \<le> \<upsilon>)"
   by auto

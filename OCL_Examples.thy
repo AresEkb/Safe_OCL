@@ -86,26 +86,26 @@ abbreviation "membersByName \<equiv>  STR ''membersByName''"
 abbreviation "allProjects \<equiv>  STR ''allProjects''"
 
 definition "literal_to_call_expr_map \<equiv> fmap_of_list [
-  (name, Attribute STR ''name''),
-  (position, Attribute STR ''position''),
-  (vip, Attribute STR ''vip''),
-  (cost, Attribute STR ''cost''),
-  (description, Attribute STR ''description''),
-  (priority, Attribute STR ''priority''),
-  (projects, AssociationEnd None STR ''projects''),
-  (members, AssociationEnd None STR ''members''),
-  (memberOf, AssociationEnd None STR ''memberOf''),
-  (manager, AssociationEnd None STR ''manager''),
-  (lineManager, AssociationEnd None STR ''lineManager''),
-  (projectManager, AssociationEnd None STR ''projectManager''),
-  (employees, AssociationEnd None STR ''employees''),
-  (customer, AssociationEnd None STR ''customer''),
-  (project, AssociationEnd None STR ''project''),
-  (tasks, AssociationEnd None STR ''tasks''),
-  (sprint, AssociationEnd None STR ''sprint''),
-  (assignee, AssociationEnd None STR ''assignee'')]"
+  (name, Attribute),
+  (position, Attribute),
+  (vip, Attribute),
+  (cost, Attribute),
+  (description, Attribute),
+  (priority, Attribute),
+  (projects, AssociationEnd None),
+  (members, AssociationEnd None),
+  (memberOf, AssociationEnd None),
+  (manager, AssociationEnd None),
+  (lineManager, AssociationEnd None),
+  (projectManager, AssociationEnd None),
+  (employees, AssociationEnd None),
+  (customer, AssociationEnd None),
+  (project, AssociationEnd None),
+  (tasks, AssociationEnd None),
+  (sprint, AssociationEnd None),
+  (assignee, AssociationEnd None)]"
 
-definition "literal_to_call_expr lit \<equiv> the (fmlookup literal_to_call_expr_map lit)"
+definition "literal_to_call_expr lit \<equiv> the (fmlookup literal_to_call_expr_map lit) lit"
 
 (*** Model ******************************************************************)
 
@@ -127,6 +127,8 @@ declare [[coercion "phantom :: String.literal \<Rightarrow> classes1 enum_type"]
 declare [[coercion "Enum :: classes1 enum_type \<Rightarrow> classes1 type"]]
 declare [[coercion "StringLiteral :: string \<Rightarrow> classes1 literal_expr"]]
 declare [[coercion "literal_to_call_expr :: String.literal \<Rightarrow> classes1 call_expr"]]
+
+(* TODO: Заменить бесконечность на звездочку *)
 
 definition "model_spec \<equiv>
 
@@ -581,15 +583,15 @@ section \<open>Code\<close>
 
 subsection \<open>Positive Cases\<close>
 
-values "{(\<D>, \<tau>). attribute Employee STR ''name'' \<D> \<tau>}"
+values "{(\<D>, \<tau>). attribute Employee name \<D> \<tau>}"
 (* TODO: Тут ошибка. Потому, что если выражение имеет тип,
    то должно иметь и значение. А, нет норм для 1-го варианта
    будут все значения без фильтрации. Но это нужно явно отметить *)
-values "{(\<D>, end). association_end Employee None STR ''employees'' \<D> end}"
-values "{(\<D>, end). association_end Employee (Some STR ''projectManager'')
-  STR ''employees'' \<D> end}"
-values "{op. operation Project[1] STR ''membersCount'' [] op}"
-values "{op. operation Project[1] STR ''membersByName'' [String[1]] op}"
+values "{(\<D>, end). association_end Employee None employees \<D> end}"
+values "{(\<D>, end).
+  association_end Employee (Some projectManager) employees \<D> end}"
+values "{op. operation Project[1] membersCount [] op}"
+values "{op. operation Project[1] membersByName [String[1]] op}"
 values "{\<tau>. \<Gamma>\<^sub>0(self \<mapsto>\<^sub>f Employee[1]) \<turnstile> \<lparr>self\<rparr>\<^bold>.projects\<^bold>.members : \<tau>}"
 
 subsection \<open>Negative Cases\<close>
