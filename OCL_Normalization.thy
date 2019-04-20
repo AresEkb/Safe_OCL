@@ -82,28 +82,30 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
+notation non_collection_type ("_ \<hookrightarrow> NonCollection'(')([_])")
+
 inductive normalize_closure_body ("_ \<turnstile>\<^sub>B _ \<Rrightarrow>/ _" [51,51,51] 50) where
  SingleClosureBodyN:
   "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<not> is_collection_type \<tau> \<Longrightarrow>
+   \<tau> \<hookrightarrow> NonCollection()[_] \<Longrightarrow>
    (\<Gamma>, _) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1\<^bold>.oclAsSet()"
 |CollectionClosureBodyN:
   "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection(\<sigma>)[_] \<Longrightarrow>
    (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
 |NullFreeNullFreeClosureBodyN:
   "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
    required_type \<sigma> \<Longrightarrow>
    (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
 |NullFreeNullableClosureBodyN:
   "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1->selectByKind(to_required_type \<sigma>)"
 |NullableNullFreeClosureBodyN:
   "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   optional_collection_type \<tau> k \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[?] \<Longrightarrow>
    required_type \<sigma> \<Longrightarrow>
    (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
       if body\<^sub>1 <> null
@@ -111,7 +113,7 @@ inductive normalize_closure_body ("_ \<turnstile>\<^sub>B _ \<Rrightarrow>/ _" [
       else CollectionLiteral k [] endif"
 |NullableNullableClosureBodyN:
   "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   optional_collection_type \<tau> k \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[?] \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
       if body\<^sub>1 <> null
@@ -153,14 +155,13 @@ inductive normalize
 |SingleDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   non_iterable_type \<tau> \<Longrightarrow>
+   \<tau> \<hookrightarrow> NonIterable()[_] \<Longrightarrow>
    (\<Gamma>, \<tau>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>.call\<^sub>2"
 |SingleSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   non_iterable_type \<tau> \<Longrightarrow>
-   optional_type \<tau> \<Longrightarrow>
+   \<tau> \<hookrightarrow> NonIterable()[?] \<Longrightarrow>
    (\<Gamma>, to_required_type \<tau>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow>
       if src\<^sub>2 <> null
@@ -169,7 +170,7 @@ inductive normalize
 |SingleArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   non_iterable_type \<tau> \<Longrightarrow>
+   \<tau> \<hookrightarrow> NonIterable()[_] \<Longrightarrow>
    src\<^sub>3 = src\<^sub>2\<^bold>.oclAsSet() \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<sigma> \<Longrightarrow>
    (\<Gamma>, \<sigma>, ArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
@@ -178,14 +179,14 @@ inductive normalize
 |CollectionDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   required_iterable_type \<tau> \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>)[1] \<Longrightarrow>
    (\<Gamma>, \<sigma>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2->collect(it : \<sigma> | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)"
 |CollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   required_iterable_type \<tau> \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>)[1] \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    \<rho> = to_required_type \<sigma> \<Longrightarrow>
    (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
@@ -194,13 +195,13 @@ inductive normalize
 |CollectionArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   iterable_type \<tau> _ _ \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(_)[_] \<Longrightarrow>
    (\<Gamma>, \<tau>, ArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1->call\<^sub>1 \<Rrightarrow> src\<^sub>2->call\<^sub>2"
 |CollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   required_iterable_type \<tau> \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>)[1] \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    src\<^sub>3 = src\<^sub>2->selectByKind(to_required_type \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
@@ -210,7 +211,7 @@ inductive normalize
 |NullableCollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   optional_iterable_type \<tau> \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?] \<Longrightarrow>
    required_type \<sigma> \<Longrightarrow>
    (\<Gamma>, \<sigma>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
@@ -221,7 +222,7 @@ inductive normalize
 |NullableNullableCollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   optional_iterable_type \<tau> \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?] \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    \<rho> = to_required_type \<sigma> \<Longrightarrow>
    (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
@@ -234,7 +235,7 @@ inductive normalize
 |NullableCollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   optional_iterable_type \<tau> \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?] \<Longrightarrow>
    required_type \<sigma> \<Longrightarrow>
    (\<Gamma>, to_required_type \<tau>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?->call\<^sub>1 \<Rrightarrow>
@@ -244,7 +245,7 @@ inductive normalize
 |NullableNullableCollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   optional_iterable_type \<tau> \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?] \<Longrightarrow>
    optional_type \<sigma> \<Longrightarrow>
    src\<^sub>3 = src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
@@ -288,28 +289,28 @@ inductive normalize
    (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> Iterator iter its its_ty\<^sub>2 body\<^sub>2"
 
 |ExplicitlyTypedCollectionLoopN:
-  "collection_type \<tau> _ _ _ \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Collection(_)[_] \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its \<sigma> \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, None), body\<^sub>1) \<Rrightarrow> (its, (Some \<sigma>, None), body\<^sub>2)"
 |ImplicitlyTypedCollectionLoopN:
-  "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Collection(\<sigma>)[_] \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its \<sigma> \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, None), body\<^sub>1) \<Rrightarrow> (its, (Some \<sigma>, None), body\<^sub>2)"
 
 |ExplicitlyTypedMapLoopN:
-  "map_type \<tau> _ _ _ \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Map(_, _)[_] \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its \<sigma> ++\<^sub>f coiterators its \<rho> \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, Some \<rho>), body\<^sub>1) \<Rrightarrow> (its, (Some \<sigma>, Some \<rho>), body\<^sub>2)"
 |ImplicitlyTypedMapKeyLoopN:
-  "map_type \<tau> \<sigma> _ _ \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Map(\<sigma>, _)[_] \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its \<sigma> ++\<^sub>f coiterators its \<rho> \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, Some \<rho>), body\<^sub>1) \<Rrightarrow> (its, (Some \<sigma>, Some \<rho>), body\<^sub>2)"
 |ImplicitlyTypedMapValueLoopN:
-  "map_type \<tau> _ \<rho> _ \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Map(_, \<rho>)[_] \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its \<sigma> ++\<^sub>f coiterators its \<rho> \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, None), body\<^sub>1) \<Rrightarrow> (its, (Some \<sigma>, Some \<rho>), body\<^sub>2)"
 |ImplicitlyTypedMapLoopN:
-  "map_type \<tau> \<sigma> \<rho> _ \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Map(\<sigma>, \<rho>)[_] \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its \<sigma> ++\<^sub>f coiterators its \<rho> \<turnstile> body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, None), body\<^sub>1) \<Rrightarrow> (its, (Some \<sigma>, Some \<rho>), body\<^sub>2)"
 
@@ -390,7 +391,7 @@ lemma normalize_closure_body_det:
   "\<Gamma>_k \<turnstile>\<^sub>B body \<Rrightarrow> body\<^sub>1 \<Longrightarrow>
    \<Gamma>_k \<turnstile>\<^sub>B body \<Rrightarrow> body\<^sub>2 \<Longrightarrow> body\<^sub>1 = body\<^sub>2"
 proof (induct rule: normalize_closure_body.inducts)
-  case (SingleClosureBodyN \<Gamma> body\<^sub>1 \<tau> k)
+  case (SingleClosureBodyN \<Gamma> body\<^sub>1 \<tau> uu k)
   have "\<And>body\<^sub>2. (\<Gamma>, k) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         body\<^sub>1\<^bold>.oclAsSet() = body\<^sub>2"
     apply (erule ClosureBodyNE)
@@ -398,7 +399,7 @@ proof (induct rule: normalize_closure_body.inducts)
     using SingleClosureBodyN.hyps is_collection_type.intros typing_det by blast+
   thus ?case by (simp add: SingleClosureBodyN.prems)
 next
-  case (CollectionClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma> n)
+  case (CollectionClosureBodyN \<Gamma> body\<^sub>1 \<tau> \<sigma> n)
   have "\<And>body\<^sub>2. (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         body\<^sub>1 = body\<^sub>2"
     apply (erule ClosureBodyNE)
@@ -406,7 +407,7 @@ next
       typing_det by blast+
   thus ?case by (simp add: CollectionClosureBodyN.prems)
 next
-  case (NullFreeNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
+  case (NullFreeNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> \<sigma>)
   have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         body\<^sub>1 = body\<^sub>2"
     apply (erule ClosureBodyNE)
@@ -414,7 +415,7 @@ next
       collection_type_det(1) typing_det by blast+
   thus ?case by (simp add: NullFreeNullFreeClosureBodyN.prems)
 next
-  case (NullFreeNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
+  case (NullFreeNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> \<sigma>)
   have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         body\<^sub>1->selectByKind(to_required_type \<sigma>) = body\<^sub>2"
     apply (erule ClosureBodyNE)
@@ -809,7 +810,7 @@ lemmas ocl_normalization_simps =
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
-
+(*
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) normalize_closure_body .
@@ -819,5 +820,5 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) normalize_loop .
 
 code_pred nf_typing .
-
+*)
 end

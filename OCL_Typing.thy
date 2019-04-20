@@ -21,7 +21,7 @@ section \<open>Operations Typing\<close>
 
 text \<open>
   A strict operation is an operation that is defined for invalid source and
-  arguments and returns an invalid value if any of its source and arguments
+  arguments and returns an invalid value if any of its source or arguments
   is invalid.
 
   A non-strict operation is an operation that either is not defined for
@@ -127,12 +127,12 @@ inductive typeop_type where
 | "\<sigma> < \<tau>[?!] \<Longrightarrow>
    typeop_type DotCall OclIsKindOfOp \<tau>[?!] \<sigma> Boolean[1!]"
 
-| "required_collection_type \<tau> _ \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
    error_free_type \<sigma> \<Longrightarrow>
    update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByKindOp \<tau> \<sigma> \<upsilon>"
 
-| "required_collection_type \<tau> _ \<rho> \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
    error_free_type \<sigma> \<Longrightarrow>
    update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<upsilon>"
@@ -149,12 +149,12 @@ text \<open>
   return @{text invalid} for an invalid value.\<close>
 
 inductive any_unop_type where
-  "\<not> is_iterable_type \<tau>[1] \<Longrightarrow>
+  "\<tau>[1] \<hookrightarrow> NonIterable()[1] \<Longrightarrow>
    any_unop_type OclAsSetOp \<tau>[1] (Set \<tau>[\<^bold>1])[1]"
-| "\<not> is_iterable_type \<tau>[?] \<Longrightarrow>
+| "\<tau>[?] \<hookrightarrow> NonIterable()[?] \<Longrightarrow>
    any_unop_type OclAsSetOp \<tau>[?] (Set \<tau>[\<^bold>1])[1]"
 
-| "object_type \<tau> _ _ \<Longrightarrow>
+| "\<tau> \<hookrightarrow> ObjectType(\<C>)[n] \<Longrightarrow>
    any_unop_type OclIsNewOp \<tau> Boolean[1]"
 
 | "any_unop_type OclIsUndefinedOp \<tau>[?] Boolean[1]"
@@ -354,36 +354,36 @@ inductive comparable_type where
 
 
 inductive iterable_unop_type where
-  "required_iterable_type \<tau> _ \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Iterable(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type SizeOp \<tau> Integer[1]"
-| "required_iterable_type \<tau> _ \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Iterable(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type IsEmptyOp \<tau> Boolean[1]"
-| "required_iterable_type \<tau> _ \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Iterable(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type NotEmptyOp \<tau> Boolean[1]"
 
-| "required_collection_type \<tau> _ \<sigma> \<Longrightarrow> max_op_defined \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow> max_op_defined \<sigma> \<Longrightarrow>
    iterable_unop_type MaxOp \<tau> \<sigma>"
-| "required_collection_type \<tau> _ \<sigma> \<Longrightarrow> min_op_defined \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow> min_op_defined \<sigma> \<Longrightarrow>
    iterable_unop_type MinOp \<tau> \<sigma>"
-| "required_collection_type \<tau> _ \<sigma> \<Longrightarrow> sum_op_defined \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow> sum_op_defined \<sigma> \<Longrightarrow>
    iterable_unop_type SumOp \<tau> \<sigma>"
 
-| "required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
-   required_collection_type \<rho> SetKind \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
+   \<rho> \<hookleftarrow> Set(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type AsSetOp \<tau> \<rho>"
-| "required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
-   required_collection_type \<rho> OrderedSetKind \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
+   \<rho> \<hookleftarrow> OrderedSet(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type AsOrderedSetOp \<tau> \<rho>"
-| "required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
-   required_collection_type \<rho> BagKind \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
+   \<rho> \<hookleftarrow> Bag(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type AsBagOp \<tau> \<rho>"
-| "required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
-   required_collection_type \<rho> SequenceKind \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
+   \<rho> \<hookleftarrow> Sequence(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type AsSequenceOp \<tau> \<rho>"
 
-| "required_collection_type \<tau> k \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
    to_single_type \<sigma> \<rho> \<Longrightarrow>
-   required_collection_type \<upsilon> k \<rho> \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow>
    iterable_unop_type FlattenOp \<tau> \<upsilon>"
 
 | "iterable_unop_type FirstOp (OrderedSet \<tau>)[1] (Errorable \<tau>)"
@@ -393,11 +393,11 @@ inductive iterable_unop_type where
 | "iterable_unop_type ReverseOp (OrderedSet \<tau>)[1] (OrderedSet \<tau>)[1]"
 | "iterable_unop_type ReverseOp (Sequence \<tau>)[1] (Sequence \<tau>)[1]"
 
-| "required_map_type \<tau> \<sigma> \<rho> \<Longrightarrow>
-   required_collection_type \<upsilon> SetKind \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<sigma>, \<rho>)[1] \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Set(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type KeysOp \<tau> \<upsilon>"
-| "required_map_type \<tau> \<sigma> \<rho> \<Longrightarrow>
-   required_collection_type \<upsilon> BagKind \<rho> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<sigma>, \<rho>)[1] \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Bag(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type ValuesOp \<tau> \<upsilon>"
 
 text \<open>
@@ -448,44 +448,49 @@ text \<open>
 
 (* TODO: Написать про разницу including и append *)
 
+notation unwrap_errorable_type ("\<lfloor>_\<rfloor>\<^sub>E")
+
 inductive iterable_binop_type where
-  "required_collection_type \<tau> _ \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+  "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    iterable_binop_type CountOp \<tau> \<sigma> Integer[1]"
 
-| "required_iterable_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    iterable_binop_type IncludesOp \<tau> \<sigma> Boolean[1]"
-| "required_iterable_type \<tau> \<rho> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    iterable_binop_type ExcludesOp \<tau> \<sigma> Boolean[1]"
 
-| "required_map_type \<tau> \<rho> \<upsilon> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
    iterable_binop_type IncludesValueOp \<tau> \<sigma> Boolean[1]"
-| "required_map_type \<tau> \<rho> \<upsilon> \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
    iterable_binop_type ExcludesValueOp \<tau> \<sigma> Boolean[1]"
 
-| "required_iterable_type \<tau> \<rho> \<Longrightarrow>
-   required_collection_type \<sigma> _ \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Collection(\<upsilon>)[1] \<Longrightarrow>
    \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    iterable_binop_type IncludesAllOp \<tau> \<sigma> Boolean[1]"
-| "required_iterable_type \<tau> \<rho> \<Longrightarrow>
-   required_collection_type \<sigma> _ \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Collection(\<upsilon>)[1] \<Longrightarrow>
    \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    iterable_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
 
-| "required_map_type \<tau> \<rho> \<upsilon> \<Longrightarrow>
-   required_map_type \<sigma> \<rho>' \<upsilon>' \<Longrightarrow>
-   \<rho>' \<le> to_optional_type_nested \<rho> \<Longrightarrow>
-   \<upsilon>' \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Map(\<phi>, \<psi>)[1] \<Longrightarrow>
+   \<phi> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<psi> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
    iterable_binop_type IncludesMapOp \<tau> \<sigma> Boolean[1]"
-| "required_map_type \<tau> \<rho> \<upsilon> \<Longrightarrow>
-   required_map_type \<sigma> \<rho>' \<upsilon>' \<Longrightarrow>
-   \<rho>' \<le> to_optional_type_nested \<rho> \<Longrightarrow>
-   \<upsilon>' \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Map(\<phi>, \<psi>)[1] \<Longrightarrow>
+   \<phi> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<psi> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
    iterable_binop_type ExcludesMapOp \<tau> \<sigma> Boolean[1]"
 
-| "required_collection_type \<tau> _ (ErrorFree \<rho>) \<Longrightarrow>
-   required_collection_type \<sigma> _ (ErrorFree \<upsilon>) \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Collection(\<upsilon>)[1] \<Longrightarrow>
    iterable_binop_type ProductOp \<tau> \<sigma>
-      (Set (Tuple(STR ''first'' : \<rho>, STR ''second'' : \<upsilon>))[\<^bold>1])[1]"
+      (Set (Tuple(STR ''first'' : \<lfloor>\<rho>\<rfloor>\<^sub>E, STR ''second'' : \<lfloor>\<upsilon>\<rfloor>\<^sub>E))[\<^bold>1])[1]"
 
 | "iterable_binop_type UnionOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set (\<tau> \<squnion> \<sigma>))[1]"
 | "iterable_binop_type UnionOp (Set \<tau>)[1] (Bag \<sigma>)[1] (Bag (\<tau> \<squnion> \<sigma>))[1]"
@@ -501,88 +506,79 @@ inductive iterable_binop_type where
    iterable_binop_type SetMinusOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set \<tau>)[1]"
 | "iterable_binop_type SymmetricDifferenceOp (Set \<tau>)[1] (Set \<sigma>)[1] (Set (\<tau> \<squnion> \<sigma>))[1]"
 
-| "required_collection_type \<tau> k \<rho> \<Longrightarrow>
-   required_collection_type \<phi> k (\<rho> \<squnion> \<sigma>) \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow>
+   \<phi> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<rho> \<squnion> \<sigma>)[1] \<Longrightarrow>
    iterable_binop_type IncludingOp \<tau> \<sigma> \<phi>"
-| "required_collection_type \<tau> _ \<rho> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type ExcludingOp \<tau> \<sigma> \<tau>"
-| "required_collection_type \<tau> k \<rho> \<Longrightarrow>
-   required_collection_type \<sigma> _ \<upsilon> \<Longrightarrow>
-   required_collection_type \<phi> k (\<rho> \<squnion> \<upsilon>) \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Collection(\<upsilon>)[1] \<Longrightarrow>
+   \<phi> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<rho> \<squnion> \<upsilon>)[1] \<Longrightarrow>
    iterable_binop_type IncludingAllOp \<tau> \<sigma> \<phi>"
-| "required_collection_type \<tau> _ \<rho> \<Longrightarrow>
-   required_collection_type \<sigma> _ \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Collection(\<upsilon>)[1] \<Longrightarrow>
    \<upsilon> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type ExcludingAllOp \<tau> \<sigma> \<tau>"
 
-| "required_map_type \<tau> \<rho> \<upsilon> \<Longrightarrow>
-   required_map_type \<sigma> \<rho>' \<upsilon>' \<Longrightarrow>
-   required_map_type' \<phi> (\<rho> \<squnion> \<rho>') (\<upsilon> \<squnion> \<upsilon>') \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Map(\<rho>', \<upsilon>')[1] \<Longrightarrow>
+   \<phi> \<hookleftarrow> Map(\<rho> \<squnion> \<rho>', \<upsilon> \<squnion> \<upsilon>')[1] \<Longrightarrow>
    iterable_binop_type IncludingMapOp \<tau> \<sigma> \<phi>"
-| "required_map_type \<tau> \<rho> \<upsilon> \<Longrightarrow>
-   required_map_type \<sigma> \<rho>' \<upsilon>' \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> Map(\<rho>', \<upsilon>')[1] \<Longrightarrow>
    \<rho>' \<le> \<rho> \<Longrightarrow>
    \<upsilon>' \<le> \<upsilon> \<Longrightarrow>
    iterable_binop_type ExcludingMapOp \<tau> \<sigma> \<tau>"
 
-| "required_collection_type \<tau> k \<rho> \<Longrightarrow>
-   k = OrderedSetKind \<or> k = SequenceKind \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type AppendOp \<tau> \<sigma> \<tau>"
-| "required_collection_type \<tau> k \<rho> \<Longrightarrow>
-   k = OrderedSetKind \<or> k = SequenceKind \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type PrependOp \<tau> \<sigma> \<tau>"
-| "required_collection_type \<tau> k\<^sub>1 \<rho> \<Longrightarrow>
-   k\<^sub>1 = OrderedSetKind \<or> k\<^sub>1 = SequenceKind \<Longrightarrow>
-   required_collection_type \<sigma> k\<^sub>2 \<upsilon> \<Longrightarrow>
-   k\<^sub>2 = OrderedSetKind \<or> k\<^sub>2 = SequenceKind \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> OrderedCollection(\<upsilon>)[1] \<Longrightarrow>
    \<upsilon> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type AppendAllOp \<tau> \<sigma> \<tau>"
-| "required_collection_type \<tau> k\<^sub>1 \<rho> \<Longrightarrow>
-   k\<^sub>1 = OrderedSetKind \<or> k\<^sub>1 = SequenceKind \<Longrightarrow>
-   required_collection_type \<sigma> k\<^sub>2 \<upsilon> \<Longrightarrow>
-   k\<^sub>2 = OrderedSetKind \<or> k\<^sub>2 = SequenceKind \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
+   \<sigma> \<hookrightarrow> OrderedCollection(\<upsilon>)[1] \<Longrightarrow>
    \<upsilon> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type PrependAllOp \<tau> \<sigma> \<tau>"
 
-| "required_collection_type \<tau> k \<sigma> \<Longrightarrow>
-   k = OrderedSetKind \<or> k = SequenceKind \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>)[1] \<Longrightarrow>
    iterable_binop_type AtOp \<tau> Integer[1] \<tau>[!]"
-| "required_map_type \<tau> \<rho> \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
    \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
    iterable_binop_type AtOp \<tau> \<sigma> \<upsilon>"
 
-| "required_collection_type \<tau> k \<rho> \<Longrightarrow>
-   k = OrderedSetKind \<or> k = SequenceKind \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type IndexOfOp \<tau> \<sigma> Integer[1]"
 
 inductive iterable_ternop_type where
-  "required_collection_type \<tau> k \<rho> \<Longrightarrow>
-   k = OrderedSetKind \<or> k = SequenceKind \<Longrightarrow>
+  "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<le> \<rho> \<Longrightarrow>
    iterable_ternop_type InsertAtOp \<tau> Integer[1] \<sigma> \<tau>[!]"
 
-| "required_collection_type \<tau> OrderedSetKind \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedSet(\<sigma>)[1] \<Longrightarrow>
    iterable_ternop_type SubOrderedSetOp \<tau> Integer[1] Integer[1] \<tau>[!]"
-| "required_collection_type \<tau> SequenceKind \<sigma> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Sequence(\<sigma>)[1] \<Longrightarrow>
    iterable_ternop_type SubSequenceOp \<tau> Integer[1] Integer[1] \<tau>[!]"
 
-| "required_map_type \<tau> \<upsilon> \<phi> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<upsilon>, \<phi>)[1] \<Longrightarrow>
    \<sigma> \<le> \<upsilon> \<Longrightarrow>
    \<rho> \<le> \<phi> \<Longrightarrow>
    iterable_ternop_type IncludesPairOp \<tau> \<sigma> \<rho> \<tau>"
-| "required_map_type \<tau> \<upsilon> \<phi> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<upsilon>, \<phi>)[1] \<Longrightarrow>
    \<sigma> \<le> \<upsilon> \<Longrightarrow>
    \<rho> \<le> \<phi> \<Longrightarrow>
    iterable_ternop_type ExcludesPairOp \<tau> \<sigma> \<rho> \<tau>"
 
-| "required_map_type \<tau> \<upsilon> \<phi> \<Longrightarrow>
-   required_map_type' \<psi> (\<upsilon> \<squnion> \<sigma>) (\<phi> \<squnion> \<rho>) \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<upsilon>, \<phi>)[1] \<Longrightarrow>
+   \<psi> \<hookleftarrow> Map(\<upsilon> \<squnion> \<sigma>, \<phi> \<squnion> \<rho>)[1] \<Longrightarrow>
    iterable_ternop_type IncludingPairOp \<tau> \<sigma> \<rho> \<psi>"
-| "required_map_type \<tau> \<upsilon> \<phi> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<upsilon>, \<phi>)[1] \<Longrightarrow>
    \<sigma> \<le> \<upsilon> \<Longrightarrow>
    \<rho> \<le> \<phi> \<Longrightarrow>
    iterable_ternop_type ExcludingPairOp \<tau> \<sigma> \<rho> \<tau>"
@@ -621,7 +617,11 @@ inductive ternop_type where
 
 definition "op_result_type_is_errorable op \<pi> \<equiv>
   strict_op op \<and> fBex \<pi> errorable_type"
-
+(*
+code_pred [show_modes] unop_type .
+code_pred [show_modes] binop_type .
+code_pred [show_modes] ternop_type .
+*)
 inductive op_type where
   "unop_type op k (to_error_free_type \<tau>) \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inl op) {|\<tau>|} \<Longrightarrow>
@@ -648,6 +648,8 @@ inductive op_type where
 
 | "operation \<tau> op \<pi> oper \<Longrightarrow>
    op_type (Inr (Inr (Inr op))) DotCall \<tau> \<pi> (oper_type oper)"
+
+(*code_pred [show_modes] op_type .*)
 
 (*** Simplification Rules ***************************************************)
 
@@ -678,6 +680,8 @@ inductive_simps op_type_alt_simps:
 "iterable_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>"
 
 (*** Determinism ************************************************************)
+
+(*code_pred [show_modes] op_type .*)
 
 subsection \<open>Determinism\<close>
 
@@ -712,12 +716,20 @@ lemma string_unop_type_det:
    string_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   by (erule string_unop_type.cases; simp add: string_unop_type.simps)
 
+lemma any_collection_type_det:
+  "\<tau> \<hookleftarrow> Collection(\<sigma>)[1] \<Longrightarrow>
+   \<tau> \<hookleftarrow> Collection(\<rho>)[1] \<Longrightarrow> \<sigma> = \<rho>"
+  apply (elim any_collection_type.cases)
+  apply simp
+  using collection_type_det by blast
+
 lemma iterable_unop_type_det:
   "iterable_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    iterable_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   apply (erule iterable_unop_type.cases; simp add: iterable_unop_type.simps)
+  using collection_type_det(2) any_collection_type_det apply blast+
   using collection_type_det to_single_type_det apply blast+
-  using collection_type_det(2) map_type_det(1) by blast+
+  using collection_type_det map_type_det by blast+
 
 lemma unop_type_det:
   "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -748,16 +760,28 @@ lemma string_binop_type_det:
    string_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   by (erule string_binop_type.cases; simp add: string_binop_type.simps)
 
+lemma any_collection_type_and_map_type_distinct:
+  "any_collection_type \<tau> \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: any_collection_type.simps collection_type.simps
+      collection_type\<^sub>N.simps collection_type\<^sub>T.simps
+      map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
+lemma ordered_collection_type_and_map_type_distinct:
+  "ordered_collection_type \<tau> \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: ordered_collection_type.simps collection_type.simps
+      collection_type\<^sub>N.simps collection_type\<^sub>T.simps
+      map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
 lemma iterable_binop_type_det:
   "iterable_binop_type op \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    iterable_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   apply (erule iterable_binop_type.cases; simp add: iterable_binop_type.simps)
+  using any_collection_type_det apply blast
   using collection_type_det apply blast
-  using collection_type_det apply blast
-  using collection_type_det apply blast
+  using any_collection_type_det collection_type_det apply blast
   using map_type_det apply blast
-  using collection_type_and_map_type_distinct apply blast
-  using collection_type_and_map_type_distinct map_type_det(1) by blast
+  using ordered_collection_type_and_map_type_distinct apply blast
+  using ordered_collection_type_and_map_type_distinct map_type_det(1) by blast
 
 lemma binop_type_det:
   "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
@@ -837,7 +861,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>E tuple_literal_element_expr el : \<tau> \<Longrightarrow>
    tuple_literal_element_type el = Some \<sigma> \<Longrightarrow>
    \<tau> \<le> \<sigma> \<Longrightarrow>
-   required_tuple_type' \<rho> (fmap_of_list [(tuple_literal_element_name el, \<sigma>)]) \<Longrightarrow>
+   \<rho> \<hookleftarrow> Tuple([tuple_literal_element_name el \<mapsto>\<^sub>f \<sigma>])[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E TupleLiteral elems : \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E TupleLiteral (el # elems) : \<rho> \<squnion> \<upsilon>"
 
@@ -845,12 +869,12 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 
 |CollectionLiteralNilT:
   "k \<noteq> CollectionKind \<Longrightarrow>
-   required_collection_type \<sigma> k OclVoid[1] \<Longrightarrow>
+   \<sigma> \<hookleftarrow> Collection\<^bsub>k\<^esub>(OclVoid[1])[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral k [] : \<sigma>"
 |CollectionLiteralConsT:
   "k \<noteq> CollectionKind \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>C x : \<tau> \<Longrightarrow>
-   required_collection_type \<sigma> k \<tau> \<Longrightarrow>
+   \<sigma> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<tau>)[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral k xs : \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectionLiteral k (x # xs) : \<sigma> \<squnion> \<rho>"
 
@@ -873,12 +897,12 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 \<comment> \<open>Map Literals\<close>
 
 |MapNilT:
-  "required_map_type' \<tau> OclVoid[1] OclVoid[1] \<Longrightarrow>
+  "\<tau> \<hookleftarrow> Map(OclVoid[1], OclVoid[1])[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E MapLiteral [] : \<tau>"
 |MapConsT:
   "\<Gamma> \<turnstile>\<^sub>E map_literal_element_key x : \<tau> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E map_literal_element_value x : \<sigma> \<Longrightarrow>
-   required_map_type' \<rho> \<tau> \<sigma> \<Longrightarrow>
+   \<rho> \<hookleftarrow> Map(\<tau>, \<sigma>)[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E MapLiteral xs : \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E MapLiteral (x # xs) : \<rho> \<squnion> \<upsilon>"
 
@@ -980,14 +1004,14 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 
 |CollectionLoopT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   required_collection_type \<tau> _ \<sigma> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
    \<sigma> \<le> its_ty \<Longrightarrow>
    list_all (\<lambda>it. snd it = None) its \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its its_ty \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : (\<tau>, \<sigma>, \<rho>)"
 |MapLoopT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   required_map_type \<tau> \<sigma> \<upsilon> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Map(\<sigma>, \<upsilon>)[1] \<Longrightarrow>
    \<sigma> \<le> its_key_ty \<Longrightarrow>
    \<upsilon> \<le> its_val_ty \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its its_key_ty ++\<^sub>f coiterators its its_val_ty \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
@@ -1006,7 +1030,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |ClosureIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   required_collection_type \<rho> _ \<phi> \<Longrightarrow>
+   \<rho> \<hookrightarrow> Collection(\<phi>)[1] \<Longrightarrow>
    \<phi> \<le> \<sigma> \<Longrightarrow>
    to_unique_collection_type \<tau> \<upsilon> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
@@ -1021,15 +1045,15 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |MapCollectIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   required_map_type \<tau> _ _ \<Longrightarrow>
+   \<tau> \<hookrightarrow> Map(_, _)[1] \<Longrightarrow>
    to_single_type \<rho> \<rho>' \<Longrightarrow>
-   required_collection_type \<upsilon> BagKind \<rho>' \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Bag(\<rho>')[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<upsilon>"
 
 |CollectByIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   required_map_type' \<upsilon> \<sigma> \<rho> \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Map(\<sigma>, \<rho>)[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src its its_ty body : \<upsilon>"
 
 |CollectionCollectNestedIterationT:
@@ -1041,8 +1065,8 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |MapCollectNestedIterationT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    length its \<le> 1 \<Longrightarrow>
-   required_map_type \<tau> \<upsilon> _ \<Longrightarrow>
-   required_map_type' \<phi> \<upsilon> \<rho> \<Longrightarrow>
+   \<tau> \<hookrightarrow> Map(\<upsilon>, _)[1] \<Longrightarrow>
+   \<phi> \<hookleftarrow> Map(\<upsilon>, \<rho>)[1] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<phi>"
 
 |ExistsIterationT:
@@ -1410,10 +1434,12 @@ next
     using ErrorableTupleElementCallT.hyps by force+
   thus ?case by (simp add: ErrorableTupleElementCallT.prems)
 next
-  case (CollectionLoopT \<Gamma> src \<tau> uu \<sigma> its_ty its body \<rho>)
+  case (CollectionLoopT \<Gamma> src \<tau> \<sigma> its_ty its body \<rho>)
   have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : ys \<Longrightarrow>
         (\<tau>, \<sigma>, \<rho>) = ys"
-    apply (erule LoopTE, auto simp add: CollectionLoopT.hyps)
+    apply (erule LoopTE)
+    using CollectionLoopT.hyps(2) CollectionLoopT.hyps(3)
+          CollectionLoopT.hyps(7) any_collection_type_det apply fastforce
     using CollectionLoopT.hyps(2) CollectionLoopT.hyps(3)
           collection_type_det(1) by blast
   thus ?case by (simp add: CollectionLoopT.prems)
@@ -1502,7 +1528,7 @@ qed
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
-
+(*
 code_pred mataop_type .
 code_pred typeop_type .
 code_pred non_strict_op .
@@ -1512,5 +1538,5 @@ code_pred (modes:
     iterator_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
     expr_list_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
     collection_part_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) typing .
-
+*)
 end

@@ -125,6 +125,12 @@ inductive is_collection_type where
   "collection_type \<tau> _ _ _ \<Longrightarrow>
    is_collection_type \<tau>"
 
+inductive is_collection_type' where
+  "collection_type \<tau> _ _ n \<Longrightarrow>
+   is_collection_type' \<tau> n"
+
+abbreviation "non_collection_type \<tau> n \<equiv> \<not> is_collection_type' \<tau> n"
+
 
 inductive to_single_type where
   "\<not> is_collection_type \<tau> \<Longrightarrow>
@@ -264,9 +270,9 @@ inductive iterable_type where
    iterable_type \<tau> \<sigma> n"
 
 inductive is_iterable_type where
-  "iterable_type \<tau> _ _ \<Longrightarrow> is_iterable_type \<tau>"
+  "iterable_type \<tau> _ n \<Longrightarrow> is_iterable_type \<tau> n"
 
-abbreviation "non_iterable_type \<tau> \<equiv> \<not> is_iterable_type \<tau>"
+abbreviation "non_iterable_type \<tau> n \<equiv> \<not> is_iterable_type \<tau> n"
 
 abbreviation "required_iterable_type \<tau> \<sigma> \<equiv> iterable_type \<tau> \<sigma> False"
 abbreviation "optional_iterable_type \<tau> \<sigma> \<equiv> iterable_type \<tau> \<sigma> True"
@@ -623,6 +629,122 @@ lemma iterable_type_det:
   apply (auto simp add: iterable_type.simps collection_type_det(1) map_type_det(1))
   using collection_type_det collection_type_and_map_type_distinct apply blast+
   using map_type_det(1) by blast+
+
+(*** Notation ***************************************************************)
+
+subsection \<open>Notation\<close>
+
+abbreviation "required_object_type \<tau> \<C> \<equiv> object_type \<tau> \<C> False"
+abbreviation "optional_object_type \<tau> \<C> \<equiv> object_type \<tau> \<C> True"
+
+inductive any_collection_type where
+  "collection_type \<tau> _ \<sigma> n \<Longrightarrow>
+   any_collection_type \<tau> \<sigma> n"
+
+code_pred [show_modes] any_collection_type .
+
+abbreviation "required_any_collection_type \<tau> \<sigma> \<equiv> any_collection_type \<tau> \<sigma> False"
+abbreviation "optional_any_collection_type \<tau> \<sigma> \<equiv> any_collection_type \<tau> \<sigma> True"
+
+abbreviation "set_type' \<tau> \<sigma> n \<equiv> collection_type \<tau> SetKind \<sigma> n"
+abbreviation "required_set_type' \<tau> \<sigma> \<equiv> collection_type \<tau> SetKind \<sigma> False"
+abbreviation "optional_set_type' \<tau> \<sigma> \<equiv> collection_type \<tau> SetKind \<sigma> True"
+
+abbreviation "ordered_set_type \<tau> \<sigma> n \<equiv> collection_type \<tau> OrderedSetKind \<sigma> n"
+abbreviation "required_ordered_set_type \<tau> \<sigma> \<equiv> collection_type \<tau> OrderedSetKind \<sigma> False"
+abbreviation "optional_ordered_set_type \<tau> \<sigma> \<equiv> collection_type \<tau> OrderedSetKind \<sigma> True"
+
+abbreviation "bag_type \<tau> \<sigma> n \<equiv> collection_type \<tau> BagKind \<sigma> n"
+abbreviation "required_bag_type \<tau> \<sigma> \<equiv> collection_type \<tau> BagKind \<sigma> False"
+abbreviation "optional_bag_type \<tau> \<sigma> \<equiv> collection_type \<tau> BagKind \<sigma> True"
+
+abbreviation "sequence_type \<tau> \<sigma> n \<equiv> collection_type \<tau> SequenceKind \<sigma> n"
+abbreviation "required_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> False"
+abbreviation "optional_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> True"
+
+inductive ordered_collection_type where
+  "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type \<tau> \<sigma> n"
+| "collection_type \<tau> SequenceKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type \<tau> \<sigma> n"
+
+abbreviation "required_ordered_collection_type \<tau> \<sigma> \<equiv>
+  ordered_collection_type \<tau> \<sigma> False"
+abbreviation "optional_ordered_collection_type \<tau> \<sigma> \<equiv>
+  ordered_collection_type \<tau> \<sigma> True"
+
+abbreviation "required_non_iterable_type \<tau> \<equiv> non_iterable_type \<tau> False"
+abbreviation "optional_non_iterable_type \<tau> \<equiv> non_iterable_type \<tau> True"
+
+notation object_type ("_ \<hookrightarrow> ObjectType'(_')([_])")
+notation required_object_type ("_ \<hookrightarrow> ObjectType'(_')([1])")
+notation optional_object_type ("_ \<hookrightarrow> ObjectType'(_')([?])")
+
+notation tuple_type ("_ \<hookrightarrow> Tuple'(_')([_])")
+notation required_tuple_type ("_ \<hookrightarrow> Tuple'(_')([1])")
+notation required_tuple_type' ("_ \<hookleftarrow> Tuple'(_')([1])")
+notation optional_tuple_type ("_ \<hookrightarrow> Tuple'(_')([?])")
+notation optional_tuple_type' ("_ \<hookleftarrow> Tuple'(_')([?])")
+
+notation collection_type ("_ \<hookrightarrow> Collection\<^bsub>_\<^esub>'(_')([_])")
+notation required_collection_type ("_ \<hookrightarrow> Collection\<^bsub>_\<^esub>'(_')([1])")
+notation required_collection_type ("_ \<hookleftarrow> Collection\<^bsub>_\<^esub>'(_')([1])")
+notation optional_collection_type ("_ \<hookrightarrow> Collection\<^bsub>_\<^esub>'(_')([?])")
+notation optional_collection_type ("_ \<hookleftarrow> Collection\<^bsub>_\<^esub>'(_')([?])")
+
+notation any_collection_type ("_ \<hookrightarrow> Collection'(_')([_])")
+notation any_collection_type ("_ \<hookleftarrow> Collection'(_')([_])")
+notation required_any_collection_type ("_ \<hookrightarrow> Collection'(_')([1])")
+notation required_any_collection_type ("_ \<hookleftarrow> Collection'(_')([1])")
+notation optional_any_collection_type ("_ \<hookrightarrow> Collection'(_')([?])")
+notation optional_any_collection_type ("_ \<hookleftarrow> Collection'(_')([?])")
+
+notation set_type' ("_ \<hookrightarrow> Set'(_')([_])")
+notation set_type' ("_ \<hookleftarrow> Set'(_')([_])")
+notation required_set_type' ("_ \<hookrightarrow> Set'(_')([1])")
+notation required_set_type' ("_ \<hookleftarrow> Set'(_')([1])")
+notation optional_set_type' ("_ \<hookrightarrow> Set'(_')([?])")
+notation optional_set_type' ("_ \<hookleftarrow> Set'(_')([?])")
+
+notation ordered_set_type ("_ \<hookrightarrow> OrderedSet'(_')([_])")
+notation ordered_set_type ("_ \<hookleftarrow> OrderedSet'(_')([_])")
+notation required_ordered_set_type ("_ \<hookrightarrow> OrderedSet'(_')([1])")
+notation required_ordered_set_type ("_ \<hookleftarrow> OrderedSet'(_')([1])")
+notation optional_ordered_set_type ("_ \<hookrightarrow> OrderedSet'(_')([?])")
+notation optional_ordered_set_type ("_ \<hookleftarrow> OrderedSet'(_')([?])")
+
+notation bag_type ("_ \<hookrightarrow> Bag'(_')([_])")
+notation bag_type ("_ \<hookleftarrow> Bag'(_')([_])")
+notation required_bag_type ("_ \<hookrightarrow> Bag'(_')([1])")
+notation required_bag_type ("_ \<hookleftarrow> Bag'(_')([1])")
+notation optional_bag_type ("_ \<hookrightarrow> Bag'(_')([?])")
+notation optional_bag_type ("_ \<hookleftarrow> Bag'(_')([?])")
+
+notation sequence_type ("_ \<hookrightarrow> Sequence'(_')([_])")
+notation sequence_type ("_ \<hookleftarrow> Sequence'(_')([_])")
+notation required_sequence_type ("_ \<hookrightarrow> Sequence'(_')([1])")
+notation required_sequence_type ("_ \<hookleftarrow> Sequence'(_')([1])")
+notation optional_sequence_type ("_ \<hookrightarrow> Sequence'(_')([?])")
+notation optional_sequence_type ("_ \<hookleftarrow> Sequence'(_')([?])")
+
+notation ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([_])")
+notation required_ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([1])")
+notation optional_ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([?])")
+
+notation map_type ("_ \<hookrightarrow> Map'(_, _')([_])")
+notation map_type' ("_ \<hookleftarrow> Map'(_, _')([_])")
+notation required_map_type ("_ \<hookrightarrow> Map'(_, _')([1])")
+notation required_map_type' ("_ \<hookleftarrow> Map'(_, _')([1])")
+notation optional_map_type ("_ \<hookrightarrow> Map'(_, _')([?])")
+notation optional_map_type' ("_ \<hookleftarrow> Map'(_, _')([?])")
+
+notation iterable_type ("_ \<hookrightarrow> Iterable'(_')([_])")
+notation required_iterable_type ("_ \<hookrightarrow> Iterable'(_')([1])")
+notation optional_iterable_type ("_ \<hookrightarrow> Iterable'(_')([?])")
+
+notation non_iterable_type ("_ \<hookrightarrow> NonIterable'(')([_])")
+notation required_non_iterable_type ("_ \<hookrightarrow> NonIterable'(')([1])")
+notation optional_non_iterable_type ("_ \<hookrightarrow> NonIterable'(')([?])")
 
 (*** Code Setup *************************************************************)
 

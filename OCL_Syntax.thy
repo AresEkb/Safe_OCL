@@ -241,6 +241,8 @@ abbreviation "RejectIterationCall src its its_ty body \<equiv>
 abbreviation "SortedByIterationCall src its its_ty body \<equiv>
   Call src ArrowCall (Iterator SortedByIter its its_ty body)"
 
+(*** Notation ***************************************************************)
+
 section \<open>Notation\<close>
 
 subsection \<open>Literals\<close>
@@ -799,6 +801,14 @@ translations
 
   "_iterators x (y # xs)" \<rightharpoonup> "x # y # xs"
   "_iterator x" \<rightharpoonup> "[x]"
+
+term "x->select(q | a)"
+term "x->select(q : ty | a)"
+term "x->select(q, qx : ty | a)"
+term "x->select(q, qx : ty <- qw : vb | a)"
+term "x->iterate(q : ty = f | a)"
+term "x->iterate(v; q : ty = f | a)"
+term "x->iterate(v : ty <- y; q : ty = f | a)"
 
 lemmas ocl_syntax_simps =
   mk_iterate_def
