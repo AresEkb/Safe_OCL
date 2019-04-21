@@ -716,13 +716,6 @@ lemma string_unop_type_det:
    string_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   by (erule string_unop_type.cases; simp add: string_unop_type.simps)
 
-lemma any_collection_type_det:
-  "\<tau> \<hookleftarrow> Collection(\<sigma>)[1] \<Longrightarrow>
-   \<tau> \<hookleftarrow> Collection(\<rho>)[1] \<Longrightarrow> \<sigma> = \<rho>"
-  apply (elim any_collection_type.cases)
-  apply simp
-  using collection_type_det by blast
-
 lemma iterable_unop_type_det:
   "iterable_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    iterable_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
@@ -1528,15 +1521,15 @@ qed
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
-(*
-code_pred mataop_type .
-code_pred typeop_type .
-code_pred non_strict_op .
-code_pred op_type .
+
+code_pred [show_modes] mataop_type .
+code_pred [show_modes] typeop_type .
+code_pred [show_modes] non_strict_op .
+code_pred [show_modes] op_type .
 code_pred (modes:
     typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
     iterator_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
     expr_list_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
-    collection_part_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) typing .
-*)
+    collection_part_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] typing .
+
 end

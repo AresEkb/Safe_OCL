@@ -82,8 +82,6 @@ fun string_of_nat :: "nat \<Rightarrow> string" where
 
 definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcard \<circ> fmdom"
 
-notation non_collection_type ("_ \<hookrightarrow> NonCollection'(')([_])")
-
 inductive normalize_closure_body ("_ \<turnstile>\<^sub>B _ \<Rrightarrow>/ _" [51,51,51] 50) where
  SingleClosureBodyN:
   "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
@@ -352,6 +350,12 @@ inductive_cases ExprListNE [elim]: "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarr
 
 section \<open>Simplification Rules\<close>
 
+inductive_simps normalize_closure_body_alt_simps:
+"(\<Gamma>, DotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, SafeDotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, ArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+
 inductive_simps normalize_alt_simps:
 "\<Gamma> \<turnstile> Literal a \<Rrightarrow> b"
 "\<Gamma> \<turnstile> Let v t init body \<Rrightarrow> b"
@@ -375,11 +379,6 @@ inductive_simps normalize_alt_simps:
 "(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, Some \<sigma>), body) \<Rrightarrow> b"
 "(\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<tau>, Some \<sigma>), body) \<Rrightarrow> b"
 
-"(\<Gamma>, DotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
-"(\<Gamma>, SafeDotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
-"(\<Gamma>, ArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
-"(\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
-
 "\<Gamma> \<turnstile>\<^sub>L [] \<Rrightarrow> ys"
 "\<Gamma> \<turnstile>\<^sub>L x # xs \<Rrightarrow> ys"
 
@@ -396,7 +395,9 @@ proof (induct rule: normalize_closure_body.inducts)
         body\<^sub>1\<^bold>.oclAsSet() = body\<^sub>2"
     apply (erule ClosureBodyNE)
     apply simp
-    using SingleClosureBodyN.hyps is_collection_type.intros typing_det by blast+
+    using SingleClosureBodyN.hyps(1) SingleClosureBodyN.hyps(2)
+          collection_type_non_collection_type_distinct
+          is_collection_type.intros typing_det by blast+
   thus ?case by (simp add: SingleClosureBodyN.prems)
 next
   case (CollectionClosureBodyN \<Gamma> body\<^sub>1 \<tau> \<sigma> n)
@@ -404,23 +405,41 @@ next
         body\<^sub>1 = body\<^sub>2"
     apply (erule ClosureBodyNE)
     using CollectionClosureBodyN.hyps is_collection_type.intros
-      typing_det by blast+
+          collection_type_non_collection_type_distinct
+          typing_det by blast+
   thus ?case by (simp add: CollectionClosureBodyN.prems)
 next
   case (NullFreeNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> \<sigma>)
   have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         body\<^sub>1 = body\<^sub>2"
     apply (erule ClosureBodyNE)
-    using NullFreeNullFreeClosureBodyN.hyps is_collection_type.intros
-      collection_type_det(1) typing_det by blast+
+    using NullFreeNullFreeClosureBodyN.hyps typing_det
+          collection_type_non_collection_type_distinct apply blast
+    using NullFreeNullFreeClosureBodyN.hyps typing_det
+          collection_type_non_collection_type_distinct apply blast
+    using NullFreeNullFreeClosureBodyN.hyps typing_det
+          collection_type_non_collection_type_distinct apply blast
+    using NullFreeNullFreeClosureBodyN.hyps
+          any_collection_type_det typing_det apply blast
+    by (metis NullFreeNullFreeClosureBodyN.hyps(1)
+              NullFreeNullFreeClosureBodyN.hyps(2)
+              any_collection_type.cases collection_type_det(1) typing_det)+
   thus ?case by (simp add: NullFreeNullFreeClosureBodyN.prems)
 next
   case (NullFreeNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> \<sigma>)
   have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         body\<^sub>1->selectByKind(to_required_type \<sigma>) = body\<^sub>2"
     apply (erule ClosureBodyNE)
-    using NullFreeNullableClosureBodyN.hyps is_collection_type.intros
-      collection_type_det(1) typing_det by blast+
+    using NullFreeNullableClosureBodyN.hyps typing_det
+          collection_type_non_collection_type_distinct apply blast
+    apply simp
+    using NullFreeNullableClosureBodyN.hyps typing_det
+          any_collection_type_det apply blast
+    using NullFreeNullableClosureBodyN.hyps typing_det
+          any_collection_type_det apply blast
+    by (metis NullFreeNullableClosureBodyN.hyps(1)
+              NullFreeNullableClosureBodyN.hyps(2)
+              any_collection_type.cases collection_type_det(1) typing_det)+
   thus ?case by (simp add: NullFreeNullableClosureBodyN.prems)
 next
   case (NullableNullFreeClosureBodyN \<Gamma> body\<^sub>1 \<tau> k \<sigma>)
@@ -433,11 +452,11 @@ next
     apply (erule ClosureBodyNE)
     using NullableNullFreeClosureBodyN.hyps(2) body_type_det
           is_collection_type.intros apply blast
-    apply auto[1]
+    apply simp
+    apply (metis NullableNullFreeClosureBodyN.hyps(2) body_type_det
+                 any_collection_type.cases collection_type_det(1))
     using NullableNullFreeClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply blast
-    using NullableNullFreeClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply blast
+          any_collection_type.simps collection_type_det(1) apply blast
     using NullableNullFreeClosureBodyN.hyps(2) body_type_det
           collection_type_det(1) apply fastforce
     using NullableNullFreeClosureBodyN.hyps(2)
@@ -457,14 +476,14 @@ next
           is_collection_type.intros apply blast
     apply simp
     using NullableNullableClosureBodyN.hyps(2) body_type_det
+          any_collection_type.simps collection_type_det(1) apply blast
+    using NullableNullableClosureBodyN.hyps(2) body_type_det
+          any_collection_type.simps collection_type_det(1) apply blast
+    using NullableNullableClosureBodyN.hyps(2)
+          NullableNullableClosureBodyN.hyps(3) body_type_det
           collection_type_det(1) apply blast
     using NullableNullableClosureBodyN.hyps(2) body_type_det
-          collection_type_det(1) apply blast
-    using NullableNullableClosureBodyN.hyps(2)
-          NullableNullableClosureBodyN.hyps(3)
-          body_type_det collection_type_det(1) apply blast
-    using NullableNullableClosureBodyN.hyps(2)
-          body_type_det collection_type_det(1) by fastforce
+          collection_type_det(1) by fastforce
   thus ?case by (simp add: NullableNullableClosureBodyN.prems)
 qed
 
@@ -514,7 +533,7 @@ next
     by (erule StaticOperationCallNE; simp add: StaticOperationCallN.hyps)
   thus ?case by (simp add: StaticOperationCallN.prems)
 next
-  case (SingleDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> call\<^sub>1 call\<^sub>2)
+  case (SingleDotCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> uu call\<^sub>1 call\<^sub>2)
   have src_type_det: "\<And>src\<^sub>2' \<tau>'. \<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2' \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E src\<^sub>2' : \<tau>' \<Longrightarrow> \<tau> = \<tau>'"
     using SingleDotCallN.hyps typing_det by auto
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>2\<^bold>.call\<^sub>2 = expr\<^sub>2"
@@ -531,13 +550,11 @@ next
       then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>.call\<^sub>2
       else null endif = expr\<^sub>2"
     apply (erule SafeDotCallNE)
-    apply (simp add: SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(7)
-          src_type_det)
-    using SingleSafeDotCallN.hyps(4) is_iterable_type.intros
-          src_type_det by blast+
+    apply (simp add: SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(6) src_type_det)
+    using SingleSafeDotCallN.hyps(4) is_iterable_type.intros src_type_det by blast+
   thus ?case by (simp add: SingleSafeDotCallN.prems)
 next
-  case (SingleArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2)
+  case (SingleArrowCallN \<Gamma> src\<^sub>1 src\<^sub>2 \<tau> uv src\<^sub>3 \<sigma> call\<^sub>1 call\<^sub>2)
   have src_type_det: "\<And>src\<^sub>2' \<tau>'. \<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2' \<Longrightarrow> \<Gamma> \<turnstile>\<^sub>E src\<^sub>2' : \<tau>' \<Longrightarrow> \<tau> = \<tau>'"
     using SingleArrowCallN.hyps typing_det by auto
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1->call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow> src\<^sub>3->call\<^sub>2 = expr\<^sub>2"
@@ -732,22 +749,23 @@ next
     using IterationN.hyps(3) by blast
   thus ?case by (simp add: IterationN.prems)
 next
-  case (ExplicitlyTypedCollectionLoopN \<tau> uv uw ux \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
+  case (ExplicitlyTypedCollectionLoopN \<tau> uy uz \<Gamma> its \<sigma> body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (Some \<sigma>, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
         (its, (Some \<sigma>, None), body\<^sub>2) = ns"
     apply (erule LoopNE)
     using ExplicitlyTypedCollectionLoopN.hyps(1)
           ExplicitlyTypedCollectionLoopN.hyps(3)
-          collection_type_and_map_type_distinct by blast+
+          any_collection_type_and_map_type_distinct by blast+
   thus ?case by (simp add: ExplicitlyTypedCollectionLoopN.prems)
 next
-  case (ImplicitlyTypedCollectionLoopN \<tau> uy \<sigma> uz \<Gamma> its body\<^sub>1 body\<^sub>2)
+  case (ImplicitlyTypedCollectionLoopN \<tau> \<sigma> va \<Gamma> its body\<^sub>1 body\<^sub>2)
   have "\<And>ns. (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, (None, None), body\<^sub>1) \<Rrightarrow> ns \<Longrightarrow>
-       (its, (Some \<sigma>, None), body\<^sub>2) = ns"
+        (its, (Some \<sigma>, None), body\<^sub>2) = ns"
     apply (erule LoopNE)
     using ImplicitlyTypedCollectionLoopN.hyps(1)
-          ImplicitlyTypedCollectionLoopN.hyps(3) collection_type_det(1)
-          collection_type_and_map_type_distinct by blast+
+          ImplicitlyTypedCollectionLoopN.hyps(3)
+          any_collection_type_and_map_type_distinct
+          any_collection_type_det by blast+
   thus ?case by (simp add: ImplicitlyTypedCollectionLoopN.prems)
 next
   case (ExplicitlyTypedMapLoopN \<tau> va vb vc \<Gamma> its \<sigma> \<rho> body\<^sub>1 body\<^sub>2)
@@ -769,7 +787,7 @@ next
     apply (erule LoopNE)
     using ImplicitlyTypedMapValueLoopN.hyps(1)
           ImplicitlyTypedMapValueLoopN.hyps(3) map_type_det(1)
-          collection_type_and_map_type_distinct by blast+
+          any_collection_type_and_map_type_distinct by blast+
   thus ?case by (simp add: ImplicitlyTypedMapValueLoopN.prems)
 next
   case (ImplicitlyTypedMapLoopN \<tau> \<sigma> \<rho> vh \<Gamma> its body\<^sub>1 body\<^sub>2)
@@ -778,7 +796,7 @@ next
     apply (erule LoopNE)
     using ImplicitlyTypedMapLoopN.hyps(1)
           ImplicitlyTypedMapLoopN.hyps(3) map_type_det(1)
-          collection_type_and_map_type_distinct by blast+
+          any_collection_type_and_map_type_distinct by blast+
   thus ?case by (simp add: ImplicitlyTypedMapLoopN.prems)
 next
   case (ExprListNilN \<Gamma>) thus ?case by auto
@@ -804,21 +822,22 @@ lemma nf_typing_det:
   by (metis nf_typing.cases normalize_det typing_det)
 
 lemmas ocl_normalization_simps =
+  normalize_closure_body_alt_simps
   normalize_alt_simps
   nf_typing.simps
 
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>
-(*
-code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) normalize_closure_body .
 
 code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) normalize_loop .
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_closure_body .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_loop .
 
 code_pred nf_typing .
-*)
+
 end

@@ -17,6 +17,16 @@ subsection \<open>All Types\<close>
 abbreviation between ("_/ = _\<midarrow>_"  [51, 51, 51] 50) where
   "x = y\<midarrow>z \<equiv> y \<le> x \<and> x \<le> z"
 
+inductive any_type\<^sub>N where
+  "any_type\<^sub>N (Required \<tau>) False"
+| "any_type\<^sub>N (Optional \<tau>) True"
+
+inductive any_type where
+  "any_type\<^sub>N \<tau> n \<Longrightarrow>
+   any_type (ErrorFree \<tau>) n"
+| "any_type\<^sub>N \<tau> n \<Longrightarrow>
+   any_type (Errorable \<tau>) n"
+
 text \<open>Set, ordered set, map and tuple types with finite element types are finite.
   However they are too big, so we consider them as infinite types.\<close>
 
@@ -66,6 +76,9 @@ inductive object_type where
    object_type (ErrorFree \<tau>) \<C> n"
 | "object_type\<^sub>N \<tau> \<C> n \<Longrightarrow>
    object_type (Errorable \<tau>) \<C> n"
+
+abbreviation "required_object_type \<tau> \<C> \<equiv> object_type \<tau> \<C> False"
+abbreviation "optional_object_type \<tau> \<C> \<equiv> object_type \<tau> \<C> True"
 
 subsection \<open>Tuple Types\<close>
 
@@ -125,11 +138,41 @@ inductive is_collection_type where
   "collection_type \<tau> _ _ _ \<Longrightarrow>
    is_collection_type \<tau>"
 
-inductive is_collection_type' where
-  "collection_type \<tau> _ _ n \<Longrightarrow>
-   is_collection_type' \<tau> n"
+inductive any_collection_type where
+  "collection_type \<tau> _ \<sigma> n \<Longrightarrow>
+   any_collection_type \<tau> \<sigma> n"
 
-abbreviation "non_collection_type \<tau> n \<equiv> \<not> is_collection_type' \<tau> n"
+abbreviation "required_any_collection_type \<tau> \<sigma> \<equiv> any_collection_type \<tau> \<sigma> False"
+abbreviation "optional_any_collection_type \<tau> \<sigma> \<equiv> any_collection_type \<tau> \<sigma> True"
+
+abbreviation "set_type' \<tau> \<sigma> n \<equiv> collection_type \<tau> SetKind \<sigma> n"
+abbreviation "required_set_type' \<tau> \<sigma> \<equiv> collection_type \<tau> SetKind \<sigma> False"
+abbreviation "optional_set_type' \<tau> \<sigma> \<equiv> collection_type \<tau> SetKind \<sigma> True"
+
+abbreviation "ordered_set_type \<tau> \<sigma> n \<equiv> collection_type \<tau> OrderedSetKind \<sigma> n"
+abbreviation "required_ordered_set_type \<tau> \<sigma> \<equiv> collection_type \<tau> OrderedSetKind \<sigma> False"
+abbreviation "optional_ordered_set_type \<tau> \<sigma> \<equiv> collection_type \<tau> OrderedSetKind \<sigma> True"
+
+abbreviation "bag_type \<tau> \<sigma> n \<equiv> collection_type \<tau> BagKind \<sigma> n"
+abbreviation "required_bag_type \<tau> \<sigma> \<equiv> collection_type \<tau> BagKind \<sigma> False"
+abbreviation "optional_bag_type \<tau> \<sigma> \<equiv> collection_type \<tau> BagKind \<sigma> True"
+
+abbreviation "sequence_type \<tau> \<sigma> n \<equiv> collection_type \<tau> SequenceKind \<sigma> n"
+abbreviation "required_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> False"
+abbreviation "optional_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> True"
+
+inductive ordered_collection_type where
+  "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type \<tau> \<sigma> n"
+| "collection_type \<tau> SequenceKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type \<tau> \<sigma> n"
+
+abbreviation "required_ordered_collection_type \<tau> \<sigma> \<equiv>
+  ordered_collection_type \<tau> \<sigma> False"
+abbreviation "optional_ordered_collection_type \<tau> \<sigma> \<equiv>
+  ordered_collection_type \<tau> \<sigma> True"
+
+abbreviation "non_collection_type \<tau> n \<equiv> (\<not> is_collection_type \<tau> \<and> any_type \<tau> n)"
 
 
 inductive to_single_type where
@@ -269,13 +312,19 @@ inductive iterable_type where
 | "map_type \<tau> \<sigma> _ n \<Longrightarrow>
    iterable_type \<tau> \<sigma> n"
 
-inductive is_iterable_type where
-  "iterable_type \<tau> _ n \<Longrightarrow> is_iterable_type \<tau> n"
-
-abbreviation "non_iterable_type \<tau> n \<equiv> \<not> is_iterable_type \<tau> n"
-
 abbreviation "required_iterable_type \<tau> \<sigma> \<equiv> iterable_type \<tau> \<sigma> False"
 abbreviation "optional_iterable_type \<tau> \<sigma> \<equiv> iterable_type \<tau> \<sigma> True"
+
+inductive any_iterable_type where
+  "iterable_type \<tau> _ n \<Longrightarrow> any_iterable_type \<tau> n"
+
+inductive is_iterable_type where
+  "iterable_type \<tau> _ _ \<Longrightarrow> is_iterable_type \<tau>"
+
+abbreviation "non_iterable_type \<tau> n \<equiv> (\<not> is_iterable_type \<tau> \<and> any_type \<tau> n)"
+
+abbreviation "required_non_iterable_type \<tau> \<equiv> non_iterable_type \<tau> False"
+abbreviation "optional_non_iterable_type \<tau> \<equiv> non_iterable_type \<tau> True"
 
 subsection \<open>Nullable and Null-free Types\<close>
 
@@ -335,6 +384,12 @@ abbreviation "to_optional_type_nested \<equiv> map_errorable to_optional_type_ne
 (*** Misc Properties ********************************************************)
 
 section \<open>Misc Properties\<close>
+
+lemma ex_any_type_simps:
+  "Ex (any_type (ErrorFree \<tau>)) = (\<exists>n. any_type\<^sub>N \<tau> n)"
+  "Ex (any_type (Errorable \<tau>)) = (\<exists>n. any_type\<^sub>N \<tau> n)"
+  by (auto simp: any_type.simps)
+
 
 lemma tuple_type_implies_tuple_type':
   "tuple_type \<tau> \<pi> n \<Longrightarrow> \<pi> \<noteq> fmempty \<Longrightarrow> tuple_type' \<tau> \<pi> n"
@@ -410,6 +465,10 @@ lemma collection_type_sup:
       collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
 
 
+lemma collection_type_non_collection_type_distinct:
+  "any_collection_type \<tau> \<sigma> n1 \<Longrightarrow> non_collection_type \<tau> n2 \<Longrightarrow> False"
+  by (auto simp add: any_collection_type.simps is_collection_type.simps)
+
 lemma collection_type_and_map_type_distinct:
   "collection_type \<tau> k \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
   by (auto simp: collection_type.simps collection_type\<^sub>N.simps
@@ -449,10 +508,14 @@ lemma map_type'_sup:
 
 
 lemmas ocl_type_helper_simps =
+  any_type\<^sub>N.simps
+  any_type.simps
+  ex_any_type_simps
   collection_type\<^sub>T.simps
   collection_type\<^sub>N.simps
   collection_type_left_simps
   collection_type_right_simps
+  any_collection_type.simps
   to_unique_collection_type\<^sub>T.simps
   to_unique_collection_type\<^sub>N.simps
   to_unique_collection_type.simps
@@ -520,6 +583,11 @@ lemma collection_type_det:
    collection_type \<tau>\<^sub>2 k \<sigma> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
   apply (elim collection_type.cases; simp add: collection_type\<^sub>N_det(1))
   by (elim collection_type.cases; simp add: collection_type\<^sub>N_det(2))
+
+lemma any_collection_type_det:
+  "any_collection_type \<tau> \<sigma>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   any_collection_type \<tau> \<sigma>\<^sub>2 n\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  by (elim any_collection_type.cases; simp add: collection_type_det(1))
 
 
 lemma to_single_type_det:
@@ -634,48 +702,6 @@ lemma iterable_type_det:
 
 subsection \<open>Notation\<close>
 
-abbreviation "required_object_type \<tau> \<C> \<equiv> object_type \<tau> \<C> False"
-abbreviation "optional_object_type \<tau> \<C> \<equiv> object_type \<tau> \<C> True"
-
-inductive any_collection_type where
-  "collection_type \<tau> _ \<sigma> n \<Longrightarrow>
-   any_collection_type \<tau> \<sigma> n"
-
-code_pred [show_modes] any_collection_type .
-
-abbreviation "required_any_collection_type \<tau> \<sigma> \<equiv> any_collection_type \<tau> \<sigma> False"
-abbreviation "optional_any_collection_type \<tau> \<sigma> \<equiv> any_collection_type \<tau> \<sigma> True"
-
-abbreviation "set_type' \<tau> \<sigma> n \<equiv> collection_type \<tau> SetKind \<sigma> n"
-abbreviation "required_set_type' \<tau> \<sigma> \<equiv> collection_type \<tau> SetKind \<sigma> False"
-abbreviation "optional_set_type' \<tau> \<sigma> \<equiv> collection_type \<tau> SetKind \<sigma> True"
-
-abbreviation "ordered_set_type \<tau> \<sigma> n \<equiv> collection_type \<tau> OrderedSetKind \<sigma> n"
-abbreviation "required_ordered_set_type \<tau> \<sigma> \<equiv> collection_type \<tau> OrderedSetKind \<sigma> False"
-abbreviation "optional_ordered_set_type \<tau> \<sigma> \<equiv> collection_type \<tau> OrderedSetKind \<sigma> True"
-
-abbreviation "bag_type \<tau> \<sigma> n \<equiv> collection_type \<tau> BagKind \<sigma> n"
-abbreviation "required_bag_type \<tau> \<sigma> \<equiv> collection_type \<tau> BagKind \<sigma> False"
-abbreviation "optional_bag_type \<tau> \<sigma> \<equiv> collection_type \<tau> BagKind \<sigma> True"
-
-abbreviation "sequence_type \<tau> \<sigma> n \<equiv> collection_type \<tau> SequenceKind \<sigma> n"
-abbreviation "required_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> False"
-abbreviation "optional_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> True"
-
-inductive ordered_collection_type where
-  "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
-   ordered_collection_type \<tau> \<sigma> n"
-| "collection_type \<tau> SequenceKind \<sigma> n \<Longrightarrow>
-   ordered_collection_type \<tau> \<sigma> n"
-
-abbreviation "required_ordered_collection_type \<tau> \<sigma> \<equiv>
-  ordered_collection_type \<tau> \<sigma> False"
-abbreviation "optional_ordered_collection_type \<tau> \<sigma> \<equiv>
-  ordered_collection_type \<tau> \<sigma> True"
-
-abbreviation "required_non_iterable_type \<tau> \<equiv> non_iterable_type \<tau> False"
-abbreviation "optional_non_iterable_type \<tau> \<equiv> non_iterable_type \<tau> True"
-
 notation object_type ("_ \<hookrightarrow> ObjectType'(_')([_])")
 notation required_object_type ("_ \<hookrightarrow> ObjectType'(_')([1])")
 notation optional_object_type ("_ \<hookrightarrow> ObjectType'(_')([?])")
@@ -731,6 +757,8 @@ notation ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([_
 notation required_ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([1])")
 notation optional_ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([?])")
 
+notation non_collection_type ("_ \<hookrightarrow> NonCollection'(')([_])")
+
 notation map_type ("_ \<hookrightarrow> Map'(_, _')([_])")
 notation map_type' ("_ \<hookleftarrow> Map'(_, _')([_])")
 notation required_map_type ("_ \<hookrightarrow> Map'(_, _')([1])")
@@ -754,9 +782,11 @@ code_pred object_type .
 code_pred tuple_type .
 code_pred tuple_type' .
 code_pred collection_type .
+code_pred any_collection_type .
+code_pred ordered_collection_type .
+code_pred is_collection_type .
 code_pred map_type .
 code_pred map_type' .
-code_pred is_collection_type .
 code_pred to_single_type .
 code_pred inner_element_type .
 code_pred update_element_type .

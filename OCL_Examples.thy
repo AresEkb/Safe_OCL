@@ -338,14 +338,16 @@ end
 
 section \<open>Simplification Rules\<close>
 
-lemma ex_alt_simps [simp]:
-  "\<exists>a. a"
-  "\<exists>a. \<not> a"
-  "(\<exists>a. (a \<longrightarrow> P) \<and> a) = P"
-  "(\<exists>a. \<not> a \<and> (\<not> a \<longrightarrow> P)) = P"
-  "(\<exists>a. \<not> a \<and> P \<and> \<not> a) = P"
-  "(\<exists>a. a \<and> P \<and> \<not> a) = False"
+lemma logic_alt_simps [simp]:
+  "\<exists>x. x"
+  "\<exists>x. \<not> x"
+  "(\<exists>x. (x \<longrightarrow> P) \<and> x) = P"
+  "(\<exists>x. \<not> x \<and> (\<not> x \<longrightarrow> P)) = P"
+  "(\<exists>x. \<not> x \<and> P \<and> \<not> x) = P"
+  "(\<exists>x. x \<and> P \<and> \<not> x) = False"
   "(\<forall>x. x) = False"
+  "(\<forall>x y. Q y \<longrightarrow> x \<or> R y) = (\<forall>y. Q y \<longrightarrow> R y)"
+  "(\<forall>x. Q x \<longrightarrow> x \<noteq> S) = (\<not> (\<exists>x. Q x \<and> x = S))"
   by auto
 
 declare numeral_eq_enat [simp]
