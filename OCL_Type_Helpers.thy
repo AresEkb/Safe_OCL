@@ -710,6 +710,8 @@ notation non_iterable_type ("_ \<hookrightarrow> NonIterable'(')([_])")
 notation required_non_iterable_type ("_ \<hookrightarrow> NonIterable'(')([1])")
 notation optional_non_iterable_type ("_ \<hookrightarrow> NonIterable'(')([?])")
 
+notation to_optional_type_nested ("_[??]" [1000] 1000)
+
 (*** Code Setup *************************************************************)
 
 section \<open>Code Setup\<close>

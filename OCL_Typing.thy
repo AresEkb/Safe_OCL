@@ -446,39 +446,39 @@ notation unwrap_errorable_type ("\<lfloor>_\<rfloor>\<^sub>E")
 
 inductive iterable_binop_type where
   "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow>
-   \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<sigma> \<le> \<rho>[??] \<Longrightarrow>
    iterable_binop_type CountOp \<tau> \<sigma> Integer[1]"
 
 | "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
-   \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<sigma> \<le> \<rho>[??] \<Longrightarrow>
    iterable_binop_type IncludesOp \<tau> \<sigma> Boolean[1]"
 | "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
-   \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<sigma> \<le> \<rho>[??] \<Longrightarrow>
    iterable_binop_type ExcludesOp \<tau> \<sigma> Boolean[1]"
 
-| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow> \<sigma> \<le> \<upsilon>[??] \<Longrightarrow>
    iterable_binop_type IncludesValueOp \<tau> \<sigma> Boolean[1]"
-| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow> \<sigma> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow> \<sigma> \<le> \<upsilon>[??] \<Longrightarrow>
    iterable_binop_type ExcludesValueOp \<tau> \<sigma> Boolean[1]"
 
 | "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<hookrightarrow> Collection(\<upsilon>)[1] \<Longrightarrow>
-   \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<upsilon> \<le> \<rho>[??] \<Longrightarrow>
    iterable_binop_type IncludesAllOp \<tau> \<sigma> Boolean[1]"
 | "\<tau> \<hookrightarrow> Iterable(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<hookrightarrow> Collection(\<upsilon>)[1] \<Longrightarrow>
-   \<upsilon> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<upsilon> \<le> \<rho>[??] \<Longrightarrow>
    iterable_binop_type ExcludesAllOp \<tau> \<sigma> Boolean[1]"
 
 | "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
    \<sigma> \<hookrightarrow> Map(\<phi>, \<psi>)[1] \<Longrightarrow>
-   \<phi> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
-   \<psi> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+   \<phi> \<le> \<rho>[??] \<Longrightarrow>
+   \<psi> \<le> \<upsilon>[??] \<Longrightarrow>
    iterable_binop_type IncludesMapOp \<tau> \<sigma> Boolean[1]"
 | "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
    \<sigma> \<hookrightarrow> Map(\<phi>, \<psi>)[1] \<Longrightarrow>
-   \<phi> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
-   \<psi> \<le> to_optional_type_nested \<upsilon> \<Longrightarrow>
+   \<phi> \<le> \<rho>[??] \<Longrightarrow>
+   \<psi> \<le> \<upsilon>[??] \<Longrightarrow>
    iterable_binop_type ExcludesMapOp \<tau> \<sigma> Boolean[1]"
 
 | "\<tau> \<hookrightarrow> Collection(\<rho>)[1] \<Longrightarrow>
@@ -543,7 +543,7 @@ inductive iterable_binop_type where
 | "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>)[1] \<Longrightarrow>
    iterable_binop_type AtOp \<tau> Integer[1] \<sigma>[!]"
 | "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
-   \<sigma> \<le> to_optional_type_nested \<rho> \<Longrightarrow>
+   \<sigma> \<le> \<rho>[??] \<Longrightarrow>
    iterable_binop_type AtOp \<tau> \<sigma> \<upsilon>[!]"
 
 | "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>

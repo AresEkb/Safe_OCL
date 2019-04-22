@@ -1153,7 +1153,9 @@ lemma type_less_left_simps [simp]:
   "String < \<sigma> = (\<sigma> = OclAny)"
 
   "Enum \<E> < \<sigma> = (\<sigma> = OclAny)"
-  "ObjectType \<C> < \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> < \<D>)"
+  "ObjectType \<C> < \<sigma> = (\<exists>\<D>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = ObjectType \<D> \<and> \<C> < \<D>)"
   "Tuple \<pi> < \<sigma> = (\<exists>\<xi>.
       \<sigma> = OclAny \<or>
       \<sigma> = Tuple \<xi> \<and> strict_subtuple (\<le>) \<pi> \<xi>)"
@@ -1196,7 +1198,9 @@ lemma type_less_eq_left_simps [simp]:
   "String \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = String)"
 
   "Enum \<E> \<le> \<sigma> = (\<sigma> = OclAny \<or> \<sigma> = Enum \<E>)"
-  "ObjectType \<C> \<le> \<sigma> = (\<exists>\<D>. \<sigma> = OclAny \<or> \<sigma> = ObjectType \<D> \<and> \<C> \<le> \<D>)"
+  "ObjectType \<C> \<le> \<sigma> = (\<exists>\<D>.
+      \<sigma> = OclAny \<or>
+      \<sigma> = ObjectType \<D> \<and> \<C> \<le> \<D>)"
   "Tuple \<pi> \<le> \<sigma> = (\<exists>\<xi>.
       \<sigma> = OclAny \<or>
       \<sigma> = Tuple \<xi> \<and> subtuple (\<le>) \<pi> \<xi>)"
@@ -1253,8 +1257,12 @@ lemma type_less_right_simps [simp]:
   "\<tau> < String = (\<tau> = OclVoid)"
 
   "\<tau> < Enum \<E> = (\<tau> = OclVoid)"
-  "\<tau> < ObjectType \<D> = (\<exists>\<C>. \<tau> = ObjectType \<C> \<and> \<C> < \<D> \<or> \<tau> = OclVoid)"
-  "\<tau> < Tuple \<xi> = (\<exists>\<pi>. \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi> \<or> \<tau> = OclVoid)"
+  "\<tau> < ObjectType \<D> = (\<exists>\<C>.
+      \<tau> = ObjectType \<C> \<and> \<C> < \<D> \<or>
+      \<tau> = OclVoid)"
+  "\<tau> < Tuple \<xi> = (\<exists>\<pi>.
+      \<tau> = Tuple \<pi> \<and> strict_subtuple (\<le>) \<pi> \<xi> \<or>
+      \<tau> = OclVoid)"
 
   "\<tau> < Collection \<sigma> = (\<exists>\<phi>.
       \<tau> = Collection \<phi> \<and> \<phi> < \<sigma> \<or>
@@ -1263,10 +1271,18 @@ lemma type_less_right_simps [simp]:
       \<tau> = Bag \<phi> \<and> \<phi> \<le> \<sigma> \<or>
       \<tau> = Sequence \<phi> \<and> \<phi> \<le> \<sigma> \<or>
       \<tau> = OclVoid)"
-  "\<tau> < Set \<sigma> = (\<exists>\<phi>. \<tau> = Set \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
-  "\<tau> < OrderedSet \<sigma> = (\<exists>\<phi>. \<tau> = OrderedSet \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
-  "\<tau> < Bag \<sigma> = (\<exists>\<phi>. \<tau> = Bag \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
-  "\<tau> < Sequence \<sigma> = (\<exists>\<phi>. \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma> \<or> \<tau> = OclVoid)"
+  "\<tau> < Set \<sigma> = (\<exists>\<phi>.
+      \<tau> = Set \<phi> \<and> \<phi> < \<sigma> \<or>
+      \<tau> = OclVoid)"
+  "\<tau> < OrderedSet \<sigma> = (\<exists>\<phi>.
+      \<tau> = OrderedSet \<phi> \<and> \<phi> < \<sigma> \<or>
+      \<tau> = OclVoid)"
+  "\<tau> < Bag \<sigma> = (\<exists>\<phi>.
+      \<tau> = Bag \<phi> \<and> \<phi> < \<sigma> \<or>
+      \<tau> = OclVoid)"
+  "\<tau> < Sequence \<sigma> = (\<exists>\<phi>.
+      \<tau> = Sequence \<phi> \<and> \<phi> < \<sigma> \<or>
+      \<tau> = OclVoid)"
 
   "\<tau> < Map \<rho> \<upsilon> = (\<exists>\<phi> \<sigma>.
       \<tau> = Map \<phi> \<sigma> \<and> \<phi> = \<rho> \<and> \<sigma> < \<upsilon> \<or>

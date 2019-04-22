@@ -8,9 +8,7 @@ theory Errorable
   imports Main
 begin
 
-datatype 'a errorable ("_\<^sub>E" [21] 21) =
-  ErrorFree 'a
-| Errorable 'a
+datatype 'a errorable = ErrorFree 'a | Errorable 'a
 
 instantiation errorable :: (order) order
 begin
