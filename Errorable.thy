@@ -113,8 +113,11 @@ lemma errorable_less_eq_left_simps [simp]:
   by (auto simp: dual_order.order_iff_strict)
 
 lemma errorable_less_right_simps [simp]:
-  "\<tau> < ErrorFree \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> < \<upsilon>)"
-  "\<tau> < Errorable \<upsilon> = (\<exists>\<rho>. \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Errorable \<rho> \<and> \<rho> < \<upsilon>)"
+  "\<tau> < ErrorFree \<upsilon> = (\<exists>\<rho>.
+      \<tau> = ErrorFree \<rho> \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Errorable \<upsilon> = (\<exists>\<rho>.
+      \<tau> = ErrorFree \<rho> \<and> \<rho> \<le> \<upsilon> \<or>
+      \<tau> = Errorable \<rho> \<and> \<rho> < \<upsilon>)"
   by auto
 
 lemma errorable_less_eq_right_simps [simp]:

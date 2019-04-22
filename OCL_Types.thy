@@ -1307,13 +1307,19 @@ lemma type_less_eq_right_simps [simp]:
   by (auto simp: order.order_iff_strict reflpI)
 
 lemma type\<^sub>N_less_right_simps [simp]:
-  "\<tau> < Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> < \<upsilon>)"
-  "\<tau> < Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Required \<upsilon> = (\<exists>\<rho>.
+      \<tau> = Required \<rho> \<and> \<rho> < \<upsilon>)"
+  "\<tau> < Optional \<upsilon> = (\<exists>\<rho>.
+      \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or>
+      \<tau> = Optional \<rho> \<and> \<rho> < \<upsilon>)"
   by auto
 
 lemma type\<^sub>N_less_eq_right_simps [simp]:
-  "\<tau> \<le> Required \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon>)"
-  "\<tau> \<le> Optional \<upsilon> = (\<exists>\<rho>. \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or> \<tau> = Optional \<rho> \<and> \<rho> \<le> \<upsilon>)"
+  "\<tau> \<le> Required \<upsilon> = (\<exists>\<rho>.
+      \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon>)"
+  "\<tau> \<le> Optional \<upsilon> = (\<exists>\<rho>.
+      \<tau> = Required \<rho> \<and> \<rho> \<le> \<upsilon> \<or>
+      \<tau> = Optional \<rho> \<and> \<rho> \<le> \<upsilon>)"
   by auto
 
 (*** Upper Semilattice of Types *********************************************)

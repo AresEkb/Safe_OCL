@@ -835,8 +835,10 @@ code_pred (modes:
     i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_closure_body .
 
 code_pred (modes:
-    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
-    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize_loop .
+    normalize: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
+    normalize_loop: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
+    normalize_expr_list: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
+    normalize_call: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] normalize .
 
 code_pred nf_typing .
 

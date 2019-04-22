@@ -134,10 +134,6 @@ inductive collection_type where
 abbreviation "required_collection_type \<tau> k \<sigma> \<equiv> collection_type \<tau> k \<sigma> False"
 abbreviation "optional_collection_type \<tau> k \<sigma> \<equiv> collection_type \<tau> k \<sigma> True"
 
-inductive is_collection_type where
-  "collection_type \<tau> _ _ _ \<Longrightarrow>
-   is_collection_type \<tau>"
-
 inductive any_collection_type where
   "collection_type \<tau> _ \<sigma> n \<Longrightarrow>
    any_collection_type \<tau> \<sigma> n"
@@ -161,6 +157,39 @@ abbreviation "sequence_type \<tau> \<sigma> n \<equiv> collection_type \<tau> Se
 abbreviation "required_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> False"
 abbreviation "optional_sequence_type \<tau> \<sigma> \<equiv> collection_type \<tau> SequenceKind \<sigma> True"
 
+
+inductive unique_collection_type' where
+  "collection_type \<tau> SetKind \<sigma> n \<Longrightarrow>
+   unique_collection_type' \<tau> SetKind \<sigma> n"
+| "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
+   unique_collection_type' \<tau> OrderedSetKind \<sigma> n"
+| "collection_type \<tau> SetKind \<sigma> n \<Longrightarrow>
+   unique_collection_type' \<tau> BagKind \<sigma> n"
+| "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
+   unique_collection_type' \<tau> SequenceKind \<sigma> n"
+
+abbreviation "required_unique_collection_type' \<tau> k \<sigma> \<equiv>
+  unique_collection_type' \<tau> k \<sigma> False"
+abbreviation "optional_unique_collection_type' \<tau> k \<sigma> \<equiv>
+  unique_collection_type' \<tau> k \<sigma> True"
+
+
+inductive non_unique_collection_type' where
+  "collection_type \<tau> BagKind \<sigma> n \<Longrightarrow>
+   non_unique_collection_type' \<tau> SetKind \<sigma> n"
+| "collection_type \<tau> SequenceKind \<sigma> n \<Longrightarrow>
+   non_unique_collection_type' \<tau> OrderedSetKind \<sigma> n"
+| "collection_type \<tau> BagKind \<sigma> n \<Longrightarrow>
+   non_unique_collection_type' \<tau> BagKind \<sigma> n"
+| "collection_type \<tau> SequenceKind \<sigma> n \<Longrightarrow>
+   non_unique_collection_type' \<tau> SequenceKind \<sigma> n"
+
+abbreviation "required_non_unique_collection_type' \<tau> k \<sigma> \<equiv>
+  non_unique_collection_type' \<tau> k \<sigma> False"
+abbreviation "optional_non_unique_collection_type' \<tau> k \<sigma> \<equiv>
+  non_unique_collection_type' \<tau> k \<sigma> True"
+
+
 inductive ordered_collection_type where
   "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
    ordered_collection_type \<tau> \<sigma> n"
@@ -172,6 +201,26 @@ abbreviation "required_ordered_collection_type \<tau> \<sigma> \<equiv>
 abbreviation "optional_ordered_collection_type \<tau> \<sigma> \<equiv>
   ordered_collection_type \<tau> \<sigma> True"
 
+inductive ordered_collection_type' where
+  "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type' \<tau> SetKind \<sigma> n"
+| "collection_type \<tau> OrderedSetKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type' \<tau> OrderedSetKind \<sigma> n"
+| "collection_type \<tau> SequenceKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type' \<tau> BagKind \<sigma> n"
+| "collection_type \<tau> SequenceKind \<sigma> n \<Longrightarrow>
+   ordered_collection_type' \<tau> SequenceKind \<sigma> n"
+
+abbreviation "required_ordered_collection_type' \<tau> k \<sigma> \<equiv>
+  ordered_collection_type' \<tau> k \<sigma> False"
+abbreviation "optional_ordered_collection_type' \<tau> k \<sigma> \<equiv>
+  ordered_collection_type' \<tau> k \<sigma> True"
+
+
+inductive is_collection_type where
+  "collection_type \<tau> _ _ _ \<Longrightarrow>
+   is_collection_type \<tau>"
+
 abbreviation "non_collection_type \<tau> n \<equiv> (\<not> is_collection_type \<tau> \<and> any_type \<tau> n)"
 
 
@@ -182,95 +231,6 @@ inductive to_single_type where
    to_single_type \<sigma> \<rho> \<Longrightarrow>
    to_single_type \<tau> \<rho>"
 
-
-inductive inner_element_type where
-  "collection_type \<tau> _ \<sigma> _ \<Longrightarrow>
-   to_single_type \<sigma> \<rho> \<Longrightarrow>
-   inner_element_type \<tau> \<rho>"
-
-
-inductive update_element_type\<^sub>T where
-  "update_element_type\<^sub>T (Collection _) \<tau> (Collection \<tau>)"
-| "update_element_type\<^sub>T (Set _) \<tau> (Set \<tau>)"
-| "update_element_type\<^sub>T (OrderedSet _) \<tau> (OrderedSet \<tau>)"
-| "update_element_type\<^sub>T (Bag _) \<tau> (Bag \<tau>)"
-| "update_element_type\<^sub>T (Sequence _) \<tau> (Sequence \<tau>)"
-
-inductive update_element_type\<^sub>N where
-  "update_element_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
-   update_element_type\<^sub>N (Required \<tau>) \<sigma> (Required \<rho>)"
-| "update_element_type\<^sub>T \<tau> \<sigma> \<rho> \<Longrightarrow>
-   update_element_type\<^sub>N (Optional \<tau>) \<sigma> (Optional \<rho>)"
-
-inductive update_element_type where
-  "update_element_type\<^sub>N \<tau> \<sigma> \<rho> \<Longrightarrow>
-   update_element_type (ErrorFree \<tau>) (ErrorFree \<sigma>) (ErrorFree \<rho>)"
-| "update_element_type\<^sub>N \<tau> \<sigma> \<rho> \<Longrightarrow>
-   update_element_type (ErrorFree \<tau>) (Errorable \<sigma>) (Errorable \<rho>)"
-| "update_element_type\<^sub>N \<tau> \<sigma> \<rho> \<Longrightarrow>
-   update_element_type (Errorable \<tau>) (ErrorFree \<sigma>) (Errorable \<rho>)"
-| "update_element_type\<^sub>N \<tau> \<sigma> \<rho> \<Longrightarrow>
-   update_element_type (Errorable \<tau>) (Errorable \<sigma>) (Errorable \<rho>)"
-
-
-inductive to_unique_collection_type\<^sub>T where
-  "to_unique_collection_type\<^sub>T (Collection \<tau>) (Set \<tau>)"
-| "to_unique_collection_type\<^sub>T (Set \<tau>) (Set \<tau>)"
-| "to_unique_collection_type\<^sub>T (OrderedSet \<tau>) (OrderedSet \<tau>)"
-| "to_unique_collection_type\<^sub>T (Bag \<tau>) (Set \<tau>)"
-| "to_unique_collection_type\<^sub>T (Sequence \<tau>) (OrderedSet \<tau>)"
-
-inductive to_unique_collection_type\<^sub>N where
-  "to_unique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_unique_collection_type\<^sub>N (Required \<tau>) (Required \<sigma>)"
-| "to_unique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_unique_collection_type\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
-
-inductive to_unique_collection_type where
-  "to_unique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_unique_collection_type (ErrorFree \<tau>) (ErrorFree \<sigma>)"
-| "to_unique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_unique_collection_type (Errorable \<tau>) (Errorable \<sigma>)"
-
-
-inductive to_nonunique_collection_type\<^sub>T where
-  "to_nonunique_collection_type\<^sub>T (Collection \<tau>) (Bag \<tau>)"
-| "to_nonunique_collection_type\<^sub>T (Set \<tau>) (Bag \<tau>)"
-| "to_nonunique_collection_type\<^sub>T (OrderedSet \<tau>) (Sequence \<tau>)"
-| "to_nonunique_collection_type\<^sub>T (Bag \<tau>) (Bag \<tau>)"
-| "to_nonunique_collection_type\<^sub>T (Sequence \<tau>) (Sequence \<tau>)"
-
-inductive to_nonunique_collection_type\<^sub>N where
-  "to_nonunique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_nonunique_collection_type\<^sub>N (Required \<tau>) (Required \<sigma>)"
-| "to_nonunique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_nonunique_collection_type\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
-
-inductive to_nonunique_collection_type where
-  "to_nonunique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_nonunique_collection_type (ErrorFree \<tau>) (ErrorFree \<sigma>)"
-| "to_nonunique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_nonunique_collection_type (Errorable \<tau>) (Errorable \<sigma>)"
-
-
-inductive to_ordered_collection_type\<^sub>T where
-  "to_ordered_collection_type\<^sub>T (Collection \<tau>) (Sequence \<tau>)"
-| "to_ordered_collection_type\<^sub>T (Set \<tau>) (OrderedSet \<tau>)"
-| "to_ordered_collection_type\<^sub>T (OrderedSet \<tau>) (OrderedSet \<tau>)"
-| "to_ordered_collection_type\<^sub>T (Bag \<tau>) (Sequence \<tau>)"
-| "to_ordered_collection_type\<^sub>T (Sequence \<tau>) (Sequence \<tau>)"
-
-inductive to_ordered_collection_type\<^sub>N where
-  "to_ordered_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_ordered_collection_type\<^sub>N (Required \<tau>) (Required \<sigma>)"
-| "to_ordered_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_ordered_collection_type\<^sub>N (Optional \<tau>) (Optional \<sigma>)"
-
-inductive to_ordered_collection_type where
-  "to_ordered_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_ordered_collection_type (ErrorFree \<tau>) (ErrorFree \<sigma>)"
-| "to_ordered_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_ordered_collection_type (Errorable \<tau>) (Errorable \<sigma>)"
 
 subsection \<open>Map Types\<close>
 
@@ -345,7 +305,7 @@ fun to_required_type\<^sub>N where
 
 abbreviation "to_required_type \<equiv> map_errorable to_required_type\<^sub>N"
 
-(* Is it realy required? Maybe it better to check types intersection? *)
+(* Is it realy required? Maybe it is better to check types intersection? *)
 fun to_optional_type_nested\<^sub>T
 and to_optional_type_nested\<^sub>N where
   "to_optional_type_nested\<^sub>T OclAny = OclAny"
@@ -473,13 +433,13 @@ lemma collection_type_and_map_type_distinct:
   "collection_type \<tau> k \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
   by (auto simp: collection_type.simps collection_type\<^sub>N.simps
       collection_type\<^sub>T.simps map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
-
-lemma to_nonunique_collection_type_and_map_type_distinct:
-  "to_nonunique_collection_type \<tau> \<sigma> \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
-  by (auto simp: to_nonunique_collection_type.simps
-      to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T.simps
+(*
+lemma to_non_unique_collection_type_and_map_type_distinct:
+  "to_non_unique_collection_type \<tau> \<sigma> \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: to_non_unique_collection_type.simps
+      to_non_unique_collection_type\<^sub>N.simps to_non_unique_collection_type\<^sub>T.simps
       map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
-
+*)
 
 lemma map_type_implies_map_type':
   "map_type \<tau> \<sigma> \<rho> n \<Longrightarrow> map_type' \<tau> \<sigma> \<rho> n"
@@ -506,31 +466,46 @@ lemma map_type'_sup:
   by (auto simp add: map_type'.simps map_type.simps
       map_type\<^sub>N.simps map_type\<^sub>T.simps)
 
+lemma any_collection_type_and_map_type_distinct:
+  "any_collection_type \<tau> \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: any_collection_type.simps collection_type.simps
+      collection_type\<^sub>N.simps collection_type\<^sub>T.simps
+      map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
+lemma ordered_collection_type_and_map_type_distinct:
+  "ordered_collection_type \<tau> \<sigma> n\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: ordered_collection_type.simps collection_type.simps
+      collection_type\<^sub>N.simps collection_type\<^sub>T.simps
+      map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
+
 
 lemmas ocl_type_helper_simps =
   any_type\<^sub>N.simps
   any_type.simps
   ex_any_type_simps
+
+  tuple_type.simps
+  tuple_type'.simps
+
   collection_type\<^sub>T.simps
   collection_type\<^sub>N.simps
   collection_type_left_simps
   collection_type_right_simps
   any_collection_type.simps
-  to_unique_collection_type\<^sub>T.simps
-  to_unique_collection_type\<^sub>N.simps
-  to_unique_collection_type.simps
-  to_nonunique_collection_type\<^sub>T.simps
-  to_nonunique_collection_type\<^sub>N.simps
-  to_nonunique_collection_type.simps
+  unique_collection_type'.simps
+  non_unique_collection_type'.simps
+  ordered_collection_type.simps
+  ordered_collection_type'.simps
   is_collection_type.simps
   to_single_type_left_simps
-  update_element_type\<^sub>T.simps
-  update_element_type\<^sub>N.simps
-  update_element_type.simps
+
   map_type\<^sub>T.simps
   map_type\<^sub>N.simps
   map_type.simps
+  map_type'.simps
+
   iterable_type.simps
+  any_iterable_type.simps
   is_iterable_type.simps
 
 (*** Determinism ************************************************************)
@@ -589,6 +564,24 @@ lemma any_collection_type_det:
    any_collection_type \<tau> \<sigma>\<^sub>2 n\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
   by (elim any_collection_type.cases; simp add: collection_type_det(1))
 
+lemma unique_collection_type_det:
+  "unique_collection_type' \<tau>\<^sub>1 k \<sigma> n \<Longrightarrow>
+   unique_collection_type' \<tau>\<^sub>2 k \<sigma> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (elim unique_collection_type'.cases; simp add: collection_type_det(2))
+
+lemma non_unique_collection_type_det:
+  "non_unique_collection_type' \<tau>\<^sub>1 k \<sigma> n \<Longrightarrow>
+   non_unique_collection_type' \<tau>\<^sub>2 k \<sigma> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  by (elim non_unique_collection_type'.cases; simp add: collection_type_det(2))
+
+lemma ordered_collection_type_det:
+  "ordered_collection_type \<tau> \<sigma>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   ordered_collection_type \<tau> \<sigma>\<^sub>2 n\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  "ordered_collection_type' \<tau>\<^sub>1 k \<sigma> n \<Longrightarrow>
+   ordered_collection_type' \<tau>\<^sub>2 k \<sigma> n \<Longrightarrow> \<tau>\<^sub>1 = \<tau>\<^sub>2"
+  apply (elim ordered_collection_type.cases; simp add: collection_type_det(1))
+  by (elim ordered_collection_type'.cases; simp add: collection_type_det(2))
+
 
 lemma to_single_type_det:
   "to_single_type \<tau> \<sigma> \<Longrightarrow>
@@ -596,76 +589,6 @@ lemma to_single_type_det:
   apply (induct rule: to_single_type.induct)
   apply (erule to_single_type.cases; simp add: is_collection_type.intros)
   using collection_type_det(1) is_collection_type.intros to_single_type.simps by blast
-
-lemma inner_element_type_det:
-  "inner_element_type \<tau> \<sigma> \<Longrightarrow>
-   inner_element_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  unfolding inner_element_type.simps
-  using inner_element_type.simps collection_type_det to_single_type_det by blast
-
-
-lemma update_element_type\<^sub>T_det:
-  "update_element_type\<^sub>T \<tau> \<sigma>\<^sub>N \<rho> \<Longrightarrow>
-   update_element_type\<^sub>T \<tau> \<sigma>\<^sub>N \<upsilon> \<Longrightarrow> \<rho> = \<upsilon>"
-  by (auto simp: update_element_type\<^sub>T.simps)
-
-lemma update_element_type\<^sub>N_det:
-  "update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<rho>\<^sub>N \<Longrightarrow>
-   update_element_type\<^sub>N \<tau>\<^sub>N \<sigma>\<^sub>N \<upsilon>\<^sub>N \<Longrightarrow> \<rho>\<^sub>N = \<upsilon>\<^sub>N"
-  by (auto simp: update_element_type\<^sub>N.simps update_element_type\<^sub>T_det)
-
-lemma update_element_type_det:
-  "update_element_type \<tau> \<sigma> \<rho> \<Longrightarrow>
-   update_element_type \<tau> \<sigma> \<upsilon> \<Longrightarrow> \<rho> = \<upsilon>"
-  by (auto simp: update_element_type.simps update_element_type\<^sub>N_det)
-
-
-lemma to_unique_collection_type\<^sub>T_det:
-  "to_unique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_unique_collection_type\<^sub>T \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_unique_collection_type\<^sub>T.simps)
-
-lemma to_unique_collection_type\<^sub>N_det:
-  "to_unique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_unique_collection_type\<^sub>N \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_unique_collection_type\<^sub>N.simps to_unique_collection_type\<^sub>T_det)
-
-lemma to_unique_collection_type_det:
-  "to_unique_collection_type \<tau> \<sigma> \<Longrightarrow>
-   to_unique_collection_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_unique_collection_type.simps to_unique_collection_type\<^sub>N_det)
-
-
-lemma to_nonunique_collection_type\<^sub>T_det:
-  "to_nonunique_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_nonunique_collection_type\<^sub>T \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_nonunique_collection_type\<^sub>T.simps)
-
-lemma to_nonunique_collection_type\<^sub>N_det:
-  "to_nonunique_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_nonunique_collection_type\<^sub>N \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_nonunique_collection_type\<^sub>N.simps to_nonunique_collection_type\<^sub>T_det)
-
-lemma to_nonunique_collection_type_det:
-  "to_nonunique_collection_type \<tau> \<sigma> \<Longrightarrow>
-   to_nonunique_collection_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_nonunique_collection_type.simps to_nonunique_collection_type\<^sub>N_det)
-
-
-lemma to_ordered_collection_type\<^sub>T_det:
-  "to_ordered_collection_type\<^sub>T \<tau> \<sigma> \<Longrightarrow>
-   to_ordered_collection_type\<^sub>T \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_ordered_collection_type\<^sub>T.simps)
-
-lemma to_ordered_collection_type\<^sub>N_det:
-  "to_ordered_collection_type\<^sub>N \<tau> \<sigma> \<Longrightarrow>
-   to_ordered_collection_type\<^sub>N \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_ordered_collection_type\<^sub>N.simps to_ordered_collection_type\<^sub>T_det)
-
-lemma to_ordered_collection_type_det:
-  "to_ordered_collection_type \<tau> \<sigma> \<Longrightarrow>
-   to_ordered_collection_type \<tau> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  by (auto simp: to_ordered_collection_type.simps to_ordered_collection_type\<^sub>N_det)
 
 
 lemma map_type\<^sub>T_det:
@@ -707,12 +630,14 @@ notation required_object_type ("_ \<hookrightarrow> ObjectType'(_')([1])")
 notation optional_object_type ("_ \<hookrightarrow> ObjectType'(_')([?])")
 
 notation tuple_type ("_ \<hookrightarrow> Tuple'(_')([_])")
+notation tuple_type' ("_ \<hookleftarrow> Tuple'(_')([_])")
 notation required_tuple_type ("_ \<hookrightarrow> Tuple'(_')([1])")
 notation required_tuple_type' ("_ \<hookleftarrow> Tuple'(_')([1])")
 notation optional_tuple_type ("_ \<hookrightarrow> Tuple'(_')([?])")
 notation optional_tuple_type' ("_ \<hookleftarrow> Tuple'(_')([?])")
 
 notation collection_type ("_ \<hookrightarrow> Collection\<^bsub>_\<^esub>'(_')([_])")
+notation collection_type ("_ \<hookleftarrow> Collection\<^bsub>_\<^esub>'(_')([_])")
 notation required_collection_type ("_ \<hookrightarrow> Collection\<^bsub>_\<^esub>'(_')([1])")
 notation required_collection_type ("_ \<hookleftarrow> Collection\<^bsub>_\<^esub>'(_')([1])")
 notation optional_collection_type ("_ \<hookrightarrow> Collection\<^bsub>_\<^esub>'(_')([?])")
@@ -753,9 +678,20 @@ notation required_sequence_type ("_ \<hookleftarrow> Sequence'(_')([1])")
 notation optional_sequence_type ("_ \<hookrightarrow> Sequence'(_')([?])")
 notation optional_sequence_type ("_ \<hookleftarrow> Sequence'(_')([?])")
 
+notation unique_collection_type' ("_ \<hookleftarrow> UniqueCollection\<^bsub>_\<^esub>'(_')([_])")
+notation required_unique_collection_type' ("_ \<hookleftarrow> UniqueCollection\<^bsub>_\<^esub>'(_')([1])")
+notation optional_unique_collection_type' ("_ \<hookleftarrow> UniqueCollection\<^bsub>_\<^esub>'(_')([?])")
+
+notation non_unique_collection_type' ("_ \<hookleftarrow> NonUniqueCollection\<^bsub>_\<^esub>'(_')([_])")
+notation required_non_unique_collection_type' ("_ \<hookleftarrow> NonUniqueCollection\<^bsub>_\<^esub>'(_')([1])")
+notation optional_non_unique_collection_type' ("_ \<hookleftarrow> NonUniqueCollection\<^bsub>_\<^esub>'(_')([?])")
+
 notation ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([_])")
+notation ordered_collection_type' ("_ \<hookleftarrow> OrderedCollection\<^bsub>_\<^esub>'(_')([_])")
 notation required_ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([1])")
+notation required_ordered_collection_type' ("_ \<hookleftarrow> OrderedCollection\<^bsub>_\<^esub>'(_')([1])")
 notation optional_ordered_collection_type ("_ \<hookrightarrow> OrderedCollection'(_')([?])")
+notation optional_ordered_collection_type' ("_ \<hookleftarrow> OrderedCollection\<^bsub>_\<^esub>'(_')([?])")
 
 notation non_collection_type ("_ \<hookrightarrow> NonCollection'(')([_])")
 
@@ -778,21 +714,22 @@ notation optional_non_iterable_type ("_ \<hookrightarrow> NonIterable'(')([?])")
 
 section \<open>Code Setup\<close>
 
+code_pred any_type .
 code_pred object_type .
 code_pred tuple_type .
 code_pred tuple_type' .
 code_pred collection_type .
 code_pred any_collection_type .
+code_pred unique_collection_type' .
+code_pred non_unique_collection_type' .
 code_pred ordered_collection_type .
+code_pred ordered_collection_type' .
 code_pred is_collection_type .
+code_pred to_single_type .
 code_pred map_type .
 code_pred map_type' .
-code_pred to_single_type .
-code_pred inner_element_type .
-code_pred update_element_type .
-code_pred to_unique_collection_type .
-code_pred to_nonunique_collection_type .
-code_pred to_ordered_collection_type .
+code_pred iterable_type .
+code_pred any_iterable_type .
 code_pred is_iterable_type .
 
 end
