@@ -345,9 +345,11 @@ lemma logic_alt_simps [simp]:
   "(\<exists>x. \<not> x \<and> (\<not> x \<longrightarrow> P)) = P"
   "(\<exists>x. \<not> x \<and> P \<and> \<not> x) = P"
   "(\<exists>x. x \<and> P \<and> \<not> x) = False"
+  "(\<exists>x. x \<and> Q x) = Q True"
+  "(\<exists>x. \<not> x \<and> Q x) = Q False"
   "(\<forall>x. x) = False"
-  "(\<forall>x y. Q y \<longrightarrow> x \<or> R y) = (\<forall>y. Q y \<longrightarrow> R y)"
-  "(\<forall>x. Q x \<longrightarrow> x \<noteq> S) = (\<not> (\<exists>x. Q x \<and> x = S))"
+  "(\<forall>x y. R y \<longrightarrow> x \<or> S y) = (\<forall>y. R y \<longrightarrow> S y)"
+  "(\<forall>x. R x \<longrightarrow> x \<noteq> T) = (\<not> (\<exists>x. R x \<and> x = T))"
   by auto
 
 declare numeral_eq_enat [simp]
@@ -512,6 +514,22 @@ lemma
   by simp
 
 lemma
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>/\<^bold>0} : (Sequence Real[\<^bold>1])[1!]"
+  by simp
+
+lemma
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>/\<^bold>0, null}->selectByKind(Integer[1]) : (Sequence Integer[\<^bold>1])[1!]"
+  by simp
+
+lemma
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>/\<^bold>0}->collect(it | \<lparr>it\<rparr>) : (Sequence Real[\<^bold>1])[1!]"
+  by simp
+
+lemma
+  "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1}->exists(it | \<lparr>it\<rparr> \<^bold>/ \<^bold>0 \<^bold>> \<^bold>1) : Boolean[1!]"
+  by simp
+
+lemma
   "\<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1..\<^bold>5}->product(Set{''a'', ''b''}) :
     (Set (Tuple(STR ''first'' : Integer[\<^bold>1], STR ''second'' : String[\<^bold>1]))[\<^bold>1])[1]"
   by simp
@@ -527,7 +545,7 @@ lemma
 
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] = Sequence{''abc'', ''zxc''} in
-   \<lparr>x\<rparr>->any(it | \<lparr>it\<rparr> \<^bold>= StringLiteral ''test'') : String[?!]"
+   \<lparr>x\<rparr>->any(it | \<lparr>it\<rparr> \<^bold>= ''test'') : String[?!]"
   by simp
 
 lemma
@@ -564,6 +582,10 @@ lemma
 
 lemma
   "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> let x : Boolean[1] = \<^bold>5 in \<lparr>x\<rparr> and true : \<tau>"
+  by simp
+
+lemma
+  "\<nexists>\<tau>. \<Gamma>\<^sub>0 \<turnstile> Sequence{\<^bold>1\<^bold>/\<^bold>0}->selectByKind(Integer[1!]) : \<tau>"
   by simp
 
 lemma

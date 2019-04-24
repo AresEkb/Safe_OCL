@@ -103,32 +103,42 @@ text \<open>
 \<^verbatim>\<open>Set{1,2,null,'abc'}->selectByKind(OclAny[?])
 Set{1,2,null,'abc'}->selectByKind(Collection(Boolean[1]))\<close>\<close>
 
-abbreviation "error_free_null_free_type \<tau> \<equiv> error_free_type \<tau> \<and> required_type \<tau>"
-
 inductive typeop_type where
   "\<tau> < \<sigma> \<Longrightarrow>
    typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
 | "\<sigma> < \<tau> \<Longrightarrow>
    typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>[!]"
 
-| "\<sigma> < \<tau> \<Longrightarrow> error_free_null_free_type \<tau> \<Longrightarrow>
-   typeop_type DotCall OclIsTypeOfOp \<tau> \<sigma> Boolean[1]"
-| "\<sigma> < \<tau> \<Longrightarrow> \<not> error_free_null_free_type \<tau> \<Longrightarrow>
-   typeop_type DotCall OclIsTypeOfOp \<tau> \<sigma> Boolean[1!]"
+| "\<sigma> < \<tau>[1] \<Longrightarrow>
+   typeop_type DotCall OclIsTypeOfOp \<tau>[1] \<sigma> Boolean[1]"
+| "\<sigma> < \<tau>[?] \<Longrightarrow>
+   typeop_type DotCall OclIsTypeOfOp \<tau>[?] \<sigma> Boolean[1!]"
+| "\<sigma> < \<tau>[1!] \<Longrightarrow>
+   typeop_type DotCall OclIsTypeOfOp \<tau>[1!] \<sigma> Boolean[1!]"
+| "\<sigma> < \<tau>[?!] \<Longrightarrow>
+   typeop_type DotCall OclIsTypeOfOp \<tau>[?!] \<sigma> Boolean[1!]"
 
-| "\<sigma> < \<tau> \<Longrightarrow> error_free_null_free_type \<tau> \<Longrightarrow>
-   typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1]"
-| "\<sigma> < \<tau> \<Longrightarrow> \<not> error_free_null_free_type \<tau> \<Longrightarrow>
-   typeop_type DotCall OclIsKindOfOp \<tau> \<sigma> Boolean[1!]"
+| "\<sigma> < \<tau>[1] \<Longrightarrow>
+   typeop_type DotCall OclIsKindOfOp \<tau>[1] \<sigma> Boolean[1]"
+| "\<sigma> < \<tau>[?] \<Longrightarrow>
+   typeop_type DotCall OclIsKindOfOp \<tau>[?] \<sigma> Boolean[1!]"
+| "\<sigma> < \<tau>[1!] \<Longrightarrow>
+   typeop_type DotCall OclIsKindOfOp \<tau>[1!] \<sigma> Boolean[1!]"
+| "\<sigma> < \<tau>[?!] \<Longrightarrow>
+   typeop_type DotCall OclIsKindOfOp \<tau>[?!] \<sigma> Boolean[1!]"
 
 | "\<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
-   error_free_type \<sigma> \<Longrightarrow>
    \<upsilon> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
+   typeop_type ArrowCall SelectByKindOp \<tau> \<sigma> \<upsilon>"
+| "\<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1!] \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1!] \<Longrightarrow>
    typeop_type ArrowCall SelectByKindOp \<tau> \<sigma> \<upsilon>"
 
 | "\<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
-   error_free_type \<sigma> \<Longrightarrow>
    \<upsilon> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
+   typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<upsilon>"
+| "\<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1!] \<Longrightarrow> \<sigma> < \<rho> \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1!] \<Longrightarrow>
    typeop_type ArrowCall SelectByTypeOp \<tau> \<sigma> \<upsilon>"
 
 subsection \<open>OclAny Operations\<close>
@@ -143,10 +153,8 @@ text \<open>
   return @{text invalid} for an invalid value.\<close>
 
 inductive any_unop_type where
-  "\<tau>[1] \<hookrightarrow> NonIterable()[1] \<Longrightarrow>
-   any_unop_type OclAsSetOp \<tau>[1] (Set \<tau>[\<^bold>1])[1]"
-| "\<tau>[?] \<hookrightarrow> NonIterable()[?] \<Longrightarrow>
-   any_unop_type OclAsSetOp \<tau>[?] (Set \<tau>[\<^bold>1])[1]"
+  "\<tau> \<hookrightarrow> NonIterable(\<sigma>) \<Longrightarrow>
+   any_unop_type OclAsSetOp \<tau> (Set \<sigma>[\<^bold>1])[1]"
 
 | "\<tau> \<hookrightarrow> ObjectType(\<C>)[_] \<Longrightarrow>
    any_unop_type OclIsNewOp \<tau> Boolean[1]"
@@ -577,6 +585,69 @@ inductive iterable_ternop_type where
    \<rho> \<le> \<phi> \<Longrightarrow>
    iterable_ternop_type ExcludingPairOp \<tau> \<sigma> \<rho> \<tau>"
 
+subsection \<open>Iterations\<close>
+
+inductive iteration_type where
+  "n \<le> (1 :: nat) \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   iteration_type AnyIter n \<tau> \<sigma> \<rho> \<sigma>[!]"
+
+| "n \<le> 1 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1.] \<Longrightarrow>
+   \<rho> \<hookrightarrow> Collection(\<phi>)[1.] \<Longrightarrow>
+   \<phi> \<le> \<sigma> \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> UniqueCollection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
+   iteration_type ClosureIter n \<tau> \<sigma> \<rho> \<upsilon>"
+
+| "n \<le> 1 \<Longrightarrow>
+   to_single_type \<rho> \<rho>' \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1.] \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> NonUniqueCollection\<^bsub>k\<^esub>(\<rho>')[1] \<Longrightarrow>
+   iteration_type CollectIter n \<tau> \<sigma> \<rho> \<upsilon>"
+| "n \<le> 1 \<Longrightarrow>
+   to_single_type \<rho> \<rho>' \<Longrightarrow>
+   \<tau> \<hookrightarrow> Map(\<sigma>, _)[1.] \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Bag(\<rho>')[1] \<Longrightarrow>
+   iteration_type CollectIter n \<tau> \<sigma> \<rho> \<upsilon>"
+
+| "n \<le> 1 \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> Map(\<sigma>, \<rho>)[1] \<Longrightarrow>
+   iteration_type CollectByIter n \<tau> \<sigma> \<rho> \<upsilon>"
+
+| "n \<le> 1 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1.] \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> NonUniqueCollection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow>
+   iteration_type CollectNestedIter n \<tau> \<sigma> \<rho> \<upsilon>"
+| "n \<le> 1 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Map(\<upsilon>, _)[1.] \<Longrightarrow>
+   \<phi> \<hookleftarrow> Map(\<upsilon>, \<rho>)[1] \<Longrightarrow>
+   iteration_type CollectNestedIter n \<tau> \<sigma> \<rho> \<phi>"
+
+| "n \<le> 2 \<Longrightarrow>
+   \<rho> \<le> Boolean[?!] \<Longrightarrow>
+   iteration_type ExistsIter n \<tau> \<sigma> \<rho> \<rho>"
+| "n \<le> 2 \<Longrightarrow>
+   \<rho> \<le> Boolean[?!] \<Longrightarrow>
+   iteration_type ForAllIter n \<tau> \<sigma> \<rho> \<rho>"
+
+| "n \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?!] \<Longrightarrow>
+   iteration_type OneIter n \<tau> \<sigma> \<rho> Boolean[1]"
+| "n \<le> 1 \<Longrightarrow>
+   iteration_type IsUniqueIter n \<tau> \<sigma> \<rho> Boolean[1]"
+
+| "n \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?!] \<Longrightarrow>
+   iteration_type SelectIter n \<tau> \<sigma> \<rho> \<tau>"
+| "n \<le> 1 \<Longrightarrow>
+   \<rho> \<le> Boolean[?!] \<Longrightarrow>
+   iteration_type RejectIter n \<tau> \<sigma> \<rho> \<tau>"
+
+| "n \<le> 1 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1.] \<Longrightarrow>
+   \<upsilon> \<hookleftarrow> OrderedCollection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
+   iteration_type SortedByIter n \<tau> \<sigma> \<rho> \<upsilon>"
+
 subsection \<open>Coercions\<close>
 
 inductive unop_type where
@@ -689,7 +760,7 @@ lemma typeop_type_det:
    typeop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   apply (erule typeop_type.cases;
       auto simp add: typeop_type.simps)
-  using collection_type_det(1) collection_type_det(2) by blast+
+  using collection_type_det collection_type'_det by blast+
 
 lemma any_unop_type_det:
   "any_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -715,11 +786,11 @@ lemma iterable_unop_type_det:
   "iterable_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    iterable_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
   apply (erule iterable_unop_type.cases; simp add: iterable_unop_type.simps)
-  using collection_type_det(2) any_collection_type_det apply blast+
-  using collection_type_det to_single_type_det apply blast+
-  apply (metis collection_type_det(1) ordered_collection_type.simps)
-  apply (metis collection_type_det(1) ordered_collection_type.simps)
-  using collection_type_det map_type_det by blast+
+  using collection_type'_det any_collection_type_det apply blast+
+  using collection_type_det collection_type'_det to_single_type_det apply blast+
+  apply (metis any_ordered_collection_type.simps collection_type_det)
+  apply (metis any_ordered_collection_type.simps collection_type_det)
+  using collection_type'_det map_type_det by blast+
 
 lemma unop_type_det:
   "unop_type op k \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -755,12 +826,12 @@ lemma iterable_binop_type_det:
    iterable_binop_type op \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
   apply (erule iterable_binop_type.cases; simp add: iterable_binop_type.simps)
   using any_collection_type_det apply blast
-  using collection_type_det apply blast
-  using any_collection_type_det collection_type_det apply blast
-  using map_type_det apply blast
-  using ordered_collection_type_and_map_type_distinct
-        ordered_collection_type_det apply blast
-  using ordered_collection_type_and_map_type_distinct map_type_det(1) by blast
+  using collection_type'_det collection_type_det apply blast
+  apply (metis any_collection_type_det collection_type'_det collection_type_det)
+  apply (metis map_type'_det map_type_det)
+  using any_ordered_collection_type_and_map_type_distinct
+        any_ordered_collection_type_det apply blast
+  using any_ordered_collection_type_and_map_type_distinct map_type_det by blast
 
 lemma binop_type_det:
   "binop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
@@ -779,7 +850,7 @@ lemma iterable_ternop_type_det:
   "iterable_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
    iterable_ternop_type op \<tau> \<sigma> \<rho> \<upsilon>\<^sub>2 \<Longrightarrow> \<upsilon>\<^sub>1 = \<upsilon>\<^sub>2"
   apply (erule iterable_ternop_type.cases; simp add: iterable_ternop_type.simps)
-  using map_type_det(1) map_type_det(2) by blast
+  using map_type_det map_type'_det by blast
 
 lemma ternop_type_det:
   "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon>\<^sub>1 \<Longrightarrow>
@@ -791,6 +862,13 @@ lemma op_type_det:
   "op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
    op_type op k \<tau> \<pi> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
   apply (auto simp add: op_type.simps)
+  using unop_type_det binop_type_det ternop_type_det apply blast+
+  using operation_det by blast
+
+lemma iteration_type_det:
+  "iteration_type iter n \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
+   iteration_type iter n \<tau> \<sigma> \<rho> \<phi> \<Longrightarrow> \<upsilon> = \<phi>"
+  apply (auto simp add: iteration_type.simps)
   using unop_type_det binop_type_det ternop_type_det apply blast+
   using operation_det by blast
 
@@ -983,14 +1061,14 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 
 |CollectionLoopT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection(\<sigma>)[1] \<Longrightarrow>
+   \<tau> \<hookrightarrow> Collection(\<sigma>)[1.] \<Longrightarrow>
    \<sigma> \<le> its_ty \<Longrightarrow>
    list_all (\<lambda>it. snd it = None) its \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its its_ty \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_ty, None), body) : (\<tau>, \<sigma>, \<rho>)"
 |MapLoopT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Map(\<sigma>, \<upsilon>)[1] \<Longrightarrow>
+   \<tau> \<hookrightarrow> Map(\<sigma>, \<upsilon>)[1.] \<Longrightarrow>
    \<sigma> \<le> its_key_ty \<Longrightarrow>
    \<upsilon> \<le> its_val_ty \<Longrightarrow>
    \<Gamma> ++\<^sub>f iterators its its_key_ty ++\<^sub>f coiterators its its_val_ty \<turnstile>\<^sub>E body : \<rho> \<Longrightarrow>
@@ -998,90 +1076,25 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 
 |IterateT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, Let res (Some res_t) res_init body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   \<tau> \<hookrightarrow> OclAny[.] \<Longrightarrow>
    \<rho> \<le> res_t \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E IterateCall src its its_ty res (Some res_t) res_init body : \<rho>"
+|ErrorableIterateT:
+  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, Let res (Some res_t) res_init body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
+   \<tau> \<hookrightarrow> OclAny[.!] \<Longrightarrow>
+   \<rho> \<le> res_t \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E IterateCall src its its_ty res (Some res_t) res_init body : \<rho>[!]"
 
-|AnyIterationT:
+|IteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AnyIterationCall src its its_ty body : \<sigma>[!]"
-|ClosureIterationT:
+   \<tau> \<hookrightarrow> OclAny[.] \<Longrightarrow> \<rho> \<hookrightarrow> OclAny[.] \<Longrightarrow>
+   iteration_type iter (length its) \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E Call src ArrowCall (Iterator iter its its_ty body) : \<upsilon>"
+|ErrorableIteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
-   \<rho> \<hookrightarrow> Collection(\<phi>)[1] \<Longrightarrow>
-   \<phi> \<le> \<sigma> \<Longrightarrow>
-   \<upsilon> \<hookleftarrow> UniqueCollection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<upsilon>"
-
-|CollectionCollectIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   to_single_type \<rho> \<rho>' \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
-   \<upsilon> \<hookleftarrow> NonUniqueCollection\<^bsub>k\<^esub>(\<rho>')[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<upsilon>"
-|MapCollectIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   to_single_type \<rho> \<rho>' \<Longrightarrow>
-   \<tau> \<hookrightarrow> Map(_, _)[1] \<Longrightarrow>
-   \<upsilon> \<hookleftarrow> Bag(\<rho>')[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<upsilon>"
-
-|CollectByIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<upsilon> \<hookleftarrow> Map(\<sigma>, \<rho>)[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src its its_ty body : \<upsilon>"
-
-|CollectionCollectNestedIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
-   \<upsilon> \<hookleftarrow> NonUniqueCollection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<upsilon>"
-|MapCollectNestedIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<hookrightarrow> Map(\<upsilon>, _)[1] \<Longrightarrow>
-   \<phi> \<hookleftarrow> Map(\<upsilon>, \<rho>)[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<phi>"
-
-|ExistsIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   \<rho> \<le> Boolean[?!] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ExistsIterationCall src its its_ty body : \<rho>"
-|ForAllIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   \<rho> \<le> Boolean[?!] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E ForAllIterationCall src its its_ty body : \<rho>"
-|OneIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E OneIterationCall src its its_ty body : Boolean[1]"
-|IsUniqueIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E IsUniqueIterationCall src its its_ty body : Boolean[1]"
-|SelectIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E SelectIterationCall src its its_ty body : \<tau>"
-|RejectIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<rho> \<le> Boolean[?] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E RejectIterationCall src its its_ty body : \<tau>"
-|SortedByIterationT:
-  "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
-   length its \<le> 1 \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
-   \<upsilon> \<hookleftarrow> OrderedCollection\<^bsub>k\<^esub>(\<sigma>)[1] \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src its its_ty body : \<upsilon>"
+   \<tau> \<hookrightarrow> OclAny[.!] \<or> \<rho> \<hookrightarrow> OclAny[.!] \<Longrightarrow>
+   iteration_type iter (length its) \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E Call src ArrowCall (Iterator iter its its_ty body) : \<upsilon>[!]"
 
 \<comment> \<open>Expression Lists\<close>
 
@@ -1202,10 +1215,12 @@ inductive_simps typing_alt_simps:
 "\<Gamma> \<turnstile>\<^sub>L x # xs : \<pi>"
 
 lemmas ocl_typing_simps =
+  non_strict_op.simps
   op_type_alt_simps
   op_result_type_is_errorable_def
   iterators_def
   coiterators_def
+  iteration_type.simps
   typing_alt_simps
 
 (*** Misc Properties ********************************************************)
@@ -1227,7 +1242,7 @@ next
 qed
 
 lemma CollectionLiteral_has_Collection_type:
-  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. required_collection_type \<tau> k \<sigma>"
+  "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1.]"
 proof (induct prts arbitrary: \<tau>)
   case Nil thus ?case by blast
 next
@@ -1293,10 +1308,10 @@ next
   thus ?case by (simp add: TupleLiteralConsT.prems)
 next
   case (CollectionLiteralNilT k \<sigma> \<Gamma>) thus ?case
-    using collection_type_det(2) by blast
+    by (meson CollectionLiteralNilTE collection_type'_det)
 next
   case (CollectionLiteralConsT k \<Gamma> x \<tau> \<sigma> xs \<rho>) thus ?case
-    by (metis CollectionLiteralConsTE collection_type_det(2))
+    by (metis CollectionLiteralConsTE collection_type'_det)
 next
   case (CollectionPartItemT \<Gamma> a \<tau>) thus ?case by blast
 next
@@ -1309,11 +1324,11 @@ next
   case (ErrorableCollectionPartRangeT \<Gamma> a b) thus ?case by blast
 next
   case (MapNilT \<tau> \<Gamma>) thus ?case
-    using map_type_det(2) by blast
+    using map_type'_det by blast
 next
   case (MapConsT \<Gamma> x \<tau> \<sigma> \<rho> xs \<upsilon>)
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E Literal (MapLiteral (x # xs)) : \<sigma> \<Longrightarrow> \<rho> \<squnion> \<upsilon> = \<sigma>"
-    using MapConsT.hyps map_type_det(2) by blast
+    using MapConsT.hyps map_type'_det by blast
   thus ?case by (simp add: MapConsT.prems)
 next
   case (LetT \<Gamma> init \<sigma> \<tau> v body \<rho>) thus ?case by blast
@@ -1420,105 +1435,31 @@ next
         (\<tau>, \<sigma>, \<rho>) = ys"
     apply (erule LoopTE)
     using CollectionLoopT.hyps(2) CollectionLoopT.hyps(3)
-          CollectionLoopT.hyps(7) any_collection_type_det apply fastforce
+          CollectionLoopT.hyps(7) any_collection_type_template_det apply blast
     using CollectionLoopT.hyps(2) CollectionLoopT.hyps(3)
-          collection_type_det(1) by blast
+          collection_type_det by blast
   thus ?case by (simp add: CollectionLoopT.prems)
 next
   case (MapLoopT \<Gamma> src \<tau> \<sigma> \<upsilon> its_key_ty its_val_ty its body \<rho>)
   have "\<And>ys. \<Gamma> \<turnstile>\<^sub>I (src, its, (Some its_key_ty, Some its_val_ty), body) : ys \<Longrightarrow>
         (\<tau>, \<sigma>, \<rho>) = ys"
     apply (erule LoopTE, auto simp add: MapLoopT.hyps)
-    using MapLoopT.hyps(2) MapLoopT.hyps(3) map_type_det(1) by blast
+    using MapLoopT.hyps(2) MapLoopT.hyps(3) map_type_template_det by blast
   thus ?case by (simp add: MapLoopT.prems)
 next
-  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>) thus ?case by blast
+  case (IterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>)
+    thus ?case by blast
 next
-  case (AnyIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
+  case (ErrorableIterateT \<Gamma> src its its_ty res res_t res_init body \<tau> \<sigma> \<rho>)
+    thus ?case by blast
 next
-  case (ClosureIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> k \<phi> \<upsilon>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E ClosureIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
-    apply (erule ClosureIterationTE)
-    by (metis ClosureIterationT.hyps(2) ClosureIterationT.hyps(4)
-              ClosureIterationT.hyps(7) Pair_inject collection_type_det(1)
-              unique_collection_type_det)
-  thus ?case by (simp add: ClosureIterationT.prems)
+  case (IteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> iter \<upsilon>)
+  then show ?case
+(*    by (smt call_expr.inject(9) call_expr.simps(25) call_expr.simps(75) call_expr.simps(81) call_kind.distinct(1) expr.distinct(21) expr.distinct(39) expr.inject(7) expr.simps(19) expr.simps(37) expr.simps(43) expr.simps(49) fst_conv iteration_type_det snd_conv typing.simps)*)
+  sorry
 next
-  case (CollectionCollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<rho>' k \<upsilon>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
-    apply (erule CollectIterationTE)
-    apply (metis CollectionCollectIterationT.hyps(2)
-                 CollectionCollectIterationT.hyps(4)
-                 CollectionCollectIterationT.hyps(5)
-                 CollectionCollectIterationT.hyps(6)
-                 Pair_inject collection_type_det(1)
-                 non_unique_collection_type_det to_single_type_det)
-    by (metis CollectionCollectIterationT.hyps(2)
-              CollectionCollectIterationT.hyps(5)
-              Pair_inject collection_type_and_map_type_distinct)
-  thus ?case by (simp add: CollectionCollectIterationT.prems)
-next
-  case (MapCollectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> uz va \<rho>' \<upsilon>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
-    apply (erule CollectIterationTE)
-    using MapCollectIterationT.hyps(2) MapCollectIterationT.hyps(5)
-          collection_type_and_map_type_distinct apply fastforce
-    using MapCollectIterationT.hyps(2) MapCollectIterationT.hyps(4)
-          MapCollectIterationT.hyps(6) collection_type_det(2)
-          to_single_type_det by fastforce
-  thus ?case by (simp add: MapCollectIterationT.prems)
-next
-  case (CollectByIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectByIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
-    apply (erule CollectByIterationTE)
-    using CollectByIterationT.hyps map_type_det(2) by fastforce
-  thus ?case by (simp add: CollectByIterationT.prems)
-next
-  case (CollectionCollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> \<phi>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<phi> = \<sigma>"
-    apply (erule CollectNestedIterationTE)
-    apply (metis CollectionCollectNestedIterationT.hyps(2)
-                 CollectionCollectNestedIterationT.hyps(4)
-                 CollectionCollectNestedIterationT.hyps(5)
-                 Pair_inject collection_type_det(1) non_unique_collection_type_det)
-    using CollectionCollectNestedIterationT.hyps(2)
-          CollectionCollectNestedIterationT.hyps(4)
-          collection_type_and_map_type_distinct by fastforce
-  thus ?case by (simp add: CollectionCollectNestedIterationT.prems)
-next
-  case (MapCollectNestedIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> \<upsilon> vb \<phi>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E CollectNestedIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<phi> = \<sigma>"
-    apply (erule CollectNestedIterationTE)
-    using MapCollectNestedIterationT.hyps(2)
-          MapCollectNestedIterationT.hyps(4)
-          collection_type_and_map_type_distinct apply fastforce
-    using MapCollectNestedIterationT.hyps(2)
-          MapCollectNestedIterationT.hyps(4)
-          MapCollectNestedIterationT.hyps(5)
-          map_type_det(1) map_type_det(2) by fastforce
-  thus ?case by (simp add: MapCollectNestedIterationT.prems)
-next
-  case (ExistsIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
-    by (metis ExistsIterationTE snd_conv)
-next
-  case (ForAllIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case
-    by (metis ForAllIterationTE snd_conv)
-next
-  case (OneIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
-next
-  case (IsUniqueIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
-next
-  case (SelectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
-next
-  case (RejectIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho>) thus ?case by blast
-next
-  case (SortedByIterationT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> k \<upsilon>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E SortedByIterationCall src its its_ty body : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
-    apply (erule SortedByIterationTE)
-    by (metis Pair_inject SortedByIterationT.hyps(2)
-              SortedByIterationT.hyps(4) SortedByIterationT.hyps(5)
-              collection_type_det(1) ordered_collection_type_det(2))
-  thus ?case by (simp add: SortedByIterationT.prems)
+  case (ErrorableIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> iter \<upsilon>)
+  then show ?case sorry
 next
   case (ExprListNilT \<Gamma>) thus ?case by auto
 next
@@ -1529,14 +1470,46 @@ qed
 
 section \<open>Code Setup\<close>
 
-code_pred [show_modes] mataop_type .
-code_pred [show_modes] typeop_type .
-code_pred [show_modes] non_strict_op .
-code_pred [show_modes] op_type .
+code_pred non_strict_op .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) mataop_type .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) typeop_type .
+
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) any_unop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) boolean_unop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) numeric_unop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) string_unop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) iterable_unop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) unop_type .
+
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) any_binop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) boolean_binop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) numeric_binop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) string_binop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) iterable_binop_type .
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) binop_type .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) string_ternop_type .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) iterable_ternop_type .
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) ternop_type .
+
+code_pred (modes: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) op_type .
+
+code_pred (modes:
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool,
+    i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) iteration_type .
+
 code_pred (modes:
     typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
     iterator_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
     expr_list_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool and
-    collection_part_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) [show_modes] typing .
+    collection_part_typing: i \<Rightarrow> i \<Rightarrow> i \<Rightarrow> bool, i \<Rightarrow> i \<Rightarrow> o \<Rightarrow> bool) typing .
 
 end

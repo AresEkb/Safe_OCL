@@ -593,10 +593,14 @@ translations
   "_mod" \<rightleftharpoons> "CONST Operation (CONST ModOp)"
   "_numericMax" \<rightleftharpoons> "CONST Operation (CONST NumericMaxOp)"
   "_numericMin" \<rightleftharpoons> "CONST Operation (CONST NumericMinOp)"
-  "_numericLess" \<rightleftharpoons> "CONST Operation (CONST NumericLessOp)"
-  "_numericLessEq" \<rightleftharpoons> "CONST Operation (CONST NumericLessEqOp)"
-  "_numericGreater" \<rightleftharpoons> "CONST Operation (CONST NumericGreaterOp)"
-  "_numericGreaterEq" \<rightleftharpoons> "CONST Operation (CONST NumericGreaterEqOp)"
+  "_numericLess x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST NumericLessOp) [y])"
+  "_numericLessEq x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST NumericLessEqOp) [y])"
+  "_numericGreater x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST NumericGreaterOp) [y])"
+  "_numericGreaterEq x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST NumericGreaterEqOp) [y])"
 
   \<comment> \<open>String Operations\<close>
   "_stringSize" \<rightleftharpoons> "CONST Operation (CONST StringSizeOp)"
@@ -610,10 +614,14 @@ translations
   "_stringIndexOf" \<rightleftharpoons> "CONST Operation (CONST StringIndexOfOp)"
   "_equalsIgnoreCase" \<rightleftharpoons> "CONST Operation (CONST EqualsIgnoreCaseOp)"
   "_stringAt" \<rightleftharpoons> "CONST Operation (CONST StringAtOp)"
-  "_stringLess" \<rightleftharpoons> "CONST Operation (CONST StringLessOp)"
-  "_stringLessEq" \<rightleftharpoons> "CONST Operation (CONST StringLessEqOp)"
-  "_stringGreater" \<rightleftharpoons> "CONST Operation (CONST StringGreaterOp)"
-  "_stringGreaterEq" \<rightleftharpoons> "CONST Operation (CONST StringGreaterEqOp)"
+  "_stringLess x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST StringLessOp) [y])"
+  "_stringLessEq x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST StringLessEqOp) [y])"
+  "_stringGreater x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST StringGreaterOp) [y])"
+  "_stringGreaterEq x y" \<rightleftharpoons> "CONST Call x (CONST DotCall)
+      (CONST Operation (CONST StringGreaterEqOp) [y])"
   "_substring" \<rightleftharpoons> "CONST Operation (CONST SubstringOp)"
 
   \<comment> \<open>Iterable Operations\<close>

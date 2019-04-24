@@ -406,26 +406,29 @@ a resulting collection can not contain `invalid`.
 `selectByKind()` and `selectByType()` are not defined for errorable
 argument types, because a source collection can not contain `invalid`.
 
-| Operation      | Source Type                  | Argument Type | Result Type                  | Precondition                          |
-|:--------------:|:----------------------------:|:-------------:|:----------------------------:|:-------------------------------------:|
-| oclAsType      | τ                            | σ             | σ                            | τ < σ                                 |
-| oclAsType      | τ                            | σ             | σ[!]                         | σ < τ                                 |
-| oclIsTypeOf    | τ                            | σ             | Boolean[1]                   | σ < τ ∧ error_free_null_free_type τ   |
-| oclIsTypeOf    | τ                            | σ             | Boolean[1!]                  | σ < τ ∧ ¬ error_free_null_free_type τ |
-| oclIsKindOf    | τ                            | σ             | Boolean[1]                   | σ < τ ∧ error_free_null_free_type τ   |
-| oclIsKindOf    | τ                            | σ             | Boolean[1!]                  | σ < τ ∧ ¬ error_free_null_free_type τ |
-| selectByKind   | Collection<sub>k</sub>(τ)[1] | σ             | Collection<sub>k</sub>(σ)[1] | σ < τ ∧ error_free_type σ             |
-| selectByType   | Collection<sub>k</sub>(τ)[1] | σ             | Collection<sub>k</sub>(σ)[1] | σ < τ ∧ error_free_type σ             |
+| Operation      | Source Type                  | Argument Type | Result Type                  | Precondition |
+|:--------------:|:----------------------------:|:-------------:|:----------------------------:|:------------:|
+| oclAsType      | τ                            | σ             | σ                            | τ < σ        |
+| oclAsType      | τ                            | σ             | σ[!]                         | σ < τ        |
+| oclIsTypeOf    | τ[1]                         | σ             | Boolean[1]                   | σ < τ[1]     |
+| oclIsTypeOf    | τ[?]                         | σ             | Boolean[1!]                  | σ < τ[?]     |
+| oclIsTypeOf    | τ[?!]                        | σ             | Boolean[1!]                  | σ < τ[1!]    |
+| oclIsTypeOf    | τ[?!]                        | σ             | Boolean[1!]                  | σ < τ[?!]    |
+| oclIsKindOf    | τ[1]                         | σ             | Boolean[1]                   | σ < τ[1]     |
+| oclIsKindOf    | τ[?]                         | σ             | Boolean[1!]                  | σ < τ[?]     |
+| oclIsKindOf    | τ[?!]                        | σ             | Boolean[1!]                  | σ < τ[1!]    |
+| oclIsKindOf    | τ[?!]                        | σ             | Boolean[1!]                  | σ < τ[?!]    |
+| selectByKind   | Collection<sub>k</sub>(τ)[1] | σ             | Collection<sub>k</sub>(σ)[1] | σ < τ        |
+| selectByType   | Collection<sub>k</sub>(τ)[1] | σ             | Collection<sub>k</sub>(σ)[1] | σ < τ        |
 
 ### OclAny Operations
 
-`oclAsSet()` is not defined for errorable source types, because
+`oclAsSet()` is not defined for a source with an errorable type, because
 a resulting collection can not contain `invalid`.
 
 | Operation      | Source Type       | Result Type  | Precondition              |
 |:--------------:|:-----------------:|:------------:|:-------------------------:|
-| oclAsSet       | NonIterable(τ)[1] | Set(τ[1])[1] |                           |
-| oclAsSet       | NonIterable(τ)[?] | Set(τ[1])[1] |                           |
+| oclAsSet       | NonIterable(τ)[_] | Set(τ[1])[1] |                           |
 | oclIsNew       | ObjectType(𝒞)[_] | Boolean[1]   |                           |
 | oclIsUndefined | τ[?]              | Boolean[1]   |                           |
 | oclIsUndefined | τ[1!]             | Boolean[1]   |                           |
@@ -538,41 +541,41 @@ a resulting collection can not contain `invalid`.
 | keys           | Map(τ, σ)[1]                 | Set(τ)[1]                                   |                                                      |
 | values         | Map(τ, σ)[1]                 | Bag(τ)[1]                                   |                                                      |
 
-| Operation           | Source Type                  | Argument Type           | Result Type                           | Precondition          |
-|:-------------------:|:----------------------------:|:-----------------------:|:-------------------------------------:|:---------------------:|
-| count               | Collection(τ)[1]             | σ                       | Integer[1]                            | σ ≤ τ[??]             |
-| includes            | Iterable(τ)[1]               | σ                       | Boolean[1]                            | σ ≤ τ[??]             |
-| excludes            | Iterable(τ)[1]               | σ                       | Boolean[1]                            | σ ≤ τ[??]             |
-| includesValue       | Map(τ, ρ)[1]                 | σ                       | Boolean[1]                            | σ ≤ ρ[??]             |
-| excludesValue       | Map(τ, ρ)[1]                 | σ                       | Boolean[1]                            | σ ≤ ρ[??]             |
-| includesAll         | Iterable(τ)[1]               | Collection(σ)[1]        | Boolean[1]                            | σ ≤ τ[??]             |
-| excludesAll         | Iterable(τ)[1]               | Collection(σ)[1]        | Boolean[1]                            | σ ≤ τ[??]             |
-| includesMap         | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Boolean[1]                            | σ ≤ τ[??] ∧ υ ≤ ρ[??] |
-| excludesMap         | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Boolean[1]                            | σ ≤ τ[??] ∧ υ ≤ ρ[??] |
-| product             | Collection(τ)[1]             | Collection(σ)[1]        | Set(Tuple(first: τ, second: σ)[1])[1] |                       |
-| union               | Set(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                       |
-| union               | Set(τ)[1]                    | Bag(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                       |
-| union               | Bag(τ)[1]                    | Set(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                       |
-| union               | Bag(τ)[1]                    | Bag(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                       |
-| intersection        | Set(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                       |
-| intersection        | Set(τ)[1]                    | Bag(σ)[1]               | Set(τ ⊔ σ)[1]                         |                       |
-| intersection        | Bag(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                       |
-| intersection        | Bag(τ)[1]                    | Bag(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                       |
-| -                   | Set(τ)[1]                    | Set(σ)[1]               | Set(τ)[1]                             | τ ≤ σ ∨ σ ≤ τ         |
-| symmetricDifference | Set(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                       |
-| including           | Collection<sub>k</sub>(τ)[1] | σ                       | Collection<sub>k</sub>(τ ⊔ σ)[1]      |                       |
-| excluding           | Collection(τ)[1]             | σ                       | Collection(τ)[1]                      | σ ≤ τ                 |
-| includingAll        | Collection<sub>k</sub>(τ)[1] | Collection(σ)[1]        | Collection<sub>k</sub>(τ ⊔ σ)[1]      |                       |
-| excludingAll        | Collection(τ)[1]             | Collection(σ)[1]        | Collection(τ)[1]                      | σ ≤ τ                 |
-| includingMap        | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Map(τ ⊔ σ, ρ ⊔ υ)[1]                  |                       |
-| excludingMap        | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Map(τ, ρ)[1]                          | σ ≤ τ ∧ υ ≤ ρ         |
-| append              | OrderedCollection(τ)[1]      | σ                       | OrderedCollection(τ)[1]               | σ ≤ τ                 |
-| prepend             | OrderedCollection(τ)[1]      | σ                       | OrderedCollection(τ)[1]               | σ ≤ τ                 |
-| appendAll           | OrderedCollection(τ)[1]      | OrderedCollection(σ)[1] | OrderedCollection(τ)[1]               | σ ≤ τ                 |
-| prependAll          | OrderedCollection(τ)[1]      | OrderedCollection(σ)[1] | OrderedCollection(τ)[1]               | σ ≤ τ                 |
-| at                  | OrderedCollection(τ)[1]      | Integer[1]              | τ[!]                                  |                       |
-| at                  | Map(τ, ρ)[1]                 | σ                       | ρ[!]                                  | σ ≤ τ                 |
-| indexOf             | OrderedCollection(τ)[1]      | σ                       | Integer[1]                            | σ ≤ τ                 |
+| Operation           | Source Type                  | Argument Type           | Result Type                           | Precondition              |
+|:-------------------:|:----------------------------:|:-----------------------:|:-------------------------------------:|:-------------------------:|
+| count               | Collection(τ)[1]             | σ                       | Integer[1]                            | σ ≤ τ[??]                 |
+| includes            | Iterable(τ)[1]               | σ                       | Boolean[1]                            | σ ≤ τ[??]                 |
+| excludes            | Iterable(τ)[1]               | σ                       | Boolean[1]                            | σ ≤ τ[??]                 |
+| includesValue       | Map(τ, ρ)[1]                 | σ                       | Boolean[1]                            | σ ≤ ρ[??]                 |
+| excludesValue       | Map(τ, ρ)[1]                 | σ                       | Boolean[1]                            | σ ≤ ρ[??]                 |
+| includesAll         | Iterable(τ)[1]               | Collection(σ)[1]        | Boolean[1]                            | σ ≤ τ[??]                 |
+| excludesAll         | Iterable(τ)[1]               | Collection(σ)[1]        | Boolean[1]                            | σ ≤ τ[??]                 |
+| includesMap         | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Boolean[1]                            | σ ≤ τ[??] ∧<br/>υ ≤ ρ[??] |
+| excludesMap         | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Boolean[1]                            | σ ≤ τ[??] ∧<br/>υ ≤ ρ[??] |
+| product             | Collection(τ)[1]             | Collection(σ)[1]        | Set(Tuple(first: τ,<br/>second: σ)[1])[1] |                       |
+| union               | Set(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                           |
+| union               | Set(τ)[1]                    | Bag(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                           |
+| union               | Bag(τ)[1]                    | Set(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                           |
+| union               | Bag(τ)[1]                    | Bag(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                           |
+| intersection        | Set(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                           |
+| intersection        | Set(τ)[1]                    | Bag(σ)[1]               | Set(τ ⊔ σ)[1]                         |                           |
+| intersection        | Bag(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                           |
+| intersection        | Bag(τ)[1]                    | Bag(σ)[1]               | Bag(τ ⊔ σ)[1]                         |                           |
+| -                   | Set(τ)[1]                    | Set(σ)[1]               | Set(τ)[1]                             | τ ≤ σ ∨<br/>σ ≤ τ         |
+| symmetricDifference | Set(τ)[1]                    | Set(σ)[1]               | Set(τ ⊔ σ)[1]                         |                           |
+| including           | Collection<sub>k</sub>(τ)[1] | σ                       | Collection<sub>k</sub>(τ ⊔ σ)[1]      |                           |
+| excluding           | Collection(τ)[1]             | σ                       | Collection(τ)[1]                      | σ ≤ τ                     |
+| includingAll        | Collection<sub>k</sub>(τ)[1] | Collection(σ)[1]        | Collection<sub>k</sub>(τ ⊔ σ)[1]      |                           |
+| excludingAll        | Collection(τ)[1]             | Collection(σ)[1]        | Collection(τ)[1]                      | σ ≤ τ                     |
+| includingMap        | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Map(τ ⊔ σ, ρ ⊔ υ)[1]                  |                           |
+| excludingMap        | Map(τ, ρ)[1]                 | Map(σ, υ)[1]            | Map(τ, ρ)[1]                          | σ ≤ τ ∧<br/>υ ≤ ρ         |
+| append              | OrderedCollection(τ)[1]      | σ                       | OrderedCollection(τ)[1]               | σ ≤ τ                     |
+| prepend             | OrderedCollection(τ)[1]      | σ                       | OrderedCollection(τ)[1]               | σ ≤ τ                     |
+| appendAll           | OrderedCollection(τ)[1]      | OrderedCollection(σ)[1] | OrderedCollection(τ)[1]               | σ ≤ τ                     |
+| prependAll          | OrderedCollection(τ)[1]      | OrderedCollection(σ)[1] | OrderedCollection(τ)[1]               | σ ≤ τ                     |
+| at                  | OrderedCollection(τ)[1]      | Integer[1]              | τ[!]                                  |                           |
+| at                  | Map(τ, ρ)[1]                 | σ                       | ρ[!]                                  | σ ≤ τ                     |
+| indexOf             | OrderedCollection(τ)[1]      | σ                       | Integer[1]                            | σ ≤ τ                     |
 
 | Operation        | Source Type             | Argument Type | 2nd Argument Type | Result Type              | Precondition        |
 |:----------------:|:-----------------------:|:-------------:|:-----------------:|:------------------------:|:-------------------:|
