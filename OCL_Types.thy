@@ -50,20 +50,6 @@ and 'a type\<^sub>N =
 
 type_synonym 'a type\<^sub>N\<^sub>E = "'a type\<^sub>N errorable"
 
-notation to_errorable_type ("_[!]" [1000] 1000)
-
-abbreviation Required_ErrorFree ("_[1]" [1000] 1000) where
-  "Required_ErrorFree \<tau> \<equiv> ErrorFree (Required \<tau>)"
-
-abbreviation Optional_ErrorFree ("_[?]" [1000] 1000) where
-  "Optional_ErrorFree \<tau> \<equiv> ErrorFree (Optional \<tau>)"
-
-abbreviation Required_Errorable ("_[1!]" [1000] 1000) where
-  "Required_Errorable \<tau> \<equiv> Errorable (Required \<tau>)"
-
-abbreviation Optional_Errorable ("_[?!]" [1000] 1000) where
-  "Optional_Errorable \<tau> \<equiv> Errorable (Optional \<tau>)"
-
 
 primrec type_size :: "'a type \<Rightarrow> nat"
     and type_size\<^sub>N :: "'a type\<^sub>N \<Rightarrow> nat" where
@@ -208,6 +194,80 @@ lemma
   and \<tau>\<^sub>N \<sigma>\<^sub>N :: "'a type\<^sub>N"
   apply (induct rule: subtype_subtype\<^sub>N.inducts, auto)
   using subtuple_antisym by fastforce
+
+(*** Notation ***************************************************************)
+
+section \<open>Notation\<close>
+
+notation to_error_free_type ("_\<lbrakk>.\<rbrakk>" [1000] 1000)
+notation to_errorable_type ("_\<lbrakk>.!\<rbrakk>" [1000] 1000)
+
+fun required_type\<^sub>N where
+  "required_type\<^sub>N (Required \<tau>) = True"
+| "required_type\<^sub>N (Optional \<tau>) = False"
+
+fun required_type where
+  "required_type (ErrorFree \<tau>) = required_type\<^sub>N \<tau>"
+| "required_type (Errorable \<tau>) = required_type\<^sub>N \<tau>"
+
+abbreviation "optional_type\<^sub>N \<tau> \<equiv> \<not> required_type\<^sub>N \<tau>"
+abbreviation "optional_type \<tau> \<equiv> \<not> required_type \<tau>"
+
+fun to_required_type\<^sub>N where
+  "to_required_type\<^sub>N (Required \<tau>) = Required \<tau>"
+| "to_required_type\<^sub>N (Optional \<tau>) = Required \<tau>"
+
+abbreviation to_required_type ("_\<lbrakk>1.\<rbrakk>" [1000] 1000) where
+  "to_required_type \<equiv> map_errorable to_required_type\<^sub>N"
+
+(* Is it realy required? Maybe it is better to check types intersection? *)
+fun to_optional_type_nested\<^sub>T
+and to_optional_type_nested\<^sub>N where
+  "to_optional_type_nested\<^sub>T OclAny = OclAny"
+| "to_optional_type_nested\<^sub>T OclVoid = OclVoid"
+
+| "to_optional_type_nested\<^sub>T Boolean = Boolean"
+| "to_optional_type_nested\<^sub>T Real = Real"
+| "to_optional_type_nested\<^sub>T Integer = Integer"
+| "to_optional_type_nested\<^sub>T UnlimitedNatural = UnlimitedNatural"
+| "to_optional_type_nested\<^sub>T String = String"
+
+| "to_optional_type_nested\<^sub>T (Enum \<E>) = Enum \<E>"
+| "to_optional_type_nested\<^sub>T (ObjectType \<C>) = ObjectType \<C>"
+| "to_optional_type_nested\<^sub>T (Tuple \<pi>) =
+      Tuple (fmmap to_optional_type_nested\<^sub>N \<pi>)"
+
+| "to_optional_type_nested\<^sub>T (Collection \<tau>) =
+      Collection (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (Set \<tau>) =
+      Set (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (OrderedSet \<tau>) =
+      OrderedSet (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (Bag \<tau>) =
+      Bag (to_optional_type_nested\<^sub>N \<tau>)"
+| "to_optional_type_nested\<^sub>T (Sequence \<tau>) =
+      Sequence (to_optional_type_nested\<^sub>N \<tau>)"
+
+| "to_optional_type_nested\<^sub>T (Map \<tau> \<sigma>) =
+      Map (to_optional_type_nested\<^sub>N \<tau>) (to_optional_type_nested\<^sub>N \<sigma>)"
+
+| "to_optional_type_nested\<^sub>N (Required \<tau>) = Optional (to_optional_type_nested\<^sub>T \<tau>)"
+| "to_optional_type_nested\<^sub>N (Optional \<tau>) = Optional (to_optional_type_nested\<^sub>T \<tau>)"
+
+abbreviation to_optional_type_nested ("_\<lbrakk>??.\<rbrakk>" [1000] 1000) where
+  "to_optional_type_nested \<equiv> map_errorable to_optional_type_nested\<^sub>N"
+
+abbreviation Required_ErrorFree ("_[1]" [1000] 1000) where
+  "Required_ErrorFree \<tau> \<equiv> ErrorFree (Required \<tau>)"
+
+abbreviation Optional_ErrorFree ("_[?]" [1000] 1000) where
+  "Optional_ErrorFree \<tau> \<equiv> ErrorFree (Optional \<tau>)"
+
+abbreviation Required_Errorable ("_[1!]" [1000] 1000) where
+  "Required_Errorable \<tau> \<equiv> Errorable (Required \<tau>)"
+
+abbreviation Optional_Errorable ("_[?!]" [1000] 1000) where
+  "Optional_Errorable \<tau> \<equiv> Errorable (Optional \<tau>)"
 
 (*** Constructors Bijectivity on Transitive Closures ************************)
 

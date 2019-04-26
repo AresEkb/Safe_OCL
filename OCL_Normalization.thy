@@ -84,39 +84,49 @@ definition "new_vname \<equiv> String.implode \<circ> string_of_nat \<circ> fcar
 
 
 inductive normalize_closure_body ("_ \<turnstile>\<^sub>B _ \<Rrightarrow>/ _" [51,51,51] 50) where
- SingleClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> NonCollection(_) \<Longrightarrow>
-   (\<Gamma>, _) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1\<^bold>.oclAsSet()"
+ NonCollectionClosureBodyN:
+  "\<tau> \<hookrightarrow> NonCollection(_) \<Longrightarrow>
+   (\<Gamma>, \<tau>, _) \<turnstile>\<^sub>B body \<Rrightarrow> body\<^bold>.oclAsSet()"
 |CollectionClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection(\<sigma>) \<Longrightarrow>
-   (\<Gamma>, ArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
-|NullFreeNullFreeClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection(\<sigma>)[1.] \<Longrightarrow>
-   required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1"
-|NullFreeNullableClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection(\<sigma>)[1.] \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>1->selectByKind(to_required_type \<sigma>)"
+  "\<tau> \<hookrightarrow> Collection(\<sigma>) \<Longrightarrow>
+   (\<Gamma>, \<tau>, ArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow> body"
+
+|NullFreeNullFreeCollectionClosureBodyN:
+  "\<tau> \<hookrightarrow> Collection(\<sigma>[1])[1] \<Longrightarrow>
+   (\<Gamma>, \<tau>, SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow> body"
+|NullFreeNullFreeCollectionClosureBodyN':
+  "\<tau> \<hookrightarrow> Collection(\<sigma>[1])[1!] \<Longrightarrow>
+   (\<Gamma>, \<tau>, SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow> body"
+|NullFreeNullableCollectionClosureBodyN:
+  "\<tau> \<hookrightarrow> Collection(\<sigma>[?])[1] \<Longrightarrow>
+   (\<Gamma>, \<tau>, SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow> body->selectByKind(\<sigma>[1])"
+|NullFreeNullableCollectionClosureBodyN':
+  "\<tau> \<hookrightarrow> Collection(\<sigma>[?])[1!] \<Longrightarrow>
+   (\<Gamma>, \<tau>, SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow> body->selectByKind(\<sigma>[1])"
+
 |NullableNullFreeClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[?.] \<Longrightarrow>
-   required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
-      if body\<^sub>1 <> null
-      then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)
+  "\<tau>[?] \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>[1])[?] \<Longrightarrow>
+   (\<Gamma>, \<tau>[?], SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow>
+      if body <> null
+      then body\<^bold>.oclAsType(\<tau>[1])
+      else CollectionLiteral k [] endif"
+|NullableNullFreeClosureBodyN':
+  "\<tau>[?!] \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>[1])[?!] \<Longrightarrow>
+   (\<Gamma>, \<tau>[?!], SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow>
+      if body <> null
+      then body\<^bold>.oclAsType(\<tau>[1!])
       else CollectionLiteral k [] endif"
 |NullableNullableClosureBodyN:
-  "\<Gamma> \<turnstile>\<^sub>E body\<^sub>1 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[?.] \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow>
-      if body\<^sub>1 <> null
-      then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>)
+  "\<tau>[?] \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>[?])[?] \<Longrightarrow>
+   (\<Gamma>, \<tau>[?], SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow>
+      if body <> null
+      then body\<^bold>.oclAsType(\<tau>[1])->selectByKind(\<sigma>[1])
+      else CollectionLiteral k [] endif"
+|NullableNullableClosureBodyN':
+  "\<tau>[?!] \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>[?])[?!] \<Longrightarrow>
+   (\<Gamma>, \<tau>[?!], SafeArrowCall) \<turnstile>\<^sub>B body \<Rrightarrow>
+      if body <> null
+      then body\<^bold>.oclAsType(\<tau>[1!])->selectByKind(\<sigma>[1])
       else CollectionLiteral k [] endif"
 
 
@@ -158,15 +168,26 @@ inductive normalize
    \<tau> \<hookrightarrow> NonIterable(_) \<Longrightarrow>
    (\<Gamma>, \<tau>, DotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1\<^bold>.call\<^sub>1 \<Rrightarrow> src\<^sub>2\<^bold>.call\<^sub>2"
+
 |SingleSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> NonIterable(_)[?.] \<Longrightarrow>
-   (\<Gamma>, to_required_type \<tau>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<tau> \<hookrightarrow> NonIterable(_[?]) \<Longrightarrow>
+   (\<Gamma>, \<tau>\<lbrakk>1.\<rbrakk>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow>
       if src\<^sub>2 <> null
-      then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>.call\<^sub>2
+      then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)\<^bold>.call\<^sub>2
       else null endif"
+|SingleSafeDotCallN':
+  "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
+   \<tau> \<hookrightarrow> NonIterable(_[?!]) \<Longrightarrow>
+   (\<Gamma>, \<tau>\<lbrakk>1.\<rbrakk>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow>
+      if src\<^sub>2 <> null
+      then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)\<^bold>.call\<^sub>2
+      else null endif"
+
 |SingleArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
@@ -186,12 +207,10 @@ inductive normalize
 |CollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Iterable(\<sigma>)[1.] \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   \<rho> = to_required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>[?])[1.] \<Longrightarrow>
+   (\<Gamma>, \<sigma>[1], SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
-   \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow> src\<^sub>2->selectByKind(\<rho>)->collect(it : \<rho> | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)"
+   \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow> src\<^sub>2->selectByKind(\<sigma>[1])->collect(it : \<sigma>[1] | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)"
 |CollectionArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
@@ -201,9 +220,8 @@ inductive normalize
 |CollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Iterable(\<sigma>)[1.] \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   src\<^sub>3 = src\<^sub>2->selectByKind(to_required_type \<sigma>) \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>[?])[1.] \<Longrightarrow>
+   src\<^sub>3 = src\<^sub>2->selectByKind(\<sigma>[1]) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
    (\<Gamma>, \<rho>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?->call\<^sub>1 \<Rrightarrow> src\<^sub>3->call\<^sub>2"
@@ -211,43 +229,38 @@ inductive normalize
 |NullableCollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?.] \<Longrightarrow>
-   required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<sigma>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>[1])[?.] \<Longrightarrow>
+   (\<Gamma>, \<sigma>[1], SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow>
       if src\<^sub>2 <> null
-      then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->collect(it : \<sigma> | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
+      then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->collect(it : \<sigma>[1] | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
       else null endif"
 |NullableNullableCollectionSafeDotCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?.] \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   \<rho> = to_required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, \<rho>, SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>[?])[?.] \<Longrightarrow>
+   (\<Gamma>, \<sigma>[1], SafeDotCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    it = new_vname \<Gamma> \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow>
       if src\<^sub>2 <> null
-      then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(\<rho>)->
-                  collect(it : \<rho> | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
+      then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->selectByKind(\<sigma>[1])->
+                  collect(it : \<sigma>[1] | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
       else null endif"
 |NullableCollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?.] \<Longrightarrow>
-   required_type \<sigma> \<Longrightarrow>
-   (\<Gamma>, to_required_type \<tau>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>[1])[?.] \<Longrightarrow>
+   (\<Gamma>, \<tau>\<lbrakk>1.\<rbrakk>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?->call\<^sub>1 \<Rrightarrow>
       if src\<^sub>2 <> null
-      then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->call\<^sub>2
+      then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->call\<^sub>2
       else null endif"
 |NullableNullableCollectionSafeArrowCallN:
   "\<Gamma> \<turnstile> src\<^sub>1 \<Rrightarrow> src\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>2 : \<tau> \<Longrightarrow>
-   \<tau> \<hookrightarrow> Iterable(\<sigma>)[?.] \<Longrightarrow>
-   optional_type \<sigma> \<Longrightarrow>
-   src\<^sub>3 = src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>) \<Longrightarrow>
+   \<tau> \<hookrightarrow> Iterable(\<sigma>[?])[?.] \<Longrightarrow>
+   src\<^sub>3 = src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->selectByKind(\<sigma>[1]) \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E src\<^sub>3 : \<rho> \<Longrightarrow>
    (\<Gamma>, \<rho>, SafeArrowCall) \<turnstile>\<^sub>C call\<^sub>1 \<Rrightarrow> call\<^sub>2 \<Longrightarrow>
    \<Gamma> \<turnstile> src\<^sub>1?->call\<^sub>1 \<Rrightarrow>
@@ -281,7 +294,8 @@ inductive normalize
   "iter = ClosureIter \<Longrightarrow>
    (\<Gamma>, \<tau>) \<turnstile>\<^sub>I (its, its_ty\<^sub>1, body\<^sub>1) \<Rrightarrow> (its, its_ty\<^sub>2, body\<^sub>2) \<Longrightarrow>
    its_ty\<^sub>2 = (Some \<sigma>, None) \<Longrightarrow>
-   (\<Gamma> ++\<^sub>f iterators its \<sigma>, k) \<turnstile>\<^sub>B body\<^sub>2 \<Rrightarrow> body\<^sub>3 \<Longrightarrow>
+   \<Gamma> \<turnstile>\<^sub>E body\<^sub>2 : \<tau> \<Longrightarrow>
+   (\<Gamma> ++\<^sub>f iterators its \<sigma>, \<tau>, k) \<turnstile>\<^sub>B body\<^sub>2 \<Rrightarrow> body\<^sub>3 \<Longrightarrow>
    (\<Gamma>, \<tau>, k) \<turnstile>\<^sub>C Iterator iter its its_ty\<^sub>1 body\<^sub>1 \<Rrightarrow> Iterator iter its its_ty\<^sub>2 body\<^sub>3"
 |IterationN:
   "iter \<noteq> ClosureIter \<Longrightarrow>
@@ -353,10 +367,10 @@ inductive_cases ExprListNE [elim]: "\<Gamma> \<turnstile>\<^sub>L xs \<Rrightarr
 section \<open>Simplification Rules\<close>
 
 inductive_simps normalize_closure_body_alt_simps:
-"(\<Gamma>, DotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
-"(\<Gamma>, SafeDotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
-"(\<Gamma>, ArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
-"(\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, \<tau>, DotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, \<tau>, SafeDotCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, \<tau>, ArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
+"(\<Gamma>, \<tau>, SafeArrowCall) \<turnstile>\<^sub>B a \<Rrightarrow> b"
 
 inductive_simps normalize_alt_simps:
 "\<Gamma> \<turnstile> Literal a \<Rrightarrow> b"
@@ -387,14 +401,6 @@ inductive_simps normalize_alt_simps:
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
-
-lemma collection_type_non_collection_type_distinct:
-  "collection_type_template' \<tau> \<sigma> \<Longrightarrow> non_collection_type_template' \<tau> \<rho> \<Longrightarrow> False"
-  "any_collection_type_template \<tau> \<sigma> n \<Longrightarrow> non_collection_type_template' \<tau> \<rho> \<Longrightarrow> False"
-  "collection_type_template \<tau> k \<sigma> n \<Longrightarrow> non_collection_type_template' \<tau> \<rho> \<Longrightarrow> False"
-  by (auto simp add: collection_type_template'.simps
-      any_collection_type_template.simps
-      collection_type_template.simps is_collection_type.simps)
 
 lemma normalize_closure_body_det:
   "\<Gamma>_k \<turnstile>\<^sub>B body \<Rrightarrow> body\<^sub>1 \<Longrightarrow>
@@ -446,7 +452,7 @@ next
 next
   case (NullFreeNullableClosureBodyN \<Gamma> body\<^sub>1 \<tau> \<sigma>)
   have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
-        body\<^sub>1->selectByKind(to_required_type \<sigma>) = body\<^sub>2"
+        body\<^sub>1->selectByKind(\<sigma>\<lbrakk>1.\<rbrakk>) = body\<^sub>2"
     apply (erule ClosureBodyNE)
     using NullFreeNullableClosureBodyN.hyps typing_det
           collection_type_non_collection_type_distinct apply blast
@@ -474,7 +480,7 @@ next
     by (simp add: NullableNullFreeClosureBodyN.hyps(1) typing_det)
   have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         if body\<^sub>1 <> null
-        then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)
+        then body\<^sub>1\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)
         else CollectionLiteral k [] endif = body\<^sub>2"
     apply (erule ClosureBodyNE)
     sorry
@@ -497,7 +503,7 @@ next
     by (simp add: NullableNullableClosureBodyN.hyps(1) typing_det)
   have "\<And>body\<^sub>2. (\<Gamma>, SafeArrowCall) \<turnstile>\<^sub>B body\<^sub>1 \<Rrightarrow> body\<^sub>2 \<Longrightarrow>
         if body\<^sub>1 <> null
-        then body\<^sub>1\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(to_required_type \<sigma>)
+        then body\<^sub>1\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->selectByKind(\<sigma>\<lbrakk>1.\<rbrakk>)
         else CollectionLiteral k [] endif = body\<^sub>2"
     apply (erule ClosureBodyNE)
     sorry
@@ -577,7 +583,7 @@ next
     using SingleSafeDotCallN.hyps typing_det by auto
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
       if src\<^sub>2 <> null
-      then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)\<^bold>.call\<^sub>2
+      then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)\<^bold>.call\<^sub>2
       else null endif = expr\<^sub>2"
     apply (erule SafeDotCallNE)
     apply (simp add: SingleSafeDotCallN.hyps(2) SingleSafeDotCallN.hyps(6) src_type_det)
@@ -657,7 +663,7 @@ next
     using NullableCollectionSafeDotCallN.hyps typing_det by auto
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
         if src\<^sub>2 <> null
-        then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->collect(it : \<sigma> | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
+        then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->collect(it : \<sigma> | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
         else null endif = expr\<^sub>2"
     apply (erule SafeDotCallNE)
     sorry
@@ -680,7 +686,7 @@ next
     using NullableNullableCollectionSafeDotCallN.hyps typing_det by auto
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1?.call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
         if src\<^sub>2 <> null
-        then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->selectByKind(\<rho>)->
+        then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->selectByKind(\<rho>)->
                     collect(it : \<rho> | \<lparr>it\<rparr>\<^bold>.call\<^sub>2)
         else null endif = expr\<^sub>2"
     apply (erule SafeDotCallNE)
@@ -705,7 +711,7 @@ next
     using NullableCollectionSafeArrowCallN.hyps typing_det by auto
   have "\<And>expr\<^sub>2. \<Gamma> \<turnstile> src\<^sub>1?->call\<^sub>1 \<Rrightarrow> expr\<^sub>2 \<Longrightarrow>
         if src\<^sub>2 <> null
-        then src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>)->call\<^sub>2
+        then src\<^sub>2\<^bold>.oclAsType(\<tau>\<lbrakk>1.\<rbrakk>)->call\<^sub>2
         else null endif = expr\<^sub>2"
     apply (erule SafeArrowCallNE)
     sorry
@@ -727,8 +733,7 @@ next
      \<Gamma> \<turnstile>\<^sub>E src\<^sub>2' : \<tau>' \<Longrightarrow>
      \<tau>' \<hookrightarrow> Iterable(\<sigma>')[?.] \<Longrightarrow>
      optional_type \<sigma>' \<Longrightarrow>
-     \<Gamma> \<turnstile>\<^sub>E src\<^sub>2\<^bold>.oclAsType(to_required_type \<tau>')->
-            selectByKind(to_required_type \<sigma>') : \<rho>' \<Longrightarrow> \<rho> = \<rho>'"
+     \<Gamma> \<turnstile>\<^sub>E src\<^sub>2\<^bold>.oclAsType(\<tau>'\<lbrakk>1.\<rbrakk>)->selectByKind(\<sigma>'\<lbrakk>1.\<rbrakk>) : \<rho>' \<Longrightarrow> \<rho> = \<rho>'"
     sorry
 (*    using NullableNullableCollectionSafeArrowCallN.hyps(4)
           NullableNullableCollectionSafeArrowCallN.hyps(6)

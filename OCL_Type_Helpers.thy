@@ -16,7 +16,7 @@ subsection \<open>All Types\<close>
 
 abbreviation between ("_/ = _\<midarrow>_"  [51, 51, 51] 50) where
   "x = y\<midarrow>z \<equiv> y \<le> x \<and> x \<le> z"
-
+(*
 inductive any_type\<^sub>N where
   "any_type\<^sub>N (Required \<tau>) \<tau> False"
 | "any_type\<^sub>N (Optional \<tau>) \<tau> True"
@@ -35,6 +35,21 @@ inductive any_type_template where
 
 inductive any_type_template' where
   "any_type_template \<tau> \<sigma> _ \<Longrightarrow>
+   any_type_template' \<tau> \<sigma>"
+*)
+
+inductive any_type where
+  "any_type \<tau>[1] \<tau>[1] False False"
+| "any_type \<tau>[?] \<tau>[?] True False"
+| "any_type \<tau>[1!] \<tau>[1!] False True"
+| "any_type \<tau>[?!] \<tau>[?!] True True"
+
+inductive any_type_template where
+  "any_type \<tau> \<sigma> n _ \<Longrightarrow>
+   any_type_template \<tau> \<sigma> n"
+
+inductive any_type_template' where
+  "any_type \<tau> \<sigma> _ _ \<Longrightarrow>
    any_type_template' \<tau> \<sigma>"
 
 notation error_free_type ("_ \<hookrightarrow> OclAny[.]" [900] 900)
@@ -497,7 +512,7 @@ inductive iterable_type_template' ("_ \<hookrightarrow> Iterable'(_')" 900) wher
 
 inductive is_iterable_type where
   "iterable_type \<tau> _ _ _ \<Longrightarrow> is_iterable_type \<tau>"
-
+(*
 abbreviation non_iterable_type_r ("_ \<hookrightarrow> NonIterable'(_')([1])") where
   "non_iterable_type_r \<tau> \<sigma> \<equiv> (\<not> is_iterable_type \<tau> \<and> any_type \<tau> \<sigma> False False)"
 abbreviation non_iterable_type_o ("_ \<hookrightarrow> NonIterable'(_')([?])") where
@@ -511,69 +526,14 @@ abbreviation non_iterable_type_template_r ("_ \<hookrightarrow> NonIterable'(_')
   "non_iterable_type_template_r \<tau> \<sigma> \<equiv> (\<not> is_iterable_type \<tau> \<and> any_type_template \<tau> \<sigma> False)"
 abbreviation non_iterable_type_template_o ("_ \<hookrightarrow> NonIterable'(_')([?.])") where
   "non_iterable_type_template_o \<tau> \<sigma> \<equiv> (\<not> is_iterable_type \<tau> \<and> any_type_template \<tau> \<sigma> True)"
-
+*)
 abbreviation non_iterable_type_template' ("_ \<hookrightarrow> NonIterable'(_')" 900) where
   "non_iterable_type_template' \<tau> \<sigma> \<equiv> (\<not> is_iterable_type \<tau> \<and> any_type_template' \<tau> \<sigma>)"
-
-subsection \<open>Nullable and Null-free Types\<close>
-
-fun required_type\<^sub>N where
-  "required_type\<^sub>N (Required \<tau>) = True"
-| "required_type\<^sub>N (Optional \<tau>) = False"
-
-fun required_type where
-  "required_type (ErrorFree \<tau>) = required_type\<^sub>N \<tau>"
-| "required_type (Errorable \<tau>) = required_type\<^sub>N \<tau>"
-
-abbreviation "optional_type\<^sub>N \<tau> \<equiv> \<not> required_type\<^sub>N \<tau>"
-abbreviation "optional_type \<tau> \<equiv> \<not> required_type \<tau>"
-
-fun to_required_type\<^sub>N where
-  "to_required_type\<^sub>N (Required \<tau>) = Required \<tau>"
-| "to_required_type\<^sub>N (Optional \<tau>) = Required \<tau>"
-
-abbreviation "to_required_type \<equiv> map_errorable to_required_type\<^sub>N"
-
-(* Is it realy required? Maybe it is better to check types intersection? *)
-fun to_optional_type_nested\<^sub>T
-and to_optional_type_nested\<^sub>N where
-  "to_optional_type_nested\<^sub>T OclAny = OclAny"
-| "to_optional_type_nested\<^sub>T OclVoid = OclVoid"
-
-| "to_optional_type_nested\<^sub>T Boolean = Boolean"
-| "to_optional_type_nested\<^sub>T Real = Real"
-| "to_optional_type_nested\<^sub>T Integer = Integer"
-| "to_optional_type_nested\<^sub>T UnlimitedNatural = UnlimitedNatural"
-| "to_optional_type_nested\<^sub>T String = String"
-
-| "to_optional_type_nested\<^sub>T (Enum \<E>) = Enum \<E>"
-| "to_optional_type_nested\<^sub>T (ObjectType \<C>) = ObjectType \<C>"
-| "to_optional_type_nested\<^sub>T (Tuple \<pi>) =
-      Tuple (fmmap to_optional_type_nested\<^sub>N \<pi>)"
-
-| "to_optional_type_nested\<^sub>T (Collection \<tau>) =
-      Collection (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (Set \<tau>) =
-      Set (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (OrderedSet \<tau>) =
-      OrderedSet (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (Bag \<tau>) =
-      Bag (to_optional_type_nested\<^sub>N \<tau>)"
-| "to_optional_type_nested\<^sub>T (Sequence \<tau>) =
-      Sequence (to_optional_type_nested\<^sub>N \<tau>)"
-
-| "to_optional_type_nested\<^sub>T (Map \<tau> \<sigma>) =
-      Map (to_optional_type_nested\<^sub>N \<tau>) (to_optional_type_nested\<^sub>N \<sigma>)"
-
-| "to_optional_type_nested\<^sub>N (Required \<tau>) = Optional (to_optional_type_nested\<^sub>T \<tau>)"
-| "to_optional_type_nested\<^sub>N (Optional \<tau>) = Optional (to_optional_type_nested\<^sub>T \<tau>)"
-
-abbreviation "to_optional_type_nested \<equiv> map_errorable to_optional_type_nested\<^sub>N"
 
 (*** Simplification Rules ***************************************************)
 
 section \<open>Simplification Rules\<close>
-
+(*
 lemma any_type_template'_simps:
   "any_type_template' (ErrorFree \<tau>) \<sigma> = (\<exists>n. any_type\<^sub>N \<tau> \<sigma> n)"
   "any_type_template' (Errorable \<tau>) \<sigma> = (\<exists>n. any_type\<^sub>N \<tau> \<sigma> n)"
@@ -584,7 +544,7 @@ lemma ex_any_type_template'_simps:
   "Ex (any_type_template' (Errorable \<tau>)) = (\<exists>\<sigma> n. any_type\<^sub>N \<tau> \<sigma> n)"
   using any_type_template'_simps(1) apply blast
   using any_type_template'_simps(2) by blast
-
+*)
 
 lemma collection_type_simps:
   "collection_type (ErrorFree \<tau>) k \<sigma> n e =
@@ -626,11 +586,12 @@ lemma to_single_type_simps:
   by (subst to_single_type.simps; auto)+
 
 lemmas ocl_type_helper_simps =
-  any_type\<^sub>N.simps
+  (*any_type\<^sub>N.simps*)
   any_type.simps
   any_type_template.simps
-  any_type_template'_simps
-  ex_any_type_template'_simps
+  any_type_template'.simps
+  (*any_type_template'_simps
+  ex_any_type_template'_simps*)
 
   tuple_type.simps
   tuple_type'.simps
@@ -708,9 +669,13 @@ lemma collection_type_sup:
   by (auto simp add: collection_type.simps
       collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
 
-lemma collection_type_non_collection_type_distinct:
+lemma collection_type_and_non_collection_type_distinct:
+  "collection_type_template \<tau> k \<sigma> n \<Longrightarrow> non_collection_type_template' \<tau> \<rho> \<Longrightarrow> False"
+  "collection_type_template' \<tau> \<sigma> \<Longrightarrow> non_collection_type_template' \<tau> \<rho> \<Longrightarrow> False"
   "any_collection_type \<tau> \<sigma> n\<^sub>1 e\<^sub>1 \<Longrightarrow> non_collection_type \<tau> \<rho> n\<^sub>2 e\<^sub>2 \<Longrightarrow> False"
-  by (auto simp add: any_collection_type.simps is_collection_type.simps)
+  "any_collection_type_template \<tau> \<sigma> n \<Longrightarrow> non_collection_type_template' \<tau> \<rho> \<Longrightarrow> False"
+  by (auto simp add: collection_type_template.simps collection_type_template'.simps
+      any_collection_type_template.simps any_collection_type.simps is_collection_type.simps)
 
 lemma collection_type_and_map_type_distinct:
   "collection_type \<tau> k \<sigma> n\<^sub>1 e\<^sub>1 \<Longrightarrow> map_type \<tau> \<rho> \<upsilon> n\<^sub>2 e\<^sub>2 \<Longrightarrow> False"

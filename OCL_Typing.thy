@@ -107,7 +107,7 @@ inductive typeop_type where
   "\<tau> < \<sigma> \<Longrightarrow>
    typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>"
 | "\<sigma> < \<tau> \<Longrightarrow>
-   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>[!]"
+   typeop_type DotCall OclAsTypeOp \<tau> \<sigma> \<sigma>\<lbrakk>.!\<rbrakk>"
 
 | "\<sigma> < \<tau>[1] \<Longrightarrow>
    typeop_type DotCall OclIsTypeOfOp \<tau>[1] \<sigma> Boolean[1]"
@@ -153,7 +153,9 @@ text \<open>
   return @{text invalid} for an invalid value.\<close>
 
 inductive any_unop_type where
-  "\<tau> \<hookrightarrow> NonIterable(\<sigma>) \<Longrightarrow>
+  "\<tau> \<hookrightarrow> NonIterable(\<sigma>[1]) \<Longrightarrow>
+   any_unop_type OclAsSetOp \<tau> (Set \<sigma>[\<^bold>1])[1]"
+| "\<tau> \<hookrightarrow> NonIterable(\<sigma>[?]) \<Longrightarrow>
    any_unop_type OclAsSetOp \<tau> (Set \<sigma>[\<^bold>1])[1]"
 
 | "\<tau> \<hookrightarrow> ObjectType(\<C>)[_] \<Longrightarrow>
@@ -388,10 +390,16 @@ inductive iterable_unop_type where
    \<upsilon> \<hookleftarrow> Collection\<^bsub>k\<^esub>(\<rho>)[1] \<Longrightarrow>
    iterable_unop_type FlattenOp \<tau> \<upsilon>"
 
-| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>)[1] \<Longrightarrow>
-   iterable_unop_type FirstOp \<tau> \<sigma>[!]"
-| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>)[1] \<Longrightarrow>
-   iterable_unop_type LastOp \<tau> \<sigma>[!]"
+| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>[1])[1] \<Longrightarrow>
+   iterable_unop_type FirstOp \<tau> \<sigma>[1!]"
+| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>[?])[1] \<Longrightarrow>
+   iterable_unop_type FirstOp \<tau> \<sigma>[?!]"
+
+| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>[1])[1] \<Longrightarrow>
+   iterable_unop_type LastOp \<tau> \<sigma>[1!]"
+| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>[?])[1] \<Longrightarrow>
+   iterable_unop_type LastOp \<tau> \<sigma>[?!]"
+
 | "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>)[1] \<Longrightarrow>
    iterable_unop_type ReverseOp \<tau> \<tau>"
 
@@ -548,25 +556,31 @@ inductive iterable_binop_type where
    \<upsilon> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type PrependAllOp \<tau> \<sigma> \<tau>"
 
-| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>)[1] \<Longrightarrow>
-   iterable_binop_type AtOp \<tau> Integer[1] \<sigma>[!]"
-| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>)[1] \<Longrightarrow>
+| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>[1])[1] \<Longrightarrow>
+   iterable_binop_type AtOp \<tau> Integer[1] \<sigma>[1!]"
+| "\<tau> \<hookrightarrow> OrderedCollection(\<sigma>[?])[1] \<Longrightarrow>
+   iterable_binop_type AtOp \<tau> Integer[1] \<sigma>[?!]"
+
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>[1])[1] \<Longrightarrow>
    \<sigma> \<le> \<rho>[??] \<Longrightarrow>
-   iterable_binop_type AtOp \<tau> \<sigma> \<upsilon>[!]"
+   iterable_binop_type AtOp \<tau> \<sigma> \<upsilon>[1!]"
+| "\<tau> \<hookrightarrow> Map(\<rho>, \<upsilon>[?])[1] \<Longrightarrow>
+   \<sigma> \<le> \<rho>[??] \<Longrightarrow>
+   iterable_binop_type AtOp \<tau> \<sigma> \<upsilon>[?!]"
 
 | "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<le> \<rho> \<Longrightarrow>
    iterable_binop_type IndexOfOp \<tau> \<sigma> Integer[1]"
 
 inductive iterable_ternop_type where
-  "\<tau> \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
+  "\<tau>[1] \<hookrightarrow> OrderedCollection(\<rho>)[1] \<Longrightarrow>
    \<sigma> \<le> \<rho> \<Longrightarrow>
-   iterable_ternop_type InsertAtOp \<tau> Integer[1] \<sigma> \<tau>[!]"
+   iterable_ternop_type InsertAtOp \<tau>[1] Integer[1] \<sigma> \<tau>[1!]"
 
-| "\<tau> \<hookrightarrow> OrderedSet(\<sigma>)[1] \<Longrightarrow>
-   iterable_ternop_type SubOrderedSetOp \<tau> Integer[1] Integer[1] \<tau>[!]"
-| "\<tau> \<hookrightarrow> Sequence(\<sigma>)[1] \<Longrightarrow>
-   iterable_ternop_type SubSequenceOp \<tau> Integer[1] Integer[1] \<tau>[!]"
+| "\<tau>[1] \<hookrightarrow> OrderedSet(\<sigma>)[1] \<Longrightarrow>
+   iterable_ternop_type SubOrderedSetOp \<tau>[1] Integer[1] Integer[1] \<tau>[1!]"
+| "\<tau>[1] \<hookrightarrow> Sequence(\<sigma>)[1] \<Longrightarrow>
+   iterable_ternop_type SubSequenceOp \<tau>[1] Integer[1] Integer[1] \<tau>[1!]"
 
 | "\<tau> \<hookrightarrow> Map(\<upsilon>, \<phi>)[1] \<Longrightarrow>
    \<sigma> \<le> \<upsilon> \<Longrightarrow>
@@ -590,7 +604,10 @@ subsection \<open>Iterations\<close>
 inductive iteration_type where
   "n \<le> (1 :: nat) \<Longrightarrow>
    \<rho> \<le> Boolean[?] \<Longrightarrow>
-   iteration_type AnyIter n \<tau> \<sigma> \<rho> \<sigma>[!]"
+   iteration_type AnyIter n \<tau> \<sigma>[1] \<rho> \<sigma>[1!]"
+| "n \<le> (1 :: nat) \<Longrightarrow>
+   \<rho> \<le> Boolean[?] \<Longrightarrow>
+   iteration_type AnyIter n \<tau> \<sigma>[?] \<rho> \<sigma>[?!]"
 
 | "n \<le> 1 \<Longrightarrow>
    \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1.] \<Longrightarrow>
@@ -682,32 +699,26 @@ inductive ternop_type where
 
 definition "op_result_type_is_errorable op \<pi> \<equiv>
   strict_op op \<and> fBex \<pi> errorable_type"
-(*
-code_pred [show_modes] unop_type .
-code_pred [show_modes] binop_type .
-code_pred [show_modes] ternop_type .
-*)
+
 inductive op_type where
-  "unop_type op k (to_error_free_type \<tau>) \<upsilon> \<Longrightarrow>
+  "unop_type op k \<tau>\<lbrakk>.\<rbrakk> \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inl op) {|\<tau>|} \<Longrightarrow>
-   op_type (Inl op) k \<tau> [] \<upsilon>[!]"
-| "unop_type op k (to_error_free_type \<tau>) \<upsilon> \<Longrightarrow>
+   op_type (Inl op) k \<tau> [] \<upsilon>\<lbrakk>.!\<rbrakk>"
+| "unop_type op k \<tau> \<upsilon> \<Longrightarrow>
    \<not> op_result_type_is_errorable (Inl op) {|\<tau>|} \<Longrightarrow>
    op_type (Inl op) k \<tau> [] \<upsilon>"
 
-| "binop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) \<upsilon> \<Longrightarrow>
+| "binop_type op k \<tau>\<lbrakk>.\<rbrakk> \<sigma>\<lbrakk>.\<rbrakk> \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inr (Inl op)) {|\<tau>, \<sigma>|} \<Longrightarrow>
-   op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>[!]"
-| "binop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>) \<upsilon> \<Longrightarrow>
+   op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>\<lbrakk>.!\<rbrakk>"
+| "binop_type op k \<tau> \<sigma> \<upsilon> \<Longrightarrow>
    \<not> op_result_type_is_errorable (Inr (Inl op)) {|\<tau>, \<sigma>|} \<Longrightarrow>
    op_type (Inr (Inl op)) k \<tau> [\<sigma>] \<upsilon>"
 
-| "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>)
-        (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
+| "ternop_type op k \<tau>\<lbrakk>.\<rbrakk> \<sigma>\<lbrakk>.\<rbrakk> \<rho>\<lbrakk>.\<rbrakk> \<upsilon> \<Longrightarrow>
    op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
-   op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>[!]"
-| "ternop_type op k (to_error_free_type \<tau>) (to_error_free_type \<sigma>)
-        (to_error_free_type \<rho>) \<upsilon> \<Longrightarrow>
+   op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>\<lbrakk>.!\<rbrakk>"
+| "ternop_type op k \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    \<not> op_result_type_is_errorable (Inr (Inr (Inl op))) {|\<tau>, \<sigma>, \<rho>|} \<Longrightarrow>
    op_type (Inr (Inr (Inl op))) k \<tau> [\<sigma>, \<rho>] \<upsilon>"
 
@@ -758,14 +769,16 @@ lemma mataop_type_det:
 lemma typeop_type_det:
   "typeop_type op k \<tau> \<sigma> \<rho>\<^sub>1 \<Longrightarrow>
    typeop_type op k \<tau> \<sigma> \<rho>\<^sub>2 \<Longrightarrow> \<rho>\<^sub>1 = \<rho>\<^sub>2"
-  apply (erule typeop_type.cases;
-      auto simp add: typeop_type.simps)
+  apply (erule typeop_type.cases; simp add: typeop_type.simps)
+  apply auto[1]
+  apply auto[1]
   using collection_type_det collection_type'_det by blast+
 
 lemma any_unop_type_det:
   "any_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
    any_unop_type op \<tau> \<sigma>\<^sub>2 \<Longrightarrow> \<sigma>\<^sub>1 = \<sigma>\<^sub>2"
-  by (erule any_unop_type.cases; simp add: any_unop_type.simps)
+  by (erule any_unop_type.cases;
+      simp add: any_unop_type.simps any_type_template'.simps any_type.simps)
 
 lemma boolean_unop_type_det:
   "boolean_unop_type op \<tau> \<sigma>\<^sub>1 \<Longrightarrow>
@@ -788,8 +801,7 @@ lemma iterable_unop_type_det:
   apply (erule iterable_unop_type.cases; simp add: iterable_unop_type.simps)
   using collection_type'_det any_collection_type_det apply blast+
   using collection_type_det collection_type'_det to_single_type_det apply blast+
-  apply (metis any_ordered_collection_type.simps collection_type_det)
-  apply (metis any_ordered_collection_type.simps collection_type_det)
+  using any_ordered_collection_type_det apply blast+
   using collection_type'_det map_type_det by blast+
 
 lemma unop_type_det:
@@ -831,6 +843,8 @@ lemma iterable_binop_type_det:
   apply (metis map_type'_det map_type_det)
   using any_ordered_collection_type_and_map_type_distinct
         any_ordered_collection_type_det apply blast
+  using any_ordered_collection_type_and_map_type_distinct any_ordered_collection_type_det apply blast
+  apply (metis any_ordered_collection_type_and_map_type_distinct errorable.inject(1) map_type_det)
   using any_ordered_collection_type_and_map_type_distinct map_type_det by blast
 
 lemma binop_type_det:
@@ -861,16 +875,34 @@ lemma ternop_type_det:
 lemma op_type_det:
   "op_type op k \<tau> \<pi> \<sigma> \<Longrightarrow>
    op_type op k \<tau> \<pi> \<rho> \<Longrightarrow> \<sigma> = \<rho>"
-  apply (auto simp add: op_type.simps)
+  apply (erule op_type.cases; simp add: op_type.simps)
   using unop_type_det binop_type_det ternop_type_det apply blast+
   using operation_det by blast
+
+lemma collection_type_template_det:
+  "collection_type_template \<tau> k\<^sub>1 \<sigma>\<^sub>1 n\<^sub>1 \<Longrightarrow>
+   collection_type_template \<tau> k\<^sub>2 \<sigma>\<^sub>2 n\<^sub>2 \<Longrightarrow> k\<^sub>1 = k\<^sub>2 \<and> \<sigma>\<^sub>1 = \<sigma>\<^sub>2 \<and> n\<^sub>1 = n\<^sub>2"
+  apply (simp add: collection_type_template.simps)
+  using collection_type_det by blast
+
+lemma any_collection_type_and_map_type_distinct':
+  "collection_type_template \<tau> k \<sigma> n\<^sub>1 \<Longrightarrow> map_type_template \<tau> \<rho> \<upsilon> n\<^sub>2 \<Longrightarrow> False"
+  by (auto simp: collection_type_template.simps collection_type.simps
+      collection_type\<^sub>N.simps collection_type\<^sub>T.simps
+      map_type_template.simps
+      map_type.simps map_type\<^sub>N.simps map_type\<^sub>T.simps)
 
 lemma iteration_type_det:
   "iteration_type iter n \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
    iteration_type iter n \<tau> \<sigma> \<rho> \<phi> \<Longrightarrow> \<upsilon> = \<phi>"
-  apply (auto simp add: iteration_type.simps)
-  using unop_type_det binop_type_det ternop_type_det apply blast+
-  using operation_det by blast
+  apply (erule iteration_type.cases; simp add: iteration_type.simps)
+  using collection_type_template_det unique_collection_type'_det apply blast
+  apply (metis any_collection_type_and_map_type_distinct' collection_type_template_det non_unique_collection_type'_det to_single_type_det)
+  using any_collection_type_and_map_type_distinct' collection_type'_det to_single_type_det apply blast
+  using map_type'_det apply blast
+  using any_collection_type_and_map_type_distinct' collection_type_template_det non_unique_collection_type'_det apply blast
+  using any_collection_type_and_map_type_distinct' map_type'_det map_type_template_det apply blast
+  using collection_type_template_det ordered_collection_type'_det by blast
 
 (*** Expressions Typing *****************************************************)
 
@@ -982,7 +1014,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>E cnd : Boolean[1!] \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E thn : \<sigma> \<Longrightarrow>
    \<Gamma> \<turnstile>\<^sub>E els : \<rho> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E If cnd thn els : (\<sigma> \<squnion> \<rho>)[!]"
+   \<Gamma> \<turnstile>\<^sub>E If cnd thn els : (\<sigma> \<squnion> \<rho>)\<lbrakk>.!\<rbrakk>"
 
 \<comment> \<open>Call Expressions\<close>
 
@@ -999,7 +1031,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>L params : \<pi> \<Longrightarrow>
    static_operation \<tau> op \<pi> oper \<Longrightarrow>
    fBex (fset_of_list \<pi>) errorable_type \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : (oper_type oper)[!]"
+   \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : (oper_type oper)\<lbrakk>.!\<rbrakk>"
 
 |TypeOperationCallT:
   "\<Gamma> \<turnstile>\<^sub>E a : \<tau> \<Longrightarrow>
@@ -1019,7 +1051,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |ErrorableAttributeCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    attribute \<C> prop \<D> \<tau> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<tau>[!]"
+   \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<tau>\<lbrakk>.!\<rbrakk>"
 
 |AssociationEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
@@ -1028,7 +1060,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |ErrorableAssociationEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    association_end \<C> from role \<D> end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src from role : (assoc_end_type end)[!]"
+   \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src from role : (assoc_end_type end)\<lbrakk>.!\<rbrakk>"
 
 |AssociationClassCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
@@ -1037,7 +1069,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |ErrorableAssociationClassCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<C>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    referred_by_association_class \<C> from \<A> \<D> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src from \<A> : (class_assoc_type \<A>)[!]"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src from \<A> : (class_assoc_type \<A>)\<lbrakk>.!\<rbrakk>"
 
 |AssociationClassEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1] \<Longrightarrow>
@@ -1046,7 +1078,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
 |ErrorableAssociationClassEndCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : \<langle>\<A>\<rangle>\<^sub>\<T>[1!] \<Longrightarrow>
    association_class_end \<A> role end \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : (class_assoc_end_type end)[!]"
+   \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : (class_assoc_end_type end)\<lbrakk>.!\<rbrakk>"
 
 |TupleElementCallT:
   "\<Gamma> \<turnstile>\<^sub>E src : (Tuple \<pi>)[1] \<Longrightarrow>
@@ -1083,7 +1115,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, Let res (Some res_t) res_init body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<tau> \<hookrightarrow> OclAny[.!] \<Longrightarrow>
    \<rho> \<le> res_t \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E IterateCall src its its_ty res (Some res_t) res_init body : \<rho>[!]"
+   \<Gamma> \<turnstile>\<^sub>E IterateCall src its its_ty res (Some res_t) res_init body : \<rho>\<lbrakk>.!\<rbrakk>"
 
 |IteratorT:
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
@@ -1094,7 +1126,7 @@ inductive typing :: "('a :: ocl_object_model) type\<^sub>N\<^sub>E env \<Rightar
   "\<Gamma> \<turnstile>\<^sub>I (src, its, its_ty, body) : (\<tau>, \<sigma>, \<rho>) \<Longrightarrow>
    \<tau> \<hookrightarrow> OclAny[.!] \<or> \<rho> \<hookrightarrow> OclAny[.!] \<Longrightarrow>
    iteration_type iter (length its) \<tau> \<sigma> \<rho> \<upsilon> \<Longrightarrow>
-   \<Gamma> \<turnstile>\<^sub>E Call src ArrowCall (Iterator iter its its_ty body) : \<upsilon>[!]"
+   \<Gamma> \<turnstile>\<^sub>E Call src ArrowCall (Iterator iter its its_ty body) : \<upsilon>\<lbrakk>.!\<rbrakk>"
 
 \<comment> \<open>Expression Lists\<close>
 
@@ -1241,10 +1273,30 @@ next
     using tuple_type_sup tuple_type'_implies_ex_tuple_type by blast
 qed
 
+lemma collection_type_template_simps:
+  "collection_type_template \<tau> k \<sigma> n =
+   (collection_type \<tau> k \<sigma> n False \<or> collection_type \<tau> k \<sigma> n True)"
+  by (metis (full_types) collection_type_template.cases collection_type_template.intros)
+
+lemma collection_type'_implies_ex_collection_type_template:
+  " collection_type' \<tau> k \<sigma> n e \<Longrightarrow> (\<exists>\<sigma>. collection_type_template \<tau> k \<sigma> n)"
+  apply (simp add: collection_type'.simps collection_type_template.simps)
+  using collection_type.intros by blast
+
+lemma collection_type_sup':
+  "collection_type \<tau> k \<rho> n e \<Longrightarrow>
+   collection_type \<sigma> k \<upsilon> n e \<Longrightarrow>
+   collection_type (\<tau> \<squnion> \<sigma>) k (\<rho> \<squnion> \<upsilon>) n e"
+  by (auto simp add: collection_type.simps
+      collection_type\<^sub>N.simps collection_type\<^sub>T.simps)
+
 lemma CollectionLiteral_has_Collection_type:
   "\<Gamma> \<turnstile>\<^sub>E CollectionLiteral k prts : \<tau> \<Longrightarrow> \<exists>\<sigma>. \<tau> \<hookrightarrow> Collection\<^bsub>k\<^esub>(\<sigma>)[1.]"
 proof (induct prts arbitrary: \<tau>)
-  case Nil thus ?case by blast
+  case Nil show ?case
+    apply (insert Nil)
+    apply (erule CollectionLiteralNilTE)
+    by (simp add: collection_type'_implies_ex_collection_type_template)
 next
   case (Cons a prts) show ?case
     apply (insert Cons)
@@ -1253,7 +1305,7 @@ next
 qed
 
 lemma MapLiteral_has_Map_type:
-  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<exists>\<sigma> \<rho>. required_map_type \<tau> \<sigma> \<rho>"
+  "\<Gamma> \<turnstile>\<^sub>E MapLiteral prts : \<tau> \<Longrightarrow> \<exists>\<sigma> \<rho>. \<tau> \<hookrightarrow> Map(\<sigma>, \<rho>)[1.]"
 proof (induct prts arbitrary: \<tau>)
   case Nil show ?case
     apply (insert Nil)
@@ -1269,6 +1321,8 @@ qed
 (*** Determinism ************************************************************)
 
 section \<open>Determinism\<close>
+
+inductive_cases IteratorTE [elim]: "\<Gamma> \<turnstile>\<^sub>E Call src ArrowCall (Iterator iter its its_ty body) : \<upsilon>"
 
 lemma
   typing_det:
@@ -1351,7 +1405,7 @@ next
 next
   case (ErrorableStaticOperationCallT \<Gamma> params \<pi> \<tau> op oper)
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E StaticOperationCall \<tau> op params : \<sigma> \<Longrightarrow>
-        (oper_type oper)[!] = \<sigma>"
+        (oper_type oper)\<lbrakk>.!\<rbrakk> = \<sigma>"
     apply (erule StaticOperationCallTE)
     using ErrorableStaticOperationCallT.hyps static_operation_det by blast+
   thus ?case by (simp add: ErrorableStaticOperationCallT.prems)
@@ -1369,7 +1423,7 @@ next
   thus ?case by (simp add: AttributeCallT.prems)
 next
   case (ErrorableAttributeCallT \<Gamma> src \<C> "prop" \<D> \<tau>)
-  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<sigma> \<Longrightarrow> \<tau>[!] = \<sigma>"
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AttributeCall src prop : \<sigma> \<Longrightarrow> \<tau>\<lbrakk>.!\<rbrakk> = \<sigma>"
     apply (erule AttributeCallTE)
     using ErrorableAttributeCallT.hyps attribute_det by blast+
   thus ?case by (simp add: ErrorableAttributeCallT.prems)
@@ -1383,7 +1437,7 @@ next
 next
   case (ErrorableAssociationEndCallT \<Gamma> src \<C> "from" role \<D> "end")
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationEndCall src from role : \<sigma> \<Longrightarrow>
-        (assoc_end_type end)[!] = \<sigma>"
+        (assoc_end_type end)\<lbrakk>.!\<rbrakk> = \<sigma>"
     apply (erule AssociationEndCallTE)
     using ErrorableAssociationEndCallT.hyps association_end_det by blast+
   thus ?case by (simp add: ErrorableAssociationEndCallT.prems)
@@ -1397,7 +1451,7 @@ next
 next
   case (ErrorableAssociationClassCallT \<Gamma> src \<C> "from" \<A> \<D>)
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassCall src from \<A> : \<sigma> \<Longrightarrow>
-        (class_assoc_type \<A>)[!] = \<sigma>"
+        (class_assoc_type \<A>)\<lbrakk>.!\<rbrakk> = \<sigma>"
     apply (erule AssociationClassCallTE)
     using ErrorableAssociationClassCallT.hyps by blast+
   thus ?case by (simp add: ErrorableAssociationClassCallT.prems)
@@ -1412,7 +1466,7 @@ next
 next
   case (ErrorableAssociationClassEndCallT \<Gamma> src \<A> role "end")
   have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E AssociationClassEndCall src role : \<sigma> \<Longrightarrow>
-        (class_assoc_end_type end)[!] = \<sigma>"
+        (class_assoc_end_type end)\<lbrakk>.!\<rbrakk> = \<sigma>"
     apply (erule AssociationClassEndCallTE)
     using ErrorableAssociationClassEndCallT.hyps
           association_class_end_det by blast+
@@ -1454,12 +1508,19 @@ next
     thus ?case by blast
 next
   case (IteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> iter \<upsilon>)
-  then show ?case
-(*    by (smt call_expr.inject(9) call_expr.simps(25) call_expr.simps(75) call_expr.simps(81) call_kind.distinct(1) expr.distinct(21) expr.distinct(39) expr.inject(7) expr.simps(19) expr.simps(37) expr.simps(43) expr.simps(49) fst_conv iteration_type_det snd_conv typing.simps)*)
-  sorry
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E src->(Iterator iter its its_ty body) : \<sigma> \<Longrightarrow> \<upsilon> = \<sigma>"
+    apply (erule IteratorTE)
+    apply (metis IteratorT.hyps(2) IteratorT.hyps(5) Pair_inject iteration_type_det)
+    using IteratorT.hyps(2) IteratorT.hyps(3) IteratorT.hyps(4) by blast
+  thus ?case by (simp add: IteratorT.prems)
 next
   case (ErrorableIteratorT \<Gamma> src its its_ty body \<tau> \<sigma> \<rho> iter \<upsilon>)
-  then show ?case sorry
+  have "\<And>\<sigma>. \<Gamma> \<turnstile>\<^sub>E src->(Iterator iter its its_ty body) : \<sigma> \<Longrightarrow> \<upsilon>\<lbrakk>.!\<rbrakk> = \<sigma>"
+    apply (erule IteratorTE)
+    using ErrorableIteratorT.hyps(2) ErrorableIteratorT.hyps(3) apply blast
+    using ErrorableIteratorT.hyps(2) ErrorableIteratorT.hyps(4) Pair_inject
+          iteration_type_det by fastforce
+  thus ?case by (simp add: ErrorableIteratorT.prems)
 next
   case (ExprListNilT \<Gamma>) thus ?case by auto
 next

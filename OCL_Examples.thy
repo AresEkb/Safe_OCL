@@ -548,6 +548,23 @@ lemma
    \<lparr>x\<rparr>->any(it | \<lparr>it\<rparr> \<^bold>= ''test'') : String[?!]"
   by simp
 
+values "{x. \<Gamma>\<^sub>0 \<turnstile> let STR ''x'' : (Sequence String[\<^bold>1])[1] =
+          Sequence{''abc'', ''zxc''} in
+   \<lparr>STR ''x''\<rparr>?->closure(it | \<lparr>it\<rparr>) : x}"
+
+values "{x. \<Gamma>\<^sub>0 \<turnstile> let STR ''x'' : (Sequence String[\<^bold>1])[1] =
+          Sequence{''abc'', ''zxc''} in
+   \<lparr>STR ''x''\<rparr>->closure(it | \<lparr>it\<rparr>) : x}"
+
+values "{x. \<Gamma>\<^sub>0 \<turnstile> let STR ''x'' : (Sequence String[\<^bold>?])[1] =
+          Sequence{''abc'', ''zxc''} in
+   \<lparr>STR ''x''\<rparr>?->closure(it | \<lparr>it\<rparr>) : x}"
+
+values "{x. \<Gamma>\<^sub>0 \<turnstile> Sequence{''abc'', ''zxc''}->closure(it | \<lparr>it\<rparr>) : x}"
+values "{x. \<Gamma>\<^sub>0 \<turnstile> Sequence{''abc'', ''zxc''}->closure(it | \<lparr>it\<rparr>\<^bold>.oclAsSet()) : x}"
+values "{x. \<Gamma>\<^sub>0 \<turnstile> Sequence{''abc'', ''zxc''}->closure(it | \<lparr>it\<rparr>) \<Rrightarrow> x}"
+values "{x. \<Gamma>\<^sub>0 \<turnstile> Sequence{''abc'', ''zxc''}->collect(it | \<lparr>it\<rparr>) \<Rrightarrow> x}"
+
 lemma
   "\<Gamma>\<^sub>0 \<turnstile> let x : (Sequence String[\<^bold>?])[1] =
           Sequence{''abc'', ''zxc''} in
